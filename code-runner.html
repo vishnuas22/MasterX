@@ -1,0 +1,113 @@
+<!-- code-runner.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Python Runner - MasterX Lite</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.jsdelivr.net/pyodide/v0.23.2/full/pyodide.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: monospace;
+      background-color: #1e1e1e;
+      color: #fff;
+    }
+    .runner-container {
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+    textarea {
+      flex: 1;
+      background-color: #2b2b2b;
+      color: #fff;
+      padding: 1rem;
+      font-size: 16px;
+      border: none;
+      resize: none;
+      outline: none;
+    }
+    #output {
+      background: #111;
+      color: #0f0;
+      padding: 1rem;
+      overflow-y: auto;
+      height: 200px;
+      white-space: pre-wrap;
+      font-size: 14px;
+      margin-top: 0.5rem;
+    }
+    .controls {
+      display: flex;
+      gap: 1rem;
+      margin: 0.5rem 0;
+    }
+    button, select {
+      padding: 0.5rem 1rem;
+      font-weight: bold;
+      border-radius: 5px;
+      cursor: pointer;
+      border: none;
+    }
+    .dark { background-color: #1e1e1e; color: #fff; }
+    .light { background-color: #fff; color: #000; }
+    .light textarea { background: #f5f5f5; color: #000; }
+    .light #output { background: #eee; color: #000; }
+  </style>
+</head>
+<body class="dark">
+  <div class="runner-container">
+    <div class="controls">
+      <button onclick="runCode()">▶ Run</button>
+      <button onclick="clearOutput()">🧹 Clear</button>
+      <select id="template-selector" onchange="loadTemplate(this.value)">
+        <option value="">📄 Load Template</option>
+        <option value="hello">Hello World</option>
+        <option value="loop">For Loop</option>
+        <option value="function">Function</option>
+      </select>
+      <button onclick="toggleTheme()">🌓 Theme</button>
+    </div>
+    <textarea id="code" placeholder="Write your Python code here..."></textarea>
+    <div id="output">Output will appear here...</div>
+  </div>
+
+  <script>
+    let pyodide;
+    async function loadPyodideAndPackages() {
+      pyodide = await loadPyodide();
+      document.getElementById("output").innerText = "✅ Python engine loaded.";
+    }
+    loadPyodideAndPackages();
+
+    async function runCode() {
+      const code = document.getElementById("code").value;
+      try {
+        let output = await pyodide.runPythonAsync(code);
+        document.getElementById("output").innerText = output || "✅ Code ran with no output.";
+      } catch (err) {
+        document.getElementById("output").innerText = "❌ Error:\n" + err;
+      }
+    }
+
+    function clearOutput() {
+      document.getElementById("output").innerText = "🧹 Cleared.";
+    }
+
+    function toggleTheme() {
+      const body = document.body;
+      body.classList.toggle("light");
+      body.classList.toggle("dark");
+    }
+
+    function loadTemplate(type) {
+      const codeArea = document.getElementById("code");
+      if (type === "hello") codeArea.value = "print('Hello from MasterX!')";
+      else if (type === "loop") codeArea.value = "for i in range(5):\n    print(i)";
+      else if (type === "function") codeArea.value = "def greet(name):\n    return f'Hello, {name}'\n\nprint(greet('Ghost'))";
+    }
+  </script>
+</body>
+</html>

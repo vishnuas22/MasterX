@@ -1,0 +1,392 @@
+/* ultra-ui.css – MasterX Lite Ultra Styling */
+
+:root {
+  --bg: #0d1117;
+  --bg-light: #161b22;
+  --fg: #c9d1d9;
+  --accent: #58a6ff;
+  --error: #ff7b72;
+  --radius: 12px;
+  --font: 'Inter', sans-serif;
+  --mono: 'Fira Code', monospace;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--fg);
+  height: 100vh;
+  display: flex;
+  overflow: hidden;
+}
+
+#app {
+  display: flex;
+  width: 100%;
+  height: 100%;
+}
+
+aside#sidebar {
+  width: 260px;
+  background: var(--bg-light);
+  padding: 1.5rem;
+  box-shadow: 2px 0 10px rgba(0,0,0,0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+#sidebar h2 {
+  font-size: 1.5rem;
+  margin: 0 0 1rem 0;
+  color: var(--accent);
+}
+
+#sidebar button {
+  background: none;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  font-weight: bold;
+  padding: 0.6rem 1rem;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+#sidebar button:hover {
+  background: var(--accent);
+  color: #fff;
+}
+
+main#main {
+  flex-grow: 1;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 2rem;
+  overflow-y: auto;
+}
+
+#chat-box {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding-right: 1rem;
+  max-width: 800px;
+  margin-bottom: 1rem;
+}
+
+#chat-box .bot {
+  color: var(--accent);
+  margin: 1rem 0;
+  white-space: pre-wrap;
+  animation: fadeIn 0.4s ease;
+}
+
+#chat-box .user {
+  text-align: right;
+  color: var(--fg);
+  font-weight: 600;
+  margin: 1rem 0;
+  animation: fadeIn 0.3s ease;
+}
+
+
+/* UPDATED CODES */
+
+
+#chat {
+  padding: 1rem;
+  max-height: 75vh;
+  overflow-y: auto;
+  font-family: 'Fira Code', monospace;
+}
+
+.chat-bubble {
+  max-width: 80%;
+  padding: 0.75rem 1rem;
+  margin: 0.5rem 0;
+  border-radius: 1rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.chat-bubble.bot {
+  background: var(--card-bg);
+  color: var(--fg);
+  align-self: flex-start;
+  border-left: 3px solid var(--accent);
+}
+
+.chat-bubble.user {
+  background: var(--accent);
+  color: #fff;
+  align-self: flex-end;
+  text-align: right;
+}
+
+
+
+/* UPDATED CODES */
+
+#lesson-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+.lesson-card {
+  background: var(--card-bg);
+  border: 1px solid var(--accent);
+  border-radius: 1.25rem;
+  padding: 1.25rem;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+}
+
+.lesson-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.lesson-card h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: var(--accent);
+}
+
+.lesson-card p {
+  margin-top: 0.5rem;
+  font-size: 0.95rem;
+  opacity: 0.8;
+}
+
+
+
+
+
+
+
+
+
+
+.shimmer-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.5rem;
+  padding: 1rem;
+}
+
+.shimmer-grid::before,
+.shimmer-grid::after {
+  content: '';
+  display: block;
+  height: 120px;
+  border-radius: 1.25rem;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.03) 0%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0.03) 100%
+  );
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: 200px 0;
+  }
+}
+
+
+
+
+#lesson-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.2rem;
+}
+
+.lesson-card {
+  background-color: var(--card-bg);
+  border-radius: 1.2rem;
+  padding: 1.5rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+}
+
+.lesson-card:hover {
+  transform: scale(1.02);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+}
+
+.lesson-card .card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.lesson-card h3 {
+  font-size: 1.2rem;
+  margin: 0;
+  font-weight: 600;
+}
+
+.lesson-card .level {
+  background: var(--accent);
+  color: white;
+  padding: 0.2rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.card-summary {
+  font-size: 0.9rem;
+  margin: 0.8rem 0;
+  color: var(--fg);
+}
+
+.load-btn {
+  background-color: var(--accent);
+  color: white;
+  border: none;
+  padding: 0.6rem 1rem;
+  border-radius: 0.6rem;
+  cursor: pointer;
+  font-weight: bold;
+  width: 100%;
+  transition: background-color 0.3s;
+}
+
+.load-btn:hover {
+  background-color: #22c55e;
+}
+
+
+
+
+
+
+
+.tab-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+
+.lesson-tab {
+  background: var(--card-bg);
+  color: var(--fg);
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s ease;
+}
+
+.lesson-tab.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+
+
+.message.user {
+  background: #d4f4ff;
+  padding: 10px;
+  margin: 5px 0;
+  border-radius: 10px;
+  align-self: flex-end;
+  max-width: 80%;
+}
+
+.message.bot {
+  background: #f0f0f0;
+  padding: 10px;
+  margin: 5px 0;
+  border-radius: 10px;
+  align-self: flex-start;
+  max-width: 80%;
+}
+
+
+
+
+
+
+/* old CODES */
+
+
+#input-area {
+  display: flex;
+  align-items: center;
+  max-width: 800px;
+  gap: 0.5rem;
+}
+
+#user-input {
+  flex-grow: 1;
+  padding: 0.8rem;
+  border-radius: var(--radius);
+  border: none;
+  background: var(--bg-light);
+  color: var(--fg);
+  font-family: var(--mono);
+  font-size: 1rem;
+}
+
+#send-btn {
+  background: var(--accent);
+  color: white;
+  padding: 0.8rem 1rem;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-weight: bold;
+  transition: 0.2s ease;
+}
+
+#send-btn:hover {
+  transform: scale(1.05);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Scrollbar for chat */
+#chat-box::-webkit-scrollbar {
+  width: 6px;
+}
+#chat-box::-webkit-scrollbar-thumb {
+  background-color: var(--accent);
+  border-radius: 10px;
+}
+
+/* Mobile Tweaks */
+@media (max-width: 768px) {
+  aside#sidebar {
+    width: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  main#main {
+    padding: 1rem;
+  }
+  #input-area {
+    flex-direction: column;
+  }
+}
