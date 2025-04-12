@@ -1,108 +1,113 @@
-// Global state
+// MasterX Lite – Advanced script.js
+
+function autoExpand(textarea) {
+  textarea.style.height = 'auto';
+  textarea.style.height = textarea.scrollHeight + 'px';
+}
+
+
+const chat = document.getElementById("chat");
+const userInputEl = document.getElementById("user-input");
+const sendBtn = document.getElementById("send-btn");
+const modelSelectEl = document.getElementById("model-select");
+
 let currentLesson = null;
+let messageCache = [];
+let lastUsedModel = "";
 
-// Sample Python lessons (customize or load dynamically later)
-const lessons = [
-  {
-    id: "intro",
-    title: "Intro to Python",
-    content: "Welcome to Python! Let's explore the basics of programming.",
-    summary: "Understand what Python is and how it’s used."
-  },
-  {
-    id: "variables",
-    title: "Variables in Python",
-    content: "Variables are used to store data in Python. Example: `x = 5`.",
-    summary: "Learn how to declare and use variables."
-  }
-];
+const modelAbilities = {
+  "llama3": ["essay", "general question", "concept explanation"],
+  "mistral": ["casual answer", "clarification", "short form", "chat"],
+  "codellama": ["code", "debug", "programming", "script"],
+  "gemma": ["creative", "example", "metaphor", "recursion"]
+};
 
-// Start a track (e.g., Python)
-function startTrack(trackName) {
-  if (trackName === 'python') {
-    renderLessons(lessons);
-    document.getElementById("lesson-tabs").style.display = "block";
-    document.getElementById("lesson-content").style.display = "block";
-  } else {
-    alert("Track not found: " + trackName);
-  }
-}
+function addChatMessage(sender, message, meta = {}) {
+  const messageEl = document.createElement("div");
+  messageEl.classList.add("message", sender);
 
-// Render lesson tabs
-function renderLessons(lessonList) {
-  const tabsContainer = document.getElementById("lesson-tabs");
-  tabsContainer.innerHTML = "";
+  const metaInfo = sender === "bot" && meta.model
+    ? `<div class='meta'>Model: ${meta.model} | ⏱ ${meta.time} ms</div>`
+    : "";
 
-  lessonList.forEach((lesson, index) => {
-    const tab = document.createElement("button");
-    tab.textContent = lesson.title;
-    tab.className = "lesson-tab";
-    tab.onclick = () => {
-      currentLesson = lesson;
-      renderLessonContent(lesson);
-    };
-    tabsContainer.appendChild(tab);
-
-    // Auto-select first lesson
-    if (index === 0) {
-      currentLesson = lesson;
-      renderLessonContent(lesson);
-    }
-  });
-}
-
-// Display lesson content
-function renderLessonContent(lesson) {
-  const contentDiv = document.getElementById("lesson-content");
-  contentDiv.innerHTML = `
-    <h2>${lesson.title}</h2>
-    <p>${lesson.content}</p>
-  `;
-}
-
-// Send message
-document.getElementById("send-btn").addEventListener("click", () => {
-  const input = document.getElementById("user-input");
-  const message = input.value.trim();
-  if (message !== "") {
-    addChatMessage("user", message);
-    getLessonReply(message);
-    input.value = "";
-  }
-});
-
-// Add message to chat box
-function addChatMessage(sender, text) {
-  const chat = document.getElementById("chat");
-  const msg = document.createElement("div");
-  msg.className = `chat-message ${sender}`;
-  msg.textContent = text;
-  chat.appendChild(msg);
+  messageEl.innerHTML = `<div class="bubble">${marked.parse(message)}</div>${metaInfo}`;
+  chat.appendChild(messageEl);
   chat.scrollTop = chat.scrollHeight;
 }
 
-// Mock lesson-aware reply generator
-function getLessonReply(userInput) {
-  if (!currentLesson) {
-    addChatMessage("bot", "Please select a lesson first.");
-    return;
+function getSelectedModel() {
+  const dropdown = modelSelectEl.value;
+  return dropdown !== "auto" ? dropdown : null;
+}
+
+function detectIntent(input) {
+  const text = input.toLowerCase();
+  if (text.includes("code") || text.includes("function") || text.includes("program")) return "code";
+  if (text.includes("essay") || text.includes("history")) return "essay";
+  if (text.includes("debug") || text.includes("error")) return "debug";
+  if (text.includes("recursion") || text.includes("metaphor")) return "recursion";
+  return "general question";
+}
+
+function suggestModel(input) {
+  const intent = detectIntent(input);
+  for (let model in modelAbilities) {
+    if (modelAbilities[model].includes(intent)) return model;
   }
-
-  // You can make this smarter later
-  addChatMessage("bot", `You're asking about "${currentLesson.title}": ${userInput}`);
+  return "llama3";
 }
 
-// Reset progress
-function resetProgress() {
-  localStorage.clear();
-  currentLesson = null;
-  document.getElementById("lesson-tabs").style.display = "none";
-  document.getElementById("lesson-content").style.display = "none";
-  document.getElementById("chat").innerHTML = "";
-  addChatMessage("bot", "Progress has been reset.");
+async function askOllama(prompt, model) {
+  const res = await fetch("http://localhost:11434/api/generate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ model: model, prompt: prompt, stream: false })
+  });
+  const data = await res.json();
+  return data.response;
 }
 
-// Show help
-function showHelp() {
-  addChatMessage("bot", "🧠 You can start a track from the sidebar. Try the Python Track first!");
+async function getLessonReply(userInput) {
+  addChatMessage("user", userInput);
+  addChatMessage("bot", "Thinking...");
+
+  const start = performance.now();
+
+  const selectedModel = getSelectedModel();
+  const model = selectedModel || suggestModel(userInput);
+  lastUsedModel = model;
+
+  let contextPrompt = currentLesson
+    ? `You are a Python mentor helping a student learn programming.
+Current Lesson: ${currentLesson.title}
+Lesson Summary: ${currentLesson.summary}
+Lesson Content: ${currentLesson.content}
+Student Question: ${userInput}
+Give a helpful, clear, and motivating response.`
+    : `You are an intelligent and friendly AI mentor named MasterX helping students learn tech skills, including programming, data science, and AI.
+Student Question: ${userInput}
+Provide a helpful, thoughtful, and clear response. Include examples or code if useful.`;
+
+  try {
+    const reply = await askOllama(contextPrompt, model);
+    const timeTaken = Math.round(performance.now() - start);
+    chat.lastChild.remove();
+    addChatMessage("bot", reply, { model, time: timeTaken });
+
+    messageCache.push({ input: userInput, reply, model, timeTaken });
+  } catch (err) {
+    chat.lastChild.textContent = "⚠️ Error fetching response from model.";
+  }
 }
+
+sendBtn.addEventListener("click", () => {
+  const input = userInputEl.value.trim();
+  if (input !== "") {
+    getLessonReply(input);
+    userInputEl.value = "";
+  }
+});
+
+userInputEl.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") sendBtn.click();
+});
