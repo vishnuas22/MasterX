@@ -3,7 +3,7 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime
 import uuid
 
-# User Models
+# User 
 class User(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     email: str
@@ -33,7 +33,7 @@ class ChatSession(BaseModel):
 class SessionCreate(BaseModel):
     user_id: str
     subject: Optional[str] = None
-    learning_objectives: Optional[List[str]] = None
+    learning_objectives: Optional[List[str]] = []
     difficulty_level: str = "beginner"
 
 # Message Models
@@ -51,7 +51,7 @@ class MessageCreate(BaseModel):
     message: str
     sender: str = "user"
     message_type: str = "text"
-    metadata: Optional[Dict[str, Any]] = None
+    metadata: Optional[Dict[str, Any]] = {}
 
 # AI Request/Response Models
 class MentorRequest(BaseModel):

@@ -1,10 +1,16 @@
+import sys
+import os
+from pathlib import Path
+
+# Add the backend directory to Python path
+backend_dir = Path(__file__).parent
+sys.path.insert(0, str(backend_dir))
+
 from fastapi import FastAPI, APIRouter, HTTPException, Depends
 from fastapi.responses import StreamingResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
-import os
 import logging
-from pathlib import Path
 from typing import List, Dict, Any, Optional
 import json
 import asyncio
@@ -18,7 +24,7 @@ from models import (
 from database import db_service
 from ai_service import ai_service
 
-ROOT_DIR = Path(__file__).parent
+ROOT_DIR = backend_dir
 load_dotenv(ROOT_DIR / '.env')
 
 # Create the main app

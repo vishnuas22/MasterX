@@ -1,11 +1,16 @@
 from motor.motor_asyncio import AsyncIOMotorClient
 from typing import List, Optional, Dict, Any
 import os
+from pathlib import Path
+from dotenv import load_dotenv
 from models import (
     User, UserCreate, ChatSession, SessionCreate, ChatMessage, MessageCreate,
     LearningProgress, Exercise, ExerciseSubmission, LearningPath
 )
 import logging
+
+# Load environment variables
+load_dotenv(Path(__file__).parent / '.env')
 
 logger = logging.getLogger(__name__)
 
@@ -17,15 +22,15 @@ class DatabaseService:
     async def connect(self):
         """Connect to MongoDB"""
         try:
-            mongo_url = os.environ.get('MONGO_URL')
-            db_name = os.environ.get('DB_NAME')
+            mongo_url = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
+            db_name = os.environ.get('DB_NAME', 'test_database')
             
             self.client = AsyncIOMotorClient(mongo_url)
             self.db = self.client[db_name]
             
             # Test connection
             await self.client.admin.command('ping')
-            logger.info("Connected to MongoDB successfully")
+            logger.info(f"Connected to MongoDB successfully at {mongo_url}")
             
         except Exception as e:
             logger.error(f"Failed to connect to MongoDB: {str(e)}")
