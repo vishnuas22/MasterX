@@ -78,14 +78,19 @@ export function UserOnboarding() {
         }
       };
 
+      // Create user first
       await actions.createUser(userData);
       
-      // Create initial session
-      if (formData.subjects.length > 0) {
+      // Get the created user by email to ensure we have the correct ID
+      const createdUser = await actions.getUserByEmail(formData.email);
+      
+      // Create initial session using the verified user ID
+      if (formData.subjects.length > 0 && createdUser?.id) {
         await actions.createSession({
-          user_id: userData.id || state.user?.id,
+          user_id: createdUser.id,
           subject: formData.subjects[0],
-          difficulty_level: formData.experience
+          difficulty_level: formData.experience,
+          learning_objectives: formData.learningGoals.slice(0, 3) // First 3 goals
         });
       }
     } catch (error) {

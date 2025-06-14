@@ -129,6 +129,16 @@ export function AppProvider({ children }) {
       }
     },
 
+    async getUserByEmail(email) {
+      try {
+        const user = await api.getUserByEmail(email);
+        return user;
+      } catch (error) {
+        actions.setError(error.message);
+        throw error;
+      }
+    },
+
     async createSession(sessionData) {
       try {
         actions.setLoading(true);
