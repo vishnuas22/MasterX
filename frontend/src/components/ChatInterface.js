@@ -1,14 +1,19 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Bot, User, Sparkles, BookOpen, Target } from 'lucide-react';
+import { Send, Bot, User, Sparkles, BookOpen, Target, Settings, Brain } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { GlassCard, GlassButton, GlassInput } from './GlassCard';
 import { TypingIndicator } from './LoadingSpinner';
+import { PremiumLearningModes, LearningModeIndicator } from './PremiumLearningModes';
+import { ModelManagement } from './ModelManagement';
 import { useApp } from '../context/AppContext';
 
 export function ChatInterface() {
   const { state, actions } = useApp();
   const [inputMessage, setInputMessage] = useState('');
+  const [learningMode, setLearningMode] = useState('adaptive');
+  const [showLearningModes, setShowLearningModes] = useState(false);
+  const [showModelManagement, setShowModelManagement] = useState(false);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -28,9 +33,21 @@ export function ChatInterface() {
     setInputMessage('');
 
     try {
-      await actions.sendMessage(state.currentSession.id, message);
+      await actions.sendPremiumMessage(state.currentSession.id, message, {
+        learning_mode: learningMode,
+        user_preferences: {
+          difficulty_preference: 'adaptive',
+          interaction_style: 'collaborative'
+        }
+      });
     } catch (error) {
-      console.error('Error sending message:', error);
+      console.error('Error sending premium message:', error);
+      // Fallback to regular message
+      try {
+        await actions.sendMessage(state.currentSession.id, message);
+      } catch (fallbackError) {
+        console.error('Error sending fallback message:', fallbackError);
+      }
     }
   };
 
@@ -83,6 +100,17 @@ export function ChatInterface() {
             </div>
           </div>
           <div className="flex items-center space-x-2">
+            <LearningModeIndicator 
+              currentMode={learningMode}
+              onClick={() => setShowLearningModes(true)}
+            />
+            <GlassButton 
+              size="sm" 
+              variant="secondary"
+              onClick={() => setShowModelManagement(true)}
+            >
+              <Brain className="h-4 w-4" />
+            </GlassButton>
             <GlassButton size="sm" variant="secondary">
               <Target className="h-4 w-4" />
             </GlassButton>
@@ -180,8 +208,33 @@ export function ChatInterface() {
           >
             Real Example
           </GlassButton>
+          <GlassButton
+            size="sm"
+            variant="secondary"
+            onClick={() => {
+              setLearningMode('challenge');
+              setInputMessage("Give me a challenge problem");
+            }}
+            disabled={state.isTyping}
+          >
+            Challenge Me
+          </GlassButton>
         </div>
       </div>
+
+      {/* Premium Learning Modes Modal */}
+      <PremiumLearningModes
+        currentMode={learningMode}
+        onModeChange={setLearningMode}
+        isVisible={showLearningModes}
+        onClose={() => setShowLearningModes(false)}
+      />
+
+      {/* Model Management Modal */}
+      <ModelManagement
+        isVisible={showModelManagement}
+        onClose={() => setShowModelManagement(false)}
+      />
     </div>
   );
 }
@@ -189,6 +242,7 @@ export function ChatInterface() {
 function ChatMessage({ message }) {
   const isUser = message.sender === 'user';
   const isTyping = message.sender === 'mentor' && !message.message;
+  const isPremium = message.learning_mode && message.learning_mode !== 'adaptive';
 
   return (
     <motion.div
@@ -200,7 +254,11 @@ function ChatMessage({ message }) {
     >
       {!isUser && (
         <div className="flex-shrink-0">
-          <div className="h-8 w-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
+          <div className={`h-8 w-8 rounded-full flex items-center justify-center ${
+            isPremium 
+              ? 'bg-gradient-to-r from-purple-500 to-pink-500' 
+              : 'bg-gradient-to-r from-blue-500 to-purple-500'
+          }`}>
             <Bot className="h-4 w-4 text-white" />
           </div>
         </div>
@@ -210,9 +268,18 @@ function ChatMessage({ message }) {
         <GlassCard 
           className={`p-4 ${isUser 
             ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 border-blue-400/30' 
-            : 'bg-white/5 border-white/10'
+            : isPremium
+              ? 'bg-gradient-to-r from-purple-500/10 to-pink-500/10 border-purple-400/20'
+              : 'bg-white/5 border-white/10'
           }`}
         >
+          {isPremium && (
+            <div className="flex items-center space-x-2 mb-2 pb-2 border-b border-white/10">
+              <Sparkles className="h-3 w-3 text-purple-400" />
+              <span className="text-xs text-purple-300 capitalize">{message.learning_mode} Mode</span>
+            </div>
+          )}
+          
           {message.message ? (
             <div className="prose prose-invert max-w-none">
               <ReactMarkdown>{message.message}</ReactMarkdown>
@@ -239,10 +306,27 @@ function ChatMessage({ message }) {
               </div>
             </div>
           )}
+
+          {/* Next steps for premium responses */}
+          {!isUser && message.next_steps && (
+            <div className="mt-3 pt-3 border-t border-white/10">
+              <p className="text-xs text-purple-400 mb-1 flex items-center space-x-1">
+                <Target className="h-3 w-3" />
+                <span>Next Steps:</span>
+              </p>
+              <p className="text-xs text-gray-300">{message.next_steps}</p>
+            </div>
+          )}
         </GlassCard>
         
         <div className={`flex items-center mt-2 text-xs text-gray-500 ${isUser ? 'justify-end' : 'justify-start'}`}>
           <span>{new Date(message.timestamp).toLocaleTimeString()}</span>
+          {isPremium && (
+            <>
+              <span className="mx-1">•</span>
+              <span className="text-purple-400">Premium</span>
+            </>
+          )}
         </div>
       </div>
       

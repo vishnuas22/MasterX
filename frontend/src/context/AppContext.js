@@ -260,6 +260,94 @@ export function AppProvider({ children }) {
         actions.setError(error.message);
         throw error;
       }
+    },
+
+    async sendPremiumMessage(sessionId, message, context = {}) {
+      try {
+        // Add user message immediately
+        const userMessage = {
+          id: Date.now().toString(),
+          session_id: sessionId,
+          message: message,
+          sender: 'user',
+          timestamp: new Date().toISOString()
+        };
+        actions.addMessage(userMessage);
+
+        // Set up streaming
+        actions.setTyping(true);
+        actions.clearStreamingMessage();
+
+        // Call premium streaming API
+        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/chat/premium/stream`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            session_id: sessionId,
+            user_message: message,
+            context: context
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to send premium message');
+        }
+
+        const reader = response.body.getReader();
+        let fullResponse = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = new TextDecoder().decode(value);
+          const lines = chunk.split('\n');
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              try {
+                const data = JSON.parse(line.slice(6));
+                
+                if (data.type === 'chunk' && data.content) {
+                  fullResponse += data.content;
+                  actions.setStreamingMessage(data.content);
+                } else if (data.type === 'complete') {
+                  actions.setTyping(false);
+                  
+                  // Add the complete AI response with premium features
+                  const aiMessage = {
+                    id: (Date.now() + 1).toString(),
+                    session_id: sessionId,
+                    message: fullResponse,
+                    sender: 'mentor',
+                    timestamp: new Date().toISOString(),
+                    suggestions: data.suggestions || [],
+                    next_steps: data.next_steps,
+                    learning_mode: data.mode || context.learning_mode
+                  };
+                  actions.addMessage(aiMessage);
+                  actions.clearStreamingMessage();
+                } else if (data.type === 'error') {
+                  actions.setTyping(false);
+                  actions.setError(data.message);
+                  actions.clearStreamingMessage();
+                }
+              } catch (e) {
+                console.error('Error parsing premium streaming data:', e);
+              }
+            }
+          }
+        }
+
+        return fullResponse;
+      } catch (error) {
+        actions.setTyping(false);
+        actions.clearStreamingMessage();
+        actions.setError(error.message);
+        throw error;
+      }
     }
   };
 

@@ -1,7 +1,3 @@
 {
-<<<<<<< HEAD
   "env_image_name": "fastapi_react_mongo_base_image_cloud_arm:v3.0.1"
-=======
-  "env_image_name": "fastapi_react_mongo_base_image_cloud_arm:v3.0.0"
->>>>>>> d4d25aae1d8473980750c4020261ebfe2ae38947
 }

@@ -8,6 +8,8 @@ import asyncio
 from pathlib import Path
 from dotenv import load_dotenv
 from models import ChatSession, ChatMessage, MentorResponse
+from premium_ai_service import premium_ai_service
+from model_manager import TaskType
 
 # Load environment variables
 load_dotenv(Path(__file__).parent / '.env')
@@ -252,9 +254,42 @@ Remember: You're not just providing information—you're creating a transformati
         user_message: str, 
         session: ChatSession,
         context: Dict[str, Any] = None,
+        stream: bool = False,
+        learning_mode: str = "adaptive"
+    ) -> MentorResponse:
+        """
+        Get response from AI mentor with premium multi-model capabilities
+        
+        Args:
+            user_message: User's input message
+            session: Current learning session
+            context: Session context and history
+            stream: Whether to stream the response
+            learning_mode: Learning mode (adaptive, socratic, debug, challenge, mentor)
+        """
+        try:
+            # Use premium AI service for enhanced responses
+            return await premium_ai_service.get_premium_response(
+                user_message=user_message,
+                session=session,
+                context=context,
+                learning_mode=learning_mode,
+                stream=stream
+            )
+                
+        except Exception as e:
+            logger.error(f"Error getting premium AI response: {str(e)}")
+            # Fallback to original implementation
+            return await self._fallback_response(user_message, session, context, stream)
+    
+    async def _fallback_response(
+        self, 
+        user_message: str, 
+        session: ChatSession,
+        context: Dict[str, Any] = None,
         stream: bool = False
     ) -> MentorResponse:
-        """Get response from AI mentor"""
+        """Fallback to original DeepSeek implementation if premium service fails"""
         try:
             system_prompt = self._get_system_prompt(session, context)
             
@@ -284,7 +319,7 @@ Remember: You're not just providing information—you're creating a transformati
                 return self._format_response(content)
                 
         except Exception as e:
-            logger.error(f"Error getting AI response: {str(e)}")
+            logger.error(f"Error in fallback AI response: {str(e)}")
             return MentorResponse(
                 response="I apologize, but I'm experiencing technical difficulties. Please try again in a moment.",
                 response_type="error",

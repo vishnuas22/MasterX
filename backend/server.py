@@ -23,6 +23,8 @@ from models import (
 )
 from database import db_service
 from ai_service import ai_service
+from premium_ai_service import premium_ai_service
+from model_manager import premium_model_manager
 
 ROOT_DIR = backend_dir
 load_dotenv(ROOT_DIR / '.env')
@@ -143,8 +145,145 @@ async def end_session(session_id: str):
     return {"message": "Session ended successfully"}
 
 # ================================
-# CHAT & MENTORING ENDPOINTS
+# PREMIUM AI CHAT ENDPOINTS
 # ================================
+
+@api_router.post("/chat/premium")
+async def premium_chat_with_mentor(request: MentorRequest):
+    """Premium chat with advanced learning modes and multi-model AI"""
+    try:
+        # Get session info
+        session = await db_service.get_session(request.session_id)
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+        
+        # Save user message
+        user_message = await db_service.save_message(MessageCreate(
+            session_id=request.session_id,
+            message=request.user_message,
+            sender="user"
+        ))
+        
+        # Get recent messages for context
+        recent_messages = await db_service.get_recent_messages(request.session_id, limit=10)
+        
+        # Prepare context
+        context = request.context or {}
+        context['recent_messages'] = recent_messages
+        
+        # Extract learning mode from context
+        learning_mode = context.get('learning_mode', 'adaptive')
+        
+        # Get premium AI response
+        mentor_response = await premium_ai_service.get_premium_response(
+            user_message=request.user_message,
+            session=session,
+            context=context,
+            learning_mode=learning_mode,
+            stream=False
+        )
+        
+        # Save mentor response
+        await db_service.save_message(MessageCreate(
+            session_id=request.session_id,
+            message=mentor_response.response,
+            sender="mentor",
+            message_type=mentor_response.response_type,
+            metadata=mentor_response.metadata
+        ))
+        
+        return mentor_response
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in premium chat: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to process premium chat message")
+
+@api_router.post("/chat/premium/stream")
+async def premium_chat_with_mentor_stream(request: MentorRequest):
+    """Premium streaming chat with advanced learning modes"""
+    try:
+        session = await db_service.get_session(request.session_id)
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+        
+        # Save user message
+        await db_service.save_message(MessageCreate(
+            session_id=request.session_id,
+            message=request.user_message,
+            sender="user"
+        ))
+        
+        # Get context
+        recent_messages = await db_service.get_recent_messages(request.session_id, limit=10)
+        context = request.context or {}
+        context['recent_messages'] = recent_messages
+        
+        # Extract learning mode
+        learning_mode = context.get('learning_mode', 'adaptive')
+        
+        async def generate_premium_stream():
+            try:
+                # Get streaming response from premium AI
+                stream_response = await premium_ai_service.get_premium_response(
+                    user_message=request.user_message,
+                    session=session,
+                    context=context,
+                    learning_mode=learning_mode,
+                    stream=True
+                )
+                
+                full_response = ""
+                
+                for chunk in stream_response:
+                    if hasattr(chunk.choices[0].delta, 'content') and chunk.choices[0].delta.content:
+                        content = chunk.choices[0].delta.content
+                        full_response += content
+                        
+                        # Send chunk as Server-Sent Event
+                        yield f"data: {json.dumps({'content': content, 'type': 'chunk', 'mode': learning_mode})}\n\n"
+                        
+                        # Small delay for better UX
+                        await asyncio.sleep(0.01)
+                
+                # Save complete response
+                if full_response:
+                    formatted_response = ai_service._format_response(full_response)
+                    await db_service.save_message(MessageCreate(
+                        session_id=request.session_id,
+                        message=full_response,
+                        sender="mentor",
+                        message_type=f"premium_{learning_mode}",
+                        metadata={
+                            **formatted_response.metadata,
+                            "learning_mode": learning_mode,
+                            "premium_features": True
+                        }
+                    ))
+                
+                # Send completion signal with premium features
+                yield f"data: {json.dumps({'type': 'complete', 'suggestions': formatted_response.suggested_actions, 'mode': learning_mode, 'next_steps': formatted_response.next_steps})}\n\n"
+                
+            except Exception as e:
+                logger.error(f"Error in premium streaming: {str(e)}")
+                yield f"data: {json.dumps({'type': 'error', 'message': 'Sorry, I encountered an error. Please try again.'})}\n\n"
+        
+        return StreamingResponse(
+            generate_premium_stream(),
+            media_type="text/stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "Content-Type": "text/stream"
+            }
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error setting up premium stream: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to setup premium streaming")
 
 @api_router.post("/chat", response_model=MentorResponse)
 async def chat_with_mentor(request: MentorRequest):
@@ -275,6 +414,109 @@ async def get_session_messages(session_id: str, limit: int = 50, offset: int = 0
     """Get messages for a session"""
     messages = await db_service.get_session_messages(session_id, limit, offset)
     return messages
+
+# ================================
+# PREMIUM MODEL MANAGEMENT ENDPOINTS
+# ================================
+
+@api_router.get("/models/available")
+async def get_available_models():
+    """Get list of available AI models"""
+    try:
+        analytics = premium_model_manager.get_usage_analytics()
+        return {
+            "available_models": analytics["available_models"],
+            "total_calls": analytics["total_calls"],
+            "model_capabilities": {
+                "deepseek-r1": {
+                    "provider": "groq",
+                    "specialties": ["reasoning", "learning", "explanation", "socratic", "debug"],
+                    "strength_score": 9,
+                    "available": "deepseek-r1" in analytics["available_models"]
+                },
+                "claude-sonnet": {
+                    "provider": "anthropic", 
+                    "specialties": ["mentoring", "analysis", "creative", "assessment"],
+                    "strength_score": 10,
+                    "available": "claude-sonnet" in analytics["available_models"]
+                },
+                "gpt-4o": {
+                    "provider": "openai",
+                    "specialties": ["creative", "explanation", "multimodal", "voice"],
+                    "strength_score": 9,
+                    "available": "gpt-4o" in analytics["available_models"]
+                },
+                "gemini-pro": {
+                    "provider": "google",
+                    "specialties": ["multimodal", "creative", "voice"],
+                    "strength_score": 8,
+                    "available": "gemini-pro" in analytics["available_models"]
+                }
+            }
+        }
+    except Exception as e:
+        logger.error(f"Error getting model info: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get model information")
+
+@api_router.post("/models/add-key")
+async def add_model_api_key(request: dict):
+    """Add new AI model API key"""
+    try:
+        provider = request.get("provider", "").lower()
+        api_key = request.get("api_key", "")
+        
+        if not provider or not api_key:
+            raise HTTPException(status_code=400, detail="Provider and API key are required")
+        
+        if provider not in ["groq", "openai", "anthropic", "google"]:
+            raise HTTPException(status_code=400, detail="Unsupported provider")
+        
+        result = premium_model_manager.add_new_model(provider, api_key)
+        return result
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error adding model key: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to add model API key")
+
+@api_router.get("/analytics/models")
+async def get_model_analytics():
+    """Get model usage analytics for premium dashboard"""
+    try:
+        return premium_model_manager.get_usage_analytics()
+    except Exception as e:
+        logger.error(f"Error getting model analytics: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get model analytics")
+
+@api_router.post("/users/{user_id}/learning-mode")
+async def set_user_learning_mode(user_id: str, request: dict):
+    """Set user's preferred learning mode and AI preferences"""
+    try:
+        preferred_mode = request.get("preferred_mode", "adaptive")
+        preferences = request.get("preferences", {})
+        
+        await premium_ai_service.set_user_learning_mode(user_id, preferred_mode, preferences)
+        
+        return {
+            "message": "Learning mode updated successfully",
+            "preferred_mode": preferred_mode,
+            "preferences": preferences
+        }
+        
+    except Exception as e:
+        logger.error(f"Error setting learning mode: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to set learning mode")
+
+@api_router.get("/users/{user_id}/analytics")
+async def get_user_learning_analytics(user_id: str):
+    """Get comprehensive learning analytics for user"""
+    try:
+        analytics = premium_ai_service.get_learning_analytics(user_id)
+        return analytics
+    except Exception as e:
+        logger.error(f"Error getting user analytics: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get learning analytics")
 
 # ================================
 # EXERCISE & ASSESSMENT ENDPOINTS
