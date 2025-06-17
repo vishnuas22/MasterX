@@ -141,6 +141,87 @@ class ApiService {
       throw new Error('Unable to connect to MasterX AI Mentor System');
     }
   }
+
+  // ================================
+  // PREMIUM CONTEXT AWARENESS ENDPOINTS
+  // ================================
+
+  async analyzeUserContext(userId, sessionId, message, conversationContext) {
+    const response = await this.axiosInstance.post('/context/analyze', {
+      user_id: userId,
+      session_id: sessionId,
+      message: message,
+      conversation_context: conversationContext
+    });
+    return response.data;
+  }
+
+  async getUserMemoryInsights(userId) {
+    const response = await this.axiosInstance.get(`/context/${userId}/memory`);
+    return response.data;
+  }
+
+  async sendContextAwareMessage(requestData) {
+    const response = await this.axiosInstance.post('/chat/premium-context', requestData);
+    return response.data;
+  }
+
+  // ================================
+  // LIVE LEARNING SESSIONS ENDPOINTS
+  // ================================
+
+  async createLiveSession(userId, sessionType, title, durationMinutes = 60, features = {}) {
+    const response = await this.axiosInstance.post('/live-sessions/create', {
+      user_id: userId,
+      session_type: sessionType,
+      title: title,
+      duration_minutes: durationMinutes,
+      features: features
+    });
+    return response.data;
+  }
+
+  async handleVoiceInteraction(sessionId, userId, audioData) {
+    const response = await this.axiosInstance.post(`/live-sessions/${sessionId}/voice`, {
+      user_id: userId,
+      audio_data: audioData
+    });
+    return response.data;
+  }
+
+  async handleScreenSharing(sessionId, userId, screenData) {
+    const response = await this.axiosInstance.post(`/live-sessions/${sessionId}/screen-share`, {
+      user_id: userId,
+      screen_data: screenData
+    });
+    return response.data;
+  }
+
+  async handleLiveCoding(sessionId, userId, codeUpdate) {
+    const response = await this.axiosInstance.post(`/live-sessions/${sessionId}/code`, {
+      user_id: userId,
+      code_update: codeUpdate
+    });
+    return response.data;
+  }
+
+  async handleInteractiveWhiteboard(sessionId, userId, whiteboardUpdate) {
+    const response = await this.axiosInstance.post(`/live-sessions/${sessionId}/whiteboard`, {
+      user_id: userId,
+      whiteboard_update: whiteboardUpdate
+    });
+    return response.data;
+  }
+
+  async getLiveSessionStatus(sessionId) {
+    const response = await this.axiosInstance.get(`/live-sessions/${sessionId}/status`);
+    return response.data;
+  }
+
+  async endLiveSession(sessionId) {
+    const response = await this.axiosInstance.post(`/live-sessions/${sessionId}/end`);
+    return response.data;
+  }
 }
 
 // Create and export API instance

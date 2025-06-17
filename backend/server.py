@@ -27,6 +27,8 @@ from premium_ai_service import premium_ai_service
 from model_manager import premium_model_manager
 from gamification_service import gamification_service
 from advanced_streaming_service import advanced_streaming_service
+from advanced_context_service import advanced_context_service
+from live_learning_service import live_learning_service, SessionType
 
 ROOT_DIR = backend_dir
 load_dotenv(ROOT_DIR / '.env')
@@ -909,3 +911,364 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ================================
+# PREMIUM ADVANCED CONTEXT AWARENESS ENDPOINTS
+# ================================
+
+@api_router.post("/context/analyze")
+async def analyze_user_context(request: dict):
+    """Analyze user context for advanced learning adaptation"""
+    try:
+        user_id = request.get("user_id")
+        session_id = request.get("session_id")
+        current_message = request.get("message", "")
+        conversation_context = request.get("conversation_context", [])
+        
+        # Get comprehensive context state
+        context_state = await advanced_context_service.get_context_state(
+            user_id, session_id, conversation_context, current_message
+        )
+        
+        return {
+            "context_state": context_state.to_dict(),
+            "recommendations": {
+                "response_complexity": context_state.response_complexity,
+                "preferred_pace": context_state.preferred_pace,
+                "explanation_depth": context_state.explanation_depth,
+                "interaction_style": context_state.interaction_style
+            },
+            "adaptations": context_state.style_adaptations,
+            "emotional_insights": {
+                "state": context_state.emotional_state.value,
+                "confidence": context_state.emotional_confidence,
+                "indicators": context_state.emotional_indicators
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Error analyzing context: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to analyze user context")
+
+@api_router.get("/context/{user_id}/memory")
+async def get_user_memory_insights(user_id: str):
+    """Get multi-session memory insights for user"""
+    try:
+        # This would get memory insights from the context service
+        insights = {
+            "learning_patterns": {},
+            "concept_mastery": {},
+            "session_history_summary": {},
+            "growth_trajectory": 0.7,
+            "consistency_score": 0.8
+        }
+        return insights
+        
+    except Exception as e:
+        logger.error(f"Error getting memory insights: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get memory insights")
+
+# ================================
+# LIVE LEARNING SESSIONS ENDPOINTS
+# ================================
+
+@api_router.post("/live-sessions/create")
+async def create_live_session(request: dict):
+    """Create a new live learning session"""
+    try:
+        user_id = request.get("user_id")
+        session_type_str = request.get("session_type", "voice_interaction")
+        title = request.get("title", "Live Learning Session")
+        duration_minutes = request.get("duration_minutes", 60)
+        features = request.get("features", {})
+        
+        # Convert string to enum
+        session_type = SessionType(session_type_str)
+        
+        # Create live session
+        live_session = await live_learning_service.create_live_session(
+            user_id, session_type, title, duration_minutes, features
+        )
+        
+        return live_session.to_dict()
+        
+    except Exception as e:
+        logger.error(f"Error creating live session: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to create live session")
+
+@api_router.post("/live-sessions/{session_id}/voice")
+async def handle_voice_interaction(session_id: str, request: dict):
+    """Handle voice interaction in live session"""
+    try:
+        user_id = request.get("user_id")
+        # In production, this would handle actual audio data
+        audio_data = request.get("audio_data", b"").encode() if isinstance(request.get("audio_data", ""), str) else b""
+        
+        result = await live_learning_service.handle_voice_interaction(
+            session_id, audio_data, user_id
+        )
+        
+        return result
+        
+    except Exception as e:
+        logger.error(f"Error handling voice interaction: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to handle voice interaction")
+
+@api_router.post("/live-sessions/{session_id}/screen-share")
+async def handle_screen_sharing(session_id: str, request: dict):
+    """Handle screen sharing and analysis"""
+    try:
+        user_id = request.get("user_id")
+        # In production, this would handle actual screen data
+        screen_data = request.get("screen_data", b"").encode() if isinstance(request.get("screen_data", ""), str) else b""
+        
+        result = await live_learning_service.handle_screen_sharing(
+            session_id, screen_data, user_id
+        )
+        
+        return result
+        
+    except Exception as e:
+        logger.error(f"Error handling screen sharing: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to handle screen sharing")
+
+@api_router.post("/live-sessions/{session_id}/code")
+async def handle_live_coding(session_id: str, request: dict):
+    """Handle live coding session"""
+    try:
+        user_id = request.get("user_id")
+        code_update = request.get("code_update", {})
+        
+        result = await live_learning_service.handle_live_coding(
+            session_id, code_update, user_id
+        )
+        
+        return result
+        
+    except Exception as e:
+        logger.error(f"Error handling live coding: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to handle live coding")
+
+@api_router.post("/live-sessions/{session_id}/whiteboard")
+async def handle_interactive_whiteboard(session_id: str, request: dict):
+    """Handle interactive whiteboard session"""
+    try:
+        user_id = request.get("user_id")
+        whiteboard_update = request.get("whiteboard_update", {})
+        
+        result = await live_learning_service.handle_interactive_whiteboard(
+            session_id, whiteboard_update, user_id
+        )
+        
+        return result
+        
+    except Exception as e:
+        logger.error(f"Error handling whiteboard: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to handle whiteboard")
+
+@api_router.get("/live-sessions/{session_id}/status")
+async def get_live_session_status(session_id: str):
+    """Get live session status"""
+    try:
+        status = await live_learning_service.get_session_status(session_id)
+        if not status:
+            raise HTTPException(status_code=404, detail="Session not found")
+        return status
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting session status: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get session status")
+
+@api_router.post("/live-sessions/{session_id}/end")
+async def end_live_session(session_id: str):
+    """End a live session"""
+    try:
+        result = await live_learning_service.end_session(session_id)
+        return result
+        
+    except Exception as e:
+        logger.error(f"Error ending session: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to end session")
+
+# ================================
+# ENHANCED PREMIUM CHAT WITH CONTEXT AWARENESS
+# ================================
+
+@api_router.post("/chat/premium-context")
+async def premium_context_aware_chat(request: MentorRequest):
+    """Premium chat with advanced context awareness"""
+    try:
+        # Get session info
+        session = await db_service.get_session(request.session_id)
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+        
+        # Get recent messages for context
+        recent_messages = await db_service.get_recent_messages(request.session_id, limit=10)
+        
+        # Analyze user context
+        context_state = await advanced_context_service.get_context_state(
+            session.user_id, request.session_id, recent_messages, request.user_message
+        )
+        
+        # Prepare enhanced context with awareness data
+        enhanced_context = request.context or {}
+        enhanced_context.update({
+            'recent_messages': recent_messages,
+            'emotional_state': context_state.emotional_state.value,
+            'learning_style': context_state.learning_style.value,
+            'cognitive_load': context_state.cognitive_load.value,
+            'preferred_pace': context_state.preferred_pace,
+            'explanation_depth': context_state.explanation_depth,
+            'interaction_style': context_state.interaction_style,
+            'style_adaptations': context_state.style_adaptations,
+            'concept_mastery': context_state.concept_mastery,
+            'learning_patterns': context_state.learning_patterns
+        })
+        
+        # Save user message
+        await db_service.save_message(MessageCreate(
+            session_id=request.session_id,
+            message=request.user_message,
+            sender="user"
+        ))
+        
+        # Get premium AI response with context awareness
+        mentor_response = await premium_ai_service.get_premium_response(
+            user_message=request.user_message,
+            session=session,
+            context=enhanced_context,
+            learning_mode=enhanced_context.get('learning_mode', 'adaptive'),
+            stream=False
+        )
+        
+        # Enhance response with context insights
+        mentor_response.metadata.update({
+            'context_awareness': {
+                'emotional_state': context_state.emotional_state.value,
+                'learning_style': context_state.learning_style.value,
+                'cognitive_load': context_state.cognitive_load.value,
+                'adaptations_applied': context_state.style_adaptations
+            },
+            'personalization_score': 0.9,
+            'context_confidence': context_state.emotional_confidence
+        })
+        
+        # Save mentor response
+        await db_service.save_message(MessageCreate(
+            session_id=request.session_id,
+            message=mentor_response.response,
+            sender="mentor",
+            message_type="premium_context_aware",
+            metadata=mentor_response.metadata
+        ))
+        
+        return mentor_response
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in premium context chat: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to process premium context chat")
+
+@api_router.post("/chat/premium-context/stream")
+async def premium_context_aware_chat_stream(request: MentorRequest):
+    """Premium streaming chat with advanced context awareness"""
+    try:
+        session = await db_service.get_session(request.session_id)
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+        
+        # Get recent messages and analyze context
+        recent_messages = await db_service.get_recent_messages(request.session_id, limit=10)
+        context_state = await advanced_context_service.get_context_state(
+            session.user_id, request.session_id, recent_messages, request.user_message
+        )
+        
+        # Save user message
+        await db_service.save_message(MessageCreate(
+            session_id=request.session_id,
+            message=request.user_message,
+            sender="user"
+        ))
+        
+        # Enhanced context
+        enhanced_context = request.context or {}
+        enhanced_context.update({
+            'recent_messages': recent_messages,
+            'emotional_state': context_state.emotional_state.value,
+            'learning_style': context_state.learning_style.value,
+            'cognitive_load': context_state.cognitive_load.value,
+            'preferred_pace': context_state.preferred_pace,
+            'explanation_depth': context_state.explanation_depth,
+            'interaction_style': context_state.interaction_style,
+            'style_adaptations': context_state.style_adaptations
+        })
+        
+        async def generate_context_aware_stream():
+            try:
+                # Get streaming response with context awareness
+                stream_response = await premium_ai_service.get_premium_response(
+                    user_message=request.user_message,
+                    session=session,
+                    context=enhanced_context,
+                    learning_mode=enhanced_context.get('learning_mode', 'adaptive'),
+                    stream=True
+                )
+                
+                full_response = ""
+                
+                for chunk in stream_response:
+                    if hasattr(chunk.choices[0].delta, 'content') and chunk.choices[0].delta.content:
+                        content = chunk.choices[0].delta.content
+                        full_response += content
+                        
+                        # Send chunk with context awareness metadata
+                        yield f"data: {json.dumps({'content': content, 'type': 'chunk', 'context': {'emotional_state': context_state.emotional_state.value, 'learning_style': context_state.learning_style.value}})}\n\n"
+                        
+                        # Adaptive delay based on cognitive load
+                        delay = 0.01 * (1.0 + context_state.load_factors.get('session_fatigue', 0.0))
+                        await asyncio.sleep(delay)
+                
+                # Save complete response
+                if full_response:
+                    formatted_response = ai_service._format_response(full_response)
+                    await db_service.save_message(MessageCreate(
+                        session_id=request.session_id,
+                        message=full_response,
+                        sender="mentor",
+                        message_type="premium_context_aware_stream",
+                        metadata={
+                            **formatted_response.metadata,
+                            "context_awareness": {
+                                'emotional_state': context_state.emotional_state.value,
+                                'learning_style': context_state.learning_style.value,
+                                'cognitive_load': context_state.cognitive_load.value
+                            }
+                        }
+                    ))
+                
+                # Send completion with context insights
+                yield f"data: {json.dumps({'type': 'complete', 'suggestions': formatted_response.suggested_actions, 'context_insights': {'emotional_state': context_state.emotional_state.value, 'adaptations': context_state.style_adaptations}})}\n\n"
+                
+            except Exception as e:
+                logger.error(f"Error in context-aware streaming: {str(e)}")
+                yield f"data: {json.dumps({'type': 'error', 'message': 'Sorry, I encountered an error. Please try again.'})}\n\n"
+        
+        return StreamingResponse(
+            generate_context_aware_stream(),
+            media_type="text/stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "Content-Type": "text/stream"
+            }
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error setting up context-aware stream: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to setup context-aware streaming")
