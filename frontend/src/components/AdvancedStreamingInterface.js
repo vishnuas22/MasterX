@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Play, Pause, SkipForward, Settings, MessageSquare, 
-  Zap, CheckCircle, AlertCircle, Branches, Eye
+  Zap, CheckCircle, AlertCircle, GitBranch, Eye
 } from 'lucide-react';
 import { GlassCard, GlassButton } from './GlassCard';
 import { useApp } from '../context/AppContext';
@@ -244,7 +244,7 @@ export function AdvancedStreamingInterface({
               onClick={generateMultiBranchResponse}
               disabled={isStreaming}
             >
-              <Branches className="h-4 w-4" />
+              <GitBranch className="h-4 w-4" />
             </GlassButton>
             
             <GlassButton
@@ -428,7 +428,7 @@ function MultiBranchModal({ isVisible, branches, onClose, onSelectBranch }) {
           <GlassCard className="p-6">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center space-x-3">
-                <Branches className="h-6 w-6 text-blue-400" />
+                <GitBranch className="h-6 w-6 text-blue-400" />
                 <div>
                   <h2 className="text-xl font-bold text-white">Multiple Explanation Paths</h2>
                   <p className="text-gray-400">Choose the approach that works best for you</p>
