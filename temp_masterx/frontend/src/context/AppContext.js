@@ -12,12 +12,7 @@ const initialState = {
   isTyping: false,
   streamingMessage: '',
   darkMode: true,
-  progress: {},
-  // Gamification state
-  gamificationData: null,
-  achievements: [],
-  streak: null,
-  rewards: null
+  progress: {}
 };
 
 // Action types
@@ -34,12 +29,7 @@ const ActionTypes = {
   SET_STREAMING_MESSAGE: 'SET_STREAMING_MESSAGE',
   CLEAR_STREAMING_MESSAGE: 'CLEAR_STREAMING_MESSAGE',
   TOGGLE_DARK_MODE: 'TOGGLE_DARK_MODE',
-  SET_PROGRESS: 'SET_PROGRESS',
-  // Gamification actions
-  SET_GAMIFICATION_DATA: 'SET_GAMIFICATION_DATA',
-  UPDATE_STREAK: 'UPDATE_STREAK',
-  ADD_ACHIEVEMENT: 'ADD_ACHIEVEMENT',
-  UPDATE_REWARDS: 'UPDATE_REWARDS'
+  SET_PROGRESS: 'SET_PROGRESS'
 };
 
 // Reducer
@@ -83,34 +73,6 @@ function appReducer(state, action) {
     
     case ActionTypes.SET_PROGRESS:
       return { ...state, progress: { ...state.progress, ...action.payload } };
-    
-    // Gamification reducer cases
-    case ActionTypes.SET_GAMIFICATION_DATA:
-      return { 
-        ...state, 
-        gamificationData: action.payload,
-        achievements: action.payload?.achievements?.details || [],
-        streak: action.payload?.streak || null,
-        rewards: action.payload?.rewards || null
-      };
-    
-    case ActionTypes.UPDATE_STREAK:
-      return { 
-        ...state, 
-        streak: { ...state.streak, ...action.payload }
-      };
-    
-    case ActionTypes.ADD_ACHIEVEMENT:
-      return {
-        ...state,
-        achievements: [...state.achievements, action.payload]
-      };
-    
-    case ActionTypes.UPDATE_REWARDS:
-      return {
-        ...state,
-        rewards: { ...state.rewards, ...action.payload }
-      };
     
     default:
       return state;
@@ -385,98 +347,6 @@ export function AppProvider({ children }) {
         actions.clearStreamingMessage();
         actions.setError(error.message);
         throw error;
-      }
-    },
-
-    // Gamification actions
-    setGamificationData: (data) => dispatch({ type: ActionTypes.SET_GAMIFICATION_DATA, payload: data }),
-    
-    updateStreak: (streak) => dispatch({ type: ActionTypes.UPDATE_STREAK, payload: streak }),
-    
-    addAchievement: (achievement) => dispatch({ type: ActionTypes.ADD_ACHIEVEMENT, payload: achievement }),
-    
-    updateRewards: (rewards) => dispatch({ type: ActionTypes.UPDATE_REWARDS, payload: rewards }),
-
-    async loadGamificationData(userId) {
-      try {
-        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/users/${userId}/gamification`);
-        const data = await response.json();
-        actions.setGamificationData(data);
-        return data;
-      } catch (error) {
-        console.error('Error loading gamification data:', error);
-        actions.setError('Failed to load gamification data');
-      }
-    },
-
-    async recordSessionCompletion(userId, sessionId, context = {}) {
-      try {
-        const response = await fetch(
-          `${process.env.REACT_APP_BACKEND_URL}/api/users/${userId}/gamification/session-complete`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              session_id: sessionId,
-              context: context
-            })
-          }
-        );
-        
-        const result = await response.json();
-        
-        // Update local state with new data
-        if (result.streak) {
-          actions.updateStreak(result.streak);
-        }
-        if (result.points) {
-          actions.updateRewards(result.points);
-        }
-        if (result.new_achievements) {
-          result.new_achievements.forEach(achievement => {
-            actions.addAchievement(achievement);
-          });
-        }
-        
-        return result;
-      } catch (error) {
-        console.error('Error recording session completion:', error);
-        actions.setError('Failed to record session completion');
-      }
-    },
-
-    async recordConceptMastery(userId, concept, subject, difficulty = 'medium') {
-      try {
-        const response = await fetch(
-          `${process.env.REACT_APP_BACKEND_URL}/api/users/${userId}/gamification/concept-mastered`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              concept,
-              subject,
-              difficulty,
-              first_time: true
-            })
-          }
-        );
-        
-        const result = await response.json();
-        
-        // Update local state
-        if (result.points) {
-          actions.updateRewards(result.points);
-        }
-        if (result.new_achievements) {
-          result.new_achievements.forEach(achievement => {
-            actions.addAchievement(achievement);
-          });
-        }
-        
-        return result;
-      } catch (error) {
-        console.error('Error recording concept mastery:', error);
-        actions.setError('Failed to record concept mastery');
       }
     }
   };

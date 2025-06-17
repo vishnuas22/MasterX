@@ -1,13 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Bot, User, Sparkles, BookOpen, Target, Settings, Brain, Trophy } from 'lucide-react';
+import { Send, Bot, User, Sparkles, BookOpen, Target, Settings, Brain } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { GlassCard, GlassButton, GlassInput } from './GlassCard';
 import { TypingIndicator } from './LoadingSpinner';
 import { PremiumLearningModes, LearningModeIndicator } from './PremiumLearningModes';
 import { ModelManagement } from './ModelManagement';
-import { GamificationDashboard } from './GamificationDashboard';
-import { AdvancedStreamingInterface } from './AdvancedStreamingInterface';
 import { useApp } from '../context/AppContext';
 
 export function ChatInterface() {
@@ -16,8 +14,6 @@ export function ChatInterface() {
   const [learningMode, setLearningMode] = useState('adaptive');
   const [showLearningModes, setShowLearningModes] = useState(false);
   const [showModelManagement, setShowModelManagement] = useState(false);
-  const [showGamification, setShowGamification] = useState(false);
-  const [useAdvancedStreaming, setUseAdvancedStreaming] = useState(false);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -37,20 +33,13 @@ export function ChatInterface() {
     setInputMessage('');
 
     try {
-      if (useAdvancedStreaming) {
-        // Use advanced streaming interface
-        // The AdvancedStreamingInterface component will handle the streaming
-        return;
-      } else {
-        // Use regular premium message
-        await actions.sendPremiumMessage(state.currentSession.id, message, {
-          learning_mode: learningMode,
-          user_preferences: {
-            difficulty_preference: 'adaptive',
-            interaction_style: 'collaborative'
-          }
-        });
-      }
+      await actions.sendPremiumMessage(state.currentSession.id, message, {
+        learning_mode: learningMode,
+        user_preferences: {
+          difficulty_preference: 'adaptive',
+          interaction_style: 'collaborative'
+        }
+      });
     } catch (error) {
       console.error('Error sending premium message:', error);
       // Fallback to regular message
@@ -118,13 +107,6 @@ export function ChatInterface() {
             <GlassButton 
               size="sm" 
               variant="secondary"
-              onClick={() => setShowGamification(true)}
-            >
-              <Trophy className="h-4 w-4" />
-            </GlassButton>
-            <GlassButton 
-              size="sm" 
-              variant="secondary"
               onClick={() => setShowModelManagement(true)}
             >
               <Brain className="h-4 w-4" />
@@ -143,26 +125,8 @@ export function ChatInterface() {
             <ChatMessage key={message.id || index} message={message} />
           ))}
           
-          {/* Advanced Streaming Interface */}
-          {useAdvancedStreaming && inputMessage && (
-            <AdvancedStreamingInterface
-              message={inputMessage}
-              sessionId={state.currentSession?.id}
-              onStreamComplete={(result) => {
-                // Handle stream completion
-                setUseAdvancedStreaming(false);
-                setInputMessage('');
-              }}
-              streamingConfig={{
-                multiBranch: true,
-                factCheck: true,
-                interruptible: true
-              }}
-            />
-          )}
-          
-          {/* Regular Streaming message */}
-          {state.isTyping && !useAdvancedStreaming && (
+          {/* Streaming message */}
+          {state.isTyping && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -222,14 +186,6 @@ export function ChatInterface() {
         <div className="flex space-x-2 mt-3">
           <GlassButton
             size="sm"
-            variant={useAdvancedStreaming ? "primary" : "secondary"}
-            onClick={() => setUseAdvancedStreaming(!useAdvancedStreaming)}
-          >
-            <Sparkles className="h-3 w-3 mr-1" />
-            Advanced Stream
-          </GlassButton>
-          <GlassButton
-            size="sm"
             variant="secondary"
             onClick={() => setInputMessage("Can you create an exercise for me?")}
             disabled={state.isTyping}
@@ -265,12 +221,6 @@ export function ChatInterface() {
           </GlassButton>
         </div>
       </div>
-
-      {/* Gamification Dashboard */}
-      <GamificationDashboard
-        isVisible={showGamification}
-        onClose={() => setShowGamification(false)}
-      />
 
       {/* Premium Learning Modes Modal */}
       <PremiumLearningModes
