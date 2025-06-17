@@ -153,6 +153,16 @@ export function AppProvider({ children }) {
     setProgress: (progress) => dispatch({ type: ActionTypes.SET_PROGRESS, payload: progress }),
 
     // API Actions
+    async healthCheck() {
+      try {
+        const response = await api.healthCheck();
+        return response;
+      } catch (error) {
+        actions.setError('Unable to connect to MasterX AI Mentor System');
+        throw error;
+      }
+    },
+
     async createUser(userData) {
       try {
         actions.setLoading(true);

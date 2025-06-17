@@ -8,6 +8,7 @@ import { useApp } from '../context/AppContext';
 export function UserOnboarding() {
   const { state, actions } = useApp();
   const [step, setStep] = useState(1);
+  const [connectionTest, setConnectionTest] = useState('checking'); // 'checking', 'connected', 'error'
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -16,6 +17,35 @@ export function UserOnboarding() {
     experience: 'beginner'
   });
   const [errors, setErrors] = useState({});
+
+  // Test backend connection on component mount
+  React.useEffect(() => {
+    const testConnection = async () => {
+      try {
+        console.log('Testing backend connection...');
+        console.log('Backend URL:', process.env.REACT_APP_BACKEND_URL);
+        
+        // Test with a direct fetch first
+        const healthResponse = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/health`);
+        const healthData = await healthResponse.json();
+        console.log('Health check response:', healthData);
+        
+        // Test with the actions.healthCheck if available
+        if (actions.healthCheck) {
+          const actionHealthData = await actions.healthCheck();
+          console.log('Action health check response:', actionHealthData);
+        }
+        
+        setConnectionTest('connected');
+        console.log('Backend connection successful');
+      } catch (error) {
+        console.error('Connection test failed:', error);
+        setConnectionTest('error');
+      }
+    };
+    
+    testConnection();
+  }, [actions]);
 
   const learningGoals = [
     'Gain new skills for career advancement',
@@ -67,34 +97,77 @@ export function UserOnboarding() {
   const handleComplete = async () => {
     if (!validateStep(step)) return;
 
-    try {
-      const userData = {
-        name: formData.name,
-        email: formData.email,
-        learning_preferences: {
-          goals: formData.learningGoals,
-          subjects: formData.subjects,
-          experience_level: formData.experience
-        }
-      };
+    const maxRetries = 3;
+    let attempt = 0;
 
-      // Create user first
-      await actions.createUser(userData);
-      
-      // Get the created user by email to ensure we have the correct ID
-      const createdUser = await actions.getUserByEmail(formData.email);
-      
-      // Create initial session using the verified user ID
-      if (formData.subjects.length > 0 && createdUser?.id) {
-        await actions.createSession({
-          user_id: createdUser.id,
-          subject: formData.subjects[0],
-          difficulty_level: formData.experience,
-          learning_objectives: formData.learningGoals.slice(0, 3) // First 3 goals
-        });
+    while (attempt < maxRetries) {
+      try {
+        actions.setLoading(true);
+        setErrors({}); // Clear any previous errors
+        
+        const userData = {
+          name: formData.name,
+          email: formData.email,
+          learning_preferences: {
+            goals: formData.learningGoals,
+            subjects: formData.subjects,
+            experience_level: formData.experience
+          }
+        };
+
+        console.log(`Attempt ${attempt + 1}: Creating user with data:`, userData);
+
+        // Create user first
+        const createdUser = await actions.createUser(userData);
+        console.log('User created:', createdUser);
+        
+        // Wait a moment for database consistency
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Verify user creation by getting user by email
+        let verifiedUser;
+        try {
+          verifiedUser = await actions.getUserByEmail(formData.email);
+          console.log('User verified by email:', verifiedUser);
+        } catch (emailError) {
+          console.log('User verification by email failed, using created user:', emailError);
+          verifiedUser = createdUser;
+        }
+        
+        // Create initial session using the verified user ID
+        if (formData.subjects.length > 0 && verifiedUser?.id) {
+          const sessionData = {
+            user_id: verifiedUser.id,
+            subject: formData.subjects[0],
+            difficulty_level: formData.experience,
+            learning_objectives: formData.learningGoals.slice(0, 3) // First 3 goals
+          };
+          
+          console.log('Creating session with data:', sessionData);
+          await actions.createSession(sessionData);
+          console.log('Session created successfully');
+        }
+        
+        // If we reach here, everything succeeded
+        break;
+        
+      } catch (error) {
+        attempt++;
+        console.error(`Attempt ${attempt} failed:`, error);
+        
+        if (attempt >= maxRetries) {
+          setErrors({ 
+            general: `Setup failed after ${maxRetries} attempts. Error: ${error.message || 'Please check your connection and try again.'}` 
+          });
+        } else {
+          // Wait before retrying
+          await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+        }
+      } finally {
+        if (attempt >= maxRetries || !state.isLoading) {
+          actions.setLoading(false);
+        }
       }
-    } catch (error) {
-      setErrors({ general: error.message });
     }
   };
 
@@ -103,6 +176,34 @@ export function UserOnboarding() {
       ? array.filter(i => i !== item)
       : [...array, item];
   };
+
+  if (connectionTest === 'checking') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex items-center justify-center">
+        <LoadingSpinner size="xl" message="Connecting to MasterX..." />
+      </div>
+    );
+  }
+
+  if (connectionTest === 'error') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex items-center justify-center p-4">
+        <GlassCard className="p-8 text-center max-w-md">
+          <div className="text-red-400 text-6xl mb-4">⚠️</div>
+          <h2 className="text-2xl font-bold text-white mb-4">Connection Error</h2>
+          <p className="text-gray-400 mb-6">
+            Unable to connect to MasterX AI Mentor System. Please check your internet connection.
+          </p>
+          <GlassButton
+            onClick={() => window.location.reload()}
+            className="w-full"
+          >
+            Retry Connection
+          </GlassButton>
+        </GlassCard>
+      </div>
+    );
+  }
 
   if (state.isLoading) {
     return (
@@ -333,7 +434,28 @@ export function UserOnboarding() {
             className="mt-4"
           >
             <GlassCard className="p-4 bg-red-500/10 border-red-400/30">
-              <p className="text-red-400 text-sm">{errors.general}</p>
+              <div className="flex items-start space-x-3">
+                <div className="text-red-400 text-xl">⚠️</div>
+                <div className="flex-1">
+                  <p className="text-red-400 text-sm">{errors.general}</p>
+                  <div className="mt-3 flex space-x-2">
+                    <GlassButton
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => setErrors({})}
+                    >
+                      Dismiss
+                    </GlassButton>
+                    <GlassButton
+                      size="sm"
+                      onClick={handleComplete}
+                      disabled={state.isLoading}
+                    >
+                      {state.isLoading ? 'Retrying...' : 'Retry Setup'}
+                    </GlassButton>
+                  </div>
+                </div>
+              </div>
             </GlassCard>
           </motion.div>
         )}
