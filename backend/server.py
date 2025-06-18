@@ -900,17 +900,7 @@ async def health_check():
         "timestamp": datetime.utcnow().isoformat()
     }
 
-# Include the router in the main app
-app.include_router(api_router)
-
-# Add CORS middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_credentials=True,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# CORS and router registration will be done at the end of the file after all endpoints are defined
 
 # ================================
 # PREMIUM ADVANCED CONTEXT AWARENESS ENDPOINTS
@@ -1272,3 +1262,20 @@ async def premium_context_aware_chat_stream(request: MentorRequest):
     except Exception as e:
         logger.error(f"Error setting up context-aware stream: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to setup context-aware streaming")
+
+# ================================
+# ROUTER AND MIDDLEWARE REGISTRATION
+# (Must be done after all endpoints are defined)
+# ================================
+
+# Include the router in the main app (after all endpoints are defined)
+app.include_router(api_router)
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_credentials=True,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
