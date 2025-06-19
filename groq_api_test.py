@@ -253,7 +253,7 @@ class GroqAPIIntegrationTests(unittest.TestCase):
 if __name__ == "__main__":
     print("=== MasterX AI Mentor System - Groq API Integration Tests ===")
     print(f"Testing backend at: {API_BASE}")
-    print("Testing with Groq API key: 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")
+    print("Testing with Groq API key from environment")
     print("=" * 50)
     
     # Run the tests

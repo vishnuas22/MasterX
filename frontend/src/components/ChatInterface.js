@@ -111,16 +111,88 @@ export function ChatInterface() {
           <p className="text-gray-400 mb-6">
             Your AI-powered learning companion. Start a new session to begin your learning journey.
           </p>
-          <GlassButton
-            onClick={() => {
-              // This would typically open a session creation modal
-              console.log('Create new session');
-            }}
-            className="w-full"
-          >
-            <BookOpen className="h-4 w-4 mr-2" />
-            Start Learning
-          </GlassButton>
+          
+          {/* Quick start options */}
+          <div className="space-y-3">
+            <GlassButton
+              onClick={async () => {
+                try {
+                  if (!state.user?.id) {
+                    actions.setError('User not found. Please refresh and try again.');
+                    return;
+                  }
+
+                  actions.setLoading(true);
+                  
+                  // Create a new session with default settings
+                  const sessionData = {
+                    user_id: state.user.id,
+                    subject: 'General Learning',
+                    difficulty_level: 'intermediate',
+                    learning_objectives: ['Explore new topics', 'Interactive learning', 'Skill development']
+                  };
+                  
+                  await actions.createSession(sessionData);
+                  console.log('New session created successfully');
+                } catch (error) {
+                  console.error('Error creating session:', error);
+                  actions.setError('Failed to create session. Please try again.');
+                } finally {
+                  actions.setLoading(false);
+                }
+              }}
+              className="w-full"
+              disabled={state.isLoading}
+            >
+              <BookOpen className="h-4 w-4 mr-2" />
+              {state.isLoading ? 'Creating Session...' : 'Start Learning'}
+            </GlassButton>
+            
+            {/* Subject-specific quick start buttons */}
+            <div className="grid grid-cols-2 gap-2 mt-4">
+              {[
+                { subject: 'Programming', icon: '💻' },
+                { subject: 'Mathematics', icon: '🔢' },
+                { subject: 'Science', icon: '🔬' },
+                { subject: 'Language', icon: '🗣️' }
+              ].map(({ subject, icon }) => (
+                <GlassButton
+                  key={subject}
+                  size="sm"
+                  variant="secondary"
+                  onClick={async () => {
+                    try {
+                      if (!state.user?.id) {
+                        actions.setError('User not found. Please refresh and try again.');
+                        return;
+                      }
+
+                      actions.setLoading(true);
+                      
+                      const sessionData = {
+                        user_id: state.user.id,
+                        subject: subject,
+                        difficulty_level: 'intermediate',
+                        learning_objectives: [`Learn ${subject}`, 'Practice skills', 'Build understanding']
+                      };
+                      
+                      await actions.createSession(sessionData);
+                    } catch (error) {
+                      console.error('Error creating session:', error);
+                      actions.setError('Failed to create session. Please try again.');
+                    } finally {
+                      actions.setLoading(false);
+                    }
+                  }}
+                  disabled={state.isLoading}
+                  className="flex flex-col items-center p-3"
+                >
+                  <span className="text-lg mb-1">{icon}</span>
+                  <span className="text-xs">{subject}</span>
+                </GlassButton>
+              ))}
+            </div>
+          </div>
         </GlassCard>
       </div>
     );

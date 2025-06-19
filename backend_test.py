@@ -25,7 +25,9 @@ TEST_USER_EMAIL = "test@example.com"
 TEST_SESSION_ID = "a2c574e3-0414-4fe2-ab8e-74c1cdba2489"
 
 # Get Groq API key for testing
-GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "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")
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
+if not GROQ_API_KEY:
+    raise ValueError("GROQ_API_KEY environment variable is required for testing")
 
 class MasterXBackendTests(unittest.TestCase):
     """Comprehensive tests for MasterX AI Mentor System backend with premium features"""
