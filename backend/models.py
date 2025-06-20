@@ -112,6 +112,104 @@ class LearningPath(BaseModel):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
+# Advanced Learning Psychology Models
+class MetacognitiveSessionModel(BaseModel):
+    """Metacognitive training session model"""
+    session_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    strategy: str  # MetacognitiveStrategy enum value
+    topic: str
+    level: str = "intermediate"
+    responses: List[Dict[str, Any]] = Field(default_factory=list)
+    insights: Dict[str, Any] = Field(default_factory=dict)
+    recommendations: List[str] = Field(default_factory=list)
+    completion_score: float = 0.0
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+class MemoryPalaceModel(BaseModel):
+    """Memory palace model"""
+    palace_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    name: str
+    palace_type: str  # MemoryPalaceType enum value
+    description: str
+    rooms: List[Dict[str, Any]] = Field(default_factory=list)
+    pathways: List[Dict[str, Any]] = Field(default_factory=list)
+    information_nodes: List[Dict[str, Any]] = Field(default_factory=list)
+    visualization_data: Dict[str, Any] = Field(default_factory=dict)
+    effectiveness_score: float = 0.0
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+class ElaborativeQuestionModel(BaseModel):
+    """Elaborative interrogation question model"""
+    question_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    question_type: str  # QuestionType enum value
+    content: str
+    difficulty_level: str = "intermediate"
+    subject_area: str
+    expected_answer_type: str
+    evaluation_criteria: List[str] = Field(default_factory=list)
+    follow_up_questions: List[str] = Field(default_factory=list)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class TransferScenarioModel(BaseModel):
+    """Knowledge transfer scenario model"""
+    scenario_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    source_domain: str
+    target_domain: str
+    transfer_type: str  # TransferType enum value
+    scenario_description: str
+    key_concepts: List[str] = Field(default_factory=list)
+    analogy_mapping: Dict[str, str] = Field(default_factory=dict)
+    exercises: List[Dict[str, Any]] = Field(default_factory=list)
+    difficulty_level: str = "intermediate"
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class LearningPsychologyProgressModel(BaseModel):
+    """User's learning psychology progress model"""
+    user_id: str
+    metacognitive_sessions_completed: int = 0
+    memory_palaces_created: int = 0
+    elaborative_questions_answered: int = 0
+    transfer_scenarios_completed: int = 0
+    overall_psychology_score: float = 0.0
+    strengths: List[str] = Field(default_factory=list)
+    improvement_areas: List[str] = Field(default_factory=list)
+    learning_insights: Dict[str, Any] = Field(default_factory=dict)
+    last_updated: datetime = Field(default_factory=datetime.utcnow)
+
+# Request/Response Models for Learning Psychology
+class MetacognitiveSessionRequest(BaseModel):
+    strategy: str  # self_questioning, goal_setting, progress_monitoring, etc.
+    topic: str
+    level: str = "intermediate"
+
+class MemoryPalaceRequest(BaseModel):
+    name: str
+    palace_type: str  # home, library, nature, castle, etc.
+    topic: str
+    information_items: List[str]
+
+class ElaborativeQuestionRequest(BaseModel):
+    topic: str
+    subject_area: str
+    difficulty_level: str = "intermediate"
+    question_count: int = 5
+
+class TransferScenarioRequest(BaseModel):
+    source_domain: str
+    target_domain: str
+    key_concepts: List[str]
+    transfer_type: str = "analogical"
+
+class LearningPsychologyResponse(BaseModel):
+    user_response: str
+    session_id: Optional[str] = None
+    question_id: Optional[str] = None
+    scenario_id: Optional[str] = None
+
 # Gamification Models
 class Achievement(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))

@@ -17,7 +17,9 @@ const initialState = {
   gamificationData: null,
   achievements: [],
   streak: null,
-  rewards: null
+  rewards: null,
+  // UI state
+  activeView: 'chat' // 'chat', 'learning-psychology', 'metacognitive-training', 'memory-palace', etc.
 };
 
 // Action types
@@ -35,6 +37,8 @@ const ActionTypes = {
   CLEAR_STREAMING_MESSAGE: 'CLEAR_STREAMING_MESSAGE',
   TOGGLE_DARK_MODE: 'TOGGLE_DARK_MODE',
   SET_PROGRESS: 'SET_PROGRESS',
+  // UI actions
+  SET_ACTIVE_VIEW: 'SET_ACTIVE_VIEW',
   // Gamification actions
   SET_GAMIFICATION_DATA: 'SET_GAMIFICATION_DATA',
   UPDATE_STREAK: 'UPDATE_STREAK',
@@ -83,6 +87,10 @@ function appReducer(state, action) {
     
     case ActionTypes.SET_PROGRESS:
       return { ...state, progress: { ...state.progress, ...action.payload } };
+    
+    // UI reducer cases
+    case ActionTypes.SET_ACTIVE_VIEW:
+      return { ...state, activeView: action.payload };
     
     // Gamification reducer cases
     case ActionTypes.SET_GAMIFICATION_DATA:
@@ -151,6 +159,9 @@ export function AppProvider({ children }) {
     toggleDarkMode: () => dispatch({ type: ActionTypes.TOGGLE_DARK_MODE }),
     
     setProgress: (progress) => dispatch({ type: ActionTypes.SET_PROGRESS, payload: progress }),
+
+    // UI Actions
+    setActiveView: (view) => dispatch({ type: ActionTypes.SET_ACTIVE_VIEW, payload: view }),
 
     // API Actions
     async healthCheck() {

@@ -43,11 +43,28 @@ export function Sidebar({ isCollapsed, onToggle }) {
   const handleNavigationClick = (action) => {
     // Handle navigation based on the action
     console.log(`Navigating to: ${action}`);
-    // TODO: Implement actual navigation logic
+    actions.setError(null); // Clear any errors
+    
     switch (action) {
       case 'learning-paths':
         // Navigate to learning paths
-        actions.setError(null); // Clear any errors
+        break;
+      case 'learning-psychology':
+        // Navigate to learning psychology dashboard
+        actions.setActiveView('learning-psychology');
+        break;
+      case 'metacognitive-training':
+        actions.setActiveView('metacognitive-training');
+        break;
+      case 'memory-palace':
+        actions.setActiveView('memory-palace');
+        break;
+      case 'elaborative-questions':
+        actions.setActiveView('elaborative-questions');
+        break;
+      case 'transfer-learning':
+        actions.setActiveView('transfer-learning');
+        break;
         console.log('Opening Learning Paths');
         break;
       case 'progress':
@@ -166,7 +183,7 @@ export function Sidebar({ isCollapsed, onToggle }) {
           )}
 
           {/* Navigation Items */}
-          <div className="space-y-2 mb-20">
+          <div className="space-y-2 mb-6">
             {[
               { icon: BookOpen, label: 'Learning Paths', badge: null, action: 'learning-paths' },
               { icon: TrendingUp, label: 'Progress', badge: '3', action: 'progress' },
@@ -181,21 +198,80 @@ export function Sidebar({ isCollapsed, onToggle }) {
                 } flex items-center justify-center rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all duration-300 text-gray-300 hover:text-white cursor-pointer relative z-10`}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: index * 0.1 }}
               >
-                <item.icon className="h-4 w-4 flex-shrink-0" />
-                {!isCollapsed && (
-                  <>
-                    <span className="ml-3 flex-1 text-left text-sm">{item.label}</span>
-                    {item.badge && (
-                      <span className="bg-blue-500 text-white text-xs rounded-full px-2 py-0.5 ml-2 flex-shrink-0">
-                        {item.badge}
-                      </span>
-                    )}
-                  </>
+                <item.icon className="h-4 w-4" />
+                {!isCollapsed && <span className="ml-3 text-sm font-medium">{item.label}</span>}
+                {!isCollapsed && item.badge && (
+                  <span className="ml-auto bg-blue-500 text-white text-xs px-2 py-0.5 rounded-full">
+                    {item.badge}
+                  </span>
                 )}
               </motion.button>
             ))}
           </div>
+
+          {/* Learning Psychology Section */}
+          {!isCollapsed && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="space-y-2 mb-6"
+            >
+              <div className="flex items-center space-x-2 mb-3">
+                <Brain className="h-4 w-4 text-purple-400" />
+                <h3 className="text-sm font-medium text-gray-400">Learning Psychology</h3>
+              </div>
+              {[
+                { icon: Brain, label: 'Dashboard', action: 'learning-psychology', color: 'from-purple-500 to-blue-600' },
+                { icon: Target, label: 'Metacognitive', action: 'metacognitive-training', color: 'from-purple-500 to-blue-600' },
+                { icon: BookOpen, label: 'Memory Palace', action: 'memory-palace', color: 'from-green-500 to-teal-600' },
+                { icon: MessageSquare, label: 'Deep Questions', action: 'elaborative-questions', color: 'from-orange-500 to-red-600' },
+                { icon: Sparkles, label: 'Transfer Learning', action: 'transfer-learning', color: 'from-cyan-500 to-blue-600' },
+              ].map((item, index) => (
+                <motion.button
+                  key={item.label}
+                  onClick={() => handleNavigationClick(item.action)}
+                  className="w-full flex items-center px-3 py-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-all duration-300 text-gray-300 hover:text-white cursor-pointer group"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.5 + index * 0.1 }}
+                >
+                  <div className={`w-6 h-6 rounded-md bg-gradient-to-r ${item.color} flex items-center justify-center mr-3 group-hover:scale-110 transition-transform`}>
+                    <item.icon className="h-3 w-3 text-white" />
+                  </div>
+                  <span className="text-sm font-medium">{item.label}</span>
+                </motion.button>
+              ))}
+            </motion.div>
+          )}
+
+          {/* Learning Psychology Collapsed Icons */}
+          {isCollapsed && (
+            <div className="space-y-2 mb-20">
+              {[
+                { icon: Brain, action: 'learning-psychology', color: 'from-purple-500 to-blue-600' },
+                { icon: Target, action: 'metacognitive-training', color: 'from-purple-500 to-blue-600' },
+                { icon: BookOpen, action: 'memory-palace', color: 'from-green-500 to-teal-600' },
+              ].map((item, index) => (
+                <motion.button
+                  key={item.action}
+                  onClick={() => handleNavigationClick(item.action)}
+                  className="w-12 h-12 p-0 flex items-center justify-center rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all duration-300 text-gray-300 hover:text-white cursor-pointer"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <div className={`w-6 h-6 rounded-md bg-gradient-to-r ${item.color} flex items-center justify-center`}>
+                    <item.icon className="h-3 w-3 text-white" />
+                  </div>
+                </motion.button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* User Profile */}

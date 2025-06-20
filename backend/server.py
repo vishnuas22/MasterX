@@ -19,7 +19,11 @@ from datetime import datetime
 # Import our models and services
 from models import (
     User, UserCreate, ChatSession, SessionCreate, ChatMessage, MessageCreate,
-    MentorRequest, MentorResponse, Exercise, ExerciseSubmission, LearningProgress
+    MentorRequest, MentorResponse, Exercise, ExerciseSubmission, LearningProgress,
+    MetacognitiveSessionModel, MemoryPalaceModel, ElaborativeQuestionModel, 
+    TransferScenarioModel, LearningPsychologyProgressModel,
+    MetacognitiveSessionRequest, MemoryPalaceRequest, ElaborativeQuestionRequest,
+    TransferScenarioRequest, LearningPsychologyResponse
 )
 from database import db_service
 from ai_service import ai_service
@@ -29,6 +33,7 @@ from gamification_service import gamification_service
 from advanced_streaming_service import advanced_streaming_service
 from advanced_context_service import advanced_context_service
 from live_learning_service import live_learning_service, SessionType
+from learning_psychology_service import learning_psychology_service
 
 ROOT_DIR = backend_dir
 load_dotenv(ROOT_DIR / '.env')
@@ -899,6 +904,340 @@ async def health_check():
         "ai_service": "healthy",
         "timestamp": datetime.utcnow().isoformat()
     }
+
+# ================================
+# ADVANCED LEARNING PSYCHOLOGY ENDPOINTS
+# ================================
+
+@api_router.post("/learning-psychology/metacognitive/start")
+async def start_metacognitive_session(request: MetacognitiveSessionRequest, user_id: str):
+    """Start a new metacognitive training session"""
+    try:
+        from learning_psychology_service import MetacognitiveStrategy
+        
+        # Convert string to enum
+        strategy_map = {
+            "self_questioning": MetacognitiveStrategy.SELF_QUESTIONING,
+            "goal_setting": MetacognitiveStrategy.GOAL_SETTING,
+            "progress_monitoring": MetacognitiveStrategy.PROGRESS_MONITORING,
+            "strategy_selection": MetacognitiveStrategy.STRATEGY_SELECTION,
+            "reflection": MetacognitiveStrategy.REFLECTION,
+            "planning": MetacognitiveStrategy.PLANNING
+        }
+        
+        strategy = strategy_map.get(request.strategy, MetacognitiveStrategy.SELF_QUESTIONING)
+        
+        session = await learning_psychology_service.start_metacognitive_session(
+            user_id=user_id,
+            strategy=strategy,
+            topic=request.topic,
+            level=request.level
+        )
+        
+        # Convert to dict for JSON response
+        return {
+            "session_id": session.session_id,
+            "strategy": session.strategy.value,
+            "topic": session.topic,
+            "level": session.level,
+            "initial_prompt": session.responses[-1]["content"] if session.responses else "",
+            "created_at": session.created_at.isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Error starting metacognitive session: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to start metacognitive session")
+
+@api_router.post("/learning-psychology/metacognitive/{session_id}/respond")
+async def respond_to_metacognitive_session(session_id: str, response: LearningPsychologyResponse):
+    """Respond to metacognitive training session"""
+    try:
+        result = await learning_psychology_service.process_metacognitive_response(
+            session_id=session_id,
+            user_response=response.user_response
+        )
+        
+        return result
+        
+    except Exception as e:
+        logger.error(f"Error processing metacognitive response: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to process response")
+
+@api_router.post("/learning-psychology/memory-palace/create")
+async def create_memory_palace(request: MemoryPalaceRequest, user_id: str):
+    """Create a new AI-assisted memory palace"""
+    try:
+        from learning_psychology_service import MemoryPalaceType
+        
+        # Convert string to enum
+        palace_type_map = {
+            "home": MemoryPalaceType.HOME,
+            "school": MemoryPalaceType.SCHOOL,
+            "nature": MemoryPalaceType.NATURE,
+            "castle": MemoryPalaceType.CASTLE,
+            "library": MemoryPalaceType.LIBRARY,
+            "laboratory": MemoryPalaceType.LABORATORY,
+            "custom": MemoryPalaceType.CUSTOM
+        }
+        
+        palace_type = palace_type_map.get(request.palace_type, MemoryPalaceType.HOME)
+        
+        palace = await learning_psychology_service.create_memory_palace(
+            user_id=user_id,
+            name=request.name,
+            palace_type=palace_type,
+            topic=request.topic,
+            information_items=request.information_items
+        )
+        
+        # Convert to dict for JSON response
+        return {
+            "palace_id": palace.palace_id,
+            "name": palace.name,
+            "palace_type": palace.palace_type.value,
+            "description": palace.description,
+            "rooms": palace.rooms,
+            "pathways": palace.pathways,
+            "information_nodes": palace.information_nodes,
+            "visualization_data": palace.visualization_data,
+            "created_at": palace.created_at.isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Error creating memory palace: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to create memory palace")
+
+@api_router.post("/learning-psychology/memory-palace/{palace_id}/practice")
+async def practice_memory_palace(palace_id: str, practice_type: str = "recall"):
+    """Practice using a memory palace"""
+    try:
+        practice_session = await learning_psychology_service.practice_memory_palace(
+            palace_id=palace_id,
+            practice_type=practice_type
+        )
+        
+        return practice_session
+        
+    except Exception as e:
+        logger.error(f"Error practicing memory palace: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to start practice session")
+
+@api_router.get("/learning-psychology/memory-palace/user/{user_id}")
+async def get_user_memory_palaces(user_id: str):
+    """Get all memory palaces for a user"""
+    try:
+        user_palaces = []
+        for palace in learning_psychology_service.memory_palaces.values():
+            if palace.user_id == user_id:
+                user_palaces.append({
+                    "palace_id": palace.palace_id,
+                    "name": palace.name,
+                    "palace_type": palace.palace_type.value,
+                    "description": palace.description,
+                    "room_count": len(palace.rooms),
+                    "information_count": len(palace.information_nodes),
+                    "effectiveness_score": palace.effectiveness_score,
+                    "created_at": palace.created_at.isoformat()
+                })
+        
+        return {"palaces": user_palaces}
+        
+    except Exception as e:
+        logger.error(f"Error getting user memory palaces: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get memory palaces")
+
+@api_router.post("/learning-psychology/elaborative-questions/generate")
+async def generate_elaborative_questions(request: ElaborativeQuestionRequest):
+    """Generate elaborative interrogation questions"""
+    try:
+        questions = await learning_psychology_service.generate_elaborative_questions(
+            topic=request.topic,
+            subject_area=request.subject_area,
+            difficulty_level=request.difficulty_level,
+            question_count=request.question_count
+        )
+        
+        # Convert to dict for JSON response
+        question_data = []
+        for question in questions:
+            question_data.append({
+                "question_id": question.question_id,
+                "question_type": question.question_type.value,
+                "content": question.content,
+                "difficulty_level": question.difficulty_level,
+                "subject_area": question.subject_area,
+                "expected_answer_type": question.expected_answer_type,
+                "evaluation_criteria": question.evaluation_criteria,
+                "follow_up_questions": question.follow_up_questions
+            })
+        
+        return {"questions": question_data}
+        
+    except Exception as e:
+        logger.error(f"Error generating elaborative questions: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to generate questions")
+
+@api_router.post("/learning-psychology/elaborative-questions/{question_id}/evaluate")
+async def evaluate_elaborative_response(question_id: str, response: LearningPsychologyResponse):
+    """Evaluate user's response to elaborative question"""
+    try:
+        # First, we need to retrieve the question from our service
+        # For now, we'll create a mock question based on the question_id
+        # In production, this would be retrieved from database
+        
+        from learning_psychology_service import ElaborativeQuestion, QuestionType
+        
+        # Mock question retrieval - in production, get from database
+        mock_question = ElaborativeQuestion(
+            question_id=question_id,
+            question_type=QuestionType.WHY,
+            content="Sample elaborative question",
+            difficulty_level="intermediate",
+            subject_area="general",
+            expected_answer_type="explanation",
+            evaluation_criteria=["accuracy", "depth"],
+            follow_up_questions=[]
+        )
+        
+        evaluation = await learning_psychology_service.evaluate_elaborative_response(
+            question=mock_question,
+            user_response=response.user_response
+        )
+        
+        return evaluation
+        
+    except Exception as e:
+        logger.error(f"Error evaluating elaborative response: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to evaluate response")
+
+@api_router.post("/learning-psychology/transfer-learning/create-scenario")
+async def create_transfer_scenario(request: TransferScenarioRequest):
+    """Create a knowledge transfer learning scenario"""
+    try:
+        from learning_psychology_service import TransferType
+        
+        # Convert string to enum
+        transfer_type_map = {
+            "analogical": TransferType.ANALOGICAL,
+            "procedural": TransferType.PROCEDURAL,
+            "conceptual": TransferType.CONCEPTUAL,
+            "strategic": TransferType.STRATEGIC
+        }
+        
+        transfer_type = transfer_type_map.get(request.transfer_type, TransferType.ANALOGICAL)
+        
+        scenario = await learning_psychology_service.create_transfer_scenario(
+            source_domain=request.source_domain,
+            target_domain=request.target_domain,
+            key_concepts=request.key_concepts,
+            transfer_type=transfer_type
+        )
+        
+        # Convert to dict for JSON response
+        return {
+            "scenario_id": scenario.scenario_id,
+            "source_domain": scenario.source_domain,
+            "target_domain": scenario.target_domain,
+            "transfer_type": scenario.transfer_type.value,
+            "scenario_description": scenario.scenario_description,
+            "key_concepts": scenario.key_concepts,
+            "analogy_mapping": scenario.analogy_mapping,
+            "exercises": scenario.exercises,
+            "difficulty_level": scenario.difficulty_level
+        }
+        
+    except Exception as e:
+        logger.error(f"Error creating transfer scenario: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to create transfer scenario")
+
+@api_router.get("/learning-psychology/progress/{user_id}")
+async def get_learning_psychology_progress(user_id: str):
+    """Get user's learning psychology progress summary"""
+    try:
+        progress = learning_psychology_service.get_user_progress_summary(user_id)
+        return progress
+        
+    except Exception as e:
+        logger.error(f"Error getting learning psychology progress: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get progress")
+
+@api_router.post("/learning-psychology/progress/{user_id}/update")
+async def update_learning_psychology_progress(user_id: str, session_data: Dict[str, Any]):
+    """Update user's learning psychology progress"""
+    try:
+        learning_psychology_service.update_user_progress(user_id, session_data)
+        return {"message": "Progress updated successfully"}
+        
+    except Exception as e:
+        logger.error(f"Error updating progress: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to update progress")
+
+@api_router.get("/learning-psychology/features")
+async def get_learning_psychology_features():
+    """Get available learning psychology features and capabilities"""
+    try:
+        return {
+            "features": {
+                "metacognitive_training": {
+                    "description": "Advanced metacognitive learning strategies",
+                    "strategies": [
+                        "self_questioning",
+                        "goal_setting", 
+                        "progress_monitoring",
+                        "strategy_selection",
+                        "reflection",
+                        "planning"
+                    ],
+                    "levels": ["beginner", "intermediate", "advanced"]
+                },
+                "memory_palace_builder": {
+                    "description": "AI-assisted spatial memory techniques",
+                    "palace_types": [
+                        "home",
+                        "school", 
+                        "nature",
+                        "castle",
+                        "library",
+                        "laboratory",
+                        "custom"
+                    ],
+                    "practice_modes": ["recall", "navigation", "association"]
+                },
+                "elaborative_interrogation": {
+                    "description": "Deep questioning skills development",
+                    "question_types": [
+                        "why",
+                        "how",
+                        "what_if",
+                        "compare",
+                        "apply",
+                        "synthesize"
+                    ],
+                    "difficulty_levels": ["beginner", "intermediate", "advanced"]
+                },
+                "transfer_learning": {
+                    "description": "Knowledge application across domains",
+                    "transfer_types": [
+                        "analogical",
+                        "procedural", 
+                        "conceptual",
+                        "strategic"
+                    ],
+                    "supported_domains": ["any subject area"]
+                }
+            },
+            "ai_capabilities": {
+                "model": learning_psychology_service.model,
+                "real_time_feedback": True,
+                "personalized_adaptation": True,
+                "progress_tracking": True,
+                "multi_modal_support": True
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting features: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get features")
 
 # CORS and router registration will be done at the end of the file after all endpoints are defined
 

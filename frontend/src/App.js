@@ -7,6 +7,9 @@ import { UserOnboarding } from "./components/UserOnboarding";
 import { Sidebar } from "./components/Sidebar";
 import { ChatInterface } from "./components/ChatInterface";
 import { LoadingSpinner } from "./components/LoadingSpinner";
+import LearningPsychologyDashboard from "./components/LearningPsychologyDashboard";
+import MetacognitiveTraining from "./components/MetacognitiveTraining";
+import MemoryPalaceBuilder from "./components/MemoryPalaceBuilder";
 import { api } from "./services/api";
 
 // Main App Content Component
@@ -95,7 +98,27 @@ function AppContent() {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
         >
-          <ChatInterface />
+          {/* Render different components based on active view */}
+          {state.activeView === 'chat' && <ChatInterface />}
+          {state.activeView === 'learning-psychology' && <LearningPsychologyDashboard />}
+          {state.activeView === 'metacognitive-training' && <MetacognitiveTraining />}
+          {state.activeView === 'memory-palace' && <MemoryPalaceBuilder />}
+          {state.activeView === 'elaborative-questions' && (
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-center">
+                <h2 className="text-2xl font-bold text-white mb-4">Elaborative Questions</h2>
+                <p className="text-gray-400">Coming soon! Deep questioning skills development.</p>
+              </div>
+            </div>
+          )}
+          {state.activeView === 'transfer-learning' && (
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-center">
+                <h2 className="text-2xl font-bold text-white mb-4">Transfer Learning</h2>
+                <p className="text-gray-400">Coming soon! Knowledge application across domains.</p>
+              </div>
+            </div>
+          )}
         </motion.main>
       </div>
 
