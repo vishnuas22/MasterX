@@ -65,8 +65,6 @@ export function Sidebar({ isCollapsed, onToggle }) {
       case 'transfer-learning':
         actions.setActiveView('transfer-learning');
         break;
-        console.log('Opening Learning Paths');
-        break;
       case 'progress':
         // Navigate to progress view
         console.log('Opening Progress View');
