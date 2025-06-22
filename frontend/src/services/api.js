@@ -1,23 +1,53 @@
 import axios from 'axios';
+import { getEnvironmentConfig } from '../config/environment';
+import { connectionManager } from '../utils/connectionManager';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+// Get environment-appropriate configuration
+const envConfig = getEnvironmentConfig();
+let BACKEND_URL = envConfig.backendURL;
+let API = envConfig.apiURL;
+
+console.log('🚀 MasterX API Service initialized');
+console.log('🔗 Backend URL:', BACKEND_URL);
+console.log('🌍 Environment:', envConfig.environment);
 
 // Configure axios defaults
 axios.defaults.timeout = 30000; // 30 seconds
 
 class ApiService {
   constructor() {
-    this.axiosInstance = axios.create({
+    this.isConnectionTested = false;
+    this.axiosInstance = this.createAxiosInstance();
+  }
+
+  createAxiosInstance() {
+    const instance = axios.create({
       baseURL: API,
       headers: {
         'Content-Type': 'application/json',
       },
     });
 
-    // Add request interceptor for logging
-    this.axiosInstance.interceptors.request.use(
-      (config) => {
+    // Add request interceptor for dynamic URL resolution
+    instance.interceptors.request.use(
+      async (config) => {
+        // Test connection and update URL if needed
+        if (!this.isConnectionTested) {
+          try {
+            const workingURL = await connectionManager.findWorkingURL();
+            if (workingURL !== BACKEND_URL) {
+              BACKEND_URL = workingURL;
+              API = `${workingURL}/api`;
+              config.baseURL = API;
+              console.log('🔄 Updated API URL to:', API);
+            }
+            this.isConnectionTested = true;
+          } catch (error) {
+            console.error('❌ Connection test failed:', error.message);
+            // Continue with original URL as fallback
+          }
+        }
+        
         console.log(`API Request: ${config.method?.toUpperCase()} ${config.url}`);
         return config;
       },
@@ -26,23 +56,37 @@ class ApiService {
       }
     );
 
-    // Add response interceptor for error handling
-    this.axiosInstance.interceptors.response.use(
+    // Add response interceptor for error handling and connection recovery
+    instance.interceptors.response.use(
       (response) => {
         return response;
       },
-      (error) => {
+      async (error) => {
         console.error('API Error:', error.response?.data || error.message);
+        
+        // If we get connection errors, try to find a working URL
+        if (error.code === 'ECONNABORTED' || error.code === 'NETWORK_ERROR' || 
+            (error.response && error.response.status >= 500)) {
+          console.log('🔄 Connection error detected, attempting to find working backend...');
+          connectionManager.resetConnection();
+          this.isConnectionTested = false;
+        }
+        
         if (error.response?.status === 404) {
           throw new Error('Resource not found');
         } else if (error.response?.status === 500) {
           throw new Error('Server error. Please try again later.');
         } else if (error.code === 'ECONNABORTED') {
           throw new Error('Request timeout. Please check your connection.');
+        } else if (error.code === 'NETWORK_ERROR' || !error.response) {
+          throw new Error('Unable to connect to MasterX AI Mentor System. Please check your internet connection.');
         }
+        
         throw new Error(error.response?.data?.detail || error.message || 'An error occurred');
       }
     );
+
+    return instance;
   }
 
   // Health check
