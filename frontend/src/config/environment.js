@@ -38,8 +38,19 @@ export const getEnvironmentConfig = () => {
       apiURL: 'http://localhost:8001/api'
     };
   } else if (isPreviewEnvironment()) {
-    // Preview environment
-    const backendURL = process.env.REACT_APP_BACKEND_URL || `${protocol}//${hostname}`;
+    // Preview environment - DYNAMICALLY construct the backend URL
+    let backendURL;
+    
+    // Check if REACT_APP_BACKEND_URL is set and valid
+    if (process.env.REACT_APP_BACKEND_URL && process.env.REACT_APP_BACKEND_URL.trim() !== '') {
+      backendURL = process.env.REACT_APP_BACKEND_URL;
+      console.log(`🌐 Using configured preview URL: ${backendURL}`);
+    } else {
+      // Dynamically construct preview URL from current hostname
+      backendURL = `${protocol}//${hostname}`;
+      console.log(`🌐 Auto-constructed preview URL: ${backendURL}`);
+    }
+    
     config = {
       environment: 'preview',
       backendURL: backendURL,

@@ -27,15 +27,21 @@ export class ConnectionManager {
       console.log('🏠 Local development detected - prioritizing localhost:8001');
     } else {
       // 2. Preview environment URLs (HIGHEST PRIORITY for non-localhost)
-      if (process.env.REACT_APP_BACKEND_URL) {
+      
+      // First try configured REACT_APP_BACKEND_URL if available
+      if (process.env.REACT_APP_BACKEND_URL && process.env.REACT_APP_BACKEND_URL.trim() !== '') {
         urls.push(process.env.REACT_APP_BACKEND_URL);
         console.log(`🌐 Preview URL from env: ${process.env.REACT_APP_BACKEND_URL}`);
       }
       
-      // 3. Same origin (for preview environments)
+      // Then try current hostname (most common case for preview environments)
+      urls.push(`${protocol}//${hostname}`);
+      console.log(`🌐 Auto-constructed preview URL: ${protocol}//${hostname}`);
+      
+      // For emergentagent.com environments, ensure we're testing the right pattern
       if (hostname.includes('emergentagent.com')) {
-        urls.push(`${protocol}//${hostname}`);
         console.log('🌐 Preview environment detected');
+        // Already added above, no need to duplicate
       }
       
       // 4. Common port variations (lower priority)

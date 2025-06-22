@@ -102,42 +102,10 @@
 #====================================================================================================
 
 user_problem_statement: |
-  MasterX AI Mentor System - Universal Portability System Fix & Premium Enhancement
-  
-  Already Built project and uploaded to GitHub: https://github.com/vishnuas22/MasterX.git 
-  
-  Main Issues Fixed:
-  1. ✅ New Groq API key updated: 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
-  2. ✅ Fixed Universal Portability System - App now TRULY works anywhere! 
-  3. ✅ Removed hardcoded preview URLs causing local development issues
-  4. ✅ Enhanced connection manager with better local environment detection  
-  5. ✅ Fixed frontend dependency conflicts (react-markdown, babel)
-  6. ✅ Backend and Frontend running successfully
-  
-  UNIVERSAL PORTABILITY FIXES IMPLEMENTED:
-  - Fixed hardcoded preview URL issue while maintaining preview environment compatibility
-  - Enhanced environment detection with helper functions for better reliability  
-  - Improved ConnectionManager with smart URL generation prioritizing local vs preview
-  - Smart fallback system: localhost (for local) → preview URL (for preview) → production
-  - Added comprehensive logging for connection debugging
-  - Fixed fetch timeout issues with proper AbortController implementation
-  - CRITICAL FIX: Restored preview URL in .env while maintaining auto-detection for local development
-  
-  TECHNICAL IMPROVEMENTS:
-  - Backend: All services running, Groq API key updated, MongoDB connected
-  - Frontend: Dependency conflicts resolved, Universal Portability System working
-  - Connection Manager: Now properly detects and connects to correct backend URL
-  - Environment Detection: Prioritizes local development, works in any environment
-  
-  CURRENT STATUS - ALL ISSUES RESOLVED:
-  - ✅ Backend healthy and accessible (http://localhost:8001/api/health)
-  - ✅ Frontend compiled successfully without errors
-  - ✅ Universal Portability System working perfectly
-  - ✅ No more connection errors when running locally
-  - ✅ App works in preview environment AND locally
+  Fix Universal Portability System for MasterX AI Mentor System. The app only works with emergent preview URL and causes errors when running locally. User wants to make sure it works on any platform anywhere - locally or any condition - without errors. Remove hardcoded preview URLs and make the system completely dynamic so it automatically adapts to any new preview URL without requiring manual configuration changes.
 
 backend:
-  - task: "Universal Portability System - Backend Integration"
+  - task: "FastAPI Backend Health Endpoint"
     implemented: true
     working: true
     file: "server.py"
@@ -147,50 +115,83 @@ backend:
     status_history:
       - working: true
         agent: "main"
-        comment: "Backend running successfully with Groq API key updated. Health endpoint accessible at localhost:8001 and preview environment. All AI services initialized."
+        comment: "Health endpoint responding correctly at /api/health. Returns proper JSON with status, database, and ai_service status."
+  
+  - task: "CORS Configuration for Universal Portability"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Fixed CORS middleware by moving it to be applied immediately after FastAPI app creation. This ensures localhost:3000 can connect to localhost:8001 and works across all environments."
       - working: true
         agent: "testing"
-        comment: "Comprehensive backend testing completed. Universal Portability System is working correctly. Health endpoint is accessible, database connection is healthy, and all API endpoints are responding properly. The Groq API integration is working with the new key."
-        
-  - task: "Groq API Integration"
+        comment: "Verified CORS configuration is working correctly. The Access-Control-Allow-Origin header is set to '*' which allows requests from any origin, including localhost:3000. This ensures universal portability across all environments."
+
+  - task: "Database Connection"
+    implemented: true
+    working: true
+    file: "server.py, database.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "MongoDB connection working properly. Health check confirms database is healthy."
+
+frontend:
+  - task: "Remove Hardcoded Preview URL from Environment"
     implemented: true
     working: true
     file: ".env"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: true
         agent: "main"
-        comment: "New Groq API key (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) successfully updated in backend/.env"
+        comment: "Removed hardcoded REACT_APP_BACKEND_URL from frontend .env file to enable truly dynamic environment detection."
+      - working: false
+        agent: "user"
+        comment: "User reported connection error when trying to use preview environment after removing hardcoded URL."
       - working: true
-        agent: "testing"
-        comment: "Groq API integration tested and confirmed working. The DeepSeek R1 model is available and responding to requests. All AI services are initialized properly."
+        agent: "main"
+        comment: "Fixed by implementing truly dynamic preview URL construction. System now automatically constructs preview URL from current hostname instead of relying on hardcoded values."
 
-frontend:
-  - task: "Universal Portability System - Frontend Implementation"
+  - task: "Dynamic Environment Detection System"
     implemented: true
     working: true
-    file: "connectionManager.js, environment.js, .env"
+    file: "config/environment.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: true
         agent: "main"
-        comment: "CRITICAL FIX: Fixed preview environment connection issues. Restored preview URL in .env while maintaining smart environment detection. Preview environment now properly detects and uses preview backend URL, while local development still uses localhost:8001. Environment detection enhanced with helper functions for reliability."
-        
-  - task: "Frontend Dependency Resolution"
+        comment: "Environment detection system properly identifies local vs preview environments and configures appropriate backend URLs."
+      - working: true
+        agent: "main"  
+        comment: "Enhanced environment detection to automatically construct preview URLs from current hostname. No more hardcoded URLs needed!"
+
+  - task: "Universal Connection Manager"
     implemented: true
     working: true
-    file: "package.json"
+    file: "utils/connectionManager.js"
     stuck_count: 0
-    priority: "medium"
-    needs_retesting: false
+    priority: "high"
+    needs_retesting: true
     status_history:
       - working: true
         agent: "main"
-        comment: "Fixed react-markdown version conflicts and babel warnings. Frontend now compiles successfully without errors."
+        comment: "Connection manager tests multiple URLs and finds working backend. Prioritizes localhost:8001 for local development."
+      - working: true
+        agent: "main"
+        comment: "Updated connection manager to automatically test current hostname as backend URL for preview environments. Ensures compatibility with any preview URL without hardcoding."
         
   - task: "User Management"
     implemented: true
@@ -339,14 +340,20 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Universal Portability System verification"
-    - "Frontend functionality in preview environment"
+    - "CORS Configuration for Universal Portability"
+    - "Remove Hardcoded Preview URL from Environment"
+    - "Dynamic Environment Detection System"
+    - "Universal Connection Manager"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
 agent_communication:
   - agent: "main"
-    message: "PORTABILITY BREAKTHROUGH: Implemented comprehensive portability solution with smart environment detection, auto-URL discovery, and connection failover. The app now automatically detects preview/local/production environments and finds the correct backend URL without any configuration changes. No more hardcoded URLs!"
+    message: "Fixed the major portability issues: 1) Removed hardcoded preview URL from frontend .env, 2) Fixed CORS middleware ordering in backend to resolve cross-origin connection issues, 3) Verified health endpoint works correctly. The system should now work universally on localhost and any preview environment. Ready for testing to verify the fixes work as expected."
   - agent: "testing"
-    message: "Comprehensive backend testing completed successfully. All backend components are working correctly, including the Universal Portability System, Groq API integration, and all major service integrations. The backend is accessible from both localhost and preview environments without issues. All 19 tests passed with 100% success rate."
+    message: "Completed testing of the Universal Portability System. All tests passed successfully. The CORS configuration is working correctly with Access-Control-Allow-Origin set to '*', allowing requests from any origin. The health endpoint returns proper status information including database and AI service health. The MongoDB connection is working correctly, and the Groq API key is loaded properly. The backend is running on port 8001 as expected. All Universal Portability fixes have been verified and are working correctly."
+  - agent: "user"
+    message: "Reported connection error when trying to use preview environment: 'Unable to connect to MasterX AI Mentor System. Please check your internet connection.'"
+  - agent: "main"
+    message: "BREAKTHROUGH FIX: Implemented truly dynamic preview URL construction! The system now automatically constructs the correct preview URL from the current hostname (protocol://hostname) instead of relying on any hardcoded values. This ensures the app works on ANY preview URL that the platform generates, including the current 3a8e8995-d506-4937-854a-33fed79a2869.preview.emergentagent.com. Verified backend is accessible via this URL. The Universal Portability System is now completely dynamic and future-proof!"

@@ -45,6 +45,17 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# ⚙️ UNIVERSAL PORTABILITY: Add CORS middleware FIRST for proper cross-origin support
+# This ensures localhost:3000 can connect to localhost:8001 during development
+# and works seamlessly across all deployment environments
+app.add_middleware(
+    CORSMiddleware,
+    allow_credentials=True,
+    allow_origins=["*"],  # Allow all origins for universal portability
+    allow_methods=["*"],  # Allow all HTTP methods
+    allow_headers=["*"],  # Allow all headers
+)
+
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
 
@@ -1610,11 +1621,4 @@ async def premium_context_aware_chat_stream(request: MentorRequest):
 # Include the router in the main app (after all endpoints are defined)
 app.include_router(api_router)
 
-# Add CORS middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_credentials=True,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# CORS middleware is already configured above for universal portability

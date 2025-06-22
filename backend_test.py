@@ -674,6 +674,7 @@ def run_all_tests():
     # Basic health checks
     test_root_endpoint()
     test_health_endpoint()
+    test_cors_configuration()  # Test CORS for Universal Portability
     
     # User management tests
     user_result = test_create_user()
@@ -741,6 +742,28 @@ def run_all_tests():
     # Return test results for reporting
     return test_results
 
+@run_test
+def test_cors_configuration():
+    """Test CORS configuration for Universal Portability"""
+    # Set Origin header to simulate a request from localhost:3000
+    headers = {
+        "Origin": "http://localhost:3000"
+    }
+    
+    response = requests.get(f"{API_URL}/health", headers=headers)
+    response.raise_for_status()
+    
+    # Check for CORS headers
+    assert "Access-Control-Allow-Origin" in response.headers, "CORS header missing"
+    assert response.headers["Access-Control-Allow-Origin"] == "*" or response.headers["Access-Control-Allow-Origin"] == "http://localhost:3000", "CORS origin not properly configured"
+    
+    # Track result
+    test_results["total"] += 1
+    test_results["passed"] += 1
+    test_results["results"].append({"name": "CORS Configuration", "passed": True})
+    
+    return response.headers
+
 def test_universal_portability():
     """Test the Universal Portability System"""
     print("\n========== TESTING UNIVERSAL PORTABILITY SYSTEM ==========\n")
@@ -784,6 +807,32 @@ def test_universal_portability():
             return False
     except Exception as e:
         print(f"❌ Failed to check Groq API integration: {str(e)}")
+        return False
+    
+    # Test CORS configuration
+    try:
+        # Set Origin header to simulate a request from localhost:3000
+        headers = {
+            "Origin": "http://localhost:3000"
+        }
+        
+        response = requests.get(f"{API_URL}/health", headers=headers)
+        response.raise_for_status()
+        
+        if "Access-Control-Allow-Origin" in response.headers:
+            print("✅ CORS headers present in response")
+            print(f"   Access-Control-Allow-Origin: {response.headers['Access-Control-Allow-Origin']}")
+            
+            if response.headers["Access-Control-Allow-Origin"] == "*" or response.headers["Access-Control-Allow-Origin"] == "http://localhost:3000":
+                print("✅ CORS configuration is correctly set for universal portability")
+            else:
+                print(f"❌ CORS origin not properly configured: {response.headers['Access-Control-Allow-Origin']}")
+                return False
+        else:
+            print("❌ CORS headers missing from response")
+            return False
+    except Exception as e:
+        print(f"❌ Failed to check CORS configuration: {str(e)}")
         return False
     
     print("\n✅ Universal Portability System is working correctly")
