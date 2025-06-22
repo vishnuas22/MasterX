@@ -1,0 +1,51 @@
+Testing backend at: http://localhost:8001/api
+
+========== TESTING UNIVERSAL PORTABILITY SYSTEM ==========
+
+Detected Backend URL: http://localhost:8001
+✅ API accessible at http://localhost:8001/api/health
+   Response: {'status': 'healthy', 'database': 'healthy', 'ai_service': 'healthy', 'timestamp': '2025-06-22T07:18:23.733452'}
+✅ MongoDB connection successful
+✅ Groq API integration successful
+
+✅ Universal Portability System is working correctly
+
+========== MASTERX AI MENTOR SYSTEM BACKEND TESTS ==========
+
+✅ PASSED - Test Root Endpoint (0.01s)
+✅ PASSED - Test Health Endpoint (0.01s)
+✅ PASSED - Test Create User (0.02s)
+✅ PASSED - Test Get User By Email (0.00s)
+✅ PASSED - Test Create Session (0.01s)
+✅ PASSED - Test Get Session (0.00s)
+✅ PASSED - Test Get User Sessions (0.01s)
+✅ PASSED - Test Basic Chat (3.25s)
+✅ PASSED - Test Premium Chat (6.89s)
+✅ PASSED - Test Premium Context Chat (51.80s)
+✅ PASSED - Test Available Models (0.00s)
+✅ PASSED - Test Learning Psychology Features (0.00s)
+✅ PASSED - Test Gamification Achievements (0.01s)
+✅ PASSED - Test Exercise Generation (7.70s)
+✅ PASSED - Test Learning Path Generation (20.70s)
+
+Testing Streaming Chat (async)...
+✅ PASSED - Streaming Chat (28.60s)
+   Received 1339 chunks, completion signal: True
+
+Testing Premium Streaming Chat (async)...
+✅ PASSED - Premium Streaming Chat (13.08s)
+   Received 1164 chunks, completion signal: True
+
+Testing Premium Context-Aware Streaming Chat (async)...
+✅ PASSED - Premium Context-Aware Streaming Chat (70.71s)
+   Received 1407 chunks, completion signal: True
+   Context data received: True
+✅ PASSED - Test End Session (0.01s)
+
+========== TEST SUMMARY ==========
+
+Total Tests: 19
+Passed: 19 (100.0%)
+Failed: 0 (0.0%)
+
+All tests completed. See results above for details.
