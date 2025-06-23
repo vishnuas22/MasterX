@@ -1,6 +1,6 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Bot, User, Sparkles, BookOpen, Target, Settings, Brain, Trophy, Zap, Eye, Heart } from 'lucide-react';
+import { Send, Bot, User, Sparkles, BookOpen, Target, Settings, Brain, Trophy, Zap, Eye, Heart, ArrowDown } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { GlassCard, GlassButton, GlassInput } from './GlassCard';
 import { TypingIndicator } from './LoadingSpinner';
@@ -23,8 +23,14 @@ export function ChatInterface() {
   const [useAdvancedStreaming, setUseAdvancedStreaming] = useState(false);
   const [useContextAwareness, setUseContextAwareness] = useState(true);
   const [currentView, setCurrentView] = useState('chat'); // 'chat', 'live-learning'
+  
+  // Enhanced scroll management
   const messagesEndRef = useRef(null);
+  const messagesContainerRef = useRef(null);
   const inputRef = useRef(null);
+  const [isUserScrolling, setIsUserScrolling] = useState(false);
+  const [showScrollToBottom, setShowScrollToBottom] = useState(false);
+  const scrollTimeoutRef = useRef(null);
 
   // Initialize context awareness component
   const contextAwareChat = ContextAwareChatInterface({
@@ -45,13 +51,67 @@ export function ChatInterface() {
     }
   });
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  // Enhanced scroll to bottom with user scroll detection
+  const scrollToBottom = useCallback((force = false) => {
+    if (!messagesEndRef.current || (!force && isUserScrolling)) return;
+    
+    messagesEndRef.current.scrollIntoView({ 
+      behavior: 'smooth',
+      block: 'end'
+    });
+  }, [isUserScrolling]);
 
+  // Handle scroll events to detect user scrolling
+  const handleScroll = useCallback(() => {
+    if (!messagesContainerRef.current) return;
+
+    const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
+    const isAtBottom = scrollTop + clientHeight >= scrollHeight - 100; // 100px threshold
+    
+    setShowScrollToBottom(!isAtBottom);
+    
+    // Detect if user is manually scrolling
+    if (!isAtBottom) {
+      setIsUserScrolling(true);
+      // Clear existing timeout
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+      // Reset user scrolling after 3 seconds of no scroll activity
+      scrollTimeoutRef.current = setTimeout(() => {
+        setIsUserScrolling(false);
+      }, 3000);
+    } else {
+      setIsUserScrolling(false);
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+    }
+  }, []);
+
+  // Enhanced useEffect for scrolling
   useEffect(() => {
-    scrollToBottom();
-  }, [state.messages, state.streamingMessage]);
+    // Only auto-scroll for new messages if user is not manually scrolling
+    if (!isUserScrolling) {
+      scrollToBottom();
+    }
+  }, [state.messages, scrollToBottom, isUserScrolling]);
+
+  // Auto-scroll for streaming messages only if at bottom
+  useEffect(() => {
+    if (state.streamingMessage && !isUserScrolling) {
+      scrollToBottom();
+    }
+  }, [state.streamingMessage, scrollToBottom, isUserScrolling]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
@@ -59,6 +119,9 @@ export function ChatInterface() {
 
     const message = inputMessage.trim();
     setInputMessage('');
+
+    // Force scroll to bottom when sending a message
+    setIsUserScrolling(false);
 
     try {
       if (useContextAwareness) {
@@ -100,6 +163,11 @@ export function ChatInterface() {
       e.preventDefault();
       handleSendMessage(e);
     }
+  };
+
+  const forceScrollToBottom = () => {
+    setIsUserScrolling(false);
+    scrollToBottom(true);
   };
 
   if (!state.currentSession) {
@@ -201,12 +269,12 @@ export function ChatInterface() {
   return (
     <div className="flex-1 flex flex-col h-full">
       {/* Enhanced Chat Header */}
-      <div className="border-b border-white/10 p-4">
+      <div className="border-b border-white/10 p-4 bg-black/20 backdrop-blur-sm">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <div className="relative">
               <Bot className="h-8 w-8 text-blue-400" />
-              <div className="absolute -bottom-1 -right-1 h-3 w-3 bg-green-400 rounded-full border-2 border-gray-900"></div>
+              <div className="absolute -bottom-1 -right-1 h-3 w-3 bg-green-400 rounded-full border-2 border-gray-900 animate-pulse"></div>
               {useContextAwareness && (
                 <div className="absolute -top-1 -right-1 h-3 w-3 bg-purple-400 rounded-full border-2 border-gray-900" title="Context Awareness Active">
                   <Brain className="h-2 w-2 text-white" />
@@ -288,10 +356,18 @@ export function ChatInterface() {
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 20 }}
-            className="flex-1 flex flex-col"
+            className="flex-1 flex flex-col relative"
           >
-            {/* Messages Area */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            {/* Enhanced Messages Area with better scroll behavior */}
+            <div 
+              ref={messagesContainerRef}
+              onScroll={handleScroll}
+              className="flex-1 overflow-y-auto p-4 space-y-4 scroll-smooth"
+              style={{ 
+                maxHeight: 'calc(100vh - 240px)', // Better height constraint
+                scrollBehavior: 'smooth'
+              }}
+            >
               <AnimatePresence>
                 {state.messages.map((message, index) => (
                   <ChatMessage key={message.id || index} message={message} />
@@ -346,8 +422,24 @@ export function ChatInterface() {
               <div ref={messagesEndRef} />
             </div>
 
+            {/* Scroll to Bottom Button */}
+            <AnimatePresence>
+              {showScrollToBottom && (
+                <motion.button
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  onClick={forceScrollToBottom}
+                  className="absolute bottom-20 right-6 w-12 h-12 rounded-full bg-blue-500/20 backdrop-blur-sm border border-blue-400/30 flex items-center justify-center hover:bg-blue-500/30 transition-all duration-300 z-10"
+                  title="Scroll to bottom"
+                >
+                  <ArrowDown className="h-5 w-5 text-blue-400" />
+                </motion.button>
+              )}
+            </AnimatePresence>
+
             {/* Enhanced Input Area */}
-            <div className="border-t border-white/10 p-4">
+            <div className="border-t border-white/10 p-4 bg-black/10 backdrop-blur-sm">
               <form onSubmit={handleSendMessage} className="flex space-x-3">
                 <div className="flex-1 relative">
                   <GlassInput

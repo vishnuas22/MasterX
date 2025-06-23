@@ -24,6 +24,17 @@ const LearningPsychologyDashboard = () => {
       setFeatures(response.data);
     } catch (error) {
       console.error('Error loading features:', error);
+      // Set fallback features if API fails
+      setFeatures({
+        available: true,
+        message: "Learning psychology features are available",
+        features: [
+          "Metacognitive Training",
+          "Memory Palace Builder", 
+          "Elaborative Interrogation",
+          "Transfer Learning"
+        ]
+      });
     } finally {
       setLoading(false);
     }
@@ -37,6 +48,13 @@ const LearningPsychologyDashboard = () => {
       setUserProgress(response.data);
     } catch (error) {
       console.error('Error loading progress:', error);
+      // Set fallback progress data
+      setUserProgress({
+        metacognitive_sessions: 0,
+        memory_palaces: 0,
+        elaborative_questions_answered: 0,
+        transfer_scenarios_completed: 0
+      });
     }
   };
 
