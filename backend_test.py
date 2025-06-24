@@ -12,7 +12,9 @@ import sys
 
 # Get backend URL from frontend .env file
 def get_backend_url():
+    """Get backend URL from frontend .env file or use local URL"""
     # For testing purposes, we'll use the local URL
+    # The preview URL might not be accessible during testing
     return "http://localhost:8001"  # Use local URL for testing
 
 BACKEND_URL = get_backend_url()

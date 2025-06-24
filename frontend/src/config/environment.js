@@ -1,16 +1,8 @@
-// Environment configuration for MasterX AI Mentor System
-// This file ensures the app works in any environment - TRULY PORTABLE!
+// MasterX AI Mentor System - Practical Environment Configuration
+// Hybrid approach: Supports both hardcoded URLs and auto-detection for maximum reliability
 
-// Helper function to detect if we're in preview environment
-const isPreviewEnvironment = () => {
-  const hostname = window.location.hostname;
-  return hostname.includes('emergentagent.com') || 
-         process.env.REACT_APP_BACKEND_URL?.includes('emergentagent.com') ||
-         process.env.REACT_APP_BACKEND_URL?.includes('preview');
-};
-
-// Helper function to detect if we're in local development
-const isLocalEnvironment = () => {
+// Environment detection functions
+const isLocalDevelopment = () => {
   const hostname = window.location.hostname;
   return hostname === 'localhost' || 
          hostname === '127.0.0.1' || 
@@ -19,56 +11,90 @@ const isLocalEnvironment = () => {
          hostname.endsWith('.local');
 };
 
+const isEmergentPreview = () => {
+  const hostname = window.location.hostname;
+  return hostname.includes('emergentagent.com') || 
+         hostname.includes('preview.emergentagent.com');
+};
+
+const hasConfiguredBackendURL = () => {
+  return process.env.REACT_APP_BACKEND_URL && 
+         process.env.REACT_APP_BACKEND_URL.trim() !== '' &&
+         process.env.REACT_APP_BACKEND_URL !== 'undefined';
+};
+
 export const getEnvironmentConfig = () => {
   const hostname = window.location.hostname;
   const protocol = window.location.protocol;
   const port = window.location.port;
   
-  console.log(`🌍 Detecting environment for hostname: ${hostname}, protocol: ${protocol}, port: ${port}`);
-  console.log(`🔧 REACT_APP_BACKEND_URL: ${process.env.REACT_APP_BACKEND_URL}`);
+  console.log(`🌍 MasterX Environment Detection`);
+  console.log(`📍 Hostname: ${hostname}, Protocol: ${protocol}, Port: ${port}`);
+  console.log(`⚙️ Configured Backend URL: ${process.env.REACT_APP_BACKEND_URL || 'NOT SET'}`);
   
-  // Configuration for different environments with improved detection
   let config;
   
-  if (isLocalEnvironment()) {
-    // Local development environment
+  // PRIORITY 1: Local Development (Always prioritize localhost for development)
+  if (isLocalDevelopment()) {
     config = {
       environment: 'local',
       backendURL: 'http://localhost:8001',
-      apiURL: 'http://localhost:8001/api'
+      apiURL: 'http://localhost:8001/api',
+      fallbacks: [
+        'http://127.0.0.1:8001',
+        'http://localhost:3001', // Alternative port
+      ]
     };
-  } else if (isPreviewEnvironment()) {
-    // Preview environment - DYNAMICALLY construct the backend URL
-    let backendURL;
+    console.log(`🏠 Local Development Mode - Using localhost:8001`);
     
-    // Check if REACT_APP_BACKEND_URL is set and valid
-    if (process.env.REACT_APP_BACKEND_URL && process.env.REACT_APP_BACKEND_URL.trim() !== '') {
-      backendURL = process.env.REACT_APP_BACKEND_URL;
-      console.log(`🌐 Using configured preview URL: ${backendURL}`);
-    } else {
-      // Dynamically construct preview URL from current hostname
-      backendURL = `${protocol}//${hostname}`;
-      console.log(`🌐 Auto-constructed preview URL: ${backendURL}`);
-    }
+  // PRIORITY 2: Configured Backend URL (Use hardcoded URLs when available)
+  } else if (hasConfiguredBackendURL()) {
+    const backendURL = process.env.REACT_APP_BACKEND_URL;
+    config = {
+      environment: isEmergentPreview() ? 'preview' : 'production',
+      backendURL: backendURL,
+      apiURL: `${backendURL}/api`,
+      fallbacks: [
+        `${protocol}//${hostname}`, // Current host as fallback
+        `${protocol}//${hostname}:8001` // With port fallback
+      ]
+    };
+    console.log(`🌐 Using Configured Backend URL: ${backendURL}`);
     
+  // PRIORITY 3: Auto-detection for Emergent Preview
+  } else if (isEmergentPreview()) {
+    const backendURL = `${protocol}//${hostname}`;
     config = {
       environment: 'preview',
       backendURL: backendURL,
-      apiURL: `${backendURL}/api`
+      apiURL: `${backendURL}/api`,
+      fallbacks: [
+        `${protocol}//${hostname}:8001`,
+        `${protocol}//${hostname}:3001`
+      ]
     };
+    console.log(`🌐 Emergent Preview Auto-Detection: ${backendURL}`);
+    
+  // PRIORITY 4: Generic Production/Unknown Environment
   } else {
-    // Production or other environments
-    const backendURL = process.env.REACT_APP_BACKEND_URL || `${protocol}//${hostname}:8001`;
+    const backendURL = `${protocol}//${hostname}:8001`;
     config = {
       environment: 'production',
       backendURL: backendURL,
-      apiURL: `${backendURL}/api`
+      apiURL: `${backendURL}/api`,
+      fallbacks: [
+        `${protocol}//${hostname}`,
+        `${protocol}//${hostname}:3001`,
+        'http://localhost:8001' // Last resort
+      ]
     };
+    console.log(`🚀 Production Mode: ${backendURL}`);
   }
   
-  console.log(`🌍 Environment detected: ${config.environment}`);
+  console.log(`✅ Environment: ${config.environment.toUpperCase()}`);
   console.log(`🔗 Backend URL: ${config.backendURL}`);
   console.log(`🚀 API URL: ${config.apiURL}`);
+  console.log(`🔄 Fallbacks: ${config.fallbacks.join(', ')}`);
   
   return config;
 };

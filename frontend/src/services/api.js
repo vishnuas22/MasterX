@@ -2,14 +2,15 @@ import axios from 'axios';
 import { getEnvironmentConfig } from '../config/environment';
 import { connectionManager } from '../utils/connectionManager';
 
-// Get environment-appropriate configuration
+// Get initial environment configuration
 const envConfig = getEnvironmentConfig();
 let BACKEND_URL = envConfig.backendURL;
 let API = envConfig.apiURL;
 
-console.log('🚀 MasterX API Service initialized');
-console.log('🔗 Backend URL:', BACKEND_URL);
-console.log('🌍 Environment:', envConfig.environment);
+console.log('🚀 MasterX API Service Initialized');
+console.log(`🌍 Environment: ${envConfig.environment.toUpperCase()}`);
+console.log(`🔗 Primary Backend URL: ${BACKEND_URL}`);
+console.log(`🚀 API Endpoint: ${API}`);
 
 // Configure axios defaults
 axios.defaults.timeout = 30000; // 30 seconds
@@ -17,6 +18,8 @@ axios.defaults.timeout = 30000; // 30 seconds
 class ApiService {
   constructor() {
     this.isConnectionTested = false;
+    this.connectionRetries = 0;
+    this.maxRetries = 3;
     this.axiosInstance = this.createAxiosInstance();
   }
 
@@ -28,27 +31,33 @@ class ApiService {
       },
     });
 
-    // Add request interceptor for dynamic URL resolution
+    // Request interceptor - Test connection and update URLs if needed
     instance.interceptors.request.use(
       async (config) => {
-        // Test connection and update URL if needed
+        // Test connection on first request or after errors
         if (!this.isConnectionTested) {
           try {
+            console.log('🔍 Testing backend connection...');
             const workingURL = await connectionManager.findWorkingURL();
+            
+            // Update URLs if different from initial configuration
             if (workingURL !== BACKEND_URL) {
               BACKEND_URL = workingURL;
               API = `${workingURL}/api`;
               config.baseURL = API;
-              console.log('🔄 Updated API URL to:', API);
+              console.log(`🔄 Updated API endpoint to: ${API}`);
             }
+            
             this.isConnectionTested = true;
+            this.connectionRetries = 0;
+            console.log('✅ Backend connection verified');
+            
           } catch (error) {
-            console.error('❌ Connection test failed:', error.message);
+            console.error('❌ Backend connection failed:', error.message);
             // Continue with original URL as fallback
           }
         }
         
-        console.log(`API Request: ${config.method?.toUpperCase()} ${config.url}`);
         return config;
       },
       (error) => {
@@ -56,37 +65,97 @@ class ApiService {
       }
     );
 
-    // Add response interceptor for error handling and connection recovery
+    // Response interceptor - Handle errors and connection recovery
     instance.interceptors.response.use(
       (response) => {
+        // Reset connection retries on successful response
+        this.connectionRetries = 0;
         return response;
       },
       async (error) => {
-        console.error('API Error:', error.response?.data || error.message);
+        console.error('❌ API Request Failed:', error.response?.data || error.message);
         
-        // If we get connection errors, try to find a working URL
-        if (error.code === 'ECONNABORTED' || error.code === 'NETWORK_ERROR' || 
-            (error.response && error.response.status >= 500)) {
-          console.log('🔄 Connection error detected, attempting to find working backend...');
-          connectionManager.resetConnection();
-          this.isConnectionTested = false;
+        // Handle connection errors with retry logic
+        if (this.shouldRetryConnection(error)) {
+          this.connectionRetries++;
+          
+          if (this.connectionRetries <= this.maxRetries) {
+            console.log(`🔄 Connection error detected (retry ${this.connectionRetries}/${this.maxRetries})`);
+            
+            // Reset connection and try to find working URL
+            connectionManager.resetConnection();
+            this.isConnectionTested = false;
+            
+            // Wait a bit before retrying
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // Retry the original request if it's a simple GET
+            if (error.config && error.config.method?.toLowerCase() === 'get') {
+              console.log('🔄 Retrying request...');
+              return this.axiosInstance.request(error.config);
+            }
+          } else {
+            console.error('❌ Max connection retries exceeded');
+          }
         }
         
-        if (error.response?.status === 404) {
-          throw new Error('Resource not found');
-        } else if (error.response?.status === 500) {
-          throw new Error('Server error. Please try again later.');
-        } else if (error.code === 'ECONNABORTED') {
-          throw new Error('Request timeout. Please check your connection.');
-        } else if (error.code === 'NETWORK_ERROR' || !error.response) {
-          throw new Error('Unable to connect to MasterX AI Mentor System. Please check your internet connection.');
-        }
-        
-        throw new Error(error.response?.data?.detail || error.message || 'An error occurred');
+        // Transform error messages for better UX
+        throw this.transformError(error);
       }
     );
 
     return instance;
+  }
+
+  shouldRetryConnection(error) {
+    return (
+      error.code === 'ECONNABORTED' ||
+      error.code === 'NETWORK_ERROR' ||
+      error.code === 'ERR_NETWORK' ||
+      !error.response ||
+      (error.response && error.response.status >= 500)
+    );
+  }
+
+  transformError(error) {
+    if (error.response?.status === 404) {
+      return new Error('Resource not found');
+    } else if (error.response?.status === 500) {
+      return new Error('Server error. Please try again later.');
+    } else if (error.code === 'ECONNABORTED') {
+      return new Error('Request timeout. Please check your connection.');
+    } else if (error.code === 'NETWORK_ERROR' || error.code === 'ERR_NETWORK' || !error.response) {
+      return new Error('Unable to connect to MasterX AI Mentor System. Please check your internet connection.');
+    }
+    
+    return new Error(error.response?.data?.detail || error.message || 'An error occurred');
+  }
+
+  // Connection utility methods
+  async testConnection() {
+    try {
+      const response = await this.axiosInstance.get('/health');
+      return response.data;
+    } catch (error) {
+      throw new Error('Unable to connect to MasterX AI Mentor System');
+    }
+  }
+
+  async forceConnectionRefresh() {
+    console.log('🔄 Forcing connection refresh...');
+    connectionManager.resetConnection();
+    this.isConnectionTested = false;
+    this.connectionRetries = 0;
+    return this.testConnection();
+  }
+
+  getConnectionStatus() {
+    return {
+      ...connectionManager.getConnectionStatus(),
+      apiRetries: this.connectionRetries,
+      maxRetries: this.maxRetries,
+      connectionTested: this.isConnectionTested
+    };
   }
 
   // Health check
@@ -174,16 +243,6 @@ class ApiService {
     const params = subject ? { subject } : {};
     const response = await this.axiosInstance.get(`/users/${userId}/progress`, { params });
     return response.data;
-  }
-
-  // Utility methods
-  async testConnection() {
-    try {
-      const response = await this.axiosInstance.get('/');
-      return response.data;
-    } catch (error) {
-      throw new Error('Unable to connect to MasterX AI Mentor System');
-    }
   }
 
   // ================================
@@ -325,6 +384,10 @@ class ApiService {
 
 // Create and export API instance
 export const api = new ApiService();
+
+// Export additional utilities
+export const getConnectionHealth = () => api.getConnectionStatus();
+export const refreshConnection = () => api.forceConnectionRefresh();
 
 // Also export the axios instance for custom requests
 export const axiosInstance = axios.create({

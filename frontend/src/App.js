@@ -10,6 +10,7 @@ import { LoadingSpinner } from "./components/LoadingSpinner";
 import LearningPsychologyDashboard from "./components/LearningPsychologyDashboard";
 import MetacognitiveTraining from "./components/MetacognitiveTraining";
 import MemoryPalaceBuilder from "./components/MemoryPalaceBuilder";
+import ConnectionStatus from "./components/ConnectionStatus";
 import { api } from "./services/api";
 
 // Main App Content Component
@@ -149,6 +150,9 @@ function AppContent() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Connection Status Debug Component */}
+      <ConnectionStatus />
     </div>
   );
 }

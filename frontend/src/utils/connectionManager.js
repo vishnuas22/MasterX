@@ -1,103 +1,78 @@
-// Connection test utility for MasterX AI Mentor System
-// Ensures robust connection handling across all environments - TRULY PORTABLE!
+// MasterX AI Mentor System - Practical Connection Manager
+// Simplified and reliable connection testing with fallback support
+
+import { getEnvironmentConfig } from '../config/environment';
 
 export class ConnectionManager {
   constructor() {
-    this.possibleURLs = this.generatePossibleURLs();
+    this.envConfig = getEnvironmentConfig();
     this.workingURL = null;
     this.testInProgress = false;
+    this.maxRetries = 3;
+    this.retryDelay = 1000; // 1 second
   }
 
-  generatePossibleURLs() {
-    const hostname = window.location.hostname;
-    const protocol = window.location.protocol;
+  // Get URLs to test in priority order
+  getURLsToTest() {
+    const urls = [this.envConfig.backendURL];
     
-    const urls = [];
-    
-    console.log(`🔍 Generating possible URLs for hostname: ${hostname}`);
-    
-    // Priority order for URL testing - LOCAL DEVELOPMENT FIRST, then PREVIEW!
-    
-    // 1. Local development URLs (HIGHEST PRIORITY for localhost)
-    if (hostname === 'localhost' || hostname === '127.0.0.1' || 
-        hostname.startsWith('192.168.') || hostname.startsWith('10.') || 
-        hostname.endsWith('.local')) {
-      urls.push('http://localhost:8001');
-      urls.push('http://127.0.0.1:8001');
-      console.log('🏠 Local development detected - prioritizing localhost:8001');
-    } else {
-      // 2. Preview environment URLs (HIGHEST PRIORITY for non-localhost)
-      
-      // First try configured REACT_APP_BACKEND_URL if available
-      if (process.env.REACT_APP_BACKEND_URL && process.env.REACT_APP_BACKEND_URL.trim() !== '') {
-        urls.push(process.env.REACT_APP_BACKEND_URL);
-        console.log(`🌐 Preview URL from env: ${process.env.REACT_APP_BACKEND_URL}`);
-      }
-      
-      // Then try current hostname (most common case for preview environments)
-      urls.push(`${protocol}//${hostname}`);
-      console.log(`🌐 Auto-constructed preview URL: ${protocol}//${hostname}`);
-      
-      // For emergentagent.com environments, ensure we're testing the right pattern
-      if (hostname.includes('emergentagent.com')) {
-        console.log('🌐 Preview environment detected');
-        // Already added above, no need to duplicate
-      }
-      
-      // 4. Common port variations (lower priority)
-      urls.push(`${protocol}//${hostname}:8001`);
-      urls.push(`${protocol}//${hostname}:3001`);
-      urls.push(`${protocol}//${hostname}:5000`);
+    // Add fallbacks if they exist and are different from primary
+    if (this.envConfig.fallbacks) {
+      this.envConfig.fallbacks.forEach(fallback => {
+        if (fallback !== this.envConfig.backendURL && !urls.includes(fallback)) {
+          urls.push(fallback);
+        }
+      });
     }
     
-    // Remove duplicates and log final list
-    const uniqueUrls = [...new Set(urls)];
-    console.log('🔗 Generated URLs to test:', uniqueUrls);
-    return uniqueUrls;
+    console.log(`🔍 Connection test order:`, urls);
+    return urls;
   }
 
-  async testConnection(baseURL) {
+  async testConnection(baseURL, timeout = 5000) {
     try {
       console.log(`🧪 Testing connection to: ${baseURL}`);
       
-      // Create an AbortController with a timeout
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      const timeoutId = setTimeout(() => controller.abort(), timeout);
       
       const response = await fetch(`${baseURL}/api/health`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache'
         },
         signal: controller.signal
       });
       
-      // Clear the timeout
       clearTimeout(timeoutId);
       
       if (response.ok) {
         const data = await response.json();
         const isHealthy = data.status === 'healthy';
-        console.log(`${isHealthy ? '✅' : '❌'} Health check for ${baseURL}: ${data.status}`);
+        console.log(`${isHealthy ? '✅' : '❌'} ${baseURL}: ${data.status}`);
         return isHealthy;
+      } else {
+        console.log(`❌ ${baseURL}: HTTP ${response.status}`);
+        return false;
       }
-      console.log(`❌ Health check failed for ${baseURL}: ${response.status}`);
-      return false;
     } catch (error) {
-      console.log(`❌ Connection test failed for ${baseURL}:`, error.message);
+      const errorType = error.name === 'AbortError' ? 'Timeout' : error.message;
+      console.log(`❌ ${baseURL}: ${errorType}`);
       return false;
     }
   }
 
-  async findWorkingURL() {
-    if (this.workingURL && !this.testInProgress) {
-      console.log(`🔄 Using cached working URL: ${this.workingURL}`);
+  async findWorkingURL(forceRetest = false) {
+    // Return cached result if available and not forcing retest
+    if (this.workingURL && !forceRetest && !this.testInProgress) {
+      console.log(`🔄 Using cached connection: ${this.workingURL}`);
       return this.workingURL;
     }
 
+    // If test is already in progress, wait for it
     if (this.testInProgress) {
-      // Wait for ongoing test
-      console.log('⏳ Waiting for ongoing connection test...');
+      console.log('⏳ Connection test in progress, waiting...');
       while (this.testInProgress) {
         await new Promise(resolve => setTimeout(resolve, 100));
       }
@@ -105,41 +80,84 @@ export class ConnectionManager {
     }
 
     this.testInProgress = true;
-    console.log('🔍 Testing connections to find working backend...');
+    console.log('🔍 Starting connection discovery...');
     
-    for (const url of this.possibleURLs) {
-      console.log(`Testing: ${url}`);
-      const isWorking = await this.testConnection(url);
+    try {
+      const urlsToTest = this.getURLsToTest();
       
-      if (isWorking) {
-        this.workingURL = url;
-        console.log(`✅ Found working backend: ${url}`);
-        this.testInProgress = false;
-        return url;
+      // Test URLs in priority order
+      for (const url of urlsToTest) {
+        console.log(`Testing: ${url}`);
+        const isWorking = await this.testConnection(url);
+        
+        if (isWorking) {
+          this.workingURL = url;
+          console.log(`✅ Found working backend: ${url}`);
+          this.testInProgress = false;
+          return url;
+        }
+        
+        // Small delay between tests
+        await new Promise(resolve => setTimeout(resolve, 200));
       }
+      
+      // If no URL works, throw error
+      this.testInProgress = false;
+      const error = `Unable to connect to MasterX backend. Tested: ${urlsToTest.join(', ')}`;
+      console.error(`❌ ${error}`);
+      throw new Error(error);
+      
+    } catch (error) {
+      this.testInProgress = false;
+      throw error;
     }
-    
-    this.testInProgress = false;
-    console.error('❌ No working backend URL found from:', this.possibleURLs);
-    throw new Error('Unable to connect to MasterX AI Mentor System. Please check your internet connection.');
   }
 
-  async getAPIURL() {
-    const baseURL = await this.findWorkingURL();
+  async getAPIURL(forceRetest = false) {
+    const baseURL = await this.findWorkingURL(forceRetest);
     return `${baseURL}/api`;
   }
 
-  // Method to force re-test connections (useful for error recovery)
+  // Quick test of current working URL
+  async testCurrentConnection() {
+    if (!this.workingURL) {
+      return false;
+    }
+    return await this.testConnection(this.workingURL, 3000);
+  }
+
+  // Reset and force new connection test
   resetConnection() {
     console.log('🔄 Resetting connection manager...');
     this.workingURL = null;
     this.testInProgress = false;
-    // Regenerate URLs to pick up any environment changes
-    this.possibleURLs = this.generatePossibleURLs();
+    // Update environment config in case it changed
+    this.envConfig = getEnvironmentConfig();
+  }
+
+  // Get current connection status
+  getConnectionStatus() {
+    return {
+      workingURL: this.workingURL,
+      environment: this.envConfig.environment,
+      configuredURL: this.envConfig.backendURL,
+      hasConnection: !!this.workingURL,
+      testInProgress: this.testInProgress
+    };
   }
 }
 
 // Create singleton instance
 export const connectionManager = new ConnectionManager();
+
+// Export a simple function for easy health checks
+export const testBackendHealth = async () => {
+  try {
+    const workingURL = await connectionManager.findWorkingURL();
+    return { success: true, url: workingURL, environment: connectionManager.envConfig.environment };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+};
 
 export default connectionManager;
