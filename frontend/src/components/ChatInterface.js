@@ -364,7 +364,7 @@ export function ChatInterface() {
               onScroll={handleScroll}
               className="flex-1 overflow-y-auto p-4 space-y-4 scroll-smooth"
               style={{ 
-                maxHeight: 'calc(100vh - 240px)', // Better height constraint
+                height: '100%',
                 scrollBehavior: 'smooth'
               }}
             >
@@ -405,7 +405,7 @@ export function ChatInterface() {
                       </div>
                     </div>
                     <div className="flex-1">
-                      <GlassCard className="p-4">
+                      <GlassCard className="p-4" variant="premium">
                         {state.streamingMessage ? (
                           <div className="prose prose-invert max-w-none">
                             <ReactMarkdown>{state.streamingMessage}</ReactMarkdown>

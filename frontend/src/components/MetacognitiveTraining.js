@@ -56,20 +56,19 @@ const MetacognitiveTraining = () => {
 
     setLoading(true);
     try {
-      const response = await api.post('/learning-psychology/metacognitive/start', {
+      const sessionData = {
         strategy: selectedStrategy,
         topic: topic,
         level: level
-      }, {
-        params: { user_id: state.user.id }
-      });
+      };
 
-      setCurrentSession(response.data);
+      const response = await api.startMetacognitiveSession(state.user.id, sessionData);
+      setCurrentSession(response);
       setSessionStep(1);
       setSessionHistory([]);
     } catch (error) {
       console.error('Error starting session:', error);
-      alert('Failed to start metacognitive session');
+      alert('Failed to start metacognitive session: ' + (error.message || 'Unknown error'));
     } finally {
       setLoading(false);
     }
@@ -80,9 +79,11 @@ const MetacognitiveTraining = () => {
 
     setLoading(true);
     try {
-      const response = await api.post(`/learning-psychology/metacognitive/${currentSession.session_id}/respond`, {
+      const responseData = {
         user_response: userResponse
-      });
+      };
+
+      const response = await api.respondToMetacognitiveSession(currentSession.session_id, responseData);
 
       // Add to history
       setSessionHistory(prev => [...prev, {
@@ -91,8 +92,8 @@ const MetacognitiveTraining = () => {
         timestamp: new Date()
       }, {
         type: 'ai',
-        content: response.data.feedback,
-        analysis: response.data.analysis,
+        content: response.feedback || response.next_prompt || 'Session completed!',
+        analysis: response.analysis,
         timestamp: new Date()
       }]);
 
@@ -100,7 +101,7 @@ const MetacognitiveTraining = () => {
       setSessionStep(prev => prev + 1);
     } catch (error) {
       console.error('Error submitting response:', error);
-      alert('Failed to submit response');
+      alert('Failed to submit response: ' + (error.message || 'Unknown error'));
     } finally {
       setLoading(false);
     }

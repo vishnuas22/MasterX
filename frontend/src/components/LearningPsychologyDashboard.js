@@ -7,7 +7,7 @@ import { api } from '../services/api';
 import { useApp } from '../context/AppContext';
 
 const LearningPsychologyDashboard = () => {
-  const { state } = useApp();
+  const { state, actions } = useApp();
   const [activeFeature, setActiveFeature] = useState(null);
   const [features, setFeatures] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -20,8 +20,8 @@ const LearningPsychologyDashboard = () => {
 
   const loadFeatures = async () => {
     try {
-      const response = await api.get('/learning-psychology/features');
-      setFeatures(response.data);
+      const response = await api.getLearningPsychologyFeatures();
+      setFeatures(response);
     } catch (error) {
       console.error('Error loading features:', error);
       // Set fallback features if API fails
@@ -44,8 +44,8 @@ const LearningPsychologyDashboard = () => {
     if (!state.user) return;
     
     try {
-      const response = await api.get(`/learning-psychology/progress/${state.user.id}`);
-      setUserProgress(response.data);
+      const response = await api.getUserLearningProgress(state.user.id);
+      setUserProgress(response);
     } catch (error) {
       console.error('Error loading progress:', error);
       // Set fallback progress data
@@ -55,6 +55,25 @@ const LearningPsychologyDashboard = () => {
         elaborative_questions_answered: 0,
         transfer_scenarios_completed: 0
       });
+    }
+  };
+
+  const handleStartFeature = (featureId) => {
+    switch (featureId) {
+      case 'metacognitive':
+        actions.setActiveView('metacognitive-training');
+        break;
+      case 'memory_palace':
+        actions.setActiveView('memory-palace');
+        break;
+      case 'elaborative':
+        actions.setActiveView('elaborative-questions');
+        break;
+      case 'transfer':
+        actions.setActiveView('transfer-learning');
+        break;
+      default:
+        console.log('Unknown feature:', featureId);
     }
   };
 
@@ -181,6 +200,7 @@ const LearningPsychologyDashboard = () => {
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
+                  onClick={() => handleStartFeature(feature.id)}
                   className={`px-6 py-2 rounded-lg bg-gradient-to-r ${feature.gradient} text-white font-medium flex items-center space-x-2 hover:shadow-lg transition-all duration-300`}
                 >
                   <Play className="w-4 h-4" />

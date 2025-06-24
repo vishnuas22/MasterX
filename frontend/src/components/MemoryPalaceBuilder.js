@@ -38,8 +38,8 @@ const MemoryPalaceBuilder = () => {
     
     setLoading(true);
     try {
-      const response = await api.get(`/learning-psychology/memory-palace/user/${state.user.id}`);
-      setUserPalaces(response.data.palaces || []);
+      const response = await api.getUserMemoryPalaces(state.user.id);
+      setUserPalaces(response.palaces || []);
     } catch (error) {
       console.error('Error loading palaces:', error);
     } finally {
@@ -77,16 +77,15 @@ const MemoryPalaceBuilder = () => {
 
     setLoading(true);
     try {
-      const response = await api.post('/learning-psychology/memory-palace/create', {
+      const palaceData = {
         name: palaceName,
         palace_type: palaceType,
         topic: topic,
         information_items: validItems
-      }, {
-        params: { user_id: state.user.id }
-      });
+      };
 
-      setCurrentPalace(response.data);
+      const response = await api.createMemoryPalace(state.user.id, palaceData);
+      setCurrentPalace(response);
       setShowBuilder(false);
       loadUserPalaces();
       
@@ -96,7 +95,7 @@ const MemoryPalaceBuilder = () => {
       setInformationItems(['']);
     } catch (error) {
       console.error('Error creating palace:', error);
-      alert('Failed to create memory palace');
+      alert('Failed to create memory palace: ' + (error.message || 'Unknown error'));
     } finally {
       setLoading(false);
     }

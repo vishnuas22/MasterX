@@ -23,6 +23,9 @@ export function GlassCard({
       before:bg-gradient-to-br before:from-white/10 before:to-transparent 
       before:opacity-50 before:pointer-events-none
       relative overflow-hidden
+      after:absolute after:inset-[1px] after:rounded-2xl
+      after:bg-gradient-to-br after:from-white/5 after:to-transparent
+      after:opacity-60 after:pointer-events-none
     `,
     solid: `
       backdrop-blur-2xl bg-white/10 
@@ -33,16 +36,28 @@ export function GlassCard({
       backdrop-blur-lg bg-white/[0.02] 
       border border-white/5 
       rounded-xl shadow-lg 
+    `,
+    glow: `
+      backdrop-blur-2xl bg-gradient-to-br from-white/15 to-white/5
+      border border-white/30 
+      rounded-2xl shadow-2xl
+      shadow-[0_0_50px_rgba(255,255,255,0.1)]
+      before:absolute before:inset-0 before:rounded-2xl 
+      before:bg-gradient-to-br before:from-white/20 before:to-transparent 
+      before:opacity-40 before:pointer-events-none
+      relative overflow-hidden
     `
   };
 
   const baseClasses = variants[variant] || variants.default;
 
   const hoverClasses = hover ? `
-    hover:bg-white/10 hover:border-white/30 
-    hover:shadow-[0_20px_40px_rgba(0,0,0,0.3)] 
+    hover:bg-white/15 hover:border-white/40 
+    hover:shadow-[0_25px_50px_rgba(0,0,0,0.4)] 
     hover:scale-[1.02] 
+    hover:shadow-[0_0_60px_rgba(255,255,255,0.15)]
     transition-all duration-500 ease-out
+    hover:before:opacity-70
   ` : '';
 
   const Card = animate ? motion.div : 'div';

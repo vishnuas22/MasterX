@@ -11,7 +11,9 @@ import {
   ChevronRight,
   Sparkles,
   Target,
-  Brain
+  Brain,
+  HelpCircle,
+  Shuffle
 } from 'lucide-react';
 import { GlassCard, GlassButton } from './GlassCard';
 import { useApp } from '../context/AppContext';
@@ -100,7 +102,7 @@ export function Sidebar({ isCollapsed, onToggle }) {
   };
 
   return (
-    <div className={`relative transition-all duration-300 ${isCollapsed ? 'w-16' : 'w-80'}`}>
+    <div className={`relative transition-all duration-300 ${isCollapsed ? 'w-16' : 'w-80'} h-full flex flex-col`}>
       {/* Toggle Button */}
       <button
         onClick={onToggle}
@@ -109,10 +111,11 @@ export function Sidebar({ isCollapsed, onToggle }) {
         {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
       </button>
 
-      <div className="h-full border-r border-white/10 bg-black/20 backdrop-blur-xl">
-        <div className="p-4 h-full flex flex-col">
+      <div className="h-full border-r border-white/10 bg-black/20 backdrop-blur-xl flex flex-col">
+        {/* TOP SECTION */}
+        <div className="p-4 flex-shrink-0">
           {/* Logo/Brand */}
-          <div className="flex items-center space-x-3 mb-8">
+          <div className="flex items-center space-x-3 mb-6">
             <div className="p-2 rounded-xl bg-gradient-to-r from-blue-500 to-purple-500">
               <Brain className="h-6 w-6 text-white" />
             </div>
@@ -138,7 +141,7 @@ export function Sidebar({ isCollapsed, onToggle }) {
               disabled={!state.user}
             >
               <Plus className="h-4 w-4" />
-              {!isCollapsed && <span className="ml-2">New Session</span>}
+              {!isCollapsed && <span className="ml-2">New Chat</span>}
             </GlassButton>
           </div>
 

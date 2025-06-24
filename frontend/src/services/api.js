@@ -266,6 +266,61 @@ class ApiService {
     const response = await this.axiosInstance.post(`/live-sessions/${sessionId}/end`);
     return response.data;
   }
+
+  // Learning Psychology Features
+  async getLearningPsychologyFeatures() {
+    const response = await this.axiosInstance.get('/learning-psychology/features');
+    return response.data;
+  }
+
+  async getUserLearningProgress(userId) {
+    const response = await this.axiosInstance.get(`/learning-psychology/progress/${userId}`);
+    return response.data;
+  }
+
+  // Metacognitive Training
+  async startMetacognitiveSession(userId, sessionData) {
+    const response = await this.axiosInstance.post(`/learning-psychology/metacognitive/start?user_id=${userId}`, sessionData);
+    return response.data;
+  }
+
+  async respondToMetacognitiveSession(sessionId, responseData) {
+    const response = await this.axiosInstance.post(`/learning-psychology/metacognitive/${sessionId}/respond`, responseData);
+    return response.data;
+  }
+
+  // Memory Palace
+  async createMemoryPalace(userId, palaceData) {
+    const response = await this.axiosInstance.post(`/learning-psychology/memory-palace/create?user_id=${userId}`, palaceData);
+    return response.data;
+  }
+
+  async practiceMemoryPalace(palaceId, practiceType = 'recall') {
+    const response = await this.axiosInstance.post(`/learning-psychology/memory-palace/${palaceId}/practice?practice_type=${practiceType}`);
+    return response.data;
+  }
+
+  async getUserMemoryPalaces(userId) {
+    const response = await this.axiosInstance.get(`/learning-psychology/memory-palace/user/${userId}`);
+    return response.data;
+  }
+
+  // Elaborative Questions
+  async generateElaborativeQuestions(questionData) {
+    const response = await this.axiosInstance.post('/learning-psychology/elaborative-questions/generate', questionData);
+    return response.data;
+  }
+
+  async evaluateElaborativeResponse(questionId, responseData) {
+    const response = await this.axiosInstance.post(`/learning-psychology/elaborative-questions/${questionId}/evaluate`, responseData);
+    return response.data;
+  }
+
+  // Transfer Learning
+  async createTransferScenario(scenarioData) {
+    const response = await this.axiosInstance.post('/learning-psychology/transfer-learning/create-scenario', scenarioData);
+    return response.data;
+  }
 }
 
 // Create and export API instance
