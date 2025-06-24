@@ -4,7 +4,7 @@ Testing backend at: http://localhost:8001/api
 
 Detected Backend URL: http://localhost:8001
 ✅ API accessible at http://localhost:8001/api/health
-   Response: {'status': 'healthy', 'database': 'healthy', 'ai_service': 'healthy', 'timestamp': '2025-06-22T08:52:35.660423'}
+   Response: {'status': 'healthy', 'database': 'healthy', 'ai_service': 'healthy', 'timestamp': '2025-06-24T11:30:36.836861'}
 ✅ MongoDB connection successful
 ✅ Groq API integration successful
 ✅ CORS headers present in response
@@ -16,40 +16,20 @@ Detected Backend URL: http://localhost:8001
 ========== MASTERX AI MENTOR SYSTEM BACKEND TESTS ==========
 
 ✅ PASSED - Test Root Endpoint (0.00s)
-✅ PASSED - Test Health Endpoint (0.00s)
+✅ PASSED - Test Health Endpoint (0.01s)
 ✅ PASSED - Test Cors Configuration (0.01s)
 ✅ PASSED - Test Create User (0.01s)
 ✅ PASSED - Test Get User By Email (0.01s)
-✅ PASSED - Test Create Session (0.05s)
+✅ PASSED - Test Create Session (0.01s)
 ✅ PASSED - Test Get Session (0.01s)
 ✅ PASSED - Test Get User Sessions (0.01s)
-✅ PASSED - Test Basic Chat (4.12s)
-✅ PASSED - Test Premium Chat (6.91s)
-✅ PASSED - Test Premium Context Chat (54.67s)
-✅ PASSED - Test Available Models (0.00s)
-✅ PASSED - Test Learning Psychology Features (0.00s)
+✅ PASSED - Test Basic Chat (6.23s)
+✅ PASSED - Test Premium Chat (23.96s)
+✅ PASSED - Test Premium Context Chat (44.24s)
+✅ PASSED - Test Available Models (0.01s)
+✅ PASSED - Test Learning Psychology Features (0.01s)
 ✅ PASSED - Test Gamification Achievements (0.01s)
-✅ PASSED - Test Exercise Generation (4.78s)
-✅ PASSED - Test Learning Path Generation (16.78s)
+✅ PASSED - Test Exercise Generation (6.48s)
+✅ PASSED - Test Learning Path Generation (13.70s)
 
 Testing Streaming Chat (async)...
-✅ PASSED - Streaming Chat (22.63s)
-   Received 863 chunks, completion signal: True
-
-Testing Premium Streaming Chat (async)...
-✅ PASSED - Premium Streaming Chat (75.64s)
-   Received 2000 chunks, completion signal: True
-
-Testing Premium Context-Aware Streaming Chat (async)...
-✅ PASSED - Premium Context-Aware Streaming Chat (22.58s)
-   Received 2000 chunks, completion signal: True
-   Context data received: True
-✅ PASSED - Test End Session (0.01s)
-
-========== TEST SUMMARY ==========
-
-Total Tests: 20
-Passed: 20 (100.0%)
-Failed: 0 (0.0%)
-
-All tests completed. See results above for details.

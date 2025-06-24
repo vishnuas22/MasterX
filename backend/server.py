@@ -34,6 +34,9 @@ from advanced_streaming_service import advanced_streaming_service
 from advanced_context_service import advanced_context_service
 from live_learning_service import live_learning_service, SessionType
 from learning_psychology_service import learning_psychology_service
+from personalization_engine import personalization_engine, LearningDNA, AdaptiveContentParameters, MoodBasedAdaptation
+from adaptive_ai_service import adaptive_ai_service
+from personal_learning_assistant import personal_assistant, LearningGoal, LearningMemory, PersonalInsight, GoalType, GoalStatus, MemoryType
 
 ROOT_DIR = backend_dir
 load_dotenv(ROOT_DIR / '.env')
@@ -1512,6 +1515,416 @@ async def premium_context_aware_chat(request: MentorRequest):
     except Exception as e:
         logger.error(f"Error in premium context chat: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to process premium context chat")
+
+# ================================
+# ADVANCED PERSONALIZATION ENDPOINTS
+# ================================
+
+@api_router.post("/chat/adaptive")
+async def adaptive_personalized_chat(request: MentorRequest):
+    """Highly personalized chat using learning DNA and mood analysis"""
+    try:
+        # Get session info
+        session = await db_service.get_session(request.session_id)
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+        
+        # Save user message first
+        await db_service.save_message(MessageCreate(
+            session_id=request.session_id,
+            message=request.user_message,
+            sender="user"
+        ))
+        
+        # Get personalized response using adaptive AI service
+        mentor_response = await adaptive_ai_service.get_personalized_response(
+            user_message=request.user_message,
+            session=session,
+            context=request.context,
+            stream=False
+        )
+        
+        # Save mentor response
+        await db_service.save_message(MessageCreate(
+            session_id=request.session_id,
+            message=mentor_response.response,
+            sender="mentor",
+            message_type=mentor_response.response_type,
+            metadata=mentor_response.metadata
+        ))
+        
+        # Update goal progress if relevant
+        if request.context and 'goal_id' in request.context:
+            try:
+                await personal_assistant.update_goal_progress(
+                    request.context['goal_id'],
+                    5.0,  # Small progress increment
+                    {
+                        'session_id': request.session_id,
+                        'session_duration_minutes': 15  # Estimate
+                    }
+                )
+            except Exception as e:
+                logger.warning(f"Could not update goal progress: {str(e)}")
+        
+        return mentor_response
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in adaptive chat: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to process adaptive chat")
+
+@api_router.post("/chat/adaptive/stream")
+async def adaptive_personalized_chat_stream(request: MentorRequest):
+    """Streaming personalized chat with adaptive pacing"""
+    try:
+        session = await db_service.get_session(request.session_id)
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+        
+        # Save user message
+        await db_service.save_message(MessageCreate(
+            session_id=request.session_id,
+            message=request.user_message,
+            sender="user"
+        ))
+        
+        async def generate_adaptive_stream():
+            try:
+                # Get streaming response from adaptive AI
+                stream_response = await adaptive_ai_service.get_personalized_response(
+                    user_message=request.user_message,
+                    session=session,
+                    context=request.context,
+                    stream=True
+                )
+                
+                full_response = ""
+                
+                async for chunk in stream_response:
+                    if hasattr(chunk, 'choices') and chunk.choices and hasattr(chunk.choices[0].delta, 'content') and chunk.choices[0].delta.content:
+                        content = chunk.choices[0].delta.content
+                        full_response += content
+                        
+                        # Send chunk with personalization metadata
+                        yield f"data: {json.dumps({'content': content, 'type': 'chunk', 'personalized': True})}\n\n"
+                
+                # Save complete response
+                if full_response:
+                    await db_service.save_message(MessageCreate(
+                        session_id=request.session_id,
+                        message=full_response,
+                        sender="mentor",
+                        message_type="adaptive_personalized",
+                        metadata={"personalization": True, "adaptive_features": True}
+                    ))
+                
+                # Send completion signal
+                yield f"data: {json.dumps({'type': 'complete', 'personalized': True})}\n\n"
+                
+            except Exception as e:
+                logger.error(f"Error in adaptive streaming: {str(e)}")
+                yield f"data: {json.dumps({'type': 'error', 'message': 'Sorry, I encountered an error. Please try again.'})}\n\n"
+        
+        return StreamingResponse(
+            generate_adaptive_stream(),
+            media_type="text/stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "Content-Type": "text/stream"
+            }
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error setting up adaptive stream: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to setup adaptive streaming")
+
+@api_router.get("/users/{user_id}/learning-dna")
+async def get_learning_dna(user_id: str):
+    """Get user's learning DNA profile"""
+    try:
+        learning_dna = await personalization_engine.analyze_learning_dna(user_id)
+        return {
+            "learning_dna": learning_dna.to_dict(),
+            "analysis_timestamp": datetime.utcnow().isoformat(),
+            "confidence_score": learning_dna.confidence_score
+        }
+    except Exception as e:
+        logger.error(f"Error getting learning DNA: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get learning DNA")
+
+@api_router.get("/users/{user_id}/adaptive-parameters")
+async def get_adaptive_parameters(user_id: str, context: Optional[str] = None):
+    """Get adaptive content parameters for user"""
+    try:
+        context_dict = json.loads(context) if context else {}
+        parameters = await personalization_engine.get_adaptive_content_parameters(user_id, context_dict)
+        return {
+            "adaptive_parameters": parameters.to_dict(),
+            "generated_at": datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Error getting adaptive parameters: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get adaptive parameters")
+
+@api_router.post("/users/{user_id}/mood-analysis")
+async def analyze_user_mood(user_id: str, request: dict):
+    """Analyze user mood and get adaptation recommendations"""
+    try:
+        session_id = request.get("session_id")
+        if session_id:
+            recent_messages = await db_service.get_recent_messages(session_id, limit=10)
+        else:
+            recent_messages = []
+        
+        context = request.get("context", {})
+        mood_adaptation = await personalization_engine.analyze_mood_and_adapt(
+            user_id, recent_messages, context
+        )
+        
+        return {
+            "mood_analysis": mood_adaptation.to_dict(),
+            "analysis_timestamp": datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Error analyzing mood: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to analyze mood")
+
+# ================================
+# PERSONAL LEARNING ASSISTANT ENDPOINTS
+# ================================
+
+@api_router.post("/users/{user_id}/goals")
+async def create_learning_goal(user_id: str, request: dict):
+    """Create a new personalized learning goal"""
+    try:
+        title = request.get("title")
+        description = request.get("description")
+        goal_type = request.get("goal_type", "skill_mastery")
+        target_date = None
+        
+        if request.get("target_date"):
+            target_date = datetime.fromisoformat(request["target_date"])
+        
+        skills_required = request.get("skills_required", [])
+        success_criteria = request.get("success_criteria", [])
+        
+        if not title or not description:
+            raise HTTPException(status_code=400, detail="Title and description are required")
+        
+        goal = await personal_assistant.create_learning_goal(
+            user_id=user_id,
+            title=title,
+            description=description,
+            goal_type=goal_type,
+            target_date=target_date,
+            skills_required=skills_required,
+            success_criteria=success_criteria
+        )
+        
+        return {
+            "goal": goal.to_dict(),
+            "message": "Learning goal created successfully with personalized plan"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error creating learning goal: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to create learning goal")
+
+@api_router.get("/users/{user_id}/goals")
+async def get_user_goals(user_id: str, status: Optional[str] = None):
+    """Get user's learning goals"""
+    try:
+        goal_status = GoalStatus(status) if status else None
+        goals = await personal_assistant.get_user_goals(user_id, goal_status)
+        
+        return {
+            "goals": [goal.to_dict() for goal in goals],
+            "total_count": len(goals),
+            "active_count": len([g for g in goals if g.status == GoalStatus.ACTIVE])
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting user goals: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get user goals")
+
+@api_router.post("/goals/{goal_id}/progress")
+async def update_goal_progress(goal_id: str, request: dict):
+    """Update goal progress"""
+    try:
+        progress_delta = request.get("progress_delta", 0.0)
+        session_context = request.get("session_context", {})
+        
+        goal = await personal_assistant.update_goal_progress(
+            goal_id=goal_id,
+            progress_delta=progress_delta,
+            session_context=session_context
+        )
+        
+        return {
+            "goal": goal.to_dict(),
+            "message": f"Progress updated: {progress_delta:.1f}% added"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error updating goal progress: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to update goal progress")
+
+@api_router.get("/users/{user_id}/recommendations")
+async def get_personalized_recommendations(user_id: str):
+    """Get personalized learning recommendations"""
+    try:
+        recommendations = await personal_assistant.get_personalized_recommendations(user_id)
+        
+        return {
+            "recommendations": recommendations,
+            "generated_at": datetime.utcnow().isoformat(),
+            "personalization_engine": "MasterX Advanced Personalization"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting recommendations: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get recommendations")
+
+@api_router.get("/users/{user_id}/insights")
+async def get_learning_insights(user_id: str):
+    """Get personal learning insights"""
+    try:
+        insights = await personal_assistant.get_learning_insights(user_id)
+        
+        return {
+            "insights": [insight.to_dict() for insight in insights],
+            "insights_count": len(insights),
+            "generated_at": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting insights: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get learning insights")
+
+@api_router.post("/users/{user_id}/memories")
+async def add_learning_memory(user_id: str, request: dict):
+    """Add a learning memory"""
+    try:
+        memory_type = MemoryType(request.get("memory_type", "insight"))
+        content = request.get("content")
+        context = request.get("context", {})
+        importance = request.get("importance", 0.5)
+        related_goals = request.get("related_goals", [])
+        related_concepts = request.get("related_concepts", [])
+        
+        if not content:
+            raise HTTPException(status_code=400, detail="Content is required")
+        
+        memory = await personal_assistant.add_learning_memory(
+            user_id=user_id,
+            memory_type=memory_type,
+            content=content,
+            context=context,
+            importance=importance,
+            related_goals=related_goals,
+            related_concepts=related_concepts
+        )
+        
+        return {
+            "memory": memory.to_dict(),
+            "message": "Learning memory added successfully"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error adding learning memory: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to add learning memory")
+
+@api_router.get("/users/{user_id}/memories")
+async def get_user_memories(user_id: str, limit: int = 50, memory_type: Optional[str] = None):
+    """Get user's learning memories"""
+    try:
+        memory_type_enum = MemoryType(memory_type) if memory_type else None
+        memories = await personal_assistant.get_user_memories(user_id, limit, memory_type_enum)
+        
+        return {
+            "memories": [memory.to_dict() for memory in memories],
+            "total_count": len(memories),
+            "limit": limit
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting user memories: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get user memories")
+
+@api_router.get("/personalization/features")
+async def get_personalization_features():
+    """Get available personalization features"""
+    try:
+        return {
+            "learning_dna_profiling": {
+                "description": "Deep analysis of learning patterns and preferences",
+                "features": [
+                    "Learning style detection",
+                    "Cognitive pattern analysis", 
+                    "Pace preference optimization",
+                    "Motivation style profiling",
+                    "Attention span tracking",
+                    "Performance pattern recognition"
+                ]
+            },
+            "adaptive_content_generation": {
+                "description": "AI creates content tailored to individual learners",
+                "features": [
+                    "Complexity level adaptation",
+                    "Explanation depth optimization",
+                    "Learning style-specific formatting",
+                    "Interactive element inclusion",
+                    "Pacing adjustment",
+                    "Reinforcement frequency tuning"
+                ]
+            },
+            "personal_learning_assistant": {
+                "description": "AI remembers preferences and tracks goals",
+                "features": [
+                    "Long-term memory system",
+                    "Goal creation and tracking",
+                    "Progress prediction",
+                    "Personalized recommendations",
+                    "Learning insights generation",
+                    "Adaptive milestone planning"
+                ]
+            },
+            "mood_based_adaptation": {
+                "description": "Content adapts to user's emotional state",
+                "features": [
+                    "Emotional state detection",
+                    "Energy level monitoring",
+                    "Stress indicator analysis",
+                    "Tone adaptation",
+                    "Pacing adjustment",
+                    "Break recommendations"
+                ]
+            },
+            "real_time_personalization": {
+                "description": "Live adaptation during conversations",
+                "features": [
+                    "Real-time mood analysis",
+                    "Dynamic difficulty adjustment",
+                    "Adaptive response pacing",
+                    "Context-aware interactions",
+                    "Personalized motivation triggers",
+                    "Learning blocker avoidance"
+                ]
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting personalization features: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get personalization features")
 
 @api_router.post("/chat/premium-context/stream")
 async def premium_context_aware_chat_stream(request: MentorRequest):

@@ -1,323 +1,242 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React from 'react';
+import { motion } from 'framer-motion';
 import { 
-  Plus, 
-  MessageSquare, 
+  MessageCircle, 
+  Brain, 
+  Users, 
+  TrendingUp, 
   Settings, 
-  User, 
-  BookOpen, 
-  TrendingUp,
   ChevronLeft,
   ChevronRight,
-  Sparkles,
+  User,
+  BookOpen,
   Target,
-  Brain,
-  HelpCircle,
-  Shuffle
+  Lightbulb,
+  Activity,
+  Award,
+  BarChart3,
+  Zap
 } from 'lucide-react';
-import { GlassCard, GlassButton } from './GlassCard';
 import { useApp } from '../context/AppContext';
 
 export function Sidebar({ isCollapsed, onToggle }) {
   const { state, actions } = useApp();
-  const [showNewSessionForm, setShowNewSessionForm] = useState(false);
 
-  const handleNewSession = async () => {
-    if (!state.user) return;
-    
-    try {
-      await actions.createSession({
-        user_id: state.user.id,
-        subject: "General Learning",
-        difficulty_level: "beginner"
-      });
-      setShowNewSessionForm(false);
-    } catch (error) {
-      console.error('Error creating session:', error);
+  const menuItems = [
+    {
+      id: 'chat',
+      label: 'AI Mentor Chat',
+      icon: MessageCircle,
+      description: 'Interactive learning conversations'
+    },
+    {
+      id: 'personalization',
+      label: 'Personalization Hub',
+      icon: User,
+      description: 'Your learning DNA & adaptive insights'
+    },
+    {
+      id: 'learning-psychology',
+      label: 'Learning Psychology',
+      icon: Brain,
+      description: 'Advanced cognitive techniques'
+    },
+    {
+      id: 'metacognitive-training',
+      label: 'Metacognitive Training',
+      icon: Lightbulb,
+      description: 'Think about thinking'
+    },
+    {
+      id: 'memory-palace',
+      label: 'Memory Palace',
+      icon: BookOpen,
+      description: 'Spatial memory techniques'
+    },
+    {
+      id: 'elaborative-questions',
+      label: 'Elaborative Questions',
+      icon: Target,
+      description: 'Deep questioning skills'
+    },
+    {
+      id: 'transfer-learning',
+      label: 'Transfer Learning',
+      icon: TrendingUp,
+      description: 'Knowledge application across domains'
     }
-  };
+  ];
 
-  const handleSessionSelect = async (session) => {
-    actions.setCurrentSession(session);
-    await actions.loadSessionMessages(session.id);
-  };
-
-  const handleNavigationClick = (action) => {
-    // Handle navigation based on the action
-    console.log(`Navigating to: ${action}`);
-    actions.setError(null); // Clear any errors
-    
-    switch (action) {
-      case 'learning-paths':
-        // Navigate to learning paths
-        break;
-      case 'learning-psychology':
-        // Navigate to learning psychology dashboard
-        actions.setActiveView('learning-psychology');
-        break;
-      case 'metacognitive-training':
-        actions.setActiveView('metacognitive-training');
-        break;
-      case 'memory-palace':
-        actions.setActiveView('memory-palace');
-        break;
-      case 'elaborative-questions':
-        actions.setActiveView('elaborative-questions');
-        break;
-      case 'transfer-learning':
-        actions.setActiveView('transfer-learning');
-        break;
-      case 'progress':
-        // Navigate to progress view
-        console.log('Opening Progress View');
-        break;
-      case 'goals':
-        // Navigate to goals
-        console.log('Opening Goals');
-        break;
-      case 'achievements':
-        // Navigate to achievements
-        console.log('Opening Achievements');
-        break;
-      default:
-        console.log(`Unknown action: ${action}`);
+  const bottomItems = [
+    {
+      id: 'analytics',
+      label: 'Analytics',
+      icon: BarChart3,
+      description: 'Learning progress insights'
+    },
+    {
+      id: 'achievements',
+      label: 'Achievements',
+      icon: Award,
+      description: 'Your learning milestones'
+    },
+    {
+      id: 'settings',
+      label: 'Settings',
+      icon: Settings,
+      description: 'Customize your experience'
     }
-  };
+  ];
 
-  const handleSettingsClick = () => {
-    console.log('Opening Settings');
-    // TODO: Implement settings modal or navigation
-  };
-
-  const handleLogout = () => {
-    console.log('Logging out');
-    // TODO: Implement logout functionality
-    if (window.confirm('Are you sure you want to logout?')) {
-      actions.setUser(null);
-      actions.setCurrentSession(null);
-      actions.setSessions([]);
-      actions.setMessages([]);
-      localStorage.removeItem('masterx_user');
-    }
+  const handleItemClick = (itemId) => {
+    actions.setActiveView(itemId);
   };
 
   return (
-    <div className={`relative transition-all duration-300 ${isCollapsed ? 'w-16' : 'w-80'} h-full flex flex-col`}>
+    <motion.div
+      initial={{ width: isCollapsed ? 80 : 280 }}
+      animate={{ width: isCollapsed ? 80 : 280 }}
+      transition={{ duration: 0.3, ease: "easeInOut" }}
+      className="bg-gray-900/80 backdrop-blur-xl border-r border-gray-800/50 flex flex-col relative"
+    >
       {/* Toggle Button */}
       <button
         onClick={onToggle}
-        className="absolute -right-3 top-6 z-10 p-1 rounded-full bg-gray-800 border border-white/20 text-gray-300 hover:text-white transition-colors"
+        className="absolute -right-3 top-6 w-6 h-6 bg-gray-800 border border-gray-700 rounded-full flex items-center justify-center text-gray-400 hover:text-white hover:bg-gray-700 transition-colors z-10"
       >
-        {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+        {isCollapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronLeft className="w-3 h-3" />}
       </button>
 
-      <div className="h-full border-r border-white/10 bg-black/20 backdrop-blur-xl flex flex-col">
-        {/* TOP SECTION */}
-        <div className="p-4 flex-shrink-0">
-          {/* Logo/Brand */}
-          <div className="flex items-center space-x-3 mb-6">
-            <div className="p-2 rounded-xl bg-gradient-to-r from-blue-500 to-purple-500">
-              <Brain className="h-6 w-6 text-white" />
-            </div>
-            {!isCollapsed && (
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="flex-1"
-              >
-                <h1 className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                  MasterX
-                </h1>
-                <p className="text-xs text-gray-400">AI Learning Mentor</p>
-              </motion.div>
-            )}
+      {/* Header */}
+      <div className="p-6 border-b border-gray-800/50">
+        <div className="flex items-center space-x-3">
+          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+            <Zap className="w-5 h-5 text-white" />
           </div>
-
-          {/* New Session Button */}
-          <div className="mb-6">
-            <GlassButton
-              onClick={handleNewSession}
-              className={`${isCollapsed ? 'w-12 h-12 p-0' : 'w-full'} justify-center`}
-              disabled={!state.user}
-            >
-              <Plus className="h-4 w-4" />
-              {!isCollapsed && <span className="ml-2">New Chat</span>}
-            </GlassButton>
-          </div>
-
-          {/* Sessions List */}
           {!isCollapsed && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="space-y-2 mb-6 flex-1 overflow-hidden"
-            >
-              <h3 className="text-sm font-medium text-gray-400 mb-3">Recent Sessions</h3>
-              <div className="max-h-64 overflow-y-auto space-y-2">
-                {state.sessions.map((session) => (
-                  <motion.button
-                    key={session.id}
-                    onClick={() => handleSessionSelect(session)}
-                    className={`w-full text-left p-3 rounded-xl transition-all duration-300 ${
-                      state.currentSession?.id === session.id
-                        ? 'bg-blue-500/20 border border-blue-400/30'
-                        : 'bg-white/5 border border-white/10 hover:bg-white/10'
-                    }`}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    <div className="flex items-center space-x-2">
-                      <MessageSquare className="h-4 w-4 text-gray-400" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-200 truncate">
-                          {session.subject || 'General Learning'}
-                        </p>
-                        <p className="text-xs text-gray-400 truncate">
-                          {session.difficulty_level} • {new Date(session.created_at).toLocaleDateString()}
-                        </p>
-                      </div>
-                    </div>
-                  </motion.button>
-                ))}
-              </div>
-            </motion.div>
-          )}
-
-          {/* Navigation Items */}
-          <div className="space-y-2 mb-6">
-            {[
-              { icon: BookOpen, label: 'Learning Paths', badge: null, action: 'learning-paths' },
-              { icon: TrendingUp, label: 'Progress', badge: '3', action: 'progress' },
-              { icon: Target, label: 'Goals', badge: null, action: 'goals' },
-              { icon: Sparkles, label: 'Achievements', badge: '2', action: 'achievements' },
-            ].map((item, index) => (
-              <motion.button
-                key={item.label}
-                onClick={() => handleNavigationClick(item.action)}
-                className={`${
-                  isCollapsed ? 'w-12 h-12 p-0' : 'w-full px-3 py-2'
-                } flex items-center justify-center rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all duration-300 text-gray-300 hover:text-white cursor-pointer relative z-10`}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.1 }}
-              >
-                <item.icon className="h-4 w-4" />
-                {!isCollapsed && <span className="ml-3 text-sm font-medium">{item.label}</span>}
-                {!isCollapsed && item.badge && (
-                  <span className="ml-auto bg-blue-500 text-white text-xs px-2 py-0.5 rounded-full">
-                    {item.badge}
-                  </span>
-                )}
-              </motion.button>
-            ))}
-          </div>
-
-          {/* Learning Psychology Section */}
-          {!isCollapsed && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="space-y-2 mb-6"
-            >
-              <div className="flex items-center space-x-2 mb-3">
-                <Brain className="h-4 w-4 text-purple-400" />
-                <h3 className="text-sm font-medium text-gray-400">Learning Psychology</h3>
-              </div>
-              {[
-                { icon: Brain, label: 'Dashboard', action: 'learning-psychology', color: 'from-purple-500 to-blue-600' },
-                { icon: Target, label: 'Metacognitive', action: 'metacognitive-training', color: 'from-purple-500 to-blue-600' },
-                { icon: BookOpen, label: 'Memory Palace', action: 'memory-palace', color: 'from-green-500 to-teal-600' },
-                { icon: MessageSquare, label: 'Deep Questions', action: 'elaborative-questions', color: 'from-orange-500 to-red-600' },
-                { icon: Sparkles, label: 'Transfer Learning', action: 'transfer-learning', color: 'from-cyan-500 to-blue-600' },
-              ].map((item, index) => (
-                <motion.button
-                  key={item.label}
-                  onClick={() => handleNavigationClick(item.action)}
-                  className="w-full flex items-center px-3 py-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-all duration-300 text-gray-300 hover:text-white cursor-pointer group"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.5 + index * 0.1 }}
-                >
-                  <div className={`w-6 h-6 rounded-md bg-gradient-to-r ${item.color} flex items-center justify-center mr-3 group-hover:scale-110 transition-transform`}>
-                    <item.icon className="h-3 w-3 text-white" />
-                  </div>
-                  <span className="text-sm font-medium">{item.label}</span>
-                </motion.button>
-              ))}
-            </motion.div>
-          )}
-
-          {/* Learning Psychology Collapsed Icons */}
-          {isCollapsed && (
-            <div className="space-y-2 mb-20">
-              {[
-                { icon: Brain, action: 'learning-psychology', color: 'from-purple-500 to-blue-600' },
-                { icon: Target, action: 'metacognitive-training', color: 'from-purple-500 to-blue-600' },
-                { icon: BookOpen, action: 'memory-palace', color: 'from-green-500 to-teal-600' },
-              ].map((item, index) => (
-                <motion.button
-                  key={item.action}
-                  onClick={() => handleNavigationClick(item.action)}
-                  className="w-12 h-12 p-0 flex items-center justify-center rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all duration-300 text-gray-300 hover:text-white cursor-pointer"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <div className={`w-6 h-6 rounded-md bg-gradient-to-r ${item.color} flex items-center justify-center`}>
-                    <item.icon className="h-3 w-3 text-white" />
-                  </div>
-                </motion.button>
-              ))}
+            <div>
+              <h1 className="text-lg font-bold text-white">MasterX</h1>
+              <p className="text-xs text-gray-400">AI Learning Mentor</p>
             </div>
           )}
         </div>
-
-        {/* User Profile */}
-        {!isCollapsed && state.user && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="absolute bottom-4 left-4 right-4 z-20"
-          >
-            <GlassCard className="p-3">
-              <div className="flex items-center space-x-3">
-                <div className="h-10 w-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center flex-shrink-0">
-                  <User className="h-5 w-5 text-white" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-200 truncate">
-                    {state.user.name}
-                  </p>
-                  <p className="text-xs text-gray-400 truncate">
-                    {state.user.email}
-                  </p>
-                </div>
-                <div className="flex space-x-1 flex-shrink-0">
-                  <button 
-                    onClick={handleSettingsClick}
-                    className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
-                    title="Settings"
-                  >
-                    <Settings className="h-4 w-4 text-gray-400 hover:text-white" />
-                  </button>
-                  <button 
-                    onClick={handleLogout}
-                    className="p-1.5 rounded-lg hover:bg-red-500/20 transition-colors"
-                    title="Logout"
-                  >
-                    <svg className="h-4 w-4 text-gray-400 hover:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </GlassCard>
-          </motion.div>
-        )}
       </div>
-    </div>
+
+      {/* User Info */}
+      {state.user && (
+        <div className="p-4 border-b border-gray-800/30">
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center">
+              <span className="text-white text-sm font-bold">
+                {state.user.name.charAt(0).toUpperCase()}
+              </span>
+            </div>
+            {!isCollapsed && (
+              <div className="min-w-0 flex-1">
+                <p className="text-white text-sm font-medium truncate">{state.user.name}</p>
+                <p className="text-gray-400 text-xs truncate">{state.user.email}</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Main Navigation */}
+      <nav className="flex-1 overflow-y-auto p-4">
+        <div className="space-y-2">
+          {menuItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = state.activeView === item.id;
+            
+            return (
+              <motion.button
+                key={item.id}
+                onClick={() => handleItemClick(item.id)}
+                className={`w-full flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 group ${
+                  isActive
+                    ? 'bg-blue-500/20 border border-blue-400/30 text-blue-300'
+                    : 'hover:bg-gray-800/50 text-gray-400 hover:text-gray-300'
+                }`}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <Icon className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-blue-400' : ''}`} />
+                {!isCollapsed && (
+                  <div className="text-left min-w-0 flex-1">
+                    <div className={`font-medium text-sm ${isActive ? 'text-blue-300' : ''}`}>
+                      {item.label}
+                    </div>
+                    <div className="text-xs text-gray-500 truncate group-hover:text-gray-400">
+                      {item.description}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Active indicator */}
+                {isActive && (
+                  <motion.div
+                    layoutId="activeIndicator"
+                    className="w-1 h-6 bg-blue-400 rounded-full"
+                    initial={false}
+                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                  />
+                )}
+              </motion.button>
+            );
+          })}
+        </div>
+      </nav>
+
+      {/* Bottom Navigation */}
+      <div className="p-4 border-t border-gray-800/30">
+        <div className="space-y-2">
+          {bottomItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = state.activeView === item.id;
+            
+            return (
+              <motion.button
+                key={item.id}
+                onClick={() => handleItemClick(item.id)}
+                className={`w-full flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 ${
+                  isActive
+                    ? 'bg-blue-500/20 border border-blue-400/30 text-blue-300'
+                    : 'hover:bg-gray-800/50 text-gray-400 hover:text-gray-300'
+                }`}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <Icon className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-blue-400' : ''}`} />
+                {!isCollapsed && (
+                  <div className="text-left min-w-0 flex-1">
+                    <div className={`font-medium text-sm ${isActive ? 'text-blue-300' : ''}`}>
+                      {item.label}
+                    </div>
+                    <div className="text-xs text-gray-500 truncate">
+                      {item.description}
+                    </div>
+                  </div>
+                )}
+              </motion.button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Premium Badge */}
+      {!isCollapsed && (
+        <div className="p-4">
+          <div className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-400/30 rounded-xl p-3">
+            <div className="flex items-center space-x-2 mb-2">
+              <Activity className="w-4 h-4 text-purple-400" />
+              <span className="text-purple-300 text-sm font-medium">Premium Features</span>
+            </div>
+            <p className="text-xs text-gray-400">
+              Advanced personalization and AI models active
+            </p>
+          </div>
+        </div>
+      )}
+    </motion.div>
   );
 }

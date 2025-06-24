@@ -10,6 +10,7 @@ import { LoadingSpinner } from "./components/LoadingSpinner";
 import LearningPsychologyDashboard from "./components/LearningPsychologyDashboard";
 import MetacognitiveTraining from "./components/MetacognitiveTraining";
 import MemoryPalaceBuilder from "./components/MemoryPalaceBuilder";
+import PersonalizationDashboard from "./components/PersonalizationDashboard";
 import ConnectionStatus from "./components/ConnectionStatus";
 import { api } from "./services/api";
 
@@ -101,6 +102,7 @@ function AppContent() {
         >
           {/* Render different components based on active view */}
           {state.activeView === 'chat' && <ChatInterface />}
+          {state.activeView === 'personalization' && <PersonalizationDashboard />}
           {state.activeView === 'learning-psychology' && <LearningPsychologyDashboard />}
           {state.activeView === 'metacognitive-training' && <MetacognitiveTraining />}
           {state.activeView === 'memory-palace' && <MemoryPalaceBuilder />}
@@ -117,6 +119,30 @@ function AppContent() {
               <div className="text-center">
                 <h2 className="text-2xl font-bold text-white mb-4">Transfer Learning</h2>
                 <p className="text-gray-400">Coming soon! Knowledge application across domains.</p>
+              </div>
+            </div>
+          )}
+          {state.activeView === 'analytics' && (
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-center">
+                <h2 className="text-2xl font-bold text-white mb-4">Analytics Dashboard</h2>
+                <p className="text-gray-400">Coming soon! Comprehensive learning analytics.</p>
+              </div>
+            </div>
+          )}
+          {state.activeView === 'achievements' && (
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-center">
+                <h2 className="text-2xl font-bold text-white mb-4">Achievements</h2>
+                <p className="text-gray-400">Coming soon! Your learning milestones and badges.</p>
+              </div>
+            </div>
+          )}
+          {state.activeView === 'settings' && (
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-center">
+                <h2 className="text-2xl font-bold text-white mb-4">Settings</h2>
+                <p className="text-gray-400">Coming soon! Customize your learning experience.</p>
               </div>
             </div>
           )}
