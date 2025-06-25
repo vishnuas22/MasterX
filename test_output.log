@@ -4,7 +4,7 @@ Testing backend at: http://localhost:8001/api
 
 Detected Backend URL: http://localhost:8001
 ✅ API accessible at http://localhost:8001/api/health
-   Response: {'status': 'healthy', 'database': 'healthy', 'ai_service': 'healthy', 'timestamp': '2025-06-24T11:30:36.836861'}
+   Response: {'status': 'healthy', 'database': 'healthy', 'ai_service': 'healthy', 'timestamp': '2025-06-24T19:40:51.130876'}
 ✅ MongoDB connection successful
 ✅ Groq API integration successful
 ✅ CORS headers present in response
@@ -16,20 +16,60 @@ Detected Backend URL: http://localhost:8001
 ========== MASTERX AI MENTOR SYSTEM BACKEND TESTS ==========
 
 ✅ PASSED - Test Root Endpoint (0.00s)
-✅ PASSED - Test Health Endpoint (0.01s)
-✅ PASSED - Test Cors Configuration (0.01s)
+✅ PASSED - Test Health Endpoint (0.00s)
+✅ PASSED - Test Cors Configuration (0.00s)
 ✅ PASSED - Test Create User (0.01s)
 ✅ PASSED - Test Get User By Email (0.01s)
 ✅ PASSED - Test Create Session (0.01s)
-✅ PASSED - Test Get Session (0.01s)
-✅ PASSED - Test Get User Sessions (0.01s)
-✅ PASSED - Test Basic Chat (6.23s)
-✅ PASSED - Test Premium Chat (23.96s)
-✅ PASSED - Test Premium Context Chat (44.24s)
-✅ PASSED - Test Available Models (0.01s)
-✅ PASSED - Test Learning Psychology Features (0.01s)
-✅ PASSED - Test Gamification Achievements (0.01s)
-✅ PASSED - Test Exercise Generation (6.48s)
-✅ PASSED - Test Learning Path Generation (13.70s)
+✅ PASSED - Test Get Session (0.00s)
+✅ PASSED - Test Get User Sessions (0.00s)
+✅ PASSED - Test Basic Chat (5.18s)
+✅ PASSED - Test Premium Chat (7.57s)
+✅ PASSED - Test Premium Context Chat (42.74s)
+✅ PASSED - Test Available Models (0.00s)
+✅ PASSED - Test Learning Psychology Features (0.00s)
+✅ PASSED - Test Gamification Achievements (0.00s)
+✅ PASSED - Test Exercise Generation (4.49s)
+✅ PASSED - Test Learning Path Generation (9.08s)
+
+----- Testing Personal Learning Assistant -----
+❌ FAILED - Test Create Learning Goal (0.01s)
+   Error: Response should contain goal ID
+❌ Learning goal creation failed, skipping related tests
+❌ FAILED - Test Add Learning Memory (0.00s)
+   Error: Response should contain memory ID
+❌ FAILED - Test Get User Memories (0.00s)
+   Error: Response should be a list of memories
+❌ FAILED - Test Get Personalized Recommendations (0.01s)
+   Error: Response should contain next actions
+❌ FAILED - Test Get Learning Insights (0.04s)
+   Error: Response should be a list of insights
+
+----- Testing Personalization Engine -----
+❌ FAILED - Test Personalization Engine Endpoints (0.00s)
+   Error: Response should contain learning style
+❌ FAILED - Test Personalization Features Endpoint (0.00s)
+   Error: Response should contain features
+✅ PASSED - Test Adaptive Ai Chat (0.10s)
 
 Testing Streaming Chat (async)...
+✅ PASSED - Streaming Chat (48.66s)
+   Received 1419 chunks, completion signal: True
+
+Testing Premium Streaming Chat (async)...
+❌ FAILED - Premium Streaming Chat (0.75s)
+   Error: [Errno 104] Connection reset by peer
+
+Testing Premium Context-Aware Streaming Chat (async)...
+❌ FAILED - Premium Context-Aware Streaming Chat (0.00s)
+   Error: Cannot connect to host localhost:8001 ssl:default [Connect call failed ('127.0.0.1', 8001)]
+❌ FAILED - Test End Session (0.00s)
+   Error: HTTPConnectionPool(host='localhost', port=8001): Max retries exceeded with url: /api/sessions/9a9c0908-9b92-4ab3-a38f-3ba397379ec2/end (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0xfd725a724e50>: Failed to establish a new connection: [Errno 111] Connection refused'))
+
+========== TEST SUMMARY ==========
+
+Total Tests: 20
+Passed: 18 (90.0%)
+Failed: 2 (10.0%)
+
+All tests completed. See results above for details.

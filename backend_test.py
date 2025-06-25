@@ -667,6 +667,249 @@ async def test_premium_context_streaming_chat(session_id):
         
         return False
 
+@run_test
+def test_create_learning_goal(user_id: str):
+    """Test creating a learning goal"""
+    goal_data = {
+        "title": "Master Python Programming",
+        "description": "Become proficient in Python programming language",
+        "goal_type": "skill_mastery",
+        "target_date": (datetime.now() + timedelta(days=90)).isoformat(),
+        "skills_required": ["Python syntax", "Data structures", "OOP concepts"],
+        "success_criteria": ["Complete 3 projects", "Pass assessment with 80%"]
+    }
+    
+    response = requests.post(f"{API_URL}/users/{user_id}/goals", json=goal_data)
+    response.raise_for_status()
+    data = response.json()
+    
+    assert "goal_id" in data, "Response should contain goal ID"
+    assert data["title"] == goal_data["title"], "Goal title should match"
+    assert data["user_id"] == user_id, "User ID should match"
+    assert data["status"] == "active", "Goal should be active"
+    
+    # Track result
+    test_results["total"] += 1
+    test_results["passed"] += 1
+    test_results["results"].append({"name": "Create Learning Goal", "passed": True})
+    
+    return data
+
+@run_test
+def test_get_user_goals(user_id: str):
+    """Test getting user's learning goals"""
+    response = requests.get(f"{API_URL}/users/{user_id}/goals")
+    response.raise_for_status()
+    data = response.json()
+    
+    assert isinstance(data, list), "Response should be a list of goals"
+    if data:
+        assert "goal_id" in data[0], "Goal should contain ID"
+        assert "user_id" in data[0], "Goal should contain user_id"
+        assert data[0]["user_id"] == user_id, "User ID should match"
+    
+    # Track result
+    test_results["total"] += 1
+    test_results["passed"] += 1
+    test_results["results"].append({"name": "Get User Goals", "passed": True})
+    
+    return data
+
+@run_test
+def test_update_goal_progress(goal_id: str):
+    """Test updating goal progress"""
+    progress_data = {
+        "progress_delta": 10.0,
+        "session_context": {
+            "session_duration_minutes": 30
+        }
+    }
+    
+    response = requests.put(f"{API_URL}/goals/{goal_id}/progress", json=progress_data)
+    response.raise_for_status()
+    data = response.json()
+    
+    assert "goal_id" in data, "Response should contain goal ID"
+    assert "progress_percentage" in data, "Response should contain progress percentage"
+    assert data["progress_percentage"] >= 10.0, "Progress should be updated"
+    
+    # Track result
+    test_results["total"] += 1
+    test_results["passed"] += 1
+    test_results["results"].append({"name": "Update Goal Progress", "passed": True})
+    
+    return data
+
+@run_test
+def test_add_learning_memory(user_id: str, goal_id: str = None):
+    """Test adding a learning memory"""
+    memory_data = {
+        "memory_type": "insight",
+        "content": "I realized that Python decorators are a powerful way to modify function behavior",
+        "context": {
+            "subject": "Python Programming",
+            "session_id": str(uuid.uuid4())
+        },
+        "importance": 0.8,
+        "related_goals": [goal_id] if goal_id else [],
+        "related_concepts": ["decorators", "metaprogramming"]
+    }
+    
+    response = requests.post(f"{API_URL}/users/{user_id}/memories", json=memory_data)
+    response.raise_for_status()
+    data = response.json()
+    
+    assert "memory_id" in data, "Response should contain memory ID"
+    assert data["user_id"] == user_id, "User ID should match"
+    assert data["content"] == memory_data["content"], "Memory content should match"
+    
+    # Track result
+    test_results["total"] += 1
+    test_results["passed"] += 1
+    test_results["results"].append({"name": "Add Learning Memory", "passed": True})
+    
+    return data
+
+@run_test
+def test_get_user_memories(user_id: str):
+    """Test getting user's learning memories"""
+    response = requests.get(f"{API_URL}/users/{user_id}/memories")
+    response.raise_for_status()
+    data = response.json()
+    
+    assert isinstance(data, list), "Response should be a list of memories"
+    if data:
+        assert "memory_id" in data[0], "Memory should contain ID"
+        assert "user_id" in data[0], "Memory should contain user_id"
+        assert data[0]["user_id"] == user_id, "User ID should match"
+    
+    # Track result
+    test_results["total"] += 1
+    test_results["passed"] += 1
+    test_results["results"].append({"name": "Get User Memories", "passed": True})
+    
+    return data
+
+@run_test
+def test_get_personalized_recommendations(user_id: str):
+    """Test getting personalized recommendations"""
+    response = requests.get(f"{API_URL}/users/{user_id}/recommendations")
+    response.raise_for_status()
+    data = response.json()
+    
+    assert "next_actions" in data, "Response should contain next actions"
+    assert "skill_gaps" in data, "Response should contain skill gaps"
+    assert "optimization_suggestions" in data, "Response should contain optimization suggestions"
+    
+    # Track result
+    test_results["total"] += 1
+    test_results["passed"] += 1
+    test_results["results"].append({"name": "Get Personalized Recommendations", "passed": True})
+    
+    return data
+
+@run_test
+def test_get_learning_insights(user_id: str):
+    """Test getting learning insights"""
+    response = requests.get(f"{API_URL}/users/{user_id}/insights")
+    response.raise_for_status()
+    data = response.json()
+    
+    assert isinstance(data, list), "Response should be a list of insights"
+    
+    # Track result
+    test_results["total"] += 1
+    test_results["passed"] += 1
+    test_results["results"].append({"name": "Get Learning Insights", "passed": True})
+    
+    return data
+
+@run_test
+def test_personalization_engine_endpoints(user_id: str):
+    """Test personalization engine endpoints"""
+    # Test learning DNA endpoint
+    response = requests.get(f"{API_URL}/users/{user_id}/learning-dna")
+    response.raise_for_status()
+    dna_data = response.json()
+    
+    assert "learning_style" in dna_data, "Response should contain learning style"
+    assert "cognitive_patterns" in dna_data, "Response should contain cognitive patterns"
+    assert "preferred_pace" in dna_data, "Response should contain preferred pace"
+    
+    # Test adaptive parameters endpoint
+    response = requests.get(f"{API_URL}/users/{user_id}/adaptive-parameters")
+    response.raise_for_status()
+    params_data = response.json()
+    
+    assert "complexity_level" in params_data, "Response should contain complexity level"
+    assert "explanation_depth" in params_data, "Response should contain explanation depth"
+    
+    # Test mood analysis endpoint
+    response = requests.get(f"{API_URL}/users/{user_id}/mood-analysis")
+    response.raise_for_status()
+    mood_data = response.json()
+    
+    assert "detected_mood" in mood_data, "Response should contain detected mood"
+    assert "recommended_pace" in mood_data, "Response should contain recommended pace"
+    
+    # Track result
+    test_results["total"] += 1
+    test_results["passed"] += 1
+    test_results["results"].append({"name": "Personalization Engine Endpoints", "passed": True})
+    
+    return {"dna": dna_data, "params": params_data, "mood": mood_data}
+
+@run_test
+def test_adaptive_ai_chat(session_id: str):
+    """Test adaptive AI chat endpoint"""
+    chat_data = {
+        "session_id": session_id,
+        "user_message": "I want to learn about Python classes and inheritance",
+        "context": {
+            "learning_mode": "adaptive"
+        }
+    }
+    
+    response = requests.post(f"{API_URL}/chat/adaptive", json=chat_data)
+    response.raise_for_status()
+    data = response.json()
+    
+    assert "response" in data, "Response should contain AI response"
+    assert len(data["response"]) > 50, "Response should be substantial"
+    assert "response_type" in data, "Response should have a type"
+    assert "metadata" in data, "Response should include metadata"
+    
+    # Track result
+    test_results["total"] += 1
+    test_results["passed"] += 1
+    test_results["results"].append({"name": "Adaptive AI Chat", "passed": True})
+    
+    return data
+
+@run_test
+def test_personalization_features_endpoint():
+    """Test personalization features endpoint"""
+    response = requests.get(f"{API_URL}/personalization/features")
+    response.raise_for_status()
+    data = response.json()
+    
+    assert "features" in data, "Response should contain features"
+    
+    # Verify key personalization features
+    features = data["features"]
+    assert "learning_dna_profiling" in features, "Should include learning DNA profiling"
+    assert "adaptive_content_generation" in features, "Should include adaptive content generation"
+    assert "personal_learning_assistant" in features, "Should include personal learning assistant"
+    assert "mood_based_adaptation" in features, "Should include mood-based adaptation"
+    assert "real_time_personalization" in features, "Should include real-time personalization"
+    
+    # Track result
+    test_results["total"] += 1
+    test_results["passed"] += 1
+    test_results["results"].append({"name": "Personalization Features", "passed": True})
+    
+    return data
+
 def run_all_tests():
     """Run all backend tests"""
     print("\n========== MASTERX AI MENTOR SYSTEM BACKEND TESTS ==========\n")
@@ -723,6 +966,31 @@ def run_all_tests():
     # Exercise and learning path generation tests
     test_exercise_generation()
     test_learning_path_generation()
+    
+    # Personal Learning Assistant tests
+    print("\n----- Testing Personal Learning Assistant -----")
+    goal_result = test_create_learning_goal(user_id)
+    if goal_result.passed:
+        goal_id = goal_result.response["goal_id"]
+        test_get_user_goals(user_id)
+        progress_result = test_update_goal_progress(goal_id)
+        if not progress_result.passed:
+            print("❌ Goal progress update failed")
+        
+        test_add_learning_memory(user_id, goal_id)
+    else:
+        print("❌ Learning goal creation failed, skipping related tests")
+        test_add_learning_memory(user_id)  # Test without goal_id
+    
+    test_get_user_memories(user_id)
+    test_get_personalized_recommendations(user_id)
+    test_get_learning_insights(user_id)
+    
+    # Personalization Engine tests
+    print("\n----- Testing Personalization Engine -----")
+    test_personalization_engine_endpoints(user_id)
+    test_personalization_features_endpoint()
+    test_adaptive_ai_chat(session_id)
     
     # Run async tests for streaming
     loop = asyncio.get_event_loop()

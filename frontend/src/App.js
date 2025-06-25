@@ -3,6 +3,7 @@ import "./App.css";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { AppProvider, useApp } from "./context/AppContext";
+import { ThemeProvider } from "./components/AdaptiveThemeSystem";
 import { UserOnboarding } from "./components/UserOnboarding";
 import { Sidebar } from "./components/Sidebar";
 import { ChatInterface } from "./components/ChatInterface";
@@ -186,13 +187,15 @@ function AppContent() {
 // Root App Component
 function App() {
   return (
-    <AppProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/*" element={<AppContent />} />
-        </Routes>
-      </BrowserRouter>
-    </AppProvider>
+    <ThemeProvider>
+      <AppProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/*" element={<AppContent />} />
+          </Routes>
+        </BrowserRouter>
+      </AppProvider>
+    </ThemeProvider>
   );
 }
 

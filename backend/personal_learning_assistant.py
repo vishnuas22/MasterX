@@ -89,6 +89,10 @@ class LearningGoal:
     
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'LearningGoal':
+        # Remove MongoDB _id field if present
+        if '_id' in data:
+            data.pop('_id')
+        
         data['goal_type'] = GoalType(data['goal_type'])
         data['status'] = GoalStatus(data['status'])
         data['target_date'] = datetime.fromisoformat(data['target_date']) if data['target_date'] else None
@@ -129,6 +133,10 @@ class LearningMemory:
     
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'LearningMemory':
+        # Remove MongoDB _id field if present
+        if '_id' in data:
+            data.pop('_id')
+            
         data['memory_type'] = MemoryType(data['memory_type'])
         data['created_at'] = datetime.fromisoformat(data['created_at'])
         data['last_accessed'] = datetime.fromisoformat(data['last_accessed'])

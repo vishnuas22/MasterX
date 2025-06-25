@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Bot, User, Sparkles, BookOpen, Target, Settings, Brain, Trophy, Zap, Eye, Heart, ArrowDown } from 'lucide-react';
+import { Send, Bot, User, Sparkles, BookOpen, Target, Settings, Brain, Trophy, Zap, Eye, Heart, ArrowDown, Palette } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { GlassCard, GlassButton, GlassInput } from './GlassCard';
 import { TypingIndicator } from './LoadingSpinner';
@@ -10,16 +10,22 @@ import { GamificationDashboard } from './GamificationDashboard';
 import { AdvancedStreamingInterface } from './AdvancedStreamingInterface';
 import ContextAwareChatInterface from './ContextAwareChatInterface';
 import LiveLearningInterface from './LiveLearningInterface';
+import { VoiceInterface } from './VoiceInterface';
+import { GestureControl } from './GestureControl';
+import { ARVRInterface } from './ARVRInterface';
+import { ThemeProvider, AdaptiveThemePanel, useAdaptiveTheme } from './AdaptiveThemeSystem';
 import { useApp } from '../context/AppContext';
 
 export function ChatInterface() {
   const { state, actions } = useApp();
+  const { getThemeClasses } = useAdaptiveTheme();
   const [inputMessage, setInputMessage] = useState('');
   const [learningMode, setLearningMode] = useState('adaptive');
   const [showLearningModes, setShowLearningModes] = useState(false);
   const [showModelManagement, setShowModelManagement] = useState(false);
   const [showGamification, setShowGamification] = useState(false);
   const [showLiveLearning, setShowLiveLearning] = useState(false);
+  const [showThemePanel, setShowThemePanel] = useState(false);
   const [useAdvancedStreaming, setUseAdvancedStreaming] = useState(false);
   const [useContextAwareness, setUseContextAwareness] = useState(true);
   const [currentView, setCurrentView] = useState('chat'); // 'chat', 'live-learning'
@@ -30,7 +36,10 @@ export function ChatInterface() {
   const inputRef = useRef(null);
   const [isUserScrolling, setIsUserScrolling] = useState(false);
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
+  const [scrollPosition, setScrollPosition] = useState(0);
   const scrollTimeoutRef = useRef(null);
+  const lastScrollTop = useRef(0);
+  const scrollDirection = useRef('down'); // 'up' or 'down'
 
   // Initialize context awareness component
   const contextAwareChat = ContextAwareChatInterface({
@@ -51,37 +60,67 @@ export function ChatInterface() {
     }
   });
 
-  // Enhanced scroll to bottom with user scroll detection
-  const scrollToBottom = useCallback((force = false) => {
-    if (!messagesEndRef.current || (!force && isUserScrolling)) return;
+  // Improved scroll to bottom function
+  const scrollToBottom = useCallback((force = false, behavior = 'smooth') => {
+    if (!messagesEndRef.current) return;
     
-    messagesEndRef.current.scrollIntoView({ 
-      behavior: 'smooth',
-      block: 'end'
-    });
+    // Only auto-scroll if user is not manually scrolling or if forced
+    if (!force && isUserScrolling) return;
+    
+    try {
+      messagesEndRef.current.scrollIntoView({ 
+        behavior: behavior,
+        block: 'end',
+        inline: 'nearest'
+      });
+    } catch (error) {
+      // Fallback for older browsers
+      if (messagesContainerRef.current) {
+        messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+      }
+    }
   }, [isUserScrolling]);
 
-  // Handle scroll events to detect user scrolling
-  const handleScroll = useCallback(() => {
+  // Enhanced scroll detection with better user intent recognition
+  const handleScroll = useCallback((e) => {
     if (!messagesContainerRef.current) return;
 
-    const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
-    const isAtBottom = scrollTop + clientHeight >= scrollHeight - 100; // 100px threshold
+    const container = messagesContainerRef.current;
+    const { scrollTop, scrollHeight, clientHeight } = container;
     
-    setShowScrollToBottom(!isAtBottom);
+    // Calculate scroll direction
+    const direction = scrollTop > lastScrollTop.current ? 'down' : 'up';
+    scrollDirection.current = direction;
+    lastScrollTop.current = scrollTop;
     
-    // Detect if user is manually scrolling
-    if (!isAtBottom) {
+    // More precise bottom detection (within 50px)
+    const distanceFromBottom = scrollHeight - (scrollTop + clientHeight);
+    const isAtBottom = distanceFromBottom <= 50;
+    const isNearBottom = distanceFromBottom <= 150;
+    
+    // Update scroll position state
+    setScrollPosition(scrollTop);
+    setShowScrollToBottom(!isNearBottom);
+    
+    // Enhanced user scrolling detection
+    if (direction === 'up' || !isAtBottom) {
       setIsUserScrolling(true);
+      
       // Clear existing timeout
       if (scrollTimeoutRef.current) {
         clearTimeout(scrollTimeoutRef.current);
       }
-      // Reset user scrolling after 3 seconds of no scroll activity
+      
+      // Reset user scrolling after delay (longer for upward scrolling)
+      const delay = direction === 'up' ? 5000 : 2000;
       scrollTimeoutRef.current = setTimeout(() => {
-        setIsUserScrolling(false);
-      }, 3000);
-    } else {
+        // Only reset if user hasn't moved further up
+        const currentDistance = container.scrollHeight - (container.scrollTop + container.clientHeight);
+        if (currentDistance <= 150) {
+          setIsUserScrolling(false);
+        }
+      }, delay);
+    } else if (isAtBottom) {
       setIsUserScrolling(false);
       if (scrollTimeoutRef.current) {
         clearTimeout(scrollTimeoutRef.current);
@@ -89,18 +128,23 @@ export function ChatInterface() {
     }
   }, []);
 
-  // Enhanced useEffect for scrolling
+  // Improved auto-scroll logic for new messages
   useEffect(() => {
-    // Only auto-scroll for new messages if user is not manually scrolling
-    if (!isUserScrolling) {
-      scrollToBottom();
+    // Only auto-scroll if user is at the bottom or not actively scrolling up
+    if (!isUserScrolling || scrollDirection.current !== 'up') {
+      // Small delay to ensure DOM has updated
+      const timer = setTimeout(() => {
+        scrollToBottom();
+      }, 100);
+      return () => clearTimeout(timer);
     }
   }, [state.messages, scrollToBottom, isUserScrolling]);
 
-  // Auto-scroll for streaming messages only if at bottom
+  // Enhanced streaming message scroll handling
   useEffect(() => {
     if (state.streamingMessage && !isUserScrolling) {
-      scrollToBottom();
+      // Use a more frequent update for streaming
+      scrollToBottom(false, 'auto');
     }
   }, [state.streamingMessage, scrollToBottom, isUserScrolling]);
 
@@ -120,8 +164,11 @@ export function ChatInterface() {
     const message = inputMessage.trim();
     setInputMessage('');
 
-    // Force scroll to bottom when sending a message
+    // Force scroll to bottom when sending a message and reset user scroll state
     setIsUserScrolling(false);
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
+    }
 
     try {
       if (useContextAwareness) {
@@ -147,11 +194,20 @@ export function ChatInterface() {
           }
         });
       }
+      
+      // Ensure scroll to bottom after message is sent
+      setTimeout(() => {
+        scrollToBottom(true, 'smooth');
+      }, 150);
+      
     } catch (error) {
       console.error('Error sending premium message:', error);
       // Fallback to regular message
       try {
         await actions.sendMessage(state.currentSession.id, message);
+        setTimeout(() => {
+          scrollToBottom(true, 'smooth');
+        }, 150);
       } catch (fallbackError) {
         console.error('Error sending fallback message:', fallbackError);
       }
@@ -167,8 +223,31 @@ export function ChatInterface() {
 
   const forceScrollToBottom = () => {
     setIsUserScrolling(false);
-    scrollToBottom(true);
+    // Clear any existing timeout
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
+    }
+    scrollToBottom(true, 'smooth');
   };
+
+  // Add keyboard shortcut for scroll to bottom
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Ctrl/Cmd + End to scroll to bottom
+      if ((e.ctrlKey || e.metaKey) && e.key === 'End') {
+        e.preventDefault();
+        forceScrollToBottom();
+      }
+      // End key to scroll to bottom when in message area
+      if (e.key === 'End' && document.activeElement === messagesContainerRef.current) {
+        e.preventDefault();
+        forceScrollToBottom();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   if (!state.currentSession) {
     return (
@@ -321,6 +400,14 @@ export function ChatInterface() {
               <Brain className="h-4 w-4" />
             </GlassButton>
             
+            <GlassButton 
+              size="sm" 
+              variant="secondary"
+              onClick={() => setShowThemePanel(true)}
+              title="Adaptive Theme Settings"
+            >
+              <Palette className="h-4 w-4" />
+            </GlassButton>
             <LearningModeIndicator 
               currentMode={learningMode}
               onClick={() => setShowLearningModes(true)}
@@ -358,16 +445,30 @@ export function ChatInterface() {
             exit={{ opacity: 0, x: 20 }}
             className="flex-1 flex flex-col relative"
           >
-            {/* Enhanced Messages Area with better scroll behavior */}
+            {/* Enhanced Messages Area with improved scroll behavior */}
             <div 
               ref={messagesContainerRef}
               onScroll={handleScroll}
-              className="flex-1 overflow-y-auto p-4 space-y-4 scroll-smooth"
+              className={getThemeClasses("flex-1 overflow-y-auto p-4 space-y-4 relative")}
               style={{ 
                 height: '100%',
-                scrollBehavior: 'smooth'
+                scrollBehavior: 'smooth',
+                overscrollBehavior: 'contain', // Prevent parent scrolling
+                WebkitOverflowScrolling: 'touch', // Smooth scrolling on iOS
+                minHeight: '0' // Ensure flex child can shrink
               }}
+              data-chat-container
             >
+              {/* Scroll Indicator */}
+              <div className="absolute top-0 right-0 w-1 h-full bg-white/5 rounded-full overflow-hidden">
+                <div 
+                  className="w-full bg-gradient-to-b from-blue-400 to-purple-500 rounded-full transition-all duration-300"
+                  style={{
+                    height: `${Math.min(100, Math.max(10, (scrollPosition / Math.max(1, (messagesContainerRef.current?.scrollHeight || 1) - (messagesContainerRef.current?.clientHeight || 1))) * 100))}%`,
+                    transform: `translateY(${(scrollPosition / Math.max(1, (messagesContainerRef.current?.scrollHeight || 1) - (messagesContainerRef.current?.clientHeight || 1))) * 100}%)`
+                  }}
+                />
+              </div>
               <AnimatePresence>
                 {state.messages.map((message, index) => (
                   <ChatMessage key={message.id || index} message={message} />
@@ -422,18 +523,25 @@ export function ChatInterface() {
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Scroll to Bottom Button */}
+            {/* Enhanced Scroll to Bottom Button with unread count */}
             <AnimatePresence>
               {showScrollToBottom && (
                 <motion.button
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
+                  initial={{ opacity: 0, scale: 0.8, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.8, y: 20 }}
                   onClick={forceScrollToBottom}
-                  className="absolute bottom-20 right-6 w-12 h-12 rounded-full bg-blue-500/20 backdrop-blur-sm border border-blue-400/30 flex items-center justify-center hover:bg-blue-500/30 transition-all duration-300 z-10"
-                  title="Scroll to bottom"
+                  className="absolute bottom-20 right-6 w-12 h-12 rounded-full bg-blue-500/20 backdrop-blur-lg border border-blue-400/30 flex items-center justify-center hover:bg-blue-500/30 transition-all duration-300 z-20 shadow-lg hover:shadow-blue-500/25 hover:scale-110"
+                  title="Scroll to bottom (Ctrl+End)"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
                 >
                   <ArrowDown className="h-5 w-5 text-blue-400" />
+                  {state.messages.length > 0 && (
+                    <div className="absolute -top-2 -right-2 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
+                      <span className="text-xs text-white font-bold">!</span>
+                    </div>
+                  )}
                 </motion.button>
               )}
             </AnimatePresence>
@@ -539,8 +647,10 @@ export function ChatInterface() {
         )}
       </AnimatePresence>
 
-      {/* Emotional State Indicator */}
-      {useContextAwareness && <contextAwareChat.EmotionalStateIndicator />}
+      {/* Advanced UI Features */}
+      <VoiceInterface />
+      <GestureControl />
+      <ARVRInterface />
 
       {/* Modals */}
       <GamificationDashboard
@@ -558,6 +668,11 @@ export function ChatInterface() {
       <ModelManagement
         isVisible={showModelManagement}
         onClose={() => setShowModelManagement(false)}
+      />
+
+      <AdaptiveThemePanel
+        isOpen={showThemePanel}
+        onClose={() => setShowThemePanel(false)}
       />
     </div>
   );
