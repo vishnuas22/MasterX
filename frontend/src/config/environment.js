@@ -28,6 +28,7 @@ export const getEnvironmentConfig = () => {
   const protocol = window.location.protocol;
   const port = window.location.port;
   
+  // Reduce logging - only essential information
   console.log(`🌍 MasterX Environment Detection`);
   console.log(`📍 Hostname: ${hostname}, Protocol: ${protocol}, Port: ${port}`);
   console.log(`⚙️ Configured Backend URL: ${process.env.REACT_APP_BACKEND_URL || 'NOT SET'}`);
@@ -94,7 +95,10 @@ export const getEnvironmentConfig = () => {
   console.log(`✅ Environment: ${config.environment.toUpperCase()}`);
   console.log(`🔗 Backend URL: ${config.backendURL}`);
   console.log(`🚀 API URL: ${config.apiURL}`);
-  console.log(`🔄 Fallbacks: ${config.fallbacks.join(', ')}`);
+  // Reduce fallback logging in production
+  if (config.environment === 'local') {
+    console.log(`🔄 Fallbacks: ${config.fallbacks.join(', ')}`);
+  }
   
   return config;
 };

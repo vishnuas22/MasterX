@@ -11,7 +11,6 @@ import {
   SkipForward,
   SkipBack,
   MousePointer,
-  Gesture,
   Camera,
   WifiOff
 } from 'lucide-react';
@@ -548,7 +547,7 @@ function GestureSettingsModal({
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center space-x-3">
                 <div className="p-2 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500">
-                  <Gesture className="h-6 w-6 text-white" />
+                  <Hand className="h-6 w-6 text-white" />
                 </div>
                 <div>
                   <h2 className="text-2xl font-bold text-white">Gesture Settings</h2>

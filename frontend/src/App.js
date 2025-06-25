@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, lazy, Suspense } from "react";
 import "./App.css";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -8,12 +8,14 @@ import { UserOnboarding } from "./components/UserOnboarding";
 import { Sidebar } from "./components/Sidebar";
 import { ChatInterface } from "./components/ChatInterface";
 import { LoadingSpinner } from "./components/LoadingSpinner";
-import LearningPsychologyDashboard from "./components/LearningPsychologyDashboard";
-import MetacognitiveTraining from "./components/MetacognitiveTraining";
-import MemoryPalaceBuilder from "./components/MemoryPalaceBuilder";
-import PersonalizationDashboard from "./components/PersonalizationDashboard";
 import ConnectionStatus from "./components/ConnectionStatus";
 import { api } from "./services/api";
+
+// Lazy load heavy components for better performance
+const LearningPsychologyDashboard = lazy(() => import("./components/LearningPsychologyDashboard"));
+const MetacognitiveTraining = lazy(() => import("./components/MetacognitiveTraining"));
+const MemoryPalaceBuilder = lazy(() => import("./components/MemoryPalaceBuilder"));
+const PersonalizationDashboard = lazy(() => import("./components/PersonalizationDashboard"));
 
 // Main App Content Component
 function AppContent() {
@@ -103,10 +105,26 @@ function AppContent() {
         >
           {/* Render different components based on active view */}
           {state.activeView === 'chat' && <ChatInterface />}
-          {state.activeView === 'personalization' && <PersonalizationDashboard />}
-          {state.activeView === 'learning-psychology' && <LearningPsychologyDashboard />}
-          {state.activeView === 'metacognitive-training' && <MetacognitiveTraining />}
-          {state.activeView === 'memory-palace' && <MemoryPalaceBuilder />}
+          {state.activeView === 'personalization' && (
+            <Suspense fallback={<LoadingSpinner />}>
+              <PersonalizationDashboard />
+            </Suspense>
+          )}
+          {state.activeView === 'learning-psychology' && (
+            <Suspense fallback={<LoadingSpinner />}>
+              <LearningPsychologyDashboard />
+            </Suspense>
+          )}
+          {state.activeView === 'metacognitive-training' && (
+            <Suspense fallback={<LoadingSpinner />}>
+              <MetacognitiveTraining />
+            </Suspense>
+          )}
+          {state.activeView === 'memory-palace' && (
+            <Suspense fallback={<LoadingSpinner />}>
+              <MemoryPalaceBuilder />
+            </Suspense>
+          )}
           {state.activeView === 'elaborative-questions' && (
             <div className="flex-1 flex items-center justify-center">
               <div className="text-center">

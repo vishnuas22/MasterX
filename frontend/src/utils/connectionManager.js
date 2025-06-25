@@ -1,5 +1,5 @@
-// MasterX AI Mentor System - Practical Connection Manager
-// Simplified and reliable connection testing with fallback support
+// MasterX AI Mentor System - Optimized Connection Manager
+// High performance connection with minimal logging
 
 import { getEnvironmentConfig } from '../config/environment';
 
@@ -8,8 +8,9 @@ export class ConnectionManager {
     this.envConfig = getEnvironmentConfig();
     this.workingURL = null;
     this.testInProgress = false;
-    this.maxRetries = 3;
-    this.retryDelay = 1000; // 1 second
+    this.maxRetries = 2; // Reduced from 3
+    this.retryDelay = 500; // Reduced from 1000ms
+    this.debugMode = false; // Only log errors by default
   }
 
   // Get URLs to test in priority order
@@ -25,13 +26,13 @@ export class ConnectionManager {
       });
     }
     
-    console.log(`🔍 Connection test order:`, urls);
+    if (this.debugMode) console.log(`🔍 Connection test order:`, urls);
     return urls;
   }
 
-  async testConnection(baseURL, timeout = 5000) {
+  async testConnection(baseURL, timeout = 3000) { // Reduced timeout
     try {
-      console.log(`🧪 Testing connection to: ${baseURL}`);
+      if (this.debugMode) console.log(`🧪 Testing connection to: ${baseURL}`);
       
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeout);
@@ -50,15 +51,19 @@ export class ConnectionManager {
       if (response.ok) {
         const data = await response.json();
         const isHealthy = data.status === 'healthy';
-        console.log(`${isHealthy ? '✅' : '❌'} ${baseURL}: ${data.status}`);
+        if (this.debugMode || isHealthy) {
+          console.log(`${isHealthy ? '✅' : '❌'} ${baseURL}: ${data.status}`);
+        }
         return isHealthy;
       } else {
-        console.log(`❌ ${baseURL}: HTTP ${response.status}`);
+        if (this.debugMode) console.log(`❌ ${baseURL}: HTTP ${response.status}`);
         return false;
       }
     } catch (error) {
-      const errorType = error.name === 'AbortError' ? 'Timeout' : error.message;
-      console.log(`❌ ${baseURL}: ${errorType}`);
+      if (this.debugMode) {
+        const errorType = error.name === 'AbortError' ? 'Timeout' : error.message;
+        console.log(`❌ ${baseURL}: ${errorType}`);
+      }
       return false;
     }
   }
@@ -66,28 +71,28 @@ export class ConnectionManager {
   async findWorkingURL(forceRetest = false) {
     // Return cached result if available and not forcing retest
     if (this.workingURL && !forceRetest && !this.testInProgress) {
-      console.log(`🔄 Using cached connection: ${this.workingURL}`);
+      if (this.debugMode) console.log(`🔄 Using cached connection: ${this.workingURL}`);
       return this.workingURL;
     }
 
     // If test is already in progress, wait for it
     if (this.testInProgress) {
-      console.log('⏳ Connection test in progress, waiting...');
+      if (this.debugMode) console.log('⏳ Connection test in progress, waiting...');
       while (this.testInProgress) {
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise(resolve => setTimeout(resolve, 50)); // Reduced wait time
       }
       return this.workingURL;
     }
 
     this.testInProgress = true;
-    console.log('🔍 Starting connection discovery...');
+    if (this.debugMode) console.log('🔍 Starting connection discovery...');
     
     try {
       const urlsToTest = this.getURLsToTest();
       
       // Test URLs in priority order
       for (const url of urlsToTest) {
-        console.log(`Testing: ${url}`);
+        if (this.debugMode) console.log(`Testing: ${url}`);
         const isWorking = await this.testConnection(url);
         
         if (isWorking) {
@@ -97,8 +102,8 @@ export class ConnectionManager {
           return url;
         }
         
-        // Small delay between tests
-        await new Promise(resolve => setTimeout(resolve, 200));
+        // Small delay between tests (reduced)
+        await new Promise(resolve => setTimeout(resolve, 100)); // Reduced from 200ms
       }
       
       // If no URL works, throw error
@@ -123,12 +128,12 @@ export class ConnectionManager {
     if (!this.workingURL) {
       return false;
     }
-    return await this.testConnection(this.workingURL, 3000);
+    return await this.testConnection(this.workingURL, 2000); // Reduced timeout
   }
 
   // Reset and force new connection test
   resetConnection() {
-    console.log('🔄 Resetting connection manager...');
+    if (this.debugMode) console.log('🔄 Resetting connection manager...');
     this.workingURL = null;
     this.testInProgress = false;
     // Update environment config in case it changed

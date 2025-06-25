@@ -41,11 +41,13 @@ from personal_learning_assistant import personal_assistant, LearningGoal, Learni
 ROOT_DIR = backend_dir
 load_dotenv(ROOT_DIR / '.env')
 
-# Create the main app
+# Create the main app with optimized settings
 app = FastAPI(
     title="MasterX AI Mentor System",
     description="World-class AI-powered personalized learning platform",
-    version="1.0.0"
+    version="1.0.0",
+    docs_url="/docs" if os.getenv("DEBUG", "false").lower() == "true" else None,  # Hide docs in production
+    redoc_url=None  # Disable redoc for better performance
 )
 
 # ⚙️ UNIVERSAL PORTABILITY: Add CORS middleware FIRST for proper cross-origin support
@@ -62,12 +64,17 @@ app.add_middleware(
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
 
-# Configure logging
+# Configure logging with optimized levels for production
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.WARNING,  # Reduced from INFO to reduce log spam
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+
+# Set specific loggers to appropriate levels
+logging.getLogger('motor').setLevel(logging.WARNING)
+logging.getLogger('uvicorn').setLevel(logging.WARNING)
+logging.getLogger('fastapi').setLevel(logging.WARNING)
 
 # Startup and shutdown events
 @app.on_event("startup")

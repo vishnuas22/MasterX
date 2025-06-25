@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Cube, 
+  Box, 
   Glasses, 
   Eye, 
   RotateCcw, 
@@ -318,7 +318,7 @@ export function ARVRInterface() {
               animate={is3DMode ? { rotateY: 360 } : {}}
               transition={{ duration: 2, repeat: is3DMode ? Infinity : 0, ease: "linear" }}
             >
-              <Cube className="h-6 w-6" />
+              <Box className="h-6 w-6" />
             </motion.div>
           </GlassButton>
 
@@ -566,7 +566,7 @@ function VisualizationPanel({ isOpen, onClose, generateVisualization, setCurrent
                 Cancel
               </GlassButton>
               <GlassButton onClick={onClose}>
-                <Cube className="h-4 w-4 mr-2" />
+                <Box className="h-4 w-4 mr-2" />
                 Start Visualizing
               </GlassButton>
             </div>
@@ -740,7 +740,7 @@ function ARVRSettingsModal({
                 Cancel
               </GlassButton>
               <GlassButton onClick={onClose}>
-                <Cube className="h-4 w-4 mr-2" />
+                <Box className="h-4 w-4 mr-2" />
                 Apply Settings
               </GlassButton>
             </div>

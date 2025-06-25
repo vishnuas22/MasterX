@@ -7,20 +7,22 @@ const envConfig = getEnvironmentConfig();
 let BACKEND_URL = envConfig.backendURL;
 let API = envConfig.apiURL;
 
+// Only log essential information
 console.log('🚀 MasterX API Service Initialized');
 console.log(`🌍 Environment: ${envConfig.environment.toUpperCase()}`);
 console.log(`🔗 Primary Backend URL: ${BACKEND_URL}`);
 console.log(`🚀 API Endpoint: ${API}`);
 
-// Configure axios defaults
-axios.defaults.timeout = 30000; // 30 seconds
+// Configure axios defaults with optimized settings
+axios.defaults.timeout = 15000; // Reduced from 30 seconds
 
 class ApiService {
   constructor() {
     this.isConnectionTested = false;
     this.connectionRetries = 0;
-    this.maxRetries = 3;
+    this.maxRetries = 2; // Reduced from 3
     this.axiosInstance = this.createAxiosInstance();
+    this.debugMode = false; // Set to true for debugging
   }
 
   createAxiosInstance() {
@@ -37,7 +39,7 @@ class ApiService {
         // Test connection on first request or after errors
         if (!this.isConnectionTested) {
           try {
-            console.log('🔍 Testing backend connection...');
+            if (this.debugMode) console.log('🔍 Testing backend connection...');
             const workingURL = await connectionManager.findWorkingURL();
             
             // Update URLs if different from initial configuration
@@ -45,7 +47,7 @@ class ApiService {
               BACKEND_URL = workingURL;
               API = `${workingURL}/api`;
               config.baseURL = API;
-              console.log(`🔄 Updated API endpoint to: ${API}`);
+              if (this.debugMode) console.log(`🔄 Updated API endpoint to: ${API}`);
             }
             
             this.isConnectionTested = true;
@@ -73,25 +75,25 @@ class ApiService {
         return response;
       },
       async (error) => {
-        console.error('❌ API Request Failed:', error.response?.data || error.message);
+        if (this.debugMode) console.error('❌ API Request Failed:', error.response?.data || error.message);
         
         // Handle connection errors with retry logic
         if (this.shouldRetryConnection(error)) {
           this.connectionRetries++;
           
           if (this.connectionRetries <= this.maxRetries) {
-            console.log(`🔄 Connection error detected (retry ${this.connectionRetries}/${this.maxRetries})`);
+            if (this.debugMode) console.log(`🔄 Connection error detected (retry ${this.connectionRetries}/${this.maxRetries})`);
             
             // Reset connection and try to find working URL
             connectionManager.resetConnection();
             this.isConnectionTested = false;
             
-            // Wait a bit before retrying
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            // Reduced wait time before retrying
+            await new Promise(resolve => setTimeout(resolve, 500));
             
             // Retry the original request if it's a simple GET
             if (error.config && error.config.method?.toLowerCase() === 'get') {
-              console.log('🔄 Retrying request...');
+              if (this.debugMode) console.log('🔄 Retrying request...');
               return this.axiosInstance.request(error.config);
             }
           } else {
