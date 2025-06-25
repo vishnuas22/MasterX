@@ -1680,6 +1680,27 @@ async def get_adaptive_parameters(user_id: str, context: Optional[str] = None):
         logger.error(f"Error getting adaptive parameters: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to get adaptive parameters")
 
+@api_router.get("/users/{user_id}/mood-analysis")
+async def get_user_mood_analysis(user_id: str, session_id: str = None):
+    """Get user mood analysis (GET method)"""
+    try:
+        if session_id:
+            recent_messages = await db_service.get_recent_messages(session_id, limit=10)
+        else:
+            recent_messages = []
+        
+        mood_adaptation = await personalization_engine.analyze_mood_and_adapt(
+            user_id, recent_messages, {}
+        )
+        
+        return {
+            "mood_analysis": mood_adaptation.to_dict(),
+            "analysis_timestamp": datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Error getting mood analysis: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get mood analysis")
+
 @api_router.post("/users/{user_id}/mood-analysis")
 async def analyze_user_mood(user_id: str, request: dict):
     """Analyze user mood and get adaptation recommendations"""

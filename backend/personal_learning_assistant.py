@@ -89,7 +89,16 @@ class LearningGoal:
     
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'LearningGoal':
-        # Remove MongoDB _id field if present
+        # Handle MongoDB _id field conversion to goal_id
+        if '_id' in data and 'goal_id' not in data:
+            from bson import ObjectId
+            # Convert ObjectId to string for goal_id
+            if isinstance(data['_id'], ObjectId):
+                data['goal_id'] = str(data['_id'])
+            else:
+                data['goal_id'] = data['_id']
+        
+        # Remove MongoDB _id field
         if '_id' in data:
             data.pop('_id')
         
@@ -133,7 +142,16 @@ class LearningMemory:
     
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'LearningMemory':
-        # Remove MongoDB _id field if present
+        # Handle MongoDB _id field conversion to memory_id
+        if '_id' in data and 'memory_id' not in data:
+            from bson import ObjectId
+            # Convert ObjectId to string for memory_id
+            if isinstance(data['_id'], ObjectId):
+                data['memory_id'] = str(data['_id'])
+            else:
+                data['memory_id'] = data['_id']
+        
+        # Remove MongoDB _id field
         if '_id' in data:
             data.pop('_id')
             

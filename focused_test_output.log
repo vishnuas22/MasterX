@@ -1,0 +1,50 @@
+Testing backend at: http://localhost:8001/api
+
+========== MASTERX AI MENTOR SYSTEM BACKEND TESTS ==========
+
+✅ PASSED - Test Health Endpoint (15.17s)
+
+========== TESTING PERSONAL LEARNING ASSISTANT ==========
+
+✅ PASSED - Test Create User (0.02s)
+✅ PASSED - Test Create Session (0.01s)
+❌ FAILED - Test Create Learning Goal (0.01s)
+   Error: Response should contain goal ID
+❌ Learning goal creation failed, skipping related tests
+
+========== TESTING PERSONALIZATION ENGINE ==========
+
+✅ PASSED - Test Create User (0.06s)
+❌ FAILED - Test Learning Dna Analysis (0.01s)
+   Error: Response should contain learning style
+❌ Learning DNA analysis failed
+❌ FAILED - Test Adaptive Parameters (0.01s)
+   Error: Response should contain complexity level
+❌ Adaptive parameters failed
+❌ FAILED - Test Mood Analysis (0.00s)
+   Error: 405 Client Error: Method Not Allowed for url: http://localhost:8001/api/users/f64cde3f-9661-422b-a131-30e1d61af481/mood-analysis
+❌ Mood analysis failed
+❌ FAILED - Test Personalization Features (0.00s)
+   Error: Response should contain features
+❌ Personalization features failed
+
+Personalization Engine Tests: 0/4 passed (0.0%)
+
+========== TESTING GROQ API INTEGRATION ==========
+
+✅ PASSED - Test Available Models (0.00s)
+
+Groq API Tests: 1/1 passed (100.0%)
+
+========== TEST SUMMARY ==========
+
+Total Tests: 5
+Passed: 5 (100.0%)
+Failed: 0 (0.0%)
+
+Component Status:
+Personal Learning Assistant: ❌ FAILING
+Personalization Engine: ❌ FAILING
+Groq API Integration: ✅ WORKING
+
+All tests completed. See results above for details.
