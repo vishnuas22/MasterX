@@ -1451,9 +1451,18 @@ async def premium_context_aware_chat(request: MentorRequest):
         # Get recent messages for context
         recent_messages = await db_service.get_recent_messages(request.session_id, limit=10)
         
+        # Convert ChatMessage objects to dictionaries for context service
+        conversation_context = [
+            {
+                'sender': msg.sender,
+                'message': msg.message,
+                'timestamp': msg.timestamp
+            } for msg in recent_messages
+        ]
+        
         # Analyze user context
         context_state = await advanced_context_service.get_context_state(
-            session.user_id, request.session_id, recent_messages, request.user_message
+            session.user_id, request.session_id, conversation_context, request.user_message
         )
         
         # Prepare enhanced context with awareness data
@@ -1936,8 +1945,18 @@ async def premium_context_aware_chat_stream(request: MentorRequest):
         
         # Get recent messages and analyze context
         recent_messages = await db_service.get_recent_messages(request.session_id, limit=10)
+        
+        # Convert ChatMessage objects to dictionaries for context service
+        conversation_context = [
+            {
+                'sender': msg.sender,
+                'message': msg.message,
+                'timestamp': msg.timestamp
+            } for msg in recent_messages
+        ]
+        
         context_state = await advanced_context_service.get_context_state(
-            session.user_id, request.session_id, recent_messages, request.user_message
+            session.user_id, request.session_id, conversation_context, request.user_message
         )
         
         # Save user message

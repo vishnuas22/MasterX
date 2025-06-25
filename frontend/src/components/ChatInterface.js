@@ -30,16 +30,15 @@ export function ChatInterface() {
   const [useContextAwareness, setUseContextAwareness] = useState(true);
   const [currentView, setCurrentView] = useState('chat'); // 'chat', 'live-learning'
   
-  // Enhanced scroll management
+  // Simplified and robust scroll management
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const inputRef = useRef(null);
-  const [isUserScrolling, setIsUserScrolling] = useState(false);
+  const [isUserNearBottom, setIsUserNearBottom] = useState(true);
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
-  const [scrollPosition, setScrollPosition] = useState(0);
-  const scrollTimeoutRef = useRef(null);
-  const lastScrollTop = useRef(0);
-  const scrollDirection = useRef('down'); // 'up' or 'down'
+  const autoScrollTimeoutRef = useRef(null);
+  const scrollCheckIntervalRef = useRef(null);
+  const isAutoScrollingRef = useRef(false);
 
   // Initialize context awareness component
   const contextAwareChat = ContextAwareChatInterface({
@@ -61,101 +60,108 @@ export function ChatInterface() {
   });
 
   // Improved scroll to bottom function
-  const scrollToBottom = useCallback((force = false, behavior = 'smooth') => {
-    if (!messagesEndRef.current) return;
+  const scrollToBottom = useCallback((force = false, smooth = true) => {
+    if (!messagesEndRef.current || !messagesContainerRef.current) return;
     
-    // Only auto-scroll if user is not manually scrolling or if forced
-    if (!force && isUserScrolling) return;
+    // Don't auto-scroll if user is reading above and not forced
+    if (!force && !isUserNearBottom) return;
+    
+    isAutoScrollingRef.current = true;
     
     try {
-      messagesEndRef.current.scrollIntoView({ 
-        behavior: behavior,
-        block: 'end',
-        inline: 'nearest'
-      });
-    } catch (error) {
-      // Fallback for older browsers
-      if (messagesContainerRef.current) {
-        messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+      const container = messagesContainerRef.current;
+      const targetScroll = container.scrollHeight - container.clientHeight;
+      
+      if (smooth) {
+        container.scrollTo({
+          top: targetScroll,
+          behavior: 'smooth'
+        });
+      } else {
+        container.scrollTop = targetScroll;
       }
+      
+      // Reset auto-scrolling flag after animation
+      setTimeout(() => {
+        isAutoScrollingRef.current = false;
+      }, 200);
+      
+    } catch (error) {
+      console.warn('Scroll error:', error);
+      isAutoScrollingRef.current = false;
     }
-  }, [isUserScrolling]);
+  }, [isUserNearBottom]);
 
-  // Enhanced scroll detection with better user intent recognition
-  const handleScroll = useCallback((e) => {
-    if (!messagesContainerRef.current) return;
+  // Simplified scroll detection
+  const checkScrollPosition = useCallback(() => {
+    if (!messagesContainerRef.current || isAutoScrollingRef.current) return;
 
     const container = messagesContainerRef.current;
     const { scrollTop, scrollHeight, clientHeight } = container;
     
-    // Calculate scroll direction
-    const direction = scrollTop > lastScrollTop.current ? 'down' : 'up';
-    scrollDirection.current = direction;
-    lastScrollTop.current = scrollTop;
-    
-    // More precise bottom detection (within 50px)
+    // Consider user "near bottom" if within 100px
     const distanceFromBottom = scrollHeight - (scrollTop + clientHeight);
-    const isAtBottom = distanceFromBottom <= 50;
-    const isNearBottom = distanceFromBottom <= 150;
+    const nearBottom = distanceFromBottom <= 100;
     
-    // Update scroll position state
-    setScrollPosition(scrollTop);
-    setShowScrollToBottom(!isNearBottom);
-    
-    // Enhanced user scrolling detection
-    if (direction === 'up' || !isAtBottom) {
-      setIsUserScrolling(true);
-      
-      // Clear existing timeout
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
-      }
-      
-      // Reset user scrolling after delay (longer for upward scrolling)
-      const delay = direction === 'up' ? 5000 : 2000;
-      scrollTimeoutRef.current = setTimeout(() => {
-        // Only reset if user hasn't moved further up
-        const currentDistance = container.scrollHeight - (container.scrollTop + container.clientHeight);
-        if (currentDistance <= 150) {
-          setIsUserScrolling(false);
-        }
-      }, delay);
-    } else if (isAtBottom) {
-      setIsUserScrolling(false);
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
-      }
-    }
+    setIsUserNearBottom(nearBottom);
+    setShowScrollToBottom(!nearBottom);
   }, []);
 
-  // Improved auto-scroll logic for new messages
+  // Optimized scroll handler with debouncing
+  const handleScroll = useCallback((e) => {
+    // Clear previous timeout
+    if (autoScrollTimeoutRef.current) {
+      clearTimeout(autoScrollTimeoutRef.current);
+    }
+    
+    // Debounce scroll position check
+    autoScrollTimeoutRef.current = setTimeout(checkScrollPosition, 50);
+  }, [checkScrollPosition]);
+
+  // Auto-scroll for new messages
   useEffect(() => {
-    // Only auto-scroll if user is at the bottom or not actively scrolling up
-    if (!isUserScrolling || scrollDirection.current !== 'up') {
+    if (state.messages.length > 0) {
       // Small delay to ensure DOM has updated
-      const timer = setTimeout(() => {
-        scrollToBottom();
-      }, 100);
-      return () => clearTimeout(timer);
+      setTimeout(() => {
+        scrollToBottom(false, true);
+      }, 50);
     }
-  }, [state.messages, scrollToBottom, isUserScrolling]);
+  }, [state.messages.length, scrollToBottom]);
 
-  // Enhanced streaming message scroll handling
+  // Auto-scroll for streaming messages  
   useEffect(() => {
-    if (state.streamingMessage && !isUserScrolling) {
-      // Use a more frequent update for streaming
-      scrollToBottom(false, 'auto');
+    if (state.streamingMessage && isUserNearBottom) {
+      scrollToBottom(false, false); // Use immediate scroll for streaming
     }
-  }, [state.streamingMessage, scrollToBottom, isUserScrolling]);
+  }, [state.streamingMessage, isUserNearBottom, scrollToBottom]);
 
-  // Cleanup timeout on unmount
+  // Periodic scroll position check (for edge cases)
+  useEffect(() => {
+    scrollCheckIntervalRef.current = setInterval(checkScrollPosition, 1000);
+    return () => {
+      if (scrollCheckIntervalRef.current) {
+        clearInterval(scrollCheckIntervalRef.current);
+      }
+    };
+  }, [checkScrollPosition]);
+
+  // Cleanup timeouts on unmount
   useEffect(() => {
     return () => {
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
+      if (autoScrollTimeoutRef.current) {
+        clearTimeout(autoScrollTimeoutRef.current);
+      }
+      if (scrollCheckIntervalRef.current) {
+        clearInterval(scrollCheckIntervalRef.current);
       }
     };
   }, []);
+
+  // Force scroll to bottom
+  const forceScrollToBottom = useCallback(() => {
+    setIsUserNearBottom(true);
+    scrollToBottom(true, true);
+  }, [scrollToBottom]);
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
@@ -164,11 +170,8 @@ export function ChatInterface() {
     const message = inputMessage.trim();
     setInputMessage('');
 
-    // Force scroll to bottom when sending a message and reset user scroll state
-    setIsUserScrolling(false);
-    if (scrollTimeoutRef.current) {
-      clearTimeout(scrollTimeoutRef.current);
-    }
+    // Force scroll to bottom when sending a message
+    forceScrollToBottom();
 
     try {
       if (useContextAwareness) {
@@ -221,15 +224,6 @@ export function ChatInterface() {
     }
   };
 
-  const forceScrollToBottom = () => {
-    setIsUserScrolling(false);
-    // Clear any existing timeout
-    if (scrollTimeoutRef.current) {
-      clearTimeout(scrollTimeoutRef.current);
-    }
-    scrollToBottom(true, 'smooth');
-  };
-
   // Add keyboard shortcut for scroll to bottom
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -247,7 +241,7 @@ export function ChatInterface() {
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [forceScrollToBottom]);
 
   if (!state.currentSession) {
     return (
@@ -464,8 +458,8 @@ export function ChatInterface() {
                 <div 
                   className="w-full bg-gradient-to-b from-blue-400 to-purple-500 rounded-full transition-all duration-300"
                   style={{
-                    height: `${Math.min(100, Math.max(10, (scrollPosition / Math.max(1, (messagesContainerRef.current?.scrollHeight || 1) - (messagesContainerRef.current?.clientHeight || 1))) * 100))}%`,
-                    transform: `translateY(${(scrollPosition / Math.max(1, (messagesContainerRef.current?.scrollHeight || 1) - (messagesContainerRef.current?.clientHeight || 1))) * 100}%)`
+                    height: `${Math.min(100, Math.max(10, ((messagesContainerRef.current?.scrollTop || 0) / Math.max(1, (messagesContainerRef.current?.scrollHeight || 1) - (messagesContainerRef.current?.clientHeight || 1))) * 100))}%`,
+                    transform: `translateY(${((messagesContainerRef.current?.scrollTop || 0) / Math.max(1, (messagesContainerRef.current?.scrollHeight || 1) - (messagesContainerRef.current?.clientHeight || 1))) * 100}%)`
                   }}
                 />
               </div>

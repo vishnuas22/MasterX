@@ -1106,6 +1106,264 @@ def test_universal_portability():
     print("\n✅ Universal Portability System is working correctly")
     return True
 
+@run_test
+def test_metacognitive_training_session():
+    """Test starting a metacognitive training session"""
+    request_data = {
+        "strategy": "self_questioning",
+        "topic": "Python Programming",
+        "level": "intermediate"
+    }
+    
+    response = requests.post(f"{API_URL}/learning-psychology/metacognitive/start", 
+                            json=request_data, 
+                            params={"user_id": str(uuid.uuid4())})
+    response.raise_for_status()
+    data = response.json()
+    
+    assert "session_id" in data, "Response should contain session ID"
+    assert "strategy" in data, "Response should contain strategy"
+    assert "initial_prompt" in data, "Response should contain initial prompt"
+    
+    # Track result
+    test_results["total"] += 1
+    test_results["passed"] += 1
+    test_results["results"].append({"name": "Metacognitive Training Session", "passed": True})
+    
+    return data
+
+@run_test
+def test_memory_palace_creation():
+    """Test creating a memory palace"""
+    request_data = {
+        "name": "Python Concepts Palace",
+        "palace_type": "library",
+        "topic": "Python Programming",
+        "information_items": [
+            "Variables and data types",
+            "Control structures",
+            "Functions and methods",
+            "Object-oriented programming",
+            "Modules and packages"
+        ]
+    }
+    
+    response = requests.post(f"{API_URL}/learning-psychology/memory-palace/create", 
+                            json=request_data, 
+                            params={"user_id": str(uuid.uuid4())})
+    response.raise_for_status()
+    data = response.json()
+    
+    assert "palace_id" in data, "Response should contain palace ID"
+    assert "rooms" in data, "Response should contain rooms"
+    assert "information_nodes" in data, "Response should contain information nodes"
+    
+    # Track result
+    test_results["total"] += 1
+    test_results["passed"] += 1
+    test_results["results"].append({"name": "Memory Palace Creation", "passed": True})
+    
+    return data
+
+@run_test
+def test_elaborative_questions_generation():
+    """Test generating elaborative questions"""
+    request_data = {
+        "topic": "Python Functions",
+        "subject_area": "Programming",
+        "difficulty_level": "intermediate",
+        "question_count": 3
+    }
+    
+    response = requests.post(f"{API_URL}/learning-psychology/elaborative-questions/generate", 
+                            json=request_data)
+    response.raise_for_status()
+    data = response.json()
+    
+    assert "questions" in data, "Response should contain questions"
+    assert len(data["questions"]) > 0, "Should generate at least one question"
+    
+    # Track result
+    test_results["total"] += 1
+    test_results["passed"] += 1
+    test_results["results"].append({"name": "Elaborative Questions Generation", "passed": True})
+    
+    return data
+
+@run_test
+def test_transfer_learning_scenario():
+    """Test creating a transfer learning scenario"""
+    request_data = {
+        "source_domain": "Mathematics",
+        "target_domain": "Programming",
+        "key_concepts": ["Functions", "Variables", "Iteration"],
+        "transfer_type": "analogical"
+    }
+    
+    response = requests.post(f"{API_URL}/learning-psychology/transfer-learning/create-scenario", 
+                            json=request_data)
+    response.raise_for_status()
+    data = response.json()
+    
+    assert "scenario_id" in data, "Response should contain scenario ID"
+    assert "analogy_mapping" in data, "Response should contain analogy mapping"
+    assert "exercises" in data, "Response should contain exercises"
+    
+    # Track result
+    test_results["total"] += 1
+    test_results["passed"] += 1
+    test_results["results"].append({"name": "Transfer Learning Scenario", "passed": True})
+    
+    return data
+
+@run_test
+def test_gamification_user_status(user_id):
+    """Test getting user gamification status"""
+    response = requests.get(f"{API_URL}/users/{user_id}/gamification")
+    response.raise_for_status()
+    data = response.json()
+    
+    assert "streak" in data, "Response should contain streak information"
+    assert "points" in data, "Response should contain points information"
+    assert "achievements" in data, "Response should contain achievements information"
+    assert "level" in data, "Response should contain level information"
+    
+    # Track result
+    test_results["total"] += 1
+    test_results["passed"] += 1
+    test_results["results"].append({"name": "Gamification User Status", "passed": True})
+    
+    return data
+
+@run_test
+def test_session_completion_gamification(user_id, session_id):
+    """Test recording session completion for gamification"""
+    request_data = {
+        "session_id": session_id,
+        "context": {
+            "duration_minutes": 30,
+            "concepts_covered": ["Python Functions", "Error Handling"],
+            "difficulty": "intermediate"
+        }
+    }
+    
+    response = requests.post(f"{API_URL}/users/{user_id}/gamification/session-complete", 
+                            json=request_data)
+    response.raise_for_status()
+    data = response.json()
+    
+    assert "streak" in data, "Response should contain streak information"
+    assert "points" in data, "Response should contain points information"
+    assert "motivational_message" in data, "Response should contain motivational message"
+    
+    # Track result
+    test_results["total"] += 1
+    test_results["passed"] += 1
+    test_results["results"].append({"name": "Session Completion Gamification", "passed": True})
+    
+    return data
+
+@run_test
+def test_concept_mastery_gamification(user_id):
+    """Test recording concept mastery for gamification"""
+    request_data = {
+        "concept": "Python Decorators",
+        "subject": "Python Programming",
+        "difficulty": "advanced",
+        "first_time": True
+    }
+    
+    response = requests.post(f"{API_URL}/users/{user_id}/gamification/concept-mastered", 
+                            json=request_data)
+    response.raise_for_status()
+    data = response.json()
+    
+    assert "points" in data, "Response should contain points information"
+    
+    # Track result
+    test_results["total"] += 1
+    test_results["passed"] += 1
+    test_results["results"].append({"name": "Concept Mastery Gamification", "passed": True})
+    
+    return data
+
+@run_test
+def test_study_group_creation(user_id):
+    """Test creating a study group"""
+    request_data = {
+        "admin_id": user_id,
+        "subject": "Python Programming",
+        "description": "Group for learning Python together"
+    }
+    
+    response = requests.post(f"{API_URL}/study-groups", json=request_data)
+    response.raise_for_status()
+    data = response.json()
+    
+    assert "id" in data, "Response should contain group ID"
+    assert "admin_id" in data, "Response should contain admin ID"
+    assert "subject" in data, "Response should contain subject"
+    
+    # Track result
+    test_results["total"] += 1
+    test_results["passed"] += 1
+    test_results["results"].append({"name": "Study Group Creation", "passed": True})
+    
+    return data
+
+@run_test
+def test_get_study_groups(user_id):
+    """Test getting study groups"""
+    response = requests.get(f"{API_URL}/study-groups", params={"user_id": user_id})
+    response.raise_for_status()
+    data = response.json()
+    
+    assert isinstance(data, list), "Response should be a list of study groups"
+    
+    # Track result
+    test_results["total"] += 1
+    test_results["passed"] += 1
+    test_results["results"].append({"name": "Get Study Groups", "passed": True})
+    
+    return data
+
+def run_learning_psychology_tests():
+    """Run tests for learning psychology services"""
+    print("\n========== TESTING LEARNING PSYCHOLOGY SERVICES ==========\n")
+    
+    # Test metacognitive training
+    test_metacognitive_training_session()
+    
+    # Test memory palace builder
+    test_memory_palace_creation()
+    
+    # Test elaborative questions
+    test_elaborative_questions_generation()
+    
+    # Test transfer learning
+    test_transfer_learning_scenario()
+    
+    print("\nLearning Psychology Services tests completed.")
+
+def run_gamification_tests(user_id, session_id):
+    """Run tests for gamification system"""
+    print("\n========== TESTING GAMIFICATION SYSTEM ==========\n")
+    
+    # Test gamification status
+    test_gamification_user_status(user_id)
+    
+    # Test session completion
+    test_session_completion_gamification(user_id, session_id)
+    
+    # Test concept mastery
+    test_concept_mastery_gamification(user_id)
+    
+    # Test study groups
+    group_data = test_study_group_creation(user_id)
+    test_get_study_groups(user_id)
+    
+    print("\nGamification System tests completed.")
+
 if __name__ == "__main__":
     # First test the Universal Portability System
     portability_success = test_universal_portability()
@@ -1113,6 +1371,24 @@ if __name__ == "__main__":
     if portability_success:
         # Run all other tests
         run_all_tests()
+        
+        # Run additional tests for learning psychology and gamification
+        try:
+            # Create a user and session for testing
+            user_result = test_create_user()
+            if user_result.passed:
+                user_id = user_result.response["id"]
+                session_result = test_create_session(user_id)
+                if session_result.passed:
+                    session_id = session_result.response["id"]
+                    
+                    # Run learning psychology tests
+                    run_learning_psychology_tests()
+                    
+                    # Run gamification tests
+                    run_gamification_tests(user_id, session_id)
+        except Exception as e:
+            print(f"\n❌ Error running additional tests: {str(e)}")
     else:
         print("\n❌ Universal Portability System test failed. Skipping other tests.")
         sys.exit(1)
