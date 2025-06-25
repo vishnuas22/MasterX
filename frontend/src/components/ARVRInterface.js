@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Cube, 
-  VrHeadset, 
+  Glasses, 
   Eye, 
   RotateCcw, 
   ZoomIn, 
@@ -330,7 +330,7 @@ export function ARVRInterface() {
               onClick={isVRMode ? stopXRSession : startVRSession}
               className="w-12 h-12 rounded-full flex items-center justify-center"
             >
-              <VrHeadset className="h-5 w-5" />
+              <Glasses className="h-5 w-5" />
             </GlassButton>
           )}
 
@@ -609,7 +609,7 @@ function ARVRSettingsModal({
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center space-x-3">
                 <div className="p-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500">
-                  <VrHeadset className="h-6 w-6 text-white" />
+                  <Glasses className="h-6 w-6 text-white" />
                 </div>
                 <div>
                   <h2 className="text-2xl font-bold text-white">AR/VR Settings</h2>
