@@ -14,9 +14,19 @@ from datetime import datetime, timedelta
 # Get backend URL from frontend .env file
 def get_backend_url():
     """Get backend URL from frontend .env file or use local URL"""
-    # For testing purposes, we'll use the local URL
-    # The preview URL might not be accessible during testing
-    return "http://localhost:8001"  # Use local URL for testing
+    # Try to read from frontend .env file
+    try:
+        with open('/app/frontend/.env', 'r') as f:
+            for line in f:
+                if line.startswith('REACT_APP_BACKEND_URL='):
+                    backend_url = line.strip().split('=', 1)[1].strip('"\'')
+                    if backend_url:
+                        return backend_url
+    except Exception as e:
+        print(f"Warning: Could not read backend URL from frontend .env: {e}")
+    
+    # Fallback to local URL
+    return "http://localhost:8001"
 
 BACKEND_URL = get_backend_url()
 API_URL = f"{BACKEND_URL}/api"

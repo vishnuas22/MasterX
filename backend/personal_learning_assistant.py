@@ -89,6 +89,7 @@ class LearningGoal:
     
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'LearningGoal':
+        """Create from dictionary"""
         # Handle MongoDB _id field conversion to goal_id
         if '_id' in data and 'goal_id' not in data:
             from bson import ObjectId
@@ -97,18 +98,34 @@ class LearningGoal:
                 data['goal_id'] = str(data['_id'])
             else:
                 data['goal_id'] = data['_id']
-        
+            
         # Remove MongoDB _id field
         if '_id' in data:
             data.pop('_id')
         
+        # Convert string values to enums
         data['goal_type'] = GoalType(data['goal_type'])
         data['status'] = GoalStatus(data['status'])
-        data['target_date'] = datetime.fromisoformat(data['target_date']) if data['target_date'] else None
-        data['last_activity_date'] = datetime.fromisoformat(data['last_activity_date']) if data['last_activity_date'] else None
-        data['completion_prediction'] = datetime.fromisoformat(data['completion_prediction']) if data['completion_prediction'] else None
+        
+        # Convert ISO date strings to datetime objects
+        if data.get('target_date'):
+            data['target_date'] = datetime.fromisoformat(data['target_date'])
+        else:
+            data['target_date'] = None
+            
+        if data.get('last_activity_date'):
+            data['last_activity_date'] = datetime.fromisoformat(data['last_activity_date'])
+        else:
+            data['last_activity_date'] = None
+            
+        if data.get('completion_prediction'):
+            data['completion_prediction'] = datetime.fromisoformat(data['completion_prediction'])
+        else:
+            data['completion_prediction'] = None
+            
         data['created_at'] = datetime.fromisoformat(data['created_at'])
         data['updated_at'] = datetime.fromisoformat(data['updated_at'])
+        
         return cls(**data)
 
 @dataclass
@@ -142,6 +159,7 @@ class LearningMemory:
     
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'LearningMemory':
+        """Create from dictionary"""
         # Handle MongoDB _id field conversion to memory_id
         if '_id' in data and 'memory_id' not in data:
             from bson import ObjectId
@@ -155,9 +173,13 @@ class LearningMemory:
         if '_id' in data:
             data.pop('_id')
             
+        # Convert string to enum
         data['memory_type'] = MemoryType(data['memory_type'])
+        
+        # Convert ISO date strings to datetime objects
         data['created_at'] = datetime.fromisoformat(data['created_at'])
         data['last_accessed'] = datetime.fromisoformat(data['last_accessed'])
+        
         return cls(**data)
 
 @dataclass

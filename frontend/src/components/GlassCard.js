@@ -429,9 +429,6 @@ export const GlassTooltip = ({
 // 🎨 UTILITY FUNCTIONS
 // ===============================
 
-// Class name utility (cn function)
-export const cn = (...classes) => {
-  return classes.filter(Boolean).join(' ');
-};
+
 
 export default GlassCard;
