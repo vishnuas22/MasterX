@@ -1,267 +1,437 @@
-import React from 'react';
+import React, { forwardRef } from 'react';
 import { motion } from 'framer-motion';
+import { cn } from '../utils/cn';
 
-export function GlassCard({ 
+// ===============================
+// 🎨 PREMIUM GLASS CARD SYSTEM
+// ===============================
+
+const glassVariants = {
+  'ultra-thin': 'glass-ultra-thin',
+  'thin': 'glass-thin',
+  'medium': 'glass-medium',
+  'thick': 'glass-thick',
+  'ultra-thick': 'glass-ultra-thick',
+  'premium': 'glass-medium hover-glow',
+  'ai-primary': 'bg-gradient-to-br from-ai-blue-500/8 to-ai-purple-500/5 border border-ai-blue-500/20 backdrop-blur-xl shadow-glow-blue',
+  'ai-secondary': 'bg-gradient-to-br from-ai-purple-500/8 to-ai-red-500/5 border border-ai-purple-500/20 backdrop-blur-xl shadow-glow-purple',
+};
+
+const sizeVariants = {
+  'sm': 'p-3 rounded-lg',
+  'md': 'p-4 rounded-xl',
+  'lg': 'p-6 rounded-2xl',
+  'xl': 'p-8 rounded-3xl',
+};
+
+export const GlassCard = forwardRef(({ 
   children, 
   className = '', 
-  animate = true, 
+  variant = 'medium',
+  size = 'md',
   hover = true,
-  variant = 'default',
+  animated = true,
   ...props 
-}) {
-  const variants = {
-    default: `
-      backdrop-blur-xl bg-white/5 
-      border border-white/10 
-      rounded-2xl shadow-2xl 
-    `,
-    premium: `
-      backdrop-blur-2xl bg-gradient-to-br from-white/10 to-white/5
-      border border-white/20 
-      rounded-2xl shadow-2xl
-      before:absolute before:inset-0 before:rounded-2xl 
-      before:bg-gradient-to-br before:from-white/10 before:to-transparent 
-      before:opacity-50 before:pointer-events-none
-      relative overflow-hidden
-      after:absolute after:inset-[1px] after:rounded-2xl
-      after:bg-gradient-to-br after:from-white/5 after:to-transparent
-      after:opacity-60 after:pointer-events-none
-    `,
-    solid: `
-      backdrop-blur-2xl bg-white/10 
-      border border-white/20 
-      rounded-2xl shadow-2xl 
-    `,
-    minimal: `
-      backdrop-blur-lg bg-white/[0.02] 
-      border border-white/5 
-      rounded-xl shadow-lg 
-    `,
-    glow: `
-      backdrop-blur-2xl bg-gradient-to-br from-white/15 to-white/5
-      border border-white/30 
-      rounded-2xl shadow-2xl
-      shadow-[0_0_50px_rgba(255,255,255,0.1)]
-      before:absolute before:inset-0 before:rounded-2xl 
-      before:bg-gradient-to-br before:from-white/20 before:to-transparent 
-      before:opacity-40 before:pointer-events-none
-      relative overflow-hidden
-    `
-  };
+}, ref) => {
+  const baseClasses = cn(
+    'relative',
+    'backdrop-blur-premium',
+    'transition-all duration-300 ease-apple',
+    glassVariants[variant],
+    sizeVariants[size],
+    hover && 'hover-lift',
+    className
+  );
 
-  const baseClasses = variants[variant] || variants.default;
-
-  const hoverClasses = hover ? `
-    hover:bg-white/15 hover:border-white/40 
-    hover:shadow-[0_25px_50px_rgba(0,0,0,0.4)] 
-    hover:scale-[1.02] 
-    hover:shadow-[0_0_60px_rgba(255,255,255,0.15)]
-    transition-all duration-500 ease-out
-    hover:before:opacity-70
-  ` : '';
-
-  const Card = animate ? motion.div : 'div';
-
-  const animationProps = animate ? {
-    initial: { opacity: 0, y: 20, scale: 0.95 },
-    animate: { opacity: 1, y: 0, scale: 1 },
-    transition: { 
-      duration: 0.6,
-      ease: [0.22, 1, 0.36, 1] // Custom easing for premium feel
-    }
-  } : {};
+  if (animated) {
+    return (
+      <motion.div
+        ref={ref}
+        className={baseClasses}
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ 
+          duration: 0.4, 
+          ease: [0.175, 0.885, 0.32, 1.275] 
+        }}
+        whileHover={hover ? { 
+          y: -2, 
+          scale: 1.01,
+          transition: { duration: 0.2 }
+        } : undefined}
+        {...props}
+      >
+        {children}
+      </motion.div>
+    );
+  }
 
   return (
-    <Card
-      className={`${baseClasses} ${hoverClasses} ${className}`}
-      {...animationProps}
+    <div ref={ref} className={baseClasses} {...props}>
+      {children}
+    </div>
+  );
+});
+
+GlassCard.displayName = 'GlassCard';
+
+// ===============================
+// 🎨 PREMIUM GLASS BUTTON SYSTEM
+// ===============================
+
+const buttonVariants = {
+  primary: cn(
+    'bg-ai-blue-500/20 hover:bg-ai-blue-500/30',
+    'border border-ai-blue-500/30 hover:border-ai-blue-500/50',
+    'text-ai-blue-100 hover:text-white',
+    'shadow-glow-blue hover:shadow-xl'
+  ),
+  secondary: cn(
+    'glass-thin hover:glass-medium',
+    'border-border-medium hover:border-border-strong',
+    'text-text-secondary hover:text-text-primary'
+  ),
+  tertiary: cn(
+    'bg-transparent hover:glass-thin',
+    'border border-transparent hover:border-border-subtle',
+    'text-text-tertiary hover:text-text-secondary'
+  ),
+  danger: cn(
+    'bg-ai-red-500/20 hover:bg-ai-red-500/30',
+    'border border-ai-red-500/30 hover:border-ai-red-500/50',
+    'text-ai-red-100 hover:text-white',
+    'shadow-glow-red'
+  ),
+  success: cn(
+    'bg-ai-green-500/20 hover:bg-ai-green-500/30',
+    'border border-ai-green-500/30 hover:border-ai-green-500/50',
+    'text-ai-green-100 hover:text-white',
+    'shadow-glow-green'
+  ),
+  gradient: cn(
+    'bg-gradient-to-r from-ai-blue-500/20 to-ai-purple-500/20',
+    'hover:from-ai-blue-500/30 hover:to-ai-purple-500/30',
+    'border border-ai-blue-500/20 hover:border-ai-purple-500/30',
+    'text-gradient-primary hover:text-white'
+  ),
+};
+
+const buttonSizes = {
+  xs: 'px-2 py-1 text-xs rounded-md',
+  sm: 'px-3 py-1.5 text-sm rounded-lg',
+  md: 'px-4 py-2 text-base rounded-xl',
+  lg: 'px-6 py-3 text-lg rounded-2xl',
+  xl: 'px-8 py-4 text-xl rounded-3xl',
+};
+
+export const GlassButton = forwardRef(({ 
+  children, 
+  className = '', 
+  variant = 'secondary',
+  size = 'md',
+  disabled = false,
+  loading = false,
+  animated = true,
+  ...props 
+}, ref) => {
+  const baseClasses = cn(
+    'relative inline-flex items-center justify-center',
+    'font-medium font-primary',
+    'backdrop-blur-premium',
+    'transition-all duration-200 ease-apple',
+    'focus:outline-none focus-visible:ring-2 focus-visible:ring-ai-blue-500/50 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent',
+    'active:scale-95',
+    disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer',
+    buttonVariants[variant],
+    buttonSizes[size],
+    className
+  );
+
+  const content = (
+    <>
+      {loading && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+        </div>
+      )}
+      <span className={cn('flex items-center', loading && 'opacity-0')}>
+        {children}
+      </span>
+    </>
+  );
+
+  if (animated && !disabled) {
+    return (
+      <motion.button
+        ref={ref}
+        className={baseClasses}
+        whileHover={{ scale: 1.02, y: -1 }}
+        whileTap={{ scale: 0.98 }}
+        transition={{ duration: 0.1 }}
+        disabled={disabled || loading}
+        {...props}
+      >
+        {content}
+      </motion.button>
+    );
+  }
+
+  return (
+    <button 
+      ref={ref} 
+      className={baseClasses} 
+      disabled={disabled || loading}
+      {...props}
+    >
+      {content}
+    </button>
+  );
+});
+
+GlassButton.displayName = 'GlassButton';
+
+// ===============================
+// 🎨 PREMIUM GLASS INPUT SYSTEM
+// ===============================
+
+export const GlassInput = forwardRef(({ 
+  className = '', 
+  error = false,
+  icon,
+  rightIcon,
+  ...props 
+}, ref) => {
+  const inputClasses = cn(
+    'w-full',
+    'glass-medium',
+    'rounded-xl',
+    'px-4 py-3',
+    'text-body text-text-primary placeholder:text-text-quaternary',
+    'font-primary font-normal',
+    'backdrop-blur-premium',
+    'border transition-all duration-200 ease-apple',
+    error 
+      ? 'border-ai-red-500/50 focus:border-ai-red-500 focus:shadow-glow-red' 
+      : 'border-border-medium focus:border-ai-blue-500/50 focus:shadow-glow-blue',
+    'focus:outline-none focus:ring-0',
+    'focus:scale-[1.01]',
+    icon && 'pl-12',
+    rightIcon && 'pr-12',
+    className
+  );
+
+  return (
+    <div className="relative">
+      {icon && (
+        <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-text-quaternary">
+          {icon}
+        </div>
+      )}
+      <input ref={ref} className={inputClasses} {...props} />
+      {rightIcon && (
+        <div className="absolute right-4 top-1/2 transform -translate-y-1/2 text-text-quaternary">
+          {rightIcon}
+        </div>
+      )}
+    </div>
+  );
+});
+
+GlassInput.displayName = 'GlassInput';
+
+// ===============================
+// 🎨 PREMIUM GLASS TEXTAREA
+// ===============================
+
+export const GlassTextarea = forwardRef(({ 
+  className = '', 
+  error = false,
+  ...props 
+}, ref) => {
+  const textareaClasses = cn(
+    'w-full',
+    'glass-medium',
+    'rounded-xl',
+    'px-4 py-3',
+    'text-body text-text-primary placeholder:text-text-quaternary',
+    'font-primary font-normal',
+    'backdrop-blur-premium',
+    'border transition-all duration-200 ease-apple',
+    'resize-none',
+    error 
+      ? 'border-ai-red-500/50 focus:border-ai-red-500 focus:shadow-glow-red' 
+      : 'border-border-medium focus:border-ai-blue-500/50 focus:shadow-glow-blue',
+    'focus:outline-none focus:ring-0',
+    'focus:scale-[1.01]',
+    className
+  );
+
+  return <textarea ref={ref} className={textareaClasses} {...props} />;
+});
+
+GlassTextarea.displayName = 'GlassTextarea';
+
+// ===============================
+// 🎨 PREMIUM GLASS MODAL
+// ===============================
+
+export const GlassModal = ({ 
+  isOpen, 
+  onClose, 
+  children, 
+  className = '',
+  size = 'md',
+  showCloseButton = true 
+}) => {
+  const sizeClasses = {
+    sm: 'max-w-md',
+    md: 'max-w-lg',
+    lg: 'max-w-2xl',
+    xl: 'max-w-4xl',
+    full: 'max-w-7xl',
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-modal flex items-center justify-center p-4"
+    >
+      {/* Backdrop */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      
+      {/* Modal */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.9, y: 20 }}
+        transition={{ type: "spring", damping: 25, stiffness: 300 }}
+        className={cn(
+          'relative w-full',
+          'glass-ultra-thick',
+          'rounded-3xl',
+          'shadow-2xl',
+          sizeClasses[size],
+          className
+        )}
+      >
+        {showCloseButton && (
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full glass-thin hover:glass-medium transition-all duration-200"
+          >
+            <svg className="w-4 h-4 text-text-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        )}
+        {children}
+      </motion.div>
+    </motion.div>
+  );
+};
+
+// ===============================
+// 🎨 PREMIUM GLASS BADGE
+// ===============================
+
+const badgeVariants = {
+  primary: 'bg-ai-blue-500/20 text-ai-blue-100 border-ai-blue-500/30',
+  secondary: 'glass-thin text-text-secondary border-border-medium',
+  success: 'bg-ai-green-500/20 text-ai-green-100 border-ai-green-500/30',
+  warning: 'bg-yellow-500/20 text-yellow-100 border-yellow-500/30',
+  danger: 'bg-ai-red-500/20 text-ai-red-100 border-ai-red-500/30',
+  gradient: 'bg-gradient-to-r from-ai-blue-500/20 to-ai-purple-500/20 text-gradient-primary border-ai-blue-500/20',
+};
+
+export const GlassBadge = ({ 
+  children, 
+  variant = 'secondary', 
+  className = '',
+  ...props 
+}) => {
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center px-2.5 py-0.5',
+        'text-xs font-medium font-primary',
+        'rounded-lg border',
+        'backdrop-blur-premium',
+        badgeVariants[variant],
+        className
+      )}
       {...props}
     >
       {children}
-    </Card>
+    </span>
   );
-}
+};
 
-export function GlassButton({ 
+// ===============================
+// 🎨 PREMIUM GLASS TOOLTIP
+// ===============================
+
+export const GlassTooltip = ({ 
   children, 
-  variant = 'primary', 
-  size = 'md', 
-  className = '', 
-  disabled = false,
-  onClick,
-  ...props 
-}) {
-  const baseClasses = `
-    backdrop-blur-xl border rounded-xl font-medium
-    transition-all duration-300 transform
-    focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-transparent
-    disabled:opacity-50 disabled:cursor-not-allowed
-    active:scale-95 relative overflow-hidden
-    before:absolute before:inset-0 before:bg-gradient-to-r 
-    before:from-white/10 before:to-transparent before:opacity-0
-    hover:before:opacity-100 before:transition-opacity before:duration-300
-  `;
+  content, 
+  placement = 'top',
+  className = '' 
+}) => {
+  const [isVisible, setIsVisible] = React.useState(false);
 
-  const variants = {
-    primary: `
-      bg-gradient-to-r from-blue-500/20 to-purple-500/20 
-      border-blue-400/30 text-blue-100
-      hover:from-blue-500/30 hover:to-purple-500/30 
-      hover:border-blue-400/50 hover:shadow-lg hover:shadow-blue-500/25
-      focus:ring-blue-400/50
-      hover:shadow-[0_0_20px_rgba(59,130,246,0.4)]
-    `,
-    secondary: `
-      bg-white/5 border-white/20 text-gray-100
-      hover:bg-white/10 hover:border-white/30
-      focus:ring-white/50
-      hover:shadow-[0_8px_32px_rgba(255,255,255,0.1)]
-    `,
-    success: `
-      bg-gradient-to-r from-green-500/20 to-emerald-500/20 
-      border-green-400/30 text-green-100
-      hover:from-green-500/30 hover:to-emerald-500/30 
-      hover:border-green-400/50
-      focus:ring-green-400/50
-      hover:shadow-[0_0_20px_rgba(16,185,129,0.4)]
-    `,
-    danger: `
-      bg-gradient-to-r from-red-500/20 to-pink-500/20 
-      border-red-400/30 text-red-100
-      hover:from-red-500/30 hover:to-pink-500/30 
-      hover:border-red-400/50
-      focus:ring-red-400/50
-      hover:shadow-[0_0_20px_rgba(239,68,68,0.4)]
-    `,
-    premium: `
-      bg-gradient-to-r from-purple-500/20 via-blue-500/20 to-cyan-500/20 
-      border-purple-400/30 text-white
-      hover:from-purple-500/30 hover:via-blue-500/30 hover:to-cyan-500/30 
-      hover:border-purple-400/50
-      focus:ring-purple-400/50
-      hover:shadow-[0_0_30px_rgba(147,51,234,0.5)]
-    `
-  };
-
-  const sizes = {
-    sm: 'px-3 py-1.5 text-sm',
-    md: 'px-4 py-2 text-base',
-    lg: 'px-6 py-3 text-lg',
-    xl: 'px-8 py-4 text-xl'
+  const placementClasses = {
+    top: 'bottom-full left-1/2 transform -translate-x-1/2 mb-2',
+    bottom: 'top-full left-1/2 transform -translate-x-1/2 mt-2',
+    left: 'right-full top-1/2 transform -translate-y-1/2 mr-2',
+    right: 'left-full top-1/2 transform -translate-y-1/2 ml-2',
   };
 
   return (
-    <motion.button
-      className={`${baseClasses} ${variants[variant]} ${sizes[size]} ${className}`}
-      whileHover={{ scale: disabled ? 1 : 1.02 }}
-      whileTap={{ scale: disabled ? 1 : 0.98 }}
-      transition={{ duration: 0.2 }}
-      disabled={disabled}
-      onClick={onClick}
-      {...props}
+    <div 
+      className="relative inline-block"
+      onMouseEnter={() => setIsVisible(true)}
+      onMouseLeave={() => setIsVisible(false)}
     >
-      <span className="relative z-10">{children}</span>
-    </motion.button>
+      {children}
+      {isVisible && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.9 }}
+          className={cn(
+            'absolute z-tooltip',
+            'glass-thick',
+            'rounded-lg px-3 py-1.5',
+            'text-sm text-text-primary font-primary',
+            'whitespace-nowrap',
+            'pointer-events-none',
+            placementClasses[placement],
+            className
+          )}
+        >
+          {content}
+        </motion.div>
+      )}
+    </div>
   );
-}
+};
 
-export function GlassInput({ 
-  className = '', 
-  error = false,
-  variant = 'default',
-  ...props 
-}) {
-  const baseClasses = `
-    backdrop-blur-xl border rounded-xl
-    px-4 py-3 text-gray-100 placeholder-gray-400
-    transition-all duration-300 relative
-    focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-transparent
-  `;
+// ===============================
+// 🎨 UTILITY FUNCTIONS
+// ===============================
 
-  const variants = {
-    default: `
-      bg-white/5 border-white/20 
-      hover:border-white/30 hover:bg-white/10
-      focus:border-blue-400/50 focus:bg-white/10 focus:ring-blue-400/50
-      focus:shadow-[0_0_20px_rgba(59,130,246,0.3)]
-    `,
-    premium: `
-      bg-gradient-to-r from-white/10 to-white/5 border-white/30 
-      hover:border-white/40 hover:from-white/15 hover:to-white/10
-      focus:border-purple-400/50 focus:from-white/15 focus:to-white/10 focus:ring-purple-400/50
-      focus:shadow-[0_0_20px_rgba(147,51,234,0.3)]
-    `
-  };
+// Class name utility (cn function)
+export const cn = (...classes) => {
+  return classes.filter(Boolean).join(' ');
+};
 
-  const normalClasses = variants[variant] || variants.default;
-
-  const errorClasses = `
-    border-red-400/50 bg-red-500/10
-    focus:border-red-400 focus:ring-red-400/50
-    focus:shadow-[0_0_20px_rgba(239,68,68,0.3)]
-  `;
-
-  return (
-    <input
-      className={`${baseClasses} ${error ? errorClasses : normalClasses} ${className}`}
-      {...props}
-    />
-  );
-}
-
-// New premium components
-export function PremiumCard({ children, className = '', ...props }) {
-  return (
-    <motion.div
-      className={`
-        relative backdrop-blur-2xl bg-gradient-to-br from-white/10 to-white/5
-        border border-white/20 rounded-2xl shadow-2xl overflow-hidden
-        before:absolute before:inset-0 before:bg-gradient-to-br 
-        before:from-white/10 before:via-transparent before:to-white/5
-        before:opacity-50 before:pointer-events-none
-        after:absolute after:inset-0 after:bg-gradient-to-t
-        after:from-black/10 after:to-transparent after:pointer-events-none
-        hover:shadow-[0_20px_60px_rgba(0,0,0,0.4)]
-        hover:border-white/30 hover:scale-[1.02]
-        transition-all duration-500 ease-out
-        ${className}
-      `}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-      {...props}
-    >
-      <div className="relative z-10">{children}</div>
-    </motion.div>
-  );
-}
-
-export function NeonButton({ children, color = 'blue', className = '', ...props }) {
-  const colors = {
-    blue: 'from-blue-500 to-cyan-500 shadow-blue-500/50',
-    purple: 'from-purple-500 to-pink-500 shadow-purple-500/50',
-    green: 'from-green-500 to-emerald-500 shadow-green-500/50',
-    orange: 'from-orange-500 to-red-500 shadow-orange-500/50'
-  };
-
-  return (
-    <motion.button
-      className={`
-        relative px-6 py-3 rounded-xl font-medium text-white
-        bg-gradient-to-r ${colors[color]} border border-white/20
-        backdrop-blur-xl overflow-hidden
-        before:absolute before:inset-0 before:bg-gradient-to-r 
-        before:${colors[color]} before:opacity-0 before:blur-xl
-        hover:before:opacity-100 hover:shadow-lg hover:${colors[color]}
-        focus:outline-none focus:ring-2 focus:ring-white/50
-        transition-all duration-300
-        ${className}
-      `}
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
-      {...props}
-    >
-      <span className="relative z-10">{children}</span>
-    </motion.button>
-  );
-}
+export default GlassCard;

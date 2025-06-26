@@ -1,0 +1,99 @@
+Testing backend at: http://localhost:8001/api
+
+========== TESTING UNIVERSAL PORTABILITY SYSTEM ==========
+
+Detected Backend URL: http://localhost:8001
+✅ API accessible at http://localhost:8001/api/health
+   Response: {'status': 'healthy', 'database': 'healthy', 'ai_service': 'healthy', 'timestamp': '2025-06-25T23:02:43.836764'}
+✅ MongoDB connection successful
+✅ Groq API integration successful
+✅ CORS headers present in response
+   Access-Control-Allow-Origin: *
+✅ CORS configuration is correctly set for universal portability
+
+✅ Universal Portability System is working correctly
+
+========== MASTERX AI MENTOR SYSTEM BACKEND TESTS ==========
+
+✅ PASSED - Test Root Endpoint (0.00s)
+✅ PASSED - Test Health Endpoint (0.05s)
+✅ PASSED - Test Cors Configuration (0.01s)
+✅ PASSED - Test Create User (0.01s)
+✅ PASSED - Test Get User By Email (0.01s)
+✅ PASSED - Test Create Session (0.01s)
+✅ PASSED - Test Get Session (0.01s)
+✅ PASSED - Test Get User Sessions (0.01s)
+✅ PASSED - Test Basic Chat (3.16s)
+✅ PASSED - Test Premium Chat (7.54s)
+✅ PASSED - Test Premium Context Chat (43.79s)
+✅ PASSED - Test Available Models (0.00s)
+✅ PASSED - Test Learning Psychology Features (0.00s)
+✅ PASSED - Test Gamification Achievements (0.01s)
+✅ PASSED - Test Exercise Generation (20.03s)
+✅ PASSED - Test Learning Path Generation (20.73s)
+
+----- Testing Personal Learning Assistant -----
+Error in test_create_learning_goal: Response should contain goal ID
+❌ FAILED - Test Create Learning Goal (0.01s)
+   Error: Response should contain goal ID
+❌ Learning goal creation failed, skipping related tests
+❌ FAILED - Test Add Learning Memory (0.01s)
+   Error: Response should contain memory ID
+❌ FAILED - Test Get User Memories (0.01s)
+   Error: Response should be a list of memories
+❌ FAILED - Test Get Personalized Recommendations (0.01s)
+   Error: Response should contain next actions
+❌ FAILED - Test Get Learning Insights (0.00s)
+   Error: Response should be a list of insights
+
+----- Testing Personalization Engine -----
+Error in test_personalization_engine_endpoints: Response should contain learning style
+❌ FAILED - Test Personalization Engine Endpoints (0.00s)
+   Error: Response should contain learning style
+❌ FAILED - Test Personalization Features Endpoint (0.05s)
+   Error: Response should contain features
+✅ PASSED - Test Adaptive Ai Chat (0.15s)
+
+Testing Streaming Chat (async)...
+✅ PASSED - Streaming Chat (27.70s)
+   Received 1261 chunks, completion signal: True
+
+Testing Premium Streaming Chat (async)...
+✅ PASSED - Premium Streaming Chat (57.45s)
+   Received 1413 chunks, completion signal: True
+
+Testing Premium Context-Aware Streaming Chat (async)...
+✅ PASSED - Premium Context-Aware Streaming Chat (58.77s)
+   Received 1080 chunks, completion signal: True
+   Context data received: True
+✅ PASSED - Test End Session (0.01s)
+
+========== TEST SUMMARY ==========
+
+Total Tests: 23
+Passed: 21 (91.3%)
+Failed: 2 (8.7%)
+
+All tests completed. See results above for details.
+✅ PASSED - Test Create User (0.01s)
+✅ PASSED - Test Create Session (0.01s)
+
+========== TESTING LEARNING PSYCHOLOGY SERVICES ==========
+
+✅ PASSED - Test Metacognitive Training Session (0.00s)
+✅ PASSED - Test Memory Palace Creation (4.00s)
+✅ PASSED - Test Elaborative Questions Generation (6.08s)
+✅ PASSED - Test Transfer Learning Scenario (3.50s)
+
+Learning Psychology Services tests completed.
+
+========== TESTING GAMIFICATION SYSTEM ==========
+
+❌ FAILED - Test Gamification User Status (0.05s)
+   Error: Response should contain points information
+✅ PASSED - Test Session Completion Gamification (0.05s)
+✅ PASSED - Test Concept Mastery Gamification (0.02s)
+✅ PASSED - Test Study Group Creation (0.05s)
+✅ PASSED - Test Get Study Groups (0.01s)
+
+Gamification System tests completed.

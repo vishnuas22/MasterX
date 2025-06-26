@@ -679,21 +679,34 @@ def test_create_learning_goal(user_id: str):
         "success_criteria": ["Complete 3 projects", "Pass assessment with 80%"]
     }
     
-    response = requests.post(f"{API_URL}/users/{user_id}/goals", json=goal_data)
-    response.raise_for_status()
-    data = response.json()
-    
-    assert "goal_id" in data, "Response should contain goal ID"
-    assert data["title"] == goal_data["title"], "Goal title should match"
-    assert data["user_id"] == user_id, "User ID should match"
-    assert data["status"] == "active", "Goal should be active"
-    
-    # Track result
-    test_results["total"] += 1
-    test_results["passed"] += 1
-    test_results["results"].append({"name": "Create Learning Goal", "passed": True})
-    
-    return data
+    try:
+        response = requests.post(f"{API_URL}/users/{user_id}/goals", json=goal_data)
+        response.raise_for_status()
+        data = response.json()
+        
+        assert "goal_id" in data, "Response should contain goal ID"
+        assert data["title"] == goal_data["title"], "Goal title should match"
+        assert data["user_id"] == user_id, "User ID should match"
+        assert data["status"] == "active", "Goal should be active"
+        
+        # Track result
+        test_results["total"] += 1
+        test_results["passed"] += 1
+        test_results["results"].append({"name": "Create Learning Goal", "passed": True})
+        
+        return data
+    except Exception as e:
+        # Print detailed error for debugging
+        print(f"Error in test_create_learning_goal: {str(e)}")
+        if isinstance(e, requests.exceptions.HTTPError):
+            print(f"Response content: {e.response.content.decode()}")
+        
+        # Track result
+        test_results["total"] += 1
+        test_results["failed"] += 1
+        test_results["results"].append({"name": "Create Learning Goal", "passed": False})
+        
+        raise
 
 @run_test
 def test_get_user_goals(user_id: str):
@@ -725,20 +738,33 @@ def test_update_goal_progress(goal_id: str):
         }
     }
     
-    response = requests.put(f"{API_URL}/goals/{goal_id}/progress", json=progress_data)
-    response.raise_for_status()
-    data = response.json()
-    
-    assert "goal_id" in data, "Response should contain goal ID"
-    assert "progress_percentage" in data, "Response should contain progress percentage"
-    assert data["progress_percentage"] >= 10.0, "Progress should be updated"
-    
-    # Track result
-    test_results["total"] += 1
-    test_results["passed"] += 1
-    test_results["results"].append({"name": "Update Goal Progress", "passed": True})
-    
-    return data
+    try:
+        response = requests.put(f"{API_URL}/goals/{goal_id}/progress", json=progress_data)
+        response.raise_for_status()
+        data = response.json()
+        
+        assert "goal_id" in data, "Response should contain goal ID"
+        assert "progress_percentage" in data, "Response should contain progress percentage"
+        assert data["progress_percentage"] >= 10.0, "Progress should be updated"
+        
+        # Track result
+        test_results["total"] += 1
+        test_results["passed"] += 1
+        test_results["results"].append({"name": "Update Goal Progress", "passed": True})
+        
+        return data
+    except Exception as e:
+        # Print detailed error for debugging
+        print(f"Error in test_update_goal_progress: {str(e)}")
+        if isinstance(e, requests.exceptions.HTTPError):
+            print(f"Response content: {e.response.content.decode()}")
+        
+        # Track result
+        test_results["total"] += 1
+        test_results["failed"] += 1
+        test_results["results"].append({"name": "Update Goal Progress", "passed": False})
+        
+        raise
 
 @run_test
 def test_add_learning_memory(user_id: str, goal_id: str = None):
@@ -827,37 +853,55 @@ def test_get_learning_insights(user_id: str):
 @run_test
 def test_personalization_engine_endpoints(user_id: str):
     """Test personalization engine endpoints"""
-    # Test learning DNA endpoint
-    response = requests.get(f"{API_URL}/users/{user_id}/learning-dna")
-    response.raise_for_status()
-    dna_data = response.json()
-    
-    assert "learning_style" in dna_data, "Response should contain learning style"
-    assert "cognitive_patterns" in dna_data, "Response should contain cognitive patterns"
-    assert "preferred_pace" in dna_data, "Response should contain preferred pace"
-    
-    # Test adaptive parameters endpoint
-    response = requests.get(f"{API_URL}/users/{user_id}/adaptive-parameters")
-    response.raise_for_status()
-    params_data = response.json()
-    
-    assert "complexity_level" in params_data, "Response should contain complexity level"
-    assert "explanation_depth" in params_data, "Response should contain explanation depth"
-    
-    # Test mood analysis endpoint
-    response = requests.get(f"{API_URL}/users/{user_id}/mood-analysis")
-    response.raise_for_status()
-    mood_data = response.json()
-    
-    assert "detected_mood" in mood_data, "Response should contain detected mood"
-    assert "recommended_pace" in mood_data, "Response should contain recommended pace"
-    
-    # Track result
-    test_results["total"] += 1
-    test_results["passed"] += 1
-    test_results["results"].append({"name": "Personalization Engine Endpoints", "passed": True})
-    
-    return {"dna": dna_data, "params": params_data, "mood": mood_data}
+    try:
+        # Test learning DNA endpoint
+        response = requests.get(f"{API_URL}/users/{user_id}/learning-dna")
+        response.raise_for_status()
+        dna_data = response.json()
+        
+        assert "learning_style" in dna_data, "Response should contain learning style"
+        assert "cognitive_patterns" in dna_data, "Response should contain cognitive patterns"
+        assert "preferred_pace" in dna_data, "Response should contain preferred pace"
+        
+        # Test adaptive parameters endpoint
+        response = requests.get(f"{API_URL}/users/{user_id}/adaptive-parameters")
+        response.raise_for_status()
+        params_data = response.json()
+        
+        assert "complexity_level" in params_data, "Response should contain complexity level"
+        assert "explanation_depth" in params_data, "Response should contain explanation depth"
+        
+        # Test mood analysis endpoint
+        response = requests.post(f"{API_URL}/users/{user_id}/mood-analysis", json={
+            "recent_messages": [
+                {"sender": "user", "message": "I'm feeling a bit confused about this topic", "timestamp": datetime.now().isoformat()},
+                {"sender": "mentor", "message": "Let me explain it differently", "timestamp": datetime.now().isoformat()}
+            ]
+        })
+        response.raise_for_status()
+        mood_data = response.json()
+        
+        assert "detected_mood" in mood_data, "Response should contain detected mood"
+        assert "recommended_pace" in mood_data, "Response should contain recommended pace"
+        
+        # Track result
+        test_results["total"] += 1
+        test_results["passed"] += 1
+        test_results["results"].append({"name": "Personalization Engine Endpoints", "passed": True})
+        
+        return {"dna": dna_data, "params": params_data, "mood": mood_data}
+    except Exception as e:
+        # Print detailed error for debugging
+        print(f"Error in test_personalization_engine_endpoints: {str(e)}")
+        if isinstance(e, requests.exceptions.HTTPError):
+            print(f"Response content: {e.response.content.decode()}")
+        
+        # Track result
+        test_results["total"] += 1
+        test_results["failed"] += 1
+        test_results["results"].append({"name": "Personalization Engine Endpoints", "passed": False})
+        
+        raise
 
 @run_test
 def test_adaptive_ai_chat(session_id: str):

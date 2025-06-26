@@ -1,23 +1,29 @@
 import React from 'react';
-import { motion } from 'framer-motion';
-import { 
-  MessageCircle, 
-  Brain, 
-  Users, 
-  TrendingUp, 
-  Settings, 
-  ChevronLeft,
-  ChevronRight,
-  User,
-  BookOpen,
-  Target,
-  Lightbulb,
-  Activity,
-  Award,
-  BarChart3,
-  Zap
-} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '../context/AppContext';
+import { GlassCard, GlassBadge } from './GlassCard';
+import { 
+  MessageIcon, 
+  AIBrainIcon, 
+  UserIcon,
+  BookIcon,
+  TargetIcon,
+  LightbulbIcon,
+  TrendingUpIcon,
+  BarChartIcon,
+  TrophyIcon,
+  SettingsIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  ZapIcon,
+  SparkleIcon,
+  PulsingDot 
+} from './PremiumIcons';
+import { cn } from '../utils/cn';
+
+// ===============================
+// 🎨 PREMIUM SIDEBAR COMPONENT
+// ===============================
 
 export function Sidebar({ isCollapsed, onToggle }) {
   const { state, actions } = useApp();
@@ -26,44 +32,54 @@ export function Sidebar({ isCollapsed, onToggle }) {
     {
       id: 'chat',
       label: 'AI Mentor Chat',
-      icon: MessageCircle,
-      description: 'Interactive learning conversations'
+      icon: MessageIcon,
+      description: 'Interactive learning conversations',
+      badge: null,
+      gradient: true
     },
     {
       id: 'personalization',
       label: 'Personalization Hub',
-      icon: User,
-      description: 'Your learning DNA & adaptive insights'
+      icon: UserIcon,
+      description: 'Your learning DNA & adaptive insights',
+      badge: 'NEW',
+      premium: true
     },
     {
       id: 'learning-psychology',
       label: 'Learning Psychology',
-      icon: Brain,
-      description: 'Advanced cognitive techniques'
+      icon: AIBrainIcon,
+      description: 'Advanced cognitive techniques',
+      badge: 'BETA',
+      premium: true
     },
     {
       id: 'metacognitive-training',
       label: 'Metacognitive Training',
-      icon: Lightbulb,
-      description: 'Think about thinking'
+      icon: LightbulbIcon,
+      description: 'Think about thinking',
+      comingSoon: false
     },
     {
       id: 'memory-palace',
       label: 'Memory Palace',
-      icon: BookOpen,
-      description: 'Spatial memory techniques'
+      icon: BookIcon,
+      description: 'Spatial memory techniques',
+      comingSoon: false
     },
     {
       id: 'elaborative-questions',
       label: 'Elaborative Questions',
-      icon: Target,
-      description: 'Deep questioning skills'
+      icon: TargetIcon,
+      description: 'Deep questioning skills',
+      comingSoon: true
     },
     {
       id: 'transfer-learning',
       label: 'Transfer Learning',
-      icon: TrendingUp,
-      description: 'Knowledge application across domains'
+      icon: TrendingUpIcon,
+      description: 'Knowledge application across domains',
+      comingSoon: true
     }
   ];
 
@@ -71,20 +87,23 @@ export function Sidebar({ isCollapsed, onToggle }) {
     {
       id: 'analytics',
       label: 'Analytics',
-      icon: BarChart3,
-      description: 'Learning progress insights'
+      icon: BarChartIcon,
+      description: 'Learning progress insights',
+      comingSoon: true
     },
     {
       id: 'achievements',
       label: 'Achievements',
-      icon: Award,
-      description: 'Your learning milestones'
+      icon: TrophyIcon,
+      description: 'Your learning milestones',
+      comingSoon: true
     },
     {
       id: 'settings',
       label: 'Settings',
-      icon: Settings,
-      description: 'Customize your experience'
+      icon: SettingsIcon,
+      description: 'Customize your experience',
+      comingSoon: true
     }
   ];
 
@@ -94,149 +113,266 @@ export function Sidebar({ isCollapsed, onToggle }) {
 
   return (
     <motion.div
-      initial={{ width: isCollapsed ? 80 : 280 }}
-      animate={{ width: isCollapsed ? 80 : 280 }}
-      transition={{ duration: 0.3, ease: "easeInOut" }}
-      className="bg-gray-900/80 backdrop-blur-xl border-r border-gray-800/50 flex flex-col relative"
+      initial={{ width: isCollapsed ? 80 : 320 }}
+      animate={{ width: isCollapsed ? 80 : 320 }}
+      transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+      className="relative flex flex-col glass-ultra-thick border-r border-border-medium shadow-xl"
     >
       {/* Toggle Button */}
-      <button
+      <motion.button
         onClick={onToggle}
-        className="absolute -right-3 top-6 w-6 h-6 bg-gray-800 border border-gray-700 rounded-full flex items-center justify-center text-gray-400 hover:text-white hover:bg-gray-700 transition-colors z-10"
+        className="absolute -right-4 top-8 w-8 h-8 glass-medium rounded-full flex items-center justify-center text-text-tertiary hover:text-text-primary hover:glass-thick transition-all duration-200 z-20 shadow-lg"
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
       >
-        {isCollapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronLeft className="w-3 h-3" />}
-      </button>
+        {isCollapsed ? (
+          <ChevronRightIcon size="sm" />
+        ) : (
+          <ChevronLeftIcon size="sm" />
+        )}
+      </motion.button>
 
       {/* Header */}
-      <div className="p-6 border-b border-gray-800/50">
-        <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-            <Zap className="w-5 h-5 text-white" />
-          </div>
-          {!isCollapsed && (
-            <div>
-              <h1 className="text-lg font-bold text-white">MasterX</h1>
-              <p className="text-xs text-gray-400">AI Learning Mentor</p>
+      <div className="p-6 border-b border-border-subtle">
+        <motion.div 
+          className="flex items-center space-x-3"
+          layout
+        >
+          <div className="relative">
+            <div className="w-10 h-10 glass-ai-primary rounded-xl flex items-center justify-center shadow-glow-blue">
+              <ZapIcon size="lg" className="text-ai-blue-400" glow />
             </div>
-          )}
-        </div>
+            <PulsingDot size="xs" className="absolute -top-1 -right-1" />
+          </div>
+          <AnimatePresence>
+            {!isCollapsed && (
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3, delay: 0.1 }}
+              >
+                <h1 className="text-title-large font-bold text-gradient-primary">
+                  MasterX
+                </h1>
+                <p className="text-caption text-text-tertiary font-medium">
+                  AI Learning Mentor
+                </p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
       </div>
 
       {/* User Info */}
       {state.user && (
-        <div className="p-4 border-b border-gray-800/30">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center">
-              <span className="text-white text-sm font-bold">
-                {state.user.name.charAt(0).toUpperCase()}
-              </span>
-            </div>
-            {!isCollapsed && (
-              <div className="min-w-0 flex-1">
-                <p className="text-white text-sm font-medium truncate">{state.user.name}</p>
-                <p className="text-gray-400 text-xs truncate">{state.user.email}</p>
+        <div className="p-4 border-b border-border-subtle/50">
+          <motion.div 
+            className="flex items-center space-x-3"
+            layout
+          >
+            <div className="relative">
+              <div className="w-9 h-9 bg-gradient-to-br from-ai-green-400 to-ai-blue-500 rounded-xl flex items-center justify-center shadow-lg">
+                <span className="text-white text-sm font-bold font-primary">
+                  {state.user.name.charAt(0).toUpperCase()}
+                </span>
               </div>
-            )}
-          </div>
+              <div className="absolute -bottom-0.5 -right-0.5">
+                <PulsingDot size="xs" color="ai-green-500" />
+              </div>
+            </div>
+            <AnimatePresence>
+              {!isCollapsed && (
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.3 }}
+                  className="min-w-0 flex-1"
+                >
+                  <p className="text-body font-semibold text-text-primary truncate">
+                    {state.user.name}
+                  </p>
+                  <p className="text-caption text-text-tertiary truncate">
+                    {state.user.email}
+                  </p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
         </div>
       )}
 
       {/* Main Navigation */}
-      <nav className="flex-1 overflow-y-auto p-4">
-        <div className="space-y-2">
-          {menuItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = state.activeView === item.id;
-            
-            return (
-              <motion.button
-                key={item.id}
-                onClick={() => handleItemClick(item.id)}
-                className={`w-full flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 group ${
-                  isActive
-                    ? 'bg-blue-500/20 border border-blue-400/30 text-blue-300'
-                    : 'hover:bg-gray-800/50 text-gray-400 hover:text-gray-300'
-                }`}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <Icon className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-blue-400' : ''}`} />
-                {!isCollapsed && (
-                  <div className="text-left min-w-0 flex-1">
-                    <div className={`font-medium text-sm ${isActive ? 'text-blue-300' : ''}`}>
-                      {item.label}
-                    </div>
-                    <div className="text-xs text-gray-500 truncate group-hover:text-gray-400">
-                      {item.description}
-                    </div>
-                  </div>
-                )}
-                
-                {/* Active indicator */}
-                {isActive && (
-                  <motion.div
-                    layoutId="activeIndicator"
-                    className="w-1 h-6 bg-blue-400 rounded-full"
-                    initial={false}
-                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                  />
-                )}
-              </motion.button>
-            );
-          })}
-        </div>
+      <nav className="flex-1 overflow-y-auto p-4 space-y-2">
+        <motion.div layout className="space-y-1">
+          {menuItems.map((item, index) => (
+            <SidebarItem
+              key={item.id}
+              item={item}
+              isActive={state.activeView === item.id}
+              isCollapsed={isCollapsed}
+              onClick={() => handleItemClick(item.id)}
+              index={index}
+            />
+          ))}
+        </motion.div>
       </nav>
 
       {/* Bottom Navigation */}
-      <div className="p-4 border-t border-gray-800/30">
-        <div className="space-y-2">
-          {bottomItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = state.activeView === item.id;
-            
-            return (
-              <motion.button
-                key={item.id}
-                onClick={() => handleItemClick(item.id)}
-                className={`w-full flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 ${
-                  isActive
-                    ? 'bg-blue-500/20 border border-blue-400/30 text-blue-300'
-                    : 'hover:bg-gray-800/50 text-gray-400 hover:text-gray-300'
-                }`}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <Icon className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-blue-400' : ''}`} />
-                {!isCollapsed && (
-                  <div className="text-left min-w-0 flex-1">
-                    <div className={`font-medium text-sm ${isActive ? 'text-blue-300' : ''}`}>
-                      {item.label}
-                    </div>
-                    <div className="text-xs text-gray-500 truncate">
-                      {item.description}
-                    </div>
-                  </div>
-                )}
-              </motion.button>
-            );
-          })}
-        </div>
+      <div className="p-4 border-t border-border-subtle space-y-1">
+        {bottomItems.map((item, index) => (
+          <SidebarItem
+            key={item.id}
+            item={item}
+            isActive={state.activeView === item.id}
+            isCollapsed={isCollapsed}
+            onClick={() => handleItemClick(item.id)}
+            index={index}
+            isBottom
+          />
+        ))}
       </div>
 
       {/* Premium Badge */}
-      {!isCollapsed && (
-        <div className="p-4">
-          <div className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-400/30 rounded-xl p-3">
-            <div className="flex items-center space-x-2 mb-2">
-              <Activity className="w-4 h-4 text-purple-400" />
-              <span className="text-purple-300 text-sm font-medium">Premium Features</span>
-            </div>
-            <p className="text-xs text-gray-400">
-              Advanced personalization and AI models active
-            </p>
-          </div>
-        </div>
-      )}
+      <AnimatePresence>
+        {!isCollapsed && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            transition={{ delay: 0.3 }}
+            className="p-4"
+          >
+            <GlassCard variant="ai-primary" size="sm" className="text-center">
+              <div className="flex items-center space-x-2 mb-2">
+                <SparkleIcon size="sm" className="text-ai-blue-400" />
+                <span className="text-caption font-semibold text-ai-blue-300">
+                  Premium Features
+                </span>
+              </div>
+              <p className="text-footnote text-text-tertiary">
+                Advanced AI models and personalization active
+              </p>
+            </GlassCard>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }
+
+// ===============================
+// 🎨 SIDEBAR ITEM COMPONENT
+// ===============================
+
+function SidebarItem({ 
+  item, 
+  isActive, 
+  isCollapsed, 
+  onClick, 
+  index, 
+  isBottom = false 
+}) {
+  const Icon = item.icon;
+
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, x: -20 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ 
+        delay: index * 0.05,
+        duration: 0.3,
+        ease: "easeOut"
+      }}
+    >
+      <motion.button
+        onClick={onClick}
+        disabled={item.comingSoon}
+        className={cn(
+          'w-full flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 group relative',
+          'focus:outline-none focus-visible:ring-2 focus-visible:ring-ai-blue-500/50',
+          isActive
+            ? 'glass-thick border border-ai-blue-500/30 text-ai-blue-300 shadow-glow-blue'
+            : item.comingSoon
+              ? 'opacity-60 cursor-not-allowed hover:opacity-70'
+              : 'hover:glass-medium text-text-tertiary hover:text-text-primary',
+          item.premium && !isActive && 'hover:glass-ai-primary hover:border-ai-blue-500/20'
+        )}
+        whileHover={!item.comingSoon ? { scale: 1.02, x: 2 } : undefined}
+        whileTap={!item.comingSoon ? { scale: 0.98 } : undefined}
+      >
+        <div className="flex-shrink-0 relative">
+          <Icon 
+            size="lg" 
+            className={cn(
+              'transition-colors duration-200',
+              isActive 
+                ? 'text-ai-blue-400' 
+                : item.premium 
+                  ? 'text-ai-purple-400'
+                  : ''
+            )}
+            animated={!item.comingSoon}
+            gradient={item.gradient && isActive}
+          />
+          {item.premium && !isCollapsed && (
+            <div className="absolute -top-1 -right-1">
+              <SparkleIcon size="xs" className="text-ai-purple-400" />
+            </div>
+          )}
+        </div>
+
+        <AnimatePresence>
+          {!isCollapsed && (
+            <motion.div
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -10 }}
+              transition={{ duration: 0.2 }}
+              className="text-left min-w-0 flex-1"
+            >
+              <div className="flex items-center justify-between mb-1">
+                <div className={cn(
+                  'font-semibold text-body truncate',
+                  isActive ? 'text-ai-blue-300' : ''
+                )}>
+                  {item.label}
+                </div>
+                {item.badge && (
+                  <GlassBadge 
+                    variant={item.badge === 'NEW' ? 'success' : 'primary'}
+                    className="ml-2 flex-shrink-0"
+                  >
+                    {item.badge}
+                  </GlassBadge>
+                )}
+                {item.comingSoon && (
+                  <GlassBadge variant="secondary" className="ml-2 flex-shrink-0">
+                    Soon
+                  </GlassBadge>
+                )}
+              </div>
+              <div className="text-caption text-text-quaternary truncate group-hover:text-text-tertiary transition-colors">
+                {item.description}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+        
+        {/* Active indicator */}
+        {isActive && (
+          <motion.div
+            layoutId="sidebarActiveIndicator"
+            className="absolute right-2 w-1 h-8 bg-ai-blue-400 rounded-full shadow-glow-blue"
+            initial={false}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          />
+        )}
+      </motion.button>
+    </motion.div>
+  );
+}
+
+export default Sidebar;

@@ -1,9 +1,22 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Bot, User, Sparkles, BookOpen, Target, Settings, Brain, Trophy, Zap, Eye, Heart, ArrowDown, Palette } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { GlassCard, GlassButton, GlassInput } from './GlassCard';
-import { TypingIndicator } from './LoadingSpinner';
+import { TypingIndicator, LoadingStates } from './LoadingSpinner';
+import { 
+  SendIcon, 
+  AIBrainIcon, 
+  UserIcon, 
+  SparkleIcon, 
+  BookIcon, 
+  TargetIcon, 
+  SettingsIcon, 
+  TrophyIcon, 
+  ZapIcon, 
+  ArrowDownIcon,
+  PulsingDot,
+  CheckIcon
+} from './PremiumIcons';
 import { PremiumLearningModes, LearningModeIndicator } from './PremiumLearningModes';
 import { ModelManagement } from './ModelManagement';
 import { GamificationDashboard } from './GamificationDashboard';
@@ -15,6 +28,7 @@ import { GestureControl } from './GestureControl';
 import { ARVRInterface } from './ARVRInterface';
 import { ThemeProvider, AdaptiveThemePanel, useAdaptiveTheme } from './AdaptiveThemeSystem';
 import { useApp } from '../context/AppContext';
+import { cn } from '../utils/cn';
 
 export function ChatInterface() {
   const { state, actions } = useApp();
@@ -245,153 +259,194 @@ export function ChatInterface() {
 
   if (!state.currentSession) {
     return (
-      <div className="flex-1 flex items-center justify-center">
-        <GlassCard className="p-8 text-center max-w-md">
-          <Bot className="h-16 w-16 text-blue-400 mx-auto mb-4" />
-          <h3 className="text-xl font-bold text-gray-100 mb-2">Welcome to MasterX</h3>
-          <p className="text-gray-400 mb-6">
-            Your AI-powered learning companion. Start a new session to begin your learning journey.
-          </p>
-          
-          {/* Quick start options */}
-          <div className="space-y-3">
-            <GlassButton
-              onClick={async () => {
-                try {
-                  if (!state.user?.id) {
-                    actions.setError('User not found. Please refresh and try again.');
-                    return;
-                  }
-
-                  actions.setLoading(true);
-                  
-                  // Create a new session with default settings
-                  const sessionData = {
-                    user_id: state.user.id,
-                    subject: 'General Learning',
-                    difficulty_level: 'intermediate',
-                    learning_objectives: ['Explore new topics', 'Interactive learning', 'Skill development']
-                  };
-                  
-                  await actions.createSession(sessionData);
-                  console.log('New session created successfully');
-                } catch (error) {
-                  console.error('Error creating session:', error);
-                  actions.setError('Failed to create session. Please try again.');
-                } finally {
-                  actions.setLoading(false);
-                }
-              }}
-              className="w-full"
-              disabled={state.isLoading}
-            >
-              <BookOpen className="h-4 w-4 mr-2" />
-              {state.isLoading ? 'Creating Session...' : 'Start Learning'}
-            </GlassButton>
-            
-            {/* Subject-specific quick start buttons */}
-            <div className="grid grid-cols-2 gap-2 mt-4">
-              {[
-                { subject: 'Programming', icon: '💻' },
-                { subject: 'Mathematics', icon: '🔢' },
-                { subject: 'Science', icon: '🔬' },
-                { subject: 'Language', icon: '🗣️' }
-              ].map(({ subject, icon }) => (
-                <GlassButton
-                  key={subject}
-                  size="sm"
-                  variant="secondary"
-                  onClick={async () => {
-                    try {
-                      if (!state.user?.id) {
-                        actions.setError('User not found. Please refresh and try again.');
-                        return;
-                      }
-
-                      actions.setLoading(true);
-                      
-                      const sessionData = {
-                        user_id: state.user.id,
-                        subject: subject,
-                        difficulty_level: 'intermediate',
-                        learning_objectives: [`Learn ${subject}`, 'Practice skills', 'Build understanding']
-                      };
-                      
-                      await actions.createSession(sessionData);
-                    } catch (error) {
-                      console.error('Error creating session:', error);
-                      actions.setError('Failed to create session. Please try again.');
-                    } finally {
-                      actions.setLoading(false);
-                    }
-                  }}
-                  disabled={state.isLoading}
-                  className="flex flex-col items-center p-3"
-                >
-                  <span className="text-lg mb-1">{icon}</span>
-                  <span className="text-xs">{subject}</span>
-                </GlassButton>
-              ))}
+      <div className="flex-1 flex items-center justify-center p-6">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+        >
+          <GlassCard variant="ai-primary" size="lg" className="text-center max-w-lg">
+            <div className="mb-8">
+              <div className="relative mx-auto mb-6">
+                <div className="w-20 h-20 glass-ai-primary rounded-3xl mx-auto flex items-center justify-center shadow-glow-blue">
+                  <AIBrainIcon size="3xl" className="text-ai-blue-400" animated glow />
+                </div>
+                <PulsingDot size="sm" className="absolute -top-2 -right-2" />
+              </div>
+              <h1 className="text-headline-large font-bold text-gradient-primary mb-3">
+                Welcome to MasterX
+              </h1>
+              <p className="text-body text-text-secondary mb-8 leading-relaxed">
+                Your premium AI-powered learning companion. Start a new session to begin your personalized learning journey with advanced AI mentoring.
+              </p>
             </div>
-          </div>
-        </GlassCard>
+            
+            {/* Enhanced Quick start options */}
+            <div className="space-y-6">
+              <GlassButton
+                variant="gradient"
+                size="lg"
+                onClick={async () => {
+                  try {
+                    if (!state.user?.id) {
+                      actions.setError('User not found. Please refresh and try again.');
+                      return;
+                    }
+
+                    actions.setLoading(true);
+                    
+                    const sessionData = {
+                      user_id: state.user.id,
+                      subject: 'General Learning',
+                      difficulty_level: 'intermediate',
+                      learning_objectives: ['Explore new topics', 'Interactive learning', 'Skill development']
+                    };
+                    
+                    await actions.createSession(sessionData);
+                  } catch (error) {
+                    console.error('Error creating session:', error);
+                    actions.setError('Failed to create session. Please try again.');
+                  } finally {
+                    actions.setLoading(false);
+                  }
+                }}
+                className="w-full"
+                disabled={state.isLoading}
+                loading={state.isLoading}
+              >
+                <BookIcon size="md" className="mr-3" />
+                {state.isLoading ? 'Creating Session...' : 'Start Learning Journey'}
+              </GlassButton>
+              
+              {/* Subject-specific quick start buttons */}
+              <div>
+                <h3 className="text-title font-semibold text-text-primary mb-4">
+                  Or choose a subject:
+                </h3>
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { subject: 'Programming', icon: '💻', color: 'ai-blue-500' },
+                    { subject: 'Mathematics', icon: '🔢', color: 'ai-purple-500' },
+                    { subject: 'Science', icon: '🔬', color: 'ai-green-500' },
+                    { subject: 'Language', icon: '🗣️', color: 'ai-red-500' }
+                  ].map(({ subject, icon, color }) => (
+                    <GlassButton
+                      key={subject}
+                      variant="secondary"
+                      onClick={async () => {
+                        try {
+                          if (!state.user?.id) {
+                            actions.setError('User not found. Please refresh and try again.');
+                            return;
+                          }
+
+                          actions.setLoading(true);
+                          
+                          const sessionData = {
+                            user_id: state.user.id,
+                            subject: subject,
+                            difficulty_level: 'intermediate',
+                            learning_objectives: [`Learn ${subject}`, 'Practice skills', 'Build understanding']
+                          };
+                          
+                          await actions.createSession(sessionData);
+                        } catch (error) {
+                          console.error('Error creating session:', error);
+                          actions.setError('Failed to create session. Please try again.');
+                        } finally {
+                          actions.setLoading(false);
+                        }
+                      }}
+                      disabled={state.isLoading}
+                      className="flex flex-col items-center p-4 hover:glass-thick"
+                    >
+                      <span className="text-2xl mb-2 transform group-hover:scale-110 transition-transform">
+                        {icon}
+                      </span>
+                      <span className="text-caption font-medium text-text-secondary group-hover:text-text-primary">
+                        {subject}
+                      </span>
+                    </GlassButton>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </GlassCard>
+        </motion.div>
       </div>
     );
   }
 
   return (
     <div className="flex-1 flex flex-col h-full">
-      {/* Enhanced Chat Header */}
-      <div className="border-b border-white/10 p-4 bg-black/20 backdrop-blur-sm">
+      {/* Premium Chat Header */}
+      <div className="glass-medium border-b border-border-subtle p-6 shadow-lg">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-4">
             <div className="relative">
-              <Bot className="h-8 w-8 text-blue-400" />
-              <div className="absolute -bottom-1 -right-1 h-3 w-3 bg-green-400 rounded-full border-2 border-gray-900 animate-pulse"></div>
+              <div className="w-12 h-12 glass-ai-primary rounded-2xl flex items-center justify-center shadow-glow-blue">
+                <AIBrainIcon size="xl" className="text-ai-blue-400" animated />
+              </div>
+              <div className="absolute -bottom-1 -right-1">
+                <PulsingDot size="sm" color="ai-green-500" />
+              </div>
               {useContextAwareness && (
-                <div className="absolute -top-1 -right-1 h-3 w-3 bg-purple-400 rounded-full border-2 border-gray-900" title="Context Awareness Active">
-                  <Brain className="h-2 w-2 text-white" />
+                <div className="absolute -top-1 -left-1 w-4 h-4 glass-ai-secondary rounded-full flex items-center justify-center" title="Context Awareness Active">
+                  <AIBrainIcon size="xs" className="text-ai-purple-400" />
                 </div>
               )}
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-gray-100">MasterX AI Mentor</h2>
-              <p className="text-sm text-gray-400">
-                {state.currentSession.subject || 'General Learning'} • {state.currentSession.difficulty_level}
-                {useContextAwareness && <span className="text-purple-400 ml-2">• Context Aware</span>}
-              </p>
+              <h1 className="text-title-large font-bold text-gradient-primary">
+                MasterX AI Mentor
+              </h1>
+              <div className="flex items-center space-x-2 text-body text-text-secondary">
+                <span>{state.currentSession.subject || 'General Learning'}</span>
+                <span>•</span>
+                <span className="capitalize">{state.currentSession.difficulty_level}</span>
+                {useContextAwareness && (
+                  <>
+                    <span>•</span>
+                    <span className="text-ai-purple-400 flex items-center space-x-1">
+                      <SparkleIcon size="xs" />
+                      <span>Context Aware</span>
+                    </span>
+                  </>
+                )}
+              </div>
             </div>
           </div>
-          <div className="flex items-center space-x-2">
+          
+          <div className="flex items-center space-x-3">
             {/* View Toggle */}
-            <div className="flex bg-gray-800 rounded-lg p-1">
+            <div className="flex glass-medium rounded-xl p-1">
               <GlassButton
                 size="sm"
-                variant={currentView === 'chat' ? 'primary' : 'secondary'}
+                variant={currentView === 'chat' ? 'primary' : 'tertiary'}
                 onClick={() => setCurrentView('chat')}
-                className="px-3 py-1"
+                className="px-4 py-2"
               >
                 Chat
               </GlassButton>
               <GlassButton
                 size="sm"
-                variant={currentView === 'live-learning' ? 'primary' : 'secondary'}
+                variant={currentView === 'live-learning' ? 'primary' : 'tertiary'}
                 onClick={() => setCurrentView('live-learning')}
-                className="px-3 py-1"
+                className="px-4 py-2"
               >
-                <Zap className="h-3 w-3 mr-1" />
+                <ZapIcon size="sm" className="mr-2" />
                 Live
               </GlassButton>
             </div>
             
-            {/* Context Awareness Toggle */}
+            {/* Premium Action Buttons */}
             <GlassButton
               size="sm"
-              variant={useContextAwareness ? 'primary' : 'secondary'}
+              variant={useContextAwareness ? 'gradient' : 'secondary'}
               onClick={() => setUseContextAwareness(!useContextAwareness)}
               title="Toggle Context Awareness"
             >
-              <Brain className="h-4 w-4" />
+              <AIBrainIcon size="sm" />
             </GlassButton>
             
             <GlassButton 
@@ -400,32 +455,44 @@ export function ChatInterface() {
               onClick={() => setShowThemePanel(true)}
               title="Adaptive Theme Settings"
             >
-              <Palette className="h-4 w-4" />
+              <SettingsIcon size="sm" />
             </GlassButton>
+            
             <LearningModeIndicator 
               currentMode={learningMode}
               onClick={() => setShowLearningModes(true)}
             />
+            
             <GlassButton 
               size="sm" 
               variant="secondary"
               onClick={() => setShowGamification(true)}
+              title="Gamification Dashboard"
             >
-              <Trophy className="h-4 w-4" />
+              <TrophyIcon size="sm" />
             </GlassButton>
+            
             <GlassButton 
               size="sm" 
               variant="secondary"
               onClick={() => setShowModelManagement(true)}
+              title="AI Model Management"
             >
-              <Settings className="h-4 w-4" />
+              <SettingsIcon size="sm" />
             </GlassButton>
           </div>
         </div>
         
         {/* Context Awareness Panel */}
         {useContextAwareness && currentView === 'chat' && (
-          <contextAwareChat.ContextInsightsPanel />
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="mt-4 pt-4 border-t border-border-subtle"
+          >
+            <contextAwareChat.ContextInsightsPanel />
+          </motion.div>
         )}
       </div>
 
@@ -439,30 +506,33 @@ export function ChatInterface() {
             exit={{ opacity: 0, x: 20 }}
             className="flex-1 flex flex-col relative"
           >
-            {/* Enhanced Messages Area with improved scroll behavior */}
+            {/* Premium Messages Area with enhanced scroll behavior */}
             <div 
               ref={messagesContainerRef}
               onScroll={handleScroll}
-              className={getThemeClasses("flex-1 overflow-y-auto p-4 space-y-4 relative")}
+              className={cn(
+                "flex-1 overflow-y-auto p-6 space-y-6 relative",
+                "scroll-smooth"
+              )}
               style={{ 
                 height: '100%',
-                scrollBehavior: 'smooth',
-                overscrollBehavior: 'contain', // Prevent parent scrolling
-                WebkitOverflowScrolling: 'touch', // Smooth scrolling on iOS
-                minHeight: '0' // Ensure flex child can shrink
+                overscrollBehavior: 'contain',
+                WebkitOverflowScrolling: 'touch',
+                minHeight: '0'
               }}
               data-chat-container
             >
-              {/* Scroll Indicator */}
-              <div className="absolute top-0 right-0 w-1 h-full bg-white/5 rounded-full overflow-hidden">
-                <div 
-                  className="w-full bg-gradient-to-b from-blue-400 to-purple-500 rounded-full transition-all duration-300"
+              {/* Enhanced Scroll Indicator */}
+              <div className="absolute top-0 right-2 w-1 h-full glass-ultra-thin rounded-full overflow-hidden">
+                <motion.div 
+                  className="w-full bg-gradient-to-b from-ai-blue-400 to-ai-purple-500 rounded-full transition-all duration-300"
                   style={{
                     height: `${Math.min(100, Math.max(10, ((messagesContainerRef.current?.scrollTop || 0) / Math.max(1, (messagesContainerRef.current?.scrollHeight || 1) - (messagesContainerRef.current?.clientHeight || 1))) * 100))}%`,
                     transform: `translateY(${((messagesContainerRef.current?.scrollTop || 0) / Math.max(1, (messagesContainerRef.current?.scrollHeight || 1) - (messagesContainerRef.current?.clientHeight || 1))) * 100}%)`
                   }}
                 />
               </div>
+              
               <AnimatePresence>
                 {state.messages.map((message, index) => (
                   <ChatMessage key={message.id || index} message={message} />
@@ -474,7 +544,6 @@ export function ChatInterface() {
                     message={inputMessage}
                     sessionId={state.currentSession?.id}
                     onStreamComplete={(result) => {
-                      // Handle stream completion
                       setUseAdvancedStreaming(false);
                       setInputMessage('');
                     }}
@@ -486,28 +555,33 @@ export function ChatInterface() {
                   />
                 )}
                 
-                {/* Regular Streaming message */}
+                {/* Premium Streaming message */}
                 {state.isTyping && !useAdvancedStreaming && (
                   <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    className="flex items-start space-x-3"
+                    initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                    transition={{ duration: 0.3, ease: "easeOut" }}
+                    className="flex items-start space-x-4"
                   >
                     <div className="flex-shrink-0">
-                      <div className="h-8 w-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
-                        <Bot className="h-4 w-4 text-white" />
+                      <div className="w-10 h-10 glass-ai-primary rounded-2xl flex items-center justify-center shadow-glow-blue">
+                        <AIBrainIcon size="lg" className="text-ai-blue-400" animated />
                       </div>
                     </div>
                     <div className="flex-1">
-                      <GlassCard className="p-4" variant="premium">
+                      <GlassCard variant="ai-primary" size="md">
                         {state.streamingMessage ? (
-                          <div className="prose prose-invert max-w-none">
+                          <div className="prose-premium max-w-none">
                             <ReactMarkdown>{state.streamingMessage}</ReactMarkdown>
-                            <span className="inline-block w-2 h-5 bg-blue-400 animate-pulse ml-1"></span>
+                            <motion.span 
+                              className="inline-block w-0.5 h-5 bg-ai-blue-400 ml-1"
+                              animate={{ opacity: [1, 0] }}
+                              transition={{ duration: 0.8, repeat: Infinity }}
+                            />
                           </div>
                         ) : (
-                          <TypingIndicator />
+                          <TypingIndicator size="md" message="AI is thinking..." />
                         )}
                       </GlassCard>
                     </div>
@@ -517,110 +591,121 @@ export function ChatInterface() {
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Enhanced Scroll to Bottom Button with unread count */}
+            {/* Enhanced Scroll to Bottom Button */}
             <AnimatePresence>
               {showScrollToBottom && (
                 <motion.button
                   initial={{ opacity: 0, scale: 0.8, y: 20 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.8, y: 20 }}
+                  transition={{ type: "spring", damping: 25, stiffness: 300 }}
                   onClick={forceScrollToBottom}
-                  className="absolute bottom-20 right-6 w-12 h-12 rounded-full bg-blue-500/20 backdrop-blur-lg border border-blue-400/30 flex items-center justify-center hover:bg-blue-500/30 transition-all duration-300 z-20 shadow-lg hover:shadow-blue-500/25 hover:scale-110"
+                  className="absolute bottom-24 right-8 w-14 h-14 glass-ai-primary rounded-2xl flex items-center justify-center hover:glass-thick transition-all duration-300 z-20 shadow-glow-blue hover:scale-110 group"
                   title="Scroll to bottom (Ctrl+End)"
-                  whileHover={{ scale: 1.1 }}
+                  whileHover={{ scale: 1.1, rotate: 5 }}
                   whileTap={{ scale: 0.95 }}
                 >
-                  <ArrowDown className="h-5 w-5 text-blue-400" />
+                  <ArrowDownIcon size="lg" className="text-ai-blue-400 group-hover:text-ai-blue-300" />
                   {state.messages.length > 0 && (
-                    <div className="absolute -top-2 -right-2 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
-                      <span className="text-xs text-white font-bold">!</span>
+                    <div className="absolute -top-2 -right-2 w-6 h-6 bg-ai-blue-500 rounded-full flex items-center justify-center shadow-lg">
+                      <span className="text-xs text-white font-bold font-primary">!</span>
                     </div>
                   )}
                 </motion.button>
               )}
             </AnimatePresence>
 
-            {/* Enhanced Input Area */}
-            <div className="border-t border-white/10 p-4 bg-black/10 backdrop-blur-sm">
-              <form onSubmit={handleSendMessage} className="flex space-x-3">
-                <div className="flex-1 relative">
-                  <GlassInput
-                    ref={inputRef}
-                    value={inputMessage}
-                    onChange={(e) => setInputMessage(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                    placeholder={useContextAwareness ? "Ask me anything... (Context aware)" : "Ask me anything..."}
-                    className="w-full pr-16"
-                    disabled={state.isTyping}
-                  />
-                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center space-x-1">
-                    {useContextAwareness && <Brain className="h-3 w-3 text-purple-400" />}
-                    <Sparkles className="h-4 w-4 text-blue-400" />
+            {/* Premium Input Area */}
+            <div className="glass-medium border-t border-border-subtle p-6 shadow-xl">
+              <form onSubmit={handleSendMessage} className="space-y-4">
+                <div className="flex space-x-4">
+                  <div className="flex-1 relative">
+                    <GlassInput
+                      ref={inputRef}
+                      value={inputMessage}
+                      onChange={(e) => setInputMessage(e.target.value)}
+                      onKeyPress={handleKeyPress}
+                      placeholder={useContextAwareness ? "Ask me anything... (Context aware AI)" : "Ask me anything..."}
+                      className="w-full text-body pr-20"
+                      disabled={state.isTyping}
+                    />
+                    <div className="absolute right-4 top-1/2 transform -translate-y-1/2 flex items-center space-x-2">
+                      {useContextAwareness && (
+                        <div className="flex items-center space-x-1 px-2 py-1 glass-ai-secondary rounded-lg">
+                          <AIBrainIcon size="xs" className="text-ai-purple-400" />
+                          <span className="text-footnote text-ai-purple-300">Smart</span>
+                        </div>
+                      )}
+                      <SparkleIcon size="sm" className="text-ai-blue-400" animated />
+                    </div>
                   </div>
+                  <GlassButton
+                    type="submit"
+                    variant="gradient"
+                    disabled={!inputMessage.trim() || state.isTyping}
+                    className="px-6"
+                    loading={state.isTyping}
+                  >
+                    <SendIcon size="md" />
+                  </GlassButton>
                 </div>
-                <GlassButton
-                  type="submit"
-                  disabled={!inputMessage.trim() || state.isTyping}
-                  className="px-4"
-                >
-                  <Send className="h-4 w-4" />
-                </GlassButton>
+                
+                {/* Enhanced Quick Actions */}
+                <div className="flex flex-wrap gap-2">
+                  <GlassButton
+                    size="sm"
+                    variant={useContextAwareness ? "gradient" : "secondary"}
+                    onClick={() => setUseContextAwareness(!useContextAwareness)}
+                  >
+                    <AIBrainIcon size="sm" className="mr-2" />
+                    Context Aware
+                  </GlassButton>
+                  <GlassButton
+                    size="sm"
+                    variant={useAdvancedStreaming ? "primary" : "secondary"}
+                    onClick={() => setUseAdvancedStreaming(!useAdvancedStreaming)}
+                  >
+                    <SparkleIcon size="sm" className="mr-2" />
+                    Advanced Stream
+                  </GlassButton>
+                  <GlassButton
+                    size="sm"
+                    variant="tertiary"
+                    onClick={() => setInputMessage("Can you create an exercise for me?")}
+                    disabled={state.isTyping}
+                  >
+                    Generate Exercise
+                  </GlassButton>
+                  <GlassButton
+                    size="sm"
+                    variant="tertiary"
+                    onClick={() => setInputMessage("Explain this concept step by step")}
+                    disabled={state.isTyping}
+                  >
+                    Step-by-Step
+                  </GlassButton>
+                  <GlassButton
+                    size="sm"
+                    variant="tertiary"
+                    onClick={() => setInputMessage("Give me a real-world example")}
+                    disabled={state.isTyping}
+                  >
+                    Real Example
+                  </GlassButton>
+                  <GlassButton
+                    size="sm"
+                    variant="tertiary"
+                    onClick={() => {
+                      setLearningMode('challenge');
+                      setInputMessage("Give me a challenge problem");
+                    }}
+                    disabled={state.isTyping}
+                  >
+                    <TargetIcon size="sm" className="mr-1" />
+                    Challenge Me
+                  </GlassButton>
+                </div>
               </form>
-              
-              {/* Enhanced Quick Actions */}
-              <div className="flex flex-wrap gap-2 mt-3">
-                <GlassButton
-                  size="sm"
-                  variant={useContextAwareness ? "primary" : "secondary"}
-                  onClick={() => setUseContextAwareness(!useContextAwareness)}
-                >
-                  <Brain className="h-3 w-3 mr-1" />
-                  Context Aware
-                </GlassButton>
-                <GlassButton
-                  size="sm"
-                  variant={useAdvancedStreaming ? "primary" : "secondary"}
-                  onClick={() => setUseAdvancedStreaming(!useAdvancedStreaming)}
-                >
-                  <Sparkles className="h-3 w-3 mr-1" />
-                  Advanced Stream
-                </GlassButton>
-                <GlassButton
-                  size="sm"
-                  variant="secondary"
-                  onClick={() => setInputMessage("Can you create an exercise for me?")}
-                  disabled={state.isTyping}
-                >
-                  Generate Exercise
-                </GlassButton>
-                <GlassButton
-                  size="sm"
-                  variant="secondary"
-                  onClick={() => setInputMessage("Explain this concept step by step")}
-                  disabled={state.isTyping}
-                >
-                  Step-by-Step
-                </GlassButton>
-                <GlassButton
-                  size="sm"
-                  variant="secondary"
-                  onClick={() => setInputMessage("Give me a real-world example")}
-                  disabled={state.isTyping}
-                >
-                  Real Example
-                </GlassButton>
-                <GlassButton
-                  size="sm"
-                  variant="secondary"
-                  onClick={() => {
-                    setLearningMode('challenge');
-                    setInputMessage("Give me a challenge problem");
-                  }}
-                  disabled={state.isTyping}
-                >
-                  Challenge Me
-                </GlassButton>
-              </div>
             </div>
           </motion.div>
         ) : (
@@ -679,59 +764,84 @@ function ChatMessage({ message }) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.3 }}
-      className={`flex ${isUser ? 'justify-end' : 'justify-start'} items-start space-x-3`}
+      initial={{ opacity: 0, y: 20, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: -20, scale: 0.95 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+      className={cn(
+        'flex items-start space-x-4',
+        isUser ? 'justify-end' : 'justify-start'
+      )}
     >
       {!isUser && (
         <div className="flex-shrink-0">
-          <div className={`h-8 w-8 rounded-full flex items-center justify-center ${
+          <div className={cn(
+            'w-10 h-10 rounded-2xl flex items-center justify-center shadow-lg',
             isPremium 
-              ? 'bg-gradient-to-r from-purple-500 to-pink-500' 
-              : 'bg-gradient-to-r from-blue-500 to-purple-500'
-          }`}>
-            <Bot className="h-4 w-4 text-white" />
+              ? 'glass-ai-secondary shadow-glow-purple' 
+              : 'glass-ai-primary shadow-glow-blue'
+          )}>
+            <AIBrainIcon 
+              size="lg" 
+              className={isPremium ? 'text-ai-purple-400' : 'text-ai-blue-400'}
+              animated
+            />
           </div>
         </div>
       )}
       
-      <div className={`max-w-[80%] ${isUser ? 'order-first' : ''}`}>
+      <div className={cn('max-w-[75%] min-w-0', isUser ? 'order-first' : '')}>
         <GlassCard 
-          className={`p-4 ${isUser 
-            ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 border-blue-400/30' 
-            : isPremium
-              ? 'bg-gradient-to-r from-purple-500/10 to-pink-500/10 border-purple-400/20'
-              : 'bg-white/5 border-white/10'
-          }`}
+          variant={
+            isUser 
+              ? 'ai-primary'
+              : isPremium
+                ? 'ai-secondary'
+                : 'medium'
+          }
+          size="md"
+          className={cn(
+            'relative',
+            isUser && 'ml-auto'
+          )}
+          hover={false}
         >
+          {/* Premium Mode Indicator */}
           {isPremium && (
-            <div className="flex items-center space-x-2 mb-2 pb-2 border-b border-white/10">
-              <Sparkles className="h-3 w-3 text-purple-400" />
-              <span className="text-xs text-purple-300 capitalize">{message.learning_mode} Mode</span>
+            <div className="flex items-center space-x-2 mb-3 pb-3 border-b border-border-subtle">
+              <SparkleIcon size="sm" className="text-ai-purple-400" />
+              <span className="text-caption font-semibold text-ai-purple-300 capitalize">
+                {message.learning_mode} Mode
+              </span>
+              <div className="ml-auto">
+                <CheckIcon size="sm" className="text-ai-green-400" />
+              </div>
             </div>
           )}
           
+          {/* Message Content */}
           {message.message ? (
-            <div className="prose prose-invert max-w-none">
+            <div className="prose-premium max-w-none">
               <ReactMarkdown>{message.message}</ReactMarkdown>
             </div>
           ) : (
             <TypingIndicator />
           )}
           
-          {/* Message suggestions */}
+          {/* Message Suggestions */}
           {!isUser && message.suggestions && message.suggestions.length > 0 && (
-            <div className="mt-3 pt-3 border-t border-white/10">
-              <p className="text-xs text-gray-400 mb-2">Suggested actions:</p>
+            <div className="mt-4 pt-4 border-t border-border-subtle">
+              <p className="text-caption text-text-tertiary mb-3 flex items-center space-x-2">
+                <SparkleIcon size="xs" />
+                <span>Suggested actions:</span>
+              </p>
               <div className="flex flex-wrap gap-2">
                 {message.suggestions.map((suggestion, index) => (
                   <GlassButton
                     key={index}
                     size="sm"
-                    variant="secondary"
-                    className="text-xs"
+                    variant="tertiary"
+                    className="text-caption hover:variant-secondary"
                   >
                     {suggestion}
                   </GlassButton>
@@ -740,24 +850,44 @@ function ChatMessage({ message }) {
             </div>
           )}
 
-          {/* Next steps for premium responses */}
+          {/* Next Steps for Premium Responses */}
           {!isUser && message.next_steps && (
-            <div className="mt-3 pt-3 border-t border-white/10">
-              <p className="text-xs text-purple-400 mb-1 flex items-center space-x-1">
-                <Target className="h-3 w-3" />
+            <div className="mt-4 pt-4 border-t border-border-subtle">
+              <p className="text-caption text-ai-blue-400 mb-2 flex items-center space-x-2 font-semibold">
+                <TargetIcon size="sm" />
                 <span>Next Steps:</span>
               </p>
-              <p className="text-xs text-gray-300">{message.next_steps}</p>
+              <p className="text-caption text-text-secondary leading-relaxed">
+                {message.next_steps}
+              </p>
             </div>
           )}
         </GlassCard>
         
-        <div className={`flex items-center mt-2 text-xs text-gray-500 ${isUser ? 'justify-end' : 'justify-start'}`}>
+        {/* Message Metadata */}
+        <div className={cn(
+          'flex items-center mt-2 text-footnote text-text-quaternary space-x-2',
+          isUser ? 'justify-end' : 'justify-start'
+        )}>
           <span>{new Date(message.timestamp).toLocaleTimeString()}</span>
           {isPremium && (
             <>
-              <span className="mx-1">•</span>
-              <span className="text-purple-400">Premium</span>
+              <span>•</span>
+              <div className="flex items-center space-x-1">
+                <SparkleIcon size="xs" className="text-ai-purple-400" />
+                <span className="text-ai-purple-400 font-medium">Premium</span>
+              </div>
+            </>
+          )}
+          {message.metadata?.personalization_score && (
+            <>
+              <span>•</span>
+              <div className="flex items-center space-x-1">
+                <div className="w-2 h-2 bg-ai-green-500 rounded-full" />
+                <span className="text-ai-green-400">
+                  {Math.round(message.metadata.personalization_score * 100)}% personalized
+                </span>
+              </div>
             </>
           )}
         </div>
@@ -765,8 +895,8 @@ function ChatMessage({ message }) {
       
       {isUser && (
         <div className="flex-shrink-0">
-          <div className="h-8 w-8 rounded-full bg-gradient-to-r from-gray-600 to-gray-700 flex items-center justify-center">
-            <User className="h-4 w-4 text-white" />
+          <div className="w-10 h-10 glass-thick rounded-2xl flex items-center justify-center shadow-lg">
+            <UserIcon size="lg" className="text-text-primary" />
           </div>
         </div>
       )}

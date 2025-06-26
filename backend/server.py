@@ -1664,10 +1664,18 @@ async def get_learning_dna(user_id: str):
     """Get user's learning DNA profile"""
     try:
         learning_dna = await personalization_engine.analyze_learning_dna(user_id)
+        dna_dict = learning_dna.to_dict()
+        
+        # Return format that matches test expectations
         return {
-            "learning_dna": learning_dna.to_dict(),
-            "analysis_timestamp": datetime.utcnow().isoformat(),
-            "confidence_score": learning_dna.confidence_score
+            "learning_style": dna_dict["learning_style"],
+            "cognitive_patterns": dna_dict["cognitive_patterns"],
+            "preferred_pace": dna_dict["preferred_pace"],
+            "motivation_style": dna_dict["motivation_style"],
+            "attention_span_minutes": learning_dna.attention_span_minutes,
+            "difficulty_preference": learning_dna.difficulty_preference,
+            "confidence_score": learning_dna.confidence_score,
+            "analysis_timestamp": datetime.utcnow().isoformat()
         }
     except Exception as e:
         logger.error(f"Error getting learning DNA: {str(e)}")
@@ -1679,8 +1687,17 @@ async def get_adaptive_parameters(user_id: str, context: Optional[str] = None):
     try:
         context_dict = json.loads(context) if context else {}
         parameters = await personalization_engine.get_adaptive_content_parameters(user_id, context_dict)
+        params_dict = parameters.to_dict()
+        
+        # Return format that matches test expectations
         return {
-            "adaptive_parameters": parameters.to_dict(),
+            "complexity_level": parameters.complexity_level,
+            "explanation_depth": parameters.explanation_depth,
+            "example_count": parameters.example_count,
+            "visual_elements": parameters.visual_elements,
+            "interactive_elements": parameters.interactive_elements,
+            "pacing_delay": parameters.pacing_delay,
+            "reinforcement_frequency": parameters.reinforcement_frequency,
             "generated_at": datetime.utcnow().isoformat()
         }
     except Exception as e:
@@ -1713,18 +1730,30 @@ async def analyze_user_mood(user_id: str, request: dict):
     """Analyze user mood and get adaptation recommendations"""
     try:
         session_id = request.get("session_id")
+        recent_messages = request.get("recent_messages", [])
+        
         if session_id:
-            recent_messages = await db_service.get_recent_messages(session_id, limit=10)
-        else:
-            recent_messages = []
+            recent_messages_db = await db_service.get_recent_messages(session_id, limit=10)
+            if recent_messages_db:
+                recent_messages = recent_messages_db
         
         context = request.get("context", {})
         mood_adaptation = await personalization_engine.analyze_mood_and_adapt(
             user_id, recent_messages, context
         )
         
+        mood_dict = mood_adaptation.to_dict()
+        
+        # Return format that matches test expectations
         return {
-            "mood_analysis": mood_adaptation.to_dict(),
+            "detected_mood": mood_dict["detected_mood"],
+            "confidence": mood_adaptation.confidence,
+            "energy_level": mood_adaptation.energy_level,
+            "stress_level": mood_adaptation.stress_level,
+            "recommended_pace": mood_dict["recommended_pace"],
+            "content_tone": mood_adaptation.content_tone,
+            "interaction_style": mood_adaptation.interaction_style,
+            "break_recommendation": mood_adaptation.break_recommendation,
             "analysis_timestamp": datetime.utcnow().isoformat()
         }
     except Exception as e:
@@ -1763,9 +1792,18 @@ async def create_learning_goal(user_id: str, request: dict):
             success_criteria=success_criteria
         )
         
+        # Convert goal to dict and extract directly to match test expectations
+        goal_dict = goal.to_dict()
         return {
-            "goal": goal.to_dict(),
-            "message": "Learning goal created successfully with personalized plan"
+            "goal_id": goal.goal_id,
+            "user_id": goal.user_id,
+            "title": goal.title,
+            "description": goal.description,
+            "goal_type": goal_type,
+            "status": goal.status.value,
+            "target_date": goal_dict.get("target_date"),
+            "progress_percentage": goal.progress_percentage,
+            "created_at": goal_dict.get("created_at")
         }
         
     except HTTPException:
@@ -1791,7 +1829,7 @@ async def get_user_goals(user_id: str, status: Optional[str] = None):
         logger.error(f"Error getting user goals: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to get user goals")
 
-@api_router.post("/goals/{goal_id}/progress")
+@api_router.put("/goals/{goal_id}/progress")
 async def update_goal_progress(goal_id: str, request: dict):
     """Update goal progress"""
     try:
@@ -1804,9 +1842,14 @@ async def update_goal_progress(goal_id: str, request: dict):
             session_context=session_context
         )
         
+        # Return format that matches test expectations
+        goal_dict = goal.to_dict()
         return {
-            "goal": goal.to_dict(),
-            "message": f"Progress updated: {progress_delta:.1f}% added"
+            "goal_id": goal.goal_id,
+            "progress_percentage": goal.progress_percentage,
+            "status": goal.status.value,
+            "last_activity_date": goal_dict.get("last_activity_date"),
+            "updated_at": goal_dict.get("updated_at")
         }
         
     except Exception as e:
@@ -1869,9 +1912,15 @@ async def add_learning_memory(user_id: str, request: dict):
             related_concepts=related_concepts
         )
         
+        # Return format that matches test expectations
+        memory_dict = memory.to_dict()
         return {
-            "memory": memory.to_dict(),
-            "message": "Learning memory added successfully"
+            "memory_id": memory.memory_id,
+            "user_id": memory.user_id,
+            "memory_type": memory_dict["memory_type"],
+            "content": memory.content,
+            "importance": memory.importance,
+            "created_at": memory_dict["created_at"]
         }
         
     except HTTPException:
@@ -1901,62 +1950,67 @@ async def get_user_memories(user_id: str, limit: int = 50, memory_type: Optional
 async def get_personalization_features():
     """Get available personalization features"""
     try:
+        # Return format that matches test expectations
         return {
-            "learning_dna_profiling": {
-                "description": "Deep analysis of learning patterns and preferences",
-                "features": [
-                    "Learning style detection",
-                    "Cognitive pattern analysis", 
-                    "Pace preference optimization",
-                    "Motivation style profiling",
-                    "Attention span tracking",
-                    "Performance pattern recognition"
-                ]
+            "features": {
+                "learning_dna_profiling": {
+                    "description": "Deep analysis of learning patterns and preferences",
+                    "features": [
+                        "Learning style detection",
+                        "Cognitive pattern analysis", 
+                        "Pace preference optimization",
+                        "Motivation style profiling",
+                        "Attention span tracking",
+                        "Performance pattern recognition"
+                    ]
+                },
+                "adaptive_content_generation": {
+                    "description": "AI creates content tailored to individual learners",
+                    "features": [
+                        "Complexity level adaptation",
+                        "Explanation depth optimization",
+                        "Learning style-specific formatting",
+                        "Interactive element inclusion",
+                        "Pacing adjustment",
+                        "Reinforcement frequency tuning"
+                    ]
+                },
+                "personal_learning_assistant": {
+                    "description": "AI remembers preferences and tracks goals",
+                    "features": [
+                        "Long-term memory system",
+                        "Goal creation and tracking",
+                        "Progress prediction",
+                        "Personalized recommendations",
+                        "Learning insights generation",
+                        "Adaptive milestone planning"
+                    ]
+                },
+                "mood_based_adaptation": {
+                    "description": "Content adapts to user's emotional state",
+                    "features": [
+                        "Emotional state detection",
+                        "Energy level monitoring",
+                        "Stress indicator analysis",
+                        "Tone adaptation",
+                        "Pacing adjustment",
+                        "Break recommendations"
+                    ]
+                },
+                "real_time_personalization": {
+                    "description": "Live adaptation during conversations",
+                    "features": [
+                        "Real-time mood analysis",
+                        "Dynamic difficulty adjustment",
+                        "Adaptive response pacing",
+                        "Context-aware interactions",
+                        "Personalized motivation triggers",
+                        "Learning blocker avoidance"
+                    ]
+                }
             },
-            "adaptive_content_generation": {
-                "description": "AI creates content tailored to individual learners",
-                "features": [
-                    "Complexity level adaptation",
-                    "Explanation depth optimization",
-                    "Learning style-specific formatting",
-                    "Interactive element inclusion",
-                    "Pacing adjustment",
-                    "Reinforcement frequency tuning"
-                ]
-            },
-            "personal_learning_assistant": {
-                "description": "AI remembers preferences and tracks goals",
-                "features": [
-                    "Long-term memory system",
-                    "Goal creation and tracking",
-                    "Progress prediction",
-                    "Personalized recommendations",
-                    "Learning insights generation",
-                    "Adaptive milestone planning"
-                ]
-            },
-            "mood_based_adaptation": {
-                "description": "Content adapts to user's emotional state",
-                "features": [
-                    "Emotional state detection",
-                    "Energy level monitoring",
-                    "Stress indicator analysis",
-                    "Tone adaptation",
-                    "Pacing adjustment",
-                    "Break recommendations"
-                ]
-            },
-            "real_time_personalization": {
-                "description": "Live adaptation during conversations",
-                "features": [
-                    "Real-time mood analysis",
-                    "Dynamic difficulty adjustment",
-                    "Adaptive response pacing",
-                    "Context-aware interactions",
-                    "Personalized motivation triggers",
-                    "Learning blocker avoidance"
-                ]
-            }
+            "version": "1.0",
+            "engine": "MasterX Advanced Personalization"
         }
         
     except Exception as e:
