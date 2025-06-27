@@ -38,6 +38,7 @@ from learning_psychology_service import learning_psychology_service
 from personalization_engine import personalization_engine, LearningDNA, AdaptiveContentParameters, MoodBasedAdaptation
 from adaptive_ai_service import adaptive_ai_service
 from personal_learning_assistant import personal_assistant, LearningGoal, LearningMemory, PersonalInsight, GoalType, GoalStatus, MemoryType
+from advanced_analytics_service import advanced_analytics_service, LearningEvent
 
 ROOT_DIR = backend_dir
 load_dotenv(ROOT_DIR / '.env')
@@ -2127,6 +2128,153 @@ async def premium_context_aware_chat_stream(request: MentorRequest):
     except Exception as e:
         logger.error(f"Error setting up context-aware stream: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to setup context-aware streaming")
+
+# ================================
+# ADVANCED LEARNING ANALYTICS ENDPOINTS
+# ================================
+
+@api_router.post("/analytics/learning-event")
+async def record_learning_event(request: Dict[str, Any]):
+    """Record a learning interaction event for analytics"""
+    try:
+        # Create learning event from request
+        event = LearningEvent(
+            id=str(uuid.uuid4()),
+            user_id=request.get("user_id"),
+            concept_id=request.get("concept_id", "general"),
+            event_type=request.get("event_type", "interaction"),
+            timestamp=datetime.utcnow(),
+            duration_seconds=request.get("duration_seconds", 0),
+            performance_score=request.get("performance_score", 0.5),
+            confidence_level=request.get("confidence_level", 0.5),
+            session_id=request.get("session_id", ""),
+            context=request.get("context", {})
+        )
+        
+        # Record the event
+        await advanced_analytics_service.record_learning_event(event)
+        
+        return {"message": "Learning event recorded successfully", "event_id": event.id}
+        
+    except Exception as e:
+        logger.error(f"Error recording learning event: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to record learning event")
+
+@api_router.get("/analytics/{user_id}/knowledge-graph")
+async def get_knowledge_graph_mapping(user_id: str):
+    """Generate personalized knowledge graph mapping for user"""
+    try:
+        knowledge_graph = await advanced_analytics_service.generate_knowledge_graph_mapping(user_id)
+        return knowledge_graph
+        
+    except Exception as e:
+        logger.error(f"Error generating knowledge graph: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to generate knowledge graph")
+
+@api_router.get("/analytics/{user_id}/competency-heatmap")
+async def get_competency_heat_map(user_id: str, time_period: int = 30):
+    """Generate competency heat map for user over specified time period (days)"""
+    try:
+        heat_map = await advanced_analytics_service.generate_competency_heat_map(user_id, time_period)
+        return heat_map
+        
+    except Exception as e:
+        logger.error(f"Error generating competency heat map: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to generate competency heat map")
+
+@api_router.get("/analytics/{user_id}/learning-velocity")
+async def get_learning_velocity_tracking(user_id: str, window_days: int = 7):
+    """Track learning velocity over a rolling window"""
+    try:
+        velocity_data = await advanced_analytics_service.track_learning_velocity(user_id, window_days)
+        return velocity_data
+        
+    except Exception as e:
+        logger.error(f"Error tracking learning velocity: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to track learning velocity")
+
+@api_router.get("/analytics/{user_id}/retention-curves")
+async def get_retention_curves(user_id: str):
+    """Generate retention curves showing how well knowledge is retained"""
+    try:
+        retention_curves = await advanced_analytics_service.generate_retention_curves(user_id)
+        return retention_curves
+        
+    except Exception as e:
+        logger.error(f"Error generating retention curves: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to generate retention curves")
+
+@api_router.get("/analytics/{user_id}/learning-path-optimization")
+async def get_optimized_learning_path(user_id: str):
+    """Generate AI-optimized learning path for user"""
+    try:
+        learning_path = await advanced_analytics_service.optimize_learning_path(user_id)
+        return learning_path
+        
+    except Exception as e:
+        logger.error(f"Error optimizing learning path: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to optimize learning path")
+
+@api_router.get("/analytics/{user_id}/comprehensive-dashboard")
+async def get_comprehensive_analytics_dashboard(user_id: str):
+    """Get comprehensive analytics dashboard with all advanced features"""
+    try:
+        # Gather all analytics data
+        knowledge_graph = await advanced_analytics_service.generate_knowledge_graph_mapping(user_id)
+        heat_map = await advanced_analytics_service.generate_competency_heat_map(user_id, 30)
+        velocity_data = await advanced_analytics_service.track_learning_velocity(user_id, 7)
+        retention_curves = await advanced_analytics_service.generate_retention_curves(user_id)
+        learning_path = await advanced_analytics_service.optimize_learning_path(user_id)
+        
+        # Combine into comprehensive dashboard
+        dashboard = {
+            "user_id": user_id,
+            "generated_at": datetime.utcnow().isoformat(),
+            "knowledge_graph": knowledge_graph,
+            "competency_heat_map": heat_map,
+            "learning_velocity": velocity_data,
+            "retention_curves": retention_curves,
+            "learning_path_optimization": learning_path,
+            "summary": {
+                "total_concepts": len(knowledge_graph.get("nodes", [])),
+                "mastered_concepts": knowledge_graph.get("user_progress", {}).get("mastered_concepts", 0),
+                "overall_competency": knowledge_graph.get("user_progress", {}).get("average_competency", 0.0),
+                "learning_velocity": velocity_data.get("overall_velocity", 0.0),
+                "retention_score": retention_curves.get("overall_retention", 0.0),
+                "next_priority_concepts": learning_path.get("priority_concepts", [])
+            }
+        }
+        
+        return dashboard
+        
+    except Exception as e:
+        logger.error(f"Error generating comprehensive dashboard: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to generate comprehensive dashboard")
+
+@api_router.post("/analytics/concepts/add")
+async def add_custom_concept(request: Dict[str, Any]):
+    """Add a custom concept to the knowledge graph"""
+    try:
+        from advanced_analytics_service import ConceptNode
+        
+        concept = ConceptNode(
+            id=request.get("id", str(uuid.uuid4())),
+            name=request.get("name"),
+            description=request.get("description", ""),
+            difficulty_level=request.get("difficulty_level", 0.5),
+            category=request.get("category", "general"),
+            prerequisites=request.get("prerequisites", []),
+            related_concepts=request.get("related_concepts", []),
+            mastery_threshold=request.get("mastery_threshold", 0.8)
+        )
+        
+        advanced_analytics_service.add_concept(concept)
+        
+        return {"message": "Concept added successfully", "concept_id": concept.id}
+        
+    except Exception as e:
+        logger.error(f"Error adding concept: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to add concept")
 
 # ================================
 # ROUTER AND MIDDLEWARE REGISTRATION

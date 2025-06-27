@@ -28,6 +28,34 @@ import { GestureControl } from './GestureControl';
 import { ARVRInterface } from './ARVRInterface';
 import { ThemeProvider, AdaptiveThemePanel, useAdaptiveTheme } from './AdaptiveThemeSystem';
 import { useApp } from '../context/AppContext';
+
+// Helper function to record learning analytics events
+const recordLearningEvent = async (userId, sessionId, eventData) => {
+  try {
+    const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/analytics/learning-event`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        user_id: userId,
+        session_id: sessionId,
+        concept_id: eventData.concept || 'general_learning',
+        event_type: eventData.type || 'interaction',
+        duration_seconds: eventData.duration || 0,
+        performance_score: eventData.performance || 0.5,
+        confidence_level: eventData.confidence || 0.5,
+        context: eventData.context || {}
+      })
+    });
+    
+    if (!response.ok) {
+      console.warn('Failed to record learning event');
+    }
+  } catch (error) {
+    console.warn('Error recording learning event:', error);
+  }
+};
 import { cn } from '../utils/cn';
 
 export function ChatInterface() {
@@ -182,10 +210,27 @@ export function ChatInterface() {
     if (!inputMessage.trim() || !state.currentSession || state.isTyping) return;
 
     const message = inputMessage.trim();
+    const startTime = Date.now();
     setInputMessage('');
 
     // Force scroll to bottom when sending a message
     forceScrollToBottom();
+
+    // Record learning event for user interaction
+    if (state.user?.id && state.currentSession?.id) {
+      await recordLearningEvent(state.user.id, state.currentSession.id, {
+        type: 'question',
+        concept: 'general_learning',
+        duration: 0,
+        performance: 0.5,
+        confidence: 0.5,
+        context: {
+          message_length: message.length,
+          learning_mode: learningMode,
+          timestamp: startTime
+        }
+      });
+    }
 
     try {
       if (useContextAwareness) {

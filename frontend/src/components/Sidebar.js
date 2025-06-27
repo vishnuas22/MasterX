@@ -86,10 +86,10 @@ export function Sidebar({ isCollapsed, onToggle }) {
   const bottomItems = [
     {
       id: 'analytics',
-      label: 'Analytics',
+      label: 'Advanced Analytics',
       icon: BarChartIcon,
-      description: 'Learning progress insights',
-      comingSoon: true
+      description: 'AI-powered learning insights',
+      comingSoon: false
     },
     {
       id: 'achievements',

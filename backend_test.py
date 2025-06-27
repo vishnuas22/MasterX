@@ -14,18 +14,7 @@ from datetime import datetime, timedelta
 # Get backend URL from frontend .env file
 def get_backend_url():
     """Get backend URL from frontend .env file or use local URL"""
-    # Try to read from frontend .env file
-    try:
-        with open('/app/frontend/.env', 'r') as f:
-            for line in f:
-                if line.startswith('REACT_APP_BACKEND_URL='):
-                    backend_url = line.strip().split('=', 1)[1].strip('"\'')
-                    if backend_url:
-                        return backend_url
-    except Exception as e:
-        print(f"Warning: Could not read backend URL from frontend .env: {e}")
-    
-    # Fallback to local URL
+    # Always use local URL for testing
     return "http://localhost:8001"
 
 BACKEND_URL = get_backend_url()
@@ -964,6 +953,325 @@ def test_personalization_features_endpoint():
     
     return data
 
+@run_test
+def test_record_learning_event(user_id, session_id):
+    """Test recording a learning event"""
+    event_data = {
+        "user_id": user_id,
+        "concept_id": "programming_basics",
+        "event_type": "explanation",
+        "duration_seconds": 300,
+        "performance_score": 0.8,
+        "confidence_level": 0.7,
+        "session_id": session_id,
+        "context": {
+            "topic": "Python Programming",
+            "difficulty": "beginner"
+        }
+    }
+    
+    response = requests.post(f"{API_URL}/analytics/learning-event", json=event_data)
+    response.raise_for_status()
+    data = response.json()
+    
+    assert "event_id" in data, "Response should contain event ID"
+    assert data["user_id"] == user_id, "User ID should match"
+    assert data["concept_id"] == event_data["concept_id"], "Concept ID should match"
+    
+    # Track result
+    test_results["total"] += 1
+    test_results["passed"] += 1
+    test_results["results"].append({"name": "Record Learning Event", "passed": True})
+    
+    return data
+
+@run_test
+def test_knowledge_graph(user_id):
+    """Test knowledge graph generation"""
+    response = requests.get(f"{API_URL}/analytics/{user_id}/knowledge-graph")
+    response.raise_for_status()
+    data = response.json()
+    
+    assert "nodes" in data, "Response should contain nodes"
+    assert "edges" in data, "Response should contain edges"
+    assert "recommendations" in data, "Response should contain recommendations"
+    assert "user_progress" in data, "Response should contain user progress"
+    
+    # Track result
+    test_results["total"] += 1
+    test_results["passed"] += 1
+    test_results["results"].append({"name": "Knowledge Graph", "passed": True})
+    
+    return data
+
+@run_test
+def test_competency_heatmap(user_id):
+    """Test competency heat map generation"""
+    response = requests.get(f"{API_URL}/analytics/{user_id}/competency-heatmap", params={"time_period": 30})
+    response.raise_for_status()
+    data = response.json()
+    
+    assert "heat_map_data" in data, "Response should contain heat map data"
+    assert "concepts" in data, "Response should contain concepts"
+    assert "summary" in data, "Response should contain summary"
+    
+    # Track result
+    test_results["total"] += 1
+    test_results["passed"] += 1
+    test_results["results"].append({"name": "Competency Heatmap", "passed": True})
+    
+    return data
+
+@run_test
+def test_learning_velocity(user_id):
+    """Test learning velocity tracking"""
+    response = requests.get(f"{API_URL}/analytics/{user_id}/learning-velocity", params={"window_days": 7})
+    response.raise_for_status()
+    data = response.json()
+    
+    assert "velocity_data" in data, "Response should contain velocity data"
+    assert "overall_velocity" in data, "Response should contain overall velocity"
+    
+    # Track result
+    test_results["total"] += 1
+    test_results["passed"] += 1
+    test_results["results"].append({"name": "Learning Velocity", "passed": True})
+    
+    return data
+
+@run_test
+def test_retention_curves(user_id):
+    """Test retention curve generation"""
+    response = requests.get(f"{API_URL}/analytics/{user_id}/retention-curves")
+    response.raise_for_status()
+    data = response.json()
+    
+    assert "retention_curves" in data, "Response should contain retention curves"
+    assert "overall_retention" in data, "Response should contain overall retention"
+    
+    # Track result
+    test_results["total"] += 1
+    test_results["passed"] += 1
+    test_results["results"].append({"name": "Retention Curves", "passed": True})
+    
+    return data
+
+@run_test
+def test_learning_path_optimization(user_id):
+    """Test learning path optimization"""
+    response = requests.get(f"{API_URL}/analytics/{user_id}/learning-path-optimization")
+    response.raise_for_status()
+    data = response.json()
+    
+    assert "optimal_path" in data, "Response should contain optimal path"
+    assert "learning_phases" in data, "Response should contain learning phases"
+    assert "adaptive_recommendations" in data, "Response should contain adaptive recommendations"
+    
+    # Track result
+    test_results["total"] += 1
+    test_results["passed"] += 1
+    test_results["results"].append({"name": "Learning Path Optimization", "passed": True})
+    
+    return data
+
+@run_test
+def test_comprehensive_dashboard(user_id):
+    """Test comprehensive analytics dashboard"""
+    response = requests.get(f"{API_URL}/analytics/{user_id}/comprehensive-dashboard")
+    response.raise_for_status()
+    data = response.json()
+    
+    assert "knowledge_graph" in data, "Response should contain knowledge graph"
+    assert "competency_heat_map" in data, "Response should contain competency heat map"
+    assert "learning_velocity" in data, "Response should contain learning velocity"
+    assert "retention_curves" in data, "Response should contain retention curves"
+    assert "learning_path" in data, "Response should contain learning path"
+    
+    # Track result
+    test_results["total"] += 1
+    test_results["passed"] += 1
+    test_results["results"].append({"name": "Comprehensive Dashboard", "passed": True})
+    
+    return data
+
+@run_test
+def test_add_custom_concept():
+    """Test adding a custom concept to the knowledge graph"""
+    concept_data = {
+        "name": "Machine Learning Basics",
+        "description": "Introduction to machine learning concepts",
+        "difficulty_level": 0.6,
+        "category": "data_science",
+        "prerequisites": ["programming_basics", "algebra"],
+        "related_concepts": ["algorithms", "data_structures"]
+    }
+    
+    response = requests.post(f"{API_URL}/analytics/concepts/add", json=concept_data)
+    response.raise_for_status()
+    data = response.json()
+    
+    assert "concept_id" in data, "Response should contain concept ID"
+    assert data["name"] == concept_data["name"], "Concept name should match"
+    assert data["category"] == concept_data["category"], "Category should match"
+    
+    # Track result
+    test_results["total"] += 1
+    test_results["passed"] += 1
+    test_results["results"].append({"name": "Add Custom Concept", "passed": True})
+    
+    return data
+
+@run_test
+def test_multiple_event_types(user_id, session_id):
+    """Test recording different event types"""
+    event_types = ["question", "explanation", "practice", "assessment"]
+    results = []
+    
+    for event_type in event_types:
+        event_data = {
+            "user_id": user_id,
+            "concept_id": "programming_basics",
+            "event_type": event_type,
+            "duration_seconds": 300,
+            "performance_score": 0.8,
+            "confidence_level": 0.7,
+            "session_id": session_id,
+            "context": {
+                "topic": "Python Programming",
+                "difficulty": "beginner",
+                "event_type_specific": event_type
+            }
+        }
+        
+        response = requests.post(f"{API_URL}/analytics/learning-event", json=event_data)
+        response.raise_for_status()
+        data = response.json()
+        
+        assert "event_id" in data, f"Response for {event_type} should contain event ID"
+        assert data["event_type"] == event_type, f"Event type should be {event_type}"
+        
+        results.append(data)
+    
+    # Track result
+    test_results["total"] += 1
+    test_results["passed"] += 1
+    test_results["results"].append({"name": "Multiple Event Types", "passed": True})
+    
+    return results
+
+@run_test
+def test_multiple_concepts(user_id, session_id):
+    """Test recording events for multiple concepts"""
+    concepts = ["programming_basics", "data_structures", "algorithms"]
+    results = []
+    
+    for concept in concepts:
+        event_data = {
+            "user_id": user_id,
+            "concept_id": concept,
+            "event_type": "explanation",
+            "duration_seconds": 300,
+            "performance_score": 0.8,
+            "confidence_level": 0.7,
+            "session_id": session_id,
+            "context": {
+                "topic": "Python Programming",
+                "difficulty": "beginner",
+                "concept_specific": concept
+            }
+        }
+        
+        response = requests.post(f"{API_URL}/analytics/learning-event", json=event_data)
+        response.raise_for_status()
+        data = response.json()
+        
+        assert "event_id" in data, f"Response for {concept} should contain event ID"
+        assert data["concept_id"] == concept, f"Concept ID should be {concept}"
+        
+        results.append(data)
+    
+    # Track result
+    test_results["total"] += 1
+    test_results["passed"] += 1
+    test_results["results"].append({"name": "Multiple Concepts", "passed": True})
+    
+    return results
+
+@run_test
+def test_time_based_analytics(user_id):
+    """Test time-based analytics with different date ranges"""
+    time_periods = [7, 30, 90]
+    results = []
+    
+    for period in time_periods:
+        response = requests.get(f"{API_URL}/analytics/{user_id}/competency-heatmap", params={"time_period": period})
+        response.raise_for_status()
+        data = response.json()
+        
+        assert "heat_map_data" in data, f"Response for period {period} should contain heat map data"
+        
+        results.append({"period": period, "data": data})
+    
+    # Track result
+    test_results["total"] += 1
+    test_results["passed"] += 1
+    test_results["results"].append({"name": "Time Based Analytics", "passed": True})
+    
+    return results
+
+def run_advanced_analytics_tests(user_id, session_id):
+    """Run tests for the Advanced Learning Analytics System"""
+    print("\n========== TESTING ADVANCED LEARNING ANALYTICS SYSTEM ==========\n")
+    
+    # Test recording learning events
+    event_result = test_record_learning_event(user_id, session_id)
+    if not event_result.passed:
+        print("❌ Learning event recording failed, skipping dependent tests")
+        return
+    
+    # Test different event types
+    test_multiple_event_types(user_id, session_id)
+    
+    # Test multiple concepts
+    test_multiple_concepts(user_id, session_id)
+    
+    # Test analytics endpoints
+    test_knowledge_graph(user_id)
+    test_competency_heatmap(user_id)
+    test_learning_velocity(user_id)
+    test_retention_curves(user_id)
+    test_learning_path_optimization(user_id)
+    test_comprehensive_dashboard(user_id)
+    
+    # Test adding custom concept
+    test_add_custom_concept()
+    
+    # Test time-based analytics
+    test_time_based_analytics(user_id)
+    
+    # Test with predefined user ID
+    print("\n----- Testing with predefined user ID -----")
+    predefined_user_id = "test_user_123"
+    predefined_session_id = "test_session_456"
+    
+    # Record events for predefined user
+    try:
+        test_record_learning_event(predefined_user_id, predefined_session_id)
+        test_multiple_event_types(predefined_user_id, predefined_session_id)
+        test_multiple_concepts(predefined_user_id, predefined_session_id)
+        
+        # Test analytics for predefined user
+        test_knowledge_graph(predefined_user_id)
+        test_competency_heatmap(predefined_user_id)
+        test_learning_velocity(predefined_user_id)
+        test_retention_curves(predefined_user_id)
+        test_learning_path_optimization(predefined_user_id)
+        test_comprehensive_dashboard(predefined_user_id)
+    except Exception as e:
+        print(f"❌ Tests with predefined user ID failed: {str(e)}")
+    
+    print("\nAdvanced Learning Analytics System tests completed.")
+
 def run_all_tests():
     """Run all backend tests"""
     print("\n========== MASTERX AI MENTOR SYSTEM BACKEND TESTS ==========\n")
@@ -1045,6 +1353,9 @@ def run_all_tests():
     test_personalization_engine_endpoints(user_id)
     test_personalization_features_endpoint()
     test_adaptive_ai_chat(session_id)
+    
+    # Advanced Learning Analytics tests
+    run_advanced_analytics_tests(user_id, session_id)
     
     # Run async tests for streaming
     loop = asyncio.get_event_loop()

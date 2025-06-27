@@ -22,6 +22,7 @@ const LearningPsychologyDashboard = lazy(() => import("./components/LearningPsyc
 const MetacognitiveTraining = lazy(() => import("./components/MetacognitiveTraining"));
 const MemoryPalaceBuilder = lazy(() => import("./components/MemoryPalaceBuilder"));
 const PersonalizationDashboard = lazy(() => import("./components/PersonalizationDashboard"));
+const AdvancedAnalyticsLearningDashboard = lazy(() => import("./components/AdvancedAnalyticsLearningDashboard"));
 
 // ===============================
 // 🎨 PREMIUM ERROR BOUNDARY
@@ -284,7 +285,6 @@ function renderActiveView(activeView) {
   const comingSoonViews = [
     'elaborative-questions',
     'transfer-learning', 
-    'analytics',
     'achievements',
     'settings'
   ];
@@ -344,6 +344,12 @@ function renderActiveView(activeView) {
       return (
         <motion.div key="memory-palace" {...viewTransition} className="flex-1">
           <MemoryPalaceBuilder />
+        </motion.div>
+      );
+    case 'analytics':
+      return (
+        <motion.div key="analytics" {...viewTransition} className="flex-1">
+          <AdvancedAnalyticsLearningDashboard userId={state.user?.id} />
         </motion.div>
       );
     default:
