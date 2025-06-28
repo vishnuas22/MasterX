@@ -160,8 +160,8 @@ class AdvancedAnalyticsService:
         # Update competency level
         await self._update_competency(event)
         
-        # Optimize learning path if needed
-        await self._optimize_learning_path(event.user_id)
+        # No need to optimize learning path on every event
+        # We'll optimize on demand when the endpoint is called
 
     async def _update_competency(self, event: LearningEvent):
         """Update user competency based on learning event"""

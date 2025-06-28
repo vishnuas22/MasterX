@@ -43,6 +43,11 @@ from advanced_analytics_service import advanced_analytics_service, LearningEvent
 ROOT_DIR = backend_dir
 load_dotenv(ROOT_DIR / '.env')
 
+# Initialize advanced analytics service as a global instance
+if not hasattr(advanced_analytics_service, 'knowledge_graph'):
+    from advanced_analytics_service import AdvancedAnalyticsService
+    advanced_analytics_service = AdvancedAnalyticsService()
+
 # Create the main app with optimized settings
 app = FastAPI(
     title="MasterX AI Mentor System",
@@ -896,6 +901,170 @@ async def get_user_progress(user_id: str, subject: Optional[str] = None):
     except Exception as e:
         logger.error(f"Error getting progress: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to get progress")
+
+# ================================
+# ADVANCED ANALYTICS ENDPOINTS
+# ================================
+
+@api_router.get("/analytics/{user_id}/comprehensive-dashboard")
+async def get_comprehensive_analytics_dashboard(user_id: str, time_range: int = 30):
+    """Get comprehensive learning analytics dashboard for user"""
+    try:
+        # Generate knowledge graph mapping
+        knowledge_graph = await advanced_analytics_service.generate_knowledge_graph_mapping(user_id)
+        
+        # Generate competency heat map
+        competency_heat_map = await advanced_analytics_service.generate_competency_heat_map(
+            user_id, time_range
+        )
+        
+        # Track learning velocity
+        learning_velocity = await advanced_analytics_service.track_learning_velocity(
+            user_id, window_days=7
+        )
+        
+        # Generate retention curves
+        retention_curves = await advanced_analytics_service.generate_retention_curves(user_id)
+        
+        # Optimize learning path
+        learning_path_optimization = await advanced_analytics_service.optimize_learning_path(user_id)
+        
+        # Calculate summary statistics
+        user_competencies = advanced_analytics_service.user_competencies.get(user_id, {})
+        total_concepts = len(advanced_analytics_service.concept_library)
+        mastered_concepts = sum(1 for c in user_competencies.values() if c.mastered)
+        
+        overall_competency = (
+            sum(c.current_level for c in user_competencies.values()) / len(user_competencies)
+            if user_competencies else 0.0
+        )
+        
+        avg_learning_velocity = learning_velocity.get("overall_velocity", 0.0)
+        avg_retention_score = retention_curves.get("overall_retention", 0.0)
+        
+        # Get next priority concepts from learning path
+        next_priority_concepts = [
+            item["concept_id"] for item in learning_path_optimization.get("optimal_path", [])[:5]
+        ]
+        
+        dashboard_data = {
+            "knowledge_graph": knowledge_graph,
+            "competency_heat_map": competency_heat_map,
+            "learning_velocity": learning_velocity,
+            "retention_curves": retention_curves,
+            "learning_path_optimization": learning_path_optimization,
+            "summary": {
+                "total_concepts": total_concepts,
+                "mastered_concepts": mastered_concepts,
+                "overall_competency": overall_competency,
+                "learning_velocity": avg_learning_velocity,
+                "retention_score": avg_retention_score,
+                "next_priority_concepts": next_priority_concepts,
+                "completion_percentage": (mastered_concepts / max(1, total_concepts)) * 100,
+                "learning_momentum": min(1.0, avg_learning_velocity * 2),  # Normalized momentum score
+                "mastery_trend": "improving" if avg_learning_velocity > 0 else "stable"
+            },
+            "insights": {
+                "strongest_areas": competency_heat_map.get("summary", {}).get("strongest_concepts", []),
+                "improvement_opportunities": [
+                    item["concept_name"] for item in learning_path_optimization.get("optimal_path", [])[:3]
+                ],
+                "retention_insights": {
+                    "best_retention": retention_curves.get("strongest_retention"),
+                    "needs_review": retention_curves.get("weakest_retention")
+                },
+                "velocity_insights": {
+                    "accelerating": learning_velocity.get("accelerating_concepts", []),
+                    "stalling": learning_velocity.get("stalling_concepts", [])
+                }
+            },
+            "recommendations": learning_path_optimization.get("adaptive_recommendations", []),
+            "generated_at": datetime.utcnow().isoformat(),
+            "time_range_days": time_range
+        }
+        
+        return dashboard_data
+        
+    except Exception as e:
+        logger.error(f"Error generating comprehensive analytics: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to generate analytics dashboard")
+
+@api_router.post("/analytics/learning-event")
+async def record_learning_analytics_event(event_data: dict):
+    """Record a learning analytics event"""
+    try:
+        # Create LearningEvent from request data
+        learning_event = LearningEvent(
+            id=str(uuid.uuid4()),
+            user_id=event_data.get("user_id"),
+            concept_id=event_data.get("concept_id", "general_learning"),
+            event_type=event_data.get("event_type", "interaction"),
+            timestamp=datetime.utcnow(),
+            duration_seconds=event_data.get("duration_seconds", 0),
+            performance_score=event_data.get("performance_score", 0.5),
+            confidence_level=event_data.get("confidence_level", 0.5),
+            session_id=event_data.get("session_id", ""),
+            context=event_data.get("context", {})
+        )
+        
+        # Record the event
+        await advanced_analytics_service.record_learning_event(learning_event)
+        
+        return {"message": "Learning event recorded successfully", "event_id": learning_event.id}
+        
+    except Exception as e:
+        logger.error(f"Error recording learning event: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to record learning event")
+
+@api_router.get("/analytics/{user_id}/knowledge-graph")
+async def get_knowledge_graph(user_id: str):
+    """Get knowledge graph data for user"""
+    try:
+        graph_data = await advanced_analytics_service.generate_knowledge_graph_mapping(user_id)
+        return graph_data
+    except Exception as e:
+        logger.error(f"Error getting knowledge graph: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get knowledge graph")
+
+@api_router.get("/analytics/{user_id}/competency-heatmap")
+async def get_competency_heatmap(user_id: str, days: int = 30):
+    """Get competency heat map for user"""
+    try:
+        heatmap_data = await advanced_analytics_service.generate_competency_heat_map(user_id, days)
+        return heatmap_data
+    except Exception as e:
+        logger.error(f"Error getting competency heatmap: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get competency heatmap")
+
+@api_router.get("/analytics/{user_id}/learning-velocity")
+async def get_learning_velocity(user_id: str, window_days: int = 7):
+    """Get learning velocity tracking for user"""
+    try:
+        velocity_data = await advanced_analytics_service.track_learning_velocity(user_id, window_days)
+        return velocity_data
+    except Exception as e:
+        logger.error(f"Error getting learning velocity: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get learning velocity")
+
+@api_router.get("/analytics/{user_id}/retention-curves")
+async def get_retention_curves(user_id: str):
+    """Get retention curves for user"""
+    try:
+        retention_data = await advanced_analytics_service.generate_retention_curves(user_id)
+        return retention_data
+    except Exception as e:
+        logger.error(f"Error getting retention curves: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get retention curves")
+
+@api_router.get("/analytics/{user_id}/learning-path")
+async def get_optimized_learning_path(user_id: str):
+    """Get AI-optimized learning path for user"""
+    try:
+        path_data = await advanced_analytics_service.optimize_learning_path(user_id)
+        return path_data
+    except Exception as e:
+        logger.error(f"Error getting learning path: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get learning path")
 
 # ================================
 # HEALTH & STATUS ENDPOINTS
@@ -2133,32 +2302,7 @@ async def premium_context_aware_chat_stream(request: MentorRequest):
 # ADVANCED LEARNING ANALYTICS ENDPOINTS
 # ================================
 
-@api_router.post("/analytics/learning-event")
-async def record_learning_event(request: Dict[str, Any]):
-    """Record a learning interaction event for analytics"""
-    try:
-        # Create learning event from request
-        event = LearningEvent(
-            id=str(uuid.uuid4()),
-            user_id=request.get("user_id"),
-            concept_id=request.get("concept_id", "general"),
-            event_type=request.get("event_type", "interaction"),
-            timestamp=datetime.utcnow(),
-            duration_seconds=request.get("duration_seconds", 0),
-            performance_score=request.get("performance_score", 0.5),
-            confidence_level=request.get("confidence_level", 0.5),
-            session_id=request.get("session_id", ""),
-            context=request.get("context", {})
-        )
-        
-        # Record the event
-        await advanced_analytics_service.record_learning_event(event)
-        
-        return {"message": "Learning event recorded successfully", "event_id": event.id}
-        
-    except Exception as e:
-        logger.error(f"Error recording learning event: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to record learning event")
+
 
 @api_router.get("/analytics/{user_id}/knowledge-graph")
 async def get_knowledge_graph_mapping(user_id: str):
