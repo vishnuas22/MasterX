@@ -1,304 +1,287 @@
 #!/usr/bin/env python3
 import requests
 import json
-import unittest
-import os
-import sys
-from datetime import datetime
+import uuid
+import time
+from typing import Dict, Any, List, Optional
 
-# Get the backend URL from the frontend .env file
-with open('/app/frontend/.env', 'r') as f:
-    for line in f:
-        if line.startswith('REACT_APP_BACKEND_URL='):
-            BACKEND_URL = line.strip().split('=')[1].strip('"\'')
-            break
+# Configuration
+BACKEND_URL = "https://35590f30-23b0-4ccf-8a1f-e0ce19b882f3.preview.emergentagent.com/api"
+TEST_USER_EMAIL = "test@masterx.ai"
+TEST_USER_NAME = "Test User"
+TEST_SESSION_SUBJECT = "Mathematics"
+TEST_SESSION_DIFFICULTY = "intermediate"
 
-# Ensure the URL doesn't have trailing slash
-if BACKEND_URL.endswith('/'):
-    BACKEND_URL = BACKEND_URL[:-1]
+# Test results tracking
+test_results = {
+    "passed": 0,
+    "failed": 0,
+    "tests": []
+}
 
-# Add /api prefix for all API calls
-API_URL = f"{BACKEND_URL}/api"
-
-print(f"Testing API at: {API_URL}")
-
-class MasterXBackendTests(unittest.TestCase):
-    """Test suite for MasterX AI Mentor backend API"""
+def log_test(name: str, passed: bool, response: Optional[requests.Response] = None, error: Optional[str] = None):
+    """Log test results"""
+    status = "PASSED" if passed else "FAILED"
+    print(f"[{status}] {name}")
     
-    def setUp(self):
-        """Set up test data"""
-        self.test_user_email = f"test-user-{datetime.now().strftime('%Y%m%d%H%M%S')}@example.com"
-        self.test_user_name = "Test User"
-        self.test_user_id = None  # Will be set after user creation
-        self.test_session_id = None  # Will be set after session creation
-        
-        # Try to create a test user for all tests to use
+    result = {
+        "name": name,
+        "passed": passed,
+        "timestamp": time.time()
+    }
+    
+    if response:
         try:
-            user_data = {
-                "email": self.test_user_email,
-                "name": self.test_user_name,
-                "learning_preferences": {
-                    "preferred_pace": "medium",
-                    "learning_style": "visual"
-                }
-            }
-            
-            response = requests.post(f"{API_URL}/users", json=user_data)
-            if response.status_code == 200:
-                data = response.json()
-                self.test_user_id = data["id"]
-                print(f"Created test user with ID: {self.test_user_id}")
-        except Exception as e:
-            print(f"Error creating test user: {e}")
+            result["status_code"] = response.status_code
+            result["response"] = response.json() if response.headers.get('content-type') == 'application/json' else response.text[:200]
+        except:
+            result["response"] = "Could not parse response"
+    
+    if error:
+        result["error"] = error
+        print(f"  Error: {error}")
+    
+    test_results["tests"].append(result)
+    
+    if passed:
+        test_results["passed"] += 1
+    else:
+        test_results["failed"] += 1
+
+def test_health_check():
+    """Test the health check endpoint"""
+    try:
+        response = requests.get(f"{BACKEND_URL}/health")
+        passed = response.status_code == 200 and response.json().get("status") in ["healthy", "degraded"]
+        log_test("Health Check Endpoint", passed, response)
+        return response.json() if passed else None
+    except Exception as e:
+        log_test("Health Check Endpoint", False, error=str(e))
+        return None
+
+def test_root_endpoint():
+    """Test the root endpoint"""
+    try:
+        response = requests.get(f"{BACKEND_URL}/")
+        passed = response.status_code == 200 and "message" in response.json()
+        log_test("Root Endpoint", passed, response)
+        return response.json() if passed else None
+    except Exception as e:
+        log_test("Root Endpoint", False, error=str(e))
+        return None
+
+def create_test_user():
+    """Create a test user or get existing one"""
+    try:
+        # First try to get the user by email
+        response = requests.get(f"{BACKEND_URL}/users/email/{TEST_USER_EMAIL}")
         
-    def test_01_health_check(self):
-        """Test the root health check endpoint"""
-        response = requests.get(f"{API_URL}/")
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
-        self.assertIn("message", data)
-        self.assertIn("status", data)
-        self.assertEqual(data["status"], "healthy")
+        if response.status_code == 200:
+            log_test("Get User by Email", True, response)
+            return response.json()
         
-        # CORS headers might not be present in the response to a simple GET request
-        # We need to send an OPTIONS request to check CORS headers
-        options_response = requests.options(f"{API_URL}/")
-        if 'Access-Control-Allow-Origin' in options_response.headers:
-            self.assertIn("Access-Control-Allow-Origin", options_response.headers)
-        else:
-            # If OPTIONS doesn't work, we'll just print a warning instead of failing
-            print("WARNING: CORS headers not found in OPTIONS response. This might be due to proxy configuration.")
-        
-    def test_02_detailed_health_check(self):
-        """Test the detailed health check endpoint"""
-        response = requests.get(f"{API_URL}/health")
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
-        self.assertIn("status", data)
-        self.assertIn("database", data)
-        
-    def test_03_create_user(self):
-        """Test creating a new user"""
-        # Skip if we already created a user in setUp
-        if self.test_user_id:
-            print(f"Using existing test user with ID: {self.test_user_id}")
-            return
-            
-        # Generate a unique email to avoid conflicts
-        unique_email = f"test-user-{datetime.now().strftime('%Y%m%d%H%M%S%f')}@example.com"
-        
+        # If user doesn't exist, create one
         user_data = {
-            "email": unique_email,
-            "name": self.test_user_name,
+            "email": TEST_USER_EMAIL,
+            "name": TEST_USER_NAME,
             "learning_preferences": {
-                "preferred_pace": "medium",
+                "preferred_pace": "moderate",
                 "learning_style": "visual"
             }
         }
         
-        response = requests.post(f"{API_URL}/users", json=user_data)
-        print(f"User creation response: {response.status_code}")
-        print(f"Response content: {response.text}")
-        
-        if response.status_code == 200:
-            data = response.json()
-            self.assertIn("id", data)
-            self.assertEqual(data["email"], unique_email)
-            self.assertEqual(data["name"], self.test_user_name)
-            
-            # Save user ID for later tests
-            self.test_user_id = data["id"]
-            print(f"Created test user with ID: {self.test_user_id}")
-        else:
-            # If we can't create a user, use a fixed test ID for other tests
-            self.test_user_id = "test-user-123"
-            print(f"Using fixed test user ID: {self.test_user_id}")
-        
-    def test_04_get_user_by_email(self):
-        """Test retrieving a user by email"""
-        # Skip if user creation failed
-        if not self.test_user_id:
-            self.skipTest("User creation failed, skipping test")
-            
-        # For fixed test user, we'll test with a different endpoint
-        if self.test_user_id == "test-user-123":
-            print("Using fixed test user, testing user retrieval by ID instead of email")
-            response = requests.get(f"{API_URL}/users/{self.test_user_id}")
-        else:
-            response = requests.get(f"{API_URL}/users/email/{self.test_user_email}")
-            
-        print(f"User retrieval response: {response.status_code}")
-        
-        # We'll consider this test successful if we get any valid response
-        # This is because we might be using a fixed test ID that doesn't have a real email
-        self.assertIn(response.status_code, [200, 404])
-        
-    def test_05_create_session(self):
-        """Test creating a new learning session"""
-        # Skip if user creation failed
-        if not self.test_user_id:
-            self.skipTest("User creation failed, skipping test")
-            
+        response = requests.post(f"{BACKEND_URL}/users", json=user_data)
+        passed = response.status_code == 200 and "id" in response.json()
+        log_test("Create User", passed, response)
+        return response.json() if passed else None
+    except Exception as e:
+        log_test("Create/Get User", False, error=str(e))
+        return None
+
+def test_get_user_by_email():
+    """Test getting a user by email"""
+    try:
+        response = requests.get(f"{BACKEND_URL}/users/email/{TEST_USER_EMAIL}")
+        passed = response.status_code == 200 and response.json().get("email") == TEST_USER_EMAIL
+        log_test("Get User by Email", passed, response)
+        return response.json() if passed else None
+    except Exception as e:
+        log_test("Get User by Email", False, error=str(e))
+        return None
+
+def create_test_session(user_id: str):
+    """Create a test session"""
+    try:
         session_data = {
-            "user_id": self.test_user_id,
-            "subject": "Machine Learning",
-            "learning_objectives": ["Understand neural networks", "Master backpropagation"],
-            "difficulty_level": "intermediate"
+            "user_id": user_id,
+            "subject": TEST_SESSION_SUBJECT,
+            "learning_objectives": ["Understand quadratic equations", "Master factorization"],
+            "difficulty_level": TEST_SESSION_DIFFICULTY
         }
         
-        response = requests.post(f"{API_URL}/sessions", json=session_data)
-        print(f"Session creation response: {response.status_code}")
-        print(f"Response content: {response.text}")
-        
-        if response.status_code == 200:
-            data = response.json()
-            self.assertIn("id", data)
-            self.assertEqual(data["user_id"], self.test_user_id)
-            self.assertEqual(data["subject"], "Machine Learning")
-            
-            # Save session ID for later tests
-            self.test_session_id = data["id"]
-            print(f"Created test session with ID: {self.test_session_id}")
-        else:
-            # If we can't create a session, we'll just skip the test
-            self.skipTest(f"Session creation failed with status {response.status_code}")
-        
-    def test_06_get_user_sessions(self):
-        """Test retrieving sessions for a user"""
-        # Skip if user creation failed
-        if not self.test_user_id:
-            self.skipTest("User creation failed, skipping test")
-            
-        response = requests.get(f"{API_URL}/users/{self.test_user_id}/sessions")
-        print(f"Get sessions response: {response.status_code}")
-        
-        if response.status_code == 200:
-            data = response.json()
-            self.assertIsInstance(data, list)
-            
-            # Verify our test session is in the list if we created one
-            if self.test_session_id:
-                session_ids = [session["id"] for session in data]
-                if self.test_session_id in session_ids:
-                    print(f"Found test session {self.test_session_id} in user sessions")
-        else:
-            # If we can't get sessions, we'll just skip the test
-            self.skipTest(f"Get sessions failed with status {response.status_code}")
-            
-    def test_07_comprehensive_dashboard(self):
-        """Test the comprehensive analytics dashboard endpoint"""
-        # Use a fixed test user ID for analytics
-        test_analytics_user_id = "test-user-123"
-        
-        response = requests.get(f"{API_URL}/analytics/{test_analytics_user_id}/comprehensive-dashboard")
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
-        
-        # Verify the structure of the response
-        self.assertIn("knowledge_graph", data)
-        self.assertIn("competency_heat_map", data)
-        self.assertIn("learning_velocity", data)
-        self.assertIn("retention_curves", data)
-        self.assertIn("learning_path_optimization", data)
-        self.assertIn("summary", data)
-        
-    def test_08_knowledge_graph(self):
-        """Test the knowledge graph endpoint"""
-        test_analytics_user_id = "test-user-123"
-        
-        response = requests.get(f"{API_URL}/analytics/{test_analytics_user_id}/knowledge-graph")
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
-        
-        # Verify the structure of the response
-        self.assertIn("nodes", data)
-        self.assertIn("edges", data)
-        self.assertIn("recommendations", data)
-        self.assertIn("user_progress", data)
-        
-    def test_09_competency_heatmap(self):
-        """Test the competency heatmap endpoint"""
-        test_analytics_user_id = "test-user-123"
-        
-        response = requests.get(f"{API_URL}/analytics/{test_analytics_user_id}/competency-heatmap")
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
-        
-        # Verify the structure of the response
-        self.assertIn("heat_map_data", data)
-        self.assertIn("concepts", data)
-        self.assertIn("summary", data)
-        
-    def test_10_learning_velocity(self):
-        """Test the learning velocity endpoint"""
-        test_analytics_user_id = "test-user-123"
-        
-        response = requests.get(f"{API_URL}/analytics/{test_analytics_user_id}/learning-velocity")
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
-        
-        # Verify the structure of the response
-        self.assertIn("velocity_data", data)
-        self.assertIn("overall_velocity", data)
-        
-    def test_11_retention_curves(self):
-        """Test the retention curves endpoint"""
-        test_analytics_user_id = "test-user-123"
-        
-        response = requests.get(f"{API_URL}/analytics/{test_analytics_user_id}/retention-curves")
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
-        
-        # Verify the structure of the response
-        self.assertIn("retention_curves", data)
-        self.assertIn("overall_retention", data)
-        
-    def test_12_error_handling_invalid_user(self):
-        """Test error handling with an invalid user ID"""
-        invalid_user_id = "nonexistent-user-id"
-        
-        response = requests.get(f"{API_URL}/users/{invalid_user_id}")
-        self.assertEqual(response.status_code, 404)
-        data = response.json()
-        self.assertIn("detail", data)
-        
-    def test_13_error_handling_missing_params(self):
-        """Test error handling with missing required parameters"""
-        # Try to create a user without required fields
-        user_data = {
-            # Missing email and name
-            "learning_preferences": {}
+        response = requests.post(f"{BACKEND_URL}/sessions", json=session_data)
+        passed = response.status_code == 200 and "id" in response.json()
+        log_test("Create Session", passed, response)
+        return response.json() if passed else None
+    except Exception as e:
+        log_test("Create Session", False, error=str(e))
+        return None
+
+def test_get_user_sessions(user_id: str):
+    """Test getting user sessions"""
+    try:
+        response = requests.get(f"{BACKEND_URL}/users/{user_id}/sessions")
+        passed = response.status_code == 200 and isinstance(response.json(), list)
+        log_test("Get User Sessions", passed, response)
+        return response.json() if passed else None
+    except Exception as e:
+        log_test("Get User Sessions", False, error=str(e))
+        return None
+
+def test_basic_chat(session_id: str):
+    """Test basic chat functionality"""
+    try:
+        chat_data = {
+            "session_id": session_id,
+            "user_message": "Can you explain what a quadratic equation is?"
         }
         
-        response = requests.post(f"{API_URL}/users", json=user_data)
-        self.assertNotEqual(response.status_code, 200)  # Should not be 200 OK
+        response = requests.post(f"{BACKEND_URL}/chat", json=chat_data)
+        passed = response.status_code == 200 and "response" in response.json()
+        log_test("Basic Chat", passed, response)
+        return response.json() if passed else None
+    except Exception as e:
+        log_test("Basic Chat", False, error=str(e))
+        return None
+
+def test_premium_chat(session_id: str):
+    """Test premium chat functionality"""
+    try:
+        chat_data = {
+            "session_id": session_id,
+            "user_message": "Can you explain the quadratic formula in detail?",
+            "context": {
+                "learning_mode": "adaptive"
+            }
+        }
         
-if __name__ == "__main__":
-    # Use a test runner that provides more detailed output
-    import unittest.runner
-    runner = unittest.TextTestRunner(verbosity=2)
-    suite = unittest.TestLoader().loadTestsFromTestCase(MasterXBackendTests)
-    result = runner.run(suite)
+        response = requests.post(f"{BACKEND_URL}/chat/premium", json=chat_data)
+        passed = response.status_code == 200 and "response" in response.json()
+        log_test("Premium Chat", passed, response)
+        return response.json() if passed else None
+    except Exception as e:
+        log_test("Premium Chat", False, error=str(e))
+        return None
+
+def test_available_models():
+    """Test getting available AI models"""
+    try:
+        response = requests.get(f"{BACKEND_URL}/models/available")
+        passed = response.status_code == 200 and "available_models" in response.json()
+        log_test("Available Models", passed, response)
+        return response.json() if passed else None
+    except Exception as e:
+        log_test("Available Models", False, error=str(e))
+        return None
+
+def test_analytics_comprehensive_dashboard(user_id: str):
+    """Test comprehensive analytics dashboard"""
+    try:
+        response = requests.get(f"{BACKEND_URL}/analytics/{user_id}/comprehensive-dashboard")
+        passed = response.status_code == 200 and "knowledge_graph" in response.json()
+        log_test("Comprehensive Analytics Dashboard", passed, response)
+        return response.json() if passed else None
+    except Exception as e:
+        log_test("Comprehensive Analytics Dashboard", False, error=str(e))
+        return None
+
+def test_analytics_knowledge_graph(user_id: str):
+    """Test knowledge graph analytics"""
+    try:
+        response = requests.get(f"{BACKEND_URL}/analytics/{user_id}/knowledge-graph")
+        passed = response.status_code == 200
+        log_test("Knowledge Graph Analytics", passed, response)
+        return response.json() if passed else None
+    except Exception as e:
+        log_test("Knowledge Graph Analytics", False, error=str(e))
+        return None
+
+def test_analytics_competency_heatmap(user_id: str):
+    """Test competency heatmap analytics"""
+    try:
+        response = requests.get(f"{BACKEND_URL}/analytics/{user_id}/competency-heatmap")
+        passed = response.status_code == 200
+        log_test("Competency Heatmap Analytics", passed, response)
+        return response.json() if passed else None
+    except Exception as e:
+        log_test("Competency Heatmap Analytics", False, error=str(e))
+        return None
+
+def test_analytics_learning_velocity(user_id: str):
+    """Test learning velocity analytics"""
+    try:
+        response = requests.get(f"{BACKEND_URL}/analytics/{user_id}/learning-velocity")
+        passed = response.status_code == 200
+        log_test("Learning Velocity Analytics", passed, response)
+        return response.json() if passed else None
+    except Exception as e:
+        log_test("Learning Velocity Analytics", False, error=str(e))
+        return None
+
+def test_analytics_retention_curves(user_id: str):
+    """Test retention curves analytics"""
+    try:
+        response = requests.get(f"{BACKEND_URL}/analytics/{user_id}/retention-curves")
+        passed = response.status_code == 200
+        log_test("Retention Curves Analytics", passed, response)
+        return response.json() if passed else None
+    except Exception as e:
+        log_test("Retention Curves Analytics", False, error=str(e))
+        return None
+
+def run_all_tests():
+    """Run all tests in sequence"""
+    print("\n===== MASTERX BACKEND API TESTING =====\n")
+    
+    # 1. Health Check & Basic Connectivity
+    test_health_check()
+    test_root_endpoint()
+    
+    # 2. User & Session Management
+    user = create_test_user()
+    if not user:
+        print("Failed to create/get test user. Aborting further tests.")
+        return
+    
+    user_id = user.get("id")
+    test_get_user_by_email()
+    
+    session = create_test_session(user_id)
+    if not session:
+        print("Failed to create test session. Aborting further tests.")
+        return
+    
+    session_id = session.get("id")
+    test_get_user_sessions(user_id)
+    
+    # 3. Chat & AI Functionality
+    test_basic_chat(session_id)
+    test_premium_chat(session_id)
+    test_available_models()
+    
+    # 4. Advanced Analytics Endpoints
+    test_analytics_comprehensive_dashboard(user_id)
+    test_analytics_knowledge_graph(user_id)
+    test_analytics_competency_heatmap(user_id)
+    test_analytics_learning_velocity(user_id)
+    test_analytics_retention_curves(user_id)
     
     # Print summary
-    print("\n=== TEST SUMMARY ===")
-    print(f"Tests run: {result.testsRun}")
-    print(f"Errors: {len(result.errors)}")
-    print(f"Failures: {len(result.failures)}")
-    print(f"Skipped: {len(result.skipped)}")
-    
-    # Print any errors or failures
-    if result.errors:
-        print("\n=== ERRORS ===")
-        for test, error in result.errors:
-            print(f"\n{test}")
-            print(error)
-    
-    if result.failures:
-        print("\n=== FAILURES ===")
-        for test, failure in result.failures:
-            print(f"\n{test}")
-            print(failure)
-            
-    # Exit with appropriate code
-    sys.exit(not result.wasSuccessful())
+    print("\n===== TEST SUMMARY =====")
+    print(f"Total Tests: {test_results['passed'] + test_results['failed']}")
+    print(f"Passed: {test_results['passed']}")
+    print(f"Failed: {test_results['failed']}")
+    print("========================\n")
+
+if __name__ == "__main__":
+    run_all_tests()

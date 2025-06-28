@@ -8,7 +8,6 @@ import { UserOnboarding } from "./components/UserOnboarding";
 import { Sidebar } from "./components/Sidebar";
 import { ChatInterface } from "./components/ChatInterface";
 import { PageLoadingOverlay, LoadingStates } from "./components/LoadingSpinner";
-import ConnectionStatus from "./components/ConnectionStatus";
 import { GlassCard, GlassButton } from "./components/GlassCard";
 import { AlertIcon, CheckIcon, MasterXIcon } from "./components/PremiumIcons";
 import { api } from "./services/api";
@@ -210,7 +209,7 @@ function AppContent() {
 
         {/* Main Content Area */}
         <motion.main
-          className="flex-1 flex flex-col overflow-hidden relative"
+          className="flex-1 flex flex-col overflow-hidden relative min-h-0"
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.2, duration: 0.6, ease: "easeOut" }}
@@ -263,9 +262,6 @@ function AppContent() {
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Connection Status Component */}
-      <ConnectionStatus />
     </div>
   );
 }
@@ -318,7 +314,7 @@ function renderActiveView(activeView, user) {
   switch (activeView) {
     case 'chat':
       return (
-        <motion.div key="chat" {...viewTransition} className="flex-1">
+        <motion.div key="chat" {...viewTransition} className="flex-1 flex flex-col min-h-0">
           <ChatInterface />
         </motion.div>
       );
@@ -354,7 +350,7 @@ function renderActiveView(activeView, user) {
       );
     default:
       return (
-        <motion.div key="default" {...viewTransition} className="flex-1">
+        <motion.div key="default" {...viewTransition} className="flex-1 flex flex-col min-h-0">
           <ChatInterface />
         </motion.div>
       );

@@ -423,9 +423,9 @@ export function ChatInterface() {
   }
 
   return (
-    <div className="flex-1 flex flex-col h-full">
+    <div className="h-full flex flex-col">
       {/* Premium Chat Header */}
-      <div className="glass-medium border-b border-border-subtle p-6 shadow-lg">
+      <div className="flex-shrink-0 glass-medium border-b border-border-subtle p-6 shadow-lg">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <div className="relative">
@@ -549,22 +549,13 @@ export function ChatInterface() {
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 20 }}
-            className="flex-1 flex flex-col relative"
+            className="flex-1 flex flex-col overflow-hidden"
           >
             {/* Premium Messages Area with enhanced scroll behavior */}
             <div 
               ref={messagesContainerRef}
               onScroll={handleScroll}
-              className={cn(
-                "flex-1 overflow-y-auto p-6 space-y-6 relative",
-                "scroll-smooth"
-              )}
-              style={{ 
-                height: '100%',
-                overscrollBehavior: 'contain',
-                WebkitOverflowScrolling: 'touch',
-                minHeight: '0'
-              }}
+              className="flex-1 overflow-y-auto p-6 space-y-6"
               data-chat-container
             >
               {/* Enhanced Scroll Indicator */}
@@ -661,7 +652,7 @@ export function ChatInterface() {
             </AnimatePresence>
 
             {/* Premium Input Area */}
-            <div className="glass-medium border-t border-border-subtle p-6 shadow-xl">
+            <div className="flex-shrink-0 glass-medium border-t border-border-subtle p-6 shadow-xl">
               <form onSubmit={handleSendMessage} className="space-y-4">
                 <div className="flex space-x-4">
                   <div className="flex-1 relative">
