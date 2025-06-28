@@ -223,7 +223,7 @@ function AppContent() {
             }
           >
             <AnimatePresence mode="wait">
-              {renderActiveView(state.activeView)}
+              {renderActiveView(state.activeView, state.user)}
             </AnimatePresence>
           </Suspense>
         </motion.main>
@@ -274,7 +274,7 @@ function AppContent() {
 // 🎨 VIEW RENDERING FUNCTION
 // ===============================
 
-function renderActiveView(activeView) {
+function renderActiveView(activeView, user) {
   const viewTransition = {
     initial: { opacity: 0, x: 20, scale: 0.98 },
     animate: { opacity: 1, x: 0, scale: 1 },
@@ -349,7 +349,7 @@ function renderActiveView(activeView) {
     case 'analytics':
       return (
         <motion.div key="analytics" {...viewTransition} className="flex-1">
-          <AdvancedAnalyticsLearningDashboard userId={state.user?.id} />
+          <AdvancedAnalyticsLearningDashboard userId={user?.id} />
         </motion.div>
       );
     default:
