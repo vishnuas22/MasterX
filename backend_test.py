@@ -35,8 +35,12 @@ def log_test(name: str, passed: bool, response: Optional[requests.Response] = No
         try:
             result["status_code"] = response.status_code
             result["response"] = response.json() if response.headers.get('content-type') == 'application/json' else response.text[:200]
-        except:
+            print(f"  Status Code: {response.status_code}")
+            print(f"  Response: {result['response']}")
+        except Exception as e:
             result["response"] = "Could not parse response"
+            print(f"  Could not parse response: {str(e)}")
+            print(f"  Raw response: {response.text[:200]}")
     
     if error:
         result["error"] = error
@@ -52,10 +56,15 @@ def log_test(name: str, passed: bool, response: Optional[requests.Response] = No
 def test_health_check():
     """Test the health check endpoint"""
     try:
-        response = requests.get(f"{BACKEND_URL}/health")
+        print(f"Testing health check endpoint: {BACKEND_URL}/health")
+        response = requests.get(f"{BACKEND_URL}/health", timeout=10)
+        print(f"Response received: Status code {response.status_code}")
         passed = response.status_code == 200 and response.json().get("status") in ["healthy", "degraded"]
         log_test("Health Check Endpoint", passed, response)
         return response.json() if passed else None
+    except requests.exceptions.RequestException as e:
+        log_test("Health Check Endpoint", False, error=f"Request exception: {str(e)}")
+        return None
     except Exception as e:
         log_test("Health Check Endpoint", False, error=str(e))
         return None

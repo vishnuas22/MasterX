@@ -28,6 +28,7 @@ import { GestureControl } from './GestureControl';
 import { ARVRInterface } from './ARVRInterface';
 import { ThemeProvider, AdaptiveThemePanel, useAdaptiveTheme } from './AdaptiveThemeSystem';
 import { useApp } from '../context/AppContext';
+import { cn } from '../utils/cn';
 
 // Helper function to record learning analytics events
 const recordLearningEvent = async (userId, sessionId, eventData) => {
@@ -56,7 +57,6 @@ const recordLearningEvent = async (userId, sessionId, eventData) => {
     console.warn('Error recording learning event:', error);
   }
 };
-import { cn } from '../utils/cn';
 
 export function ChatInterface() {
   const { state, actions } = useApp();
@@ -84,6 +84,63 @@ export function ChatInterface() {
   const scrollCheckIntervalRef = useRef(null);
   const isAutoScrollingRef = useRef(false);
 
+  // Helper function for quick start - defined early with useCallback to avoid hoisting issues
+  const handleQuickStart = useCallback(async () => {
+    if (!inputMessage.trim() || !state.user?.id) return;
+
+    const message = inputMessage.trim();
+    setInputMessage('');
+
+    try {
+      actions.setLoading(true);
+      
+      const sessionData = {
+        user_id: state.user.id,
+        subject: 'General Learning',
+        difficulty_level: 'intermediate',
+        learning_objectives: ['Interactive learning', 'Skill development']
+      };
+      
+      await actions.createSession(sessionData);
+      
+      // Send the initial message
+      setTimeout(async () => {
+        if (state.currentSession?.id) {
+          await actions.sendMessage(state.currentSession.id, message);
+        }
+      }, 100);
+      
+    } catch (error) {
+      console.error('Error starting conversation:', error);
+      actions.setError('Failed to start conversation. Please try again.');
+    } finally {
+      actions.setLoading(false);
+    }
+  }, [inputMessage, state.user, state.currentSession, actions]);
+
+  // Helper function for subject-specific start
+  const handleSubjectStart = useCallback(async (subject) => {
+    if (!state.user?.id) return;
+
+    try {
+      actions.setLoading(true);
+      
+      const sessionData = {
+        user_id: state.user.id,
+        subject: subject,
+        difficulty_level: 'intermediate',
+        learning_objectives: [`Learn ${subject}`, 'Practice skills', 'Build understanding']
+      };
+      
+      await actions.createSession(sessionData);
+    } catch (error) {
+      console.error('Error creating session:', error);
+      actions.setError('Failed to create session. Please try again.');
+    } finally {
+      actions.setLoading(false);
+    }
+  }, [state.user, actions]);
+
   // Expand chat when messages exist or conversation starts
   useEffect(() => {
     if (state.messages.length > 0 || state.isTyping) {
@@ -93,24 +150,28 @@ export function ChatInterface() {
     }
   }, [state.messages.length, state.isTyping]);
 
-  // Initialize context awareness component
-  const contextAwareChat = ContextAwareChatInterface({
-    sessionId: state.currentSession?.id,
-    userId: state.user?.id,
-    onMessage: (response) => {
-      // Handle context-aware message response
-      actions.addMessage({
-        id: Date.now().toString(),
-        message: response.response,
-        sender: 'mentor',
-        timestamp: new Date().toISOString(),
-        learning_mode: 'context_aware',
-        suggestions: response.suggested_actions,
-        next_steps: response.next_steps,
-        metadata: response.metadata
-      });
-    }
-  });
+  // Initialize context awareness component when session and user are available
+  const contextAwareChat = useCallback(() => {
+    if (!state.currentSession?.id || !state.user?.id) return null;
+    
+    return ContextAwareChatInterface({
+      sessionId: state.currentSession.id,
+      userId: state.user.id,
+      onMessage: (response) => {
+        // Handle context-aware message response
+        actions.addMessage({
+          id: Date.now().toString(),
+          message: response.response,
+          sender: 'mentor',
+          timestamp: new Date().toISOString(),
+          learning_mode: 'context_aware',
+          suggestions: response.suggested_actions,
+          next_steps: response.next_steps,
+          metadata: response.metadata
+        });
+      }
+    });
+  }, [state.currentSession?.id, state.user?.id, actions]);
 
   // Improved scroll to bottom function
   const scrollToBottom = useCallback((force = false, smooth = true) => {
@@ -252,7 +313,19 @@ export function ChatInterface() {
           timestamp: msg.timestamp
         }));
         
-        await contextAwareChat.sendContextAwareMessage(message, conversationContext);
+        const contextChat = contextAwareChat();
+        if (contextChat) {
+          await contextChat.sendContextAwareMessage(message, conversationContext);
+        } else {
+          // Fallback to regular premium chat if context chat not available
+          await actions.sendPremiumMessage(state.currentSession.id, message, {
+            learning_mode: learningMode,
+            user_preferences: {
+              difficulty_preference: 'adaptive',
+              interaction_style: 'collaborative'
+            }
+          });
+        }
       } else if (useAdvancedStreaming) {
         // Use advanced streaming interface
         // The AdvancedStreamingInterface component will handle the streaming
@@ -351,7 +424,7 @@ export function ChatInterface() {
               </p>
             </motion.div>
 
-            {/* Centered Input Box - Google AI Labs Style */}
+            {/* Centered Input Box - Premium Dark Outline Style */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -359,11 +432,11 @@ export function ChatInterface() {
               className="relative mb-8"
             >
               <div className="relative group">
-                {/* Animated Gradient Border */}
-                <div className="absolute -inset-[2px] rounded-2xl bg-gradient-to-r from-ai-blue-500 via-ai-purple-500 to-ai-green-500 opacity-75 group-hover:opacity-100 transition-opacity duration-300 animate-gradient-x"></div>
+                {/* Premium Gradient Outline Border */}
+                <div className="absolute -inset-[2px] rounded-2xl bg-gradient-to-r from-ai-blue-500 via-ai-purple-500 to-ai-green-500 opacity-60 group-hover:opacity-100 transition-opacity duration-300 animate-gradient-x"></div>
                 
-                {/* Input Container */}
-                <div className="relative glass-medium rounded-2xl p-4 bg-opacity-90 backdrop-blur-xl">
+                {/* Dark Input Container */}
+                <div className="relative bg-gray-900/80 backdrop-blur-xl rounded-2xl p-4 border border-gray-700/50">
                   <div className="flex items-center space-x-4">
                     <div className="flex-1">
                       <input
@@ -379,7 +452,7 @@ export function ChatInterface() {
                         onFocus={() => setIsInputFocused(true)}
                         onBlur={() => setIsInputFocused(false)}
                         placeholder="Ask me anything to start learning..."
-                        className="w-full bg-transparent border-0 text-lg text-text-primary placeholder-text-tertiary focus:outline-none font-medium"
+                        className="w-full bg-transparent border-0 text-lg text-white placeholder-gray-400 focus:outline-none font-medium"
                         disabled={state.isLoading}
                       />
                     </div>
@@ -394,11 +467,11 @@ export function ChatInterface() {
                     </GlassButton>
                   </div>
                   
-                  {/* Animated Background Gradient */}
+                  {/* Premium Focus Effect */}
                   <div className={cn(
-                    "absolute inset-0 rounded-2xl transition-opacity duration-300",
+                    "absolute inset-0 rounded-2xl transition-opacity duration-300 pointer-events-none",
                     "bg-gradient-to-r from-ai-blue-500/5 via-ai-purple-500/5 to-ai-green-500/5",
-                    isInputFocused ? "opacity-100 animate-gradient-x" : "opacity-0"
+                    isInputFocused ? "opacity-100" : "opacity-0"
                   )}></div>
                 </div>
               </div>
@@ -439,62 +512,9 @@ export function ChatInterface() {
     );
   }
 
-  // Helper function for quick start
-  const handleQuickStart = async () => {
-    if (!inputMessage.trim() || !state.user?.id) return;
 
-    const message = inputMessage.trim();
-    setInputMessage('');
 
-    try {
-      actions.setLoading(true);
-      
-      const sessionData = {
-        user_id: state.user.id,
-        subject: 'General Learning',
-        difficulty_level: 'intermediate',
-        learning_objectives: ['Interactive learning', 'Skill development']
-      };
-      
-      await actions.createSession(sessionData);
-      
-      // Send the initial message
-      setTimeout(async () => {
-        if (state.currentSession?.id) {
-          await actions.sendMessage(state.currentSession.id, message);
-        }
-      }, 100);
-      
-    } catch (error) {
-      console.error('Error starting conversation:', error);
-      actions.setError('Failed to start conversation. Please try again.');
-    } finally {
-      actions.setLoading(false);
-    }
-  };
 
-  // Helper function for subject-specific start
-  const handleSubjectStart = async (subject) => {
-    if (!state.user?.id) return;
-
-    try {
-      actions.setLoading(true);
-      
-      const sessionData = {
-        user_id: state.user.id,
-        subject: subject,
-        difficulty_level: 'intermediate',
-        learning_objectives: [`Learn ${subject}`, 'Practice skills', 'Build understanding']
-      };
-      
-      await actions.createSession(sessionData);
-    } catch (error) {
-      console.error('Error creating session:', error);
-      actions.setError('Failed to create session. Please try again.');
-    } finally {
-      actions.setLoading(false);
-    }
-  };
 
   return (
     <div className="h-full flex flex-col">
@@ -632,23 +652,24 @@ export function ChatInterface() {
           )}
         </AnimatePresence>
 
-        {/* Input Area - Google AI Labs Style with Animations */}
+        {/* Input Area - Premium Dark Outline Style */}
         <div className="flex-shrink-0 p-4">
           <div className={cn(
             "mx-auto transition-all duration-500",
-            isChatExpanded ? "max-w-4xl" : "max-w-2xl"
+            // Match the chat messages width with slightly wider margins
+            isChatExpanded ? "max-w-3xl" : "max-w-xl"
           )}>
             <form onSubmit={handleSendMessage} className="relative">
               <div className="relative group">
-                {/* Animated Gradient Border - Google AI Labs Style */}
+                {/* Premium Gradient Outline Border */}
                 <div className={cn(
                   "absolute -inset-[2px] rounded-2xl transition-all duration-300",
                   "bg-gradient-to-r from-ai-blue-500 via-ai-purple-500 to-ai-green-500",
-                  isInputFocused ? "opacity-75 animate-gradient-x" : "opacity-30"
+                  isInputFocused ? "opacity-100 animate-gradient-x" : "opacity-60"
                 )}></div>
                 
-                {/* Input Container */}
-                <div className="relative glass-medium rounded-2xl bg-opacity-90 backdrop-blur-xl">
+                {/* Dark Input Container with Transparent Background */}
+                <div className="relative bg-gray-900/80 backdrop-blur-xl rounded-2xl border border-gray-700/50">
                   <div className="flex items-center p-4 space-x-4">
                     <div className="flex-1 relative">
                       <GlassInput
@@ -659,7 +680,7 @@ export function ChatInterface() {
                         onFocus={() => setIsInputFocused(true)}
                         onBlur={() => setIsInputFocused(false)}
                         placeholder={useContextAwareness ? "Message MasterX..." : "Ask me anything..."}
-                        className="w-full bg-transparent border-0 text-base text-text-primary placeholder-text-tertiary focus:outline-none resize-none min-h-[24px] max-h-32"
+                        className="w-full bg-transparent border-0 text-base text-white placeholder-gray-400 focus:outline-none resize-none min-h-[24px] max-h-32"
                         disabled={state.isTyping}
                         multiline
                       />
@@ -667,7 +688,7 @@ export function ChatInterface() {
                       {/* Context Indicator */}
                       {useContextAwareness && (
                         <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
-                          <div className="flex items-center space-x-1 px-2 py-1 glass-ai-secondary rounded-lg">
+                          <div className="flex items-center space-x-1 px-2 py-1 bg-ai-purple-500/20 rounded-lg border border-ai-purple-400/30">
                             <AIBrainIcon size="xs" className="text-ai-purple-400" />
                             <span className="text-xs text-ai-purple-300">Smart</span>
                           </div>
@@ -686,11 +707,11 @@ export function ChatInterface() {
                     </GlassButton>
                   </div>
                   
-                  {/* Animated Background Gradient */}
+                  {/* Premium Focus Effect */}
                   <div className={cn(
                     "absolute inset-0 rounded-2xl transition-opacity duration-300 pointer-events-none",
-                    "bg-gradient-to-r from-ai-blue-500/3 via-ai-purple-500/3 to-ai-green-500/3",
-                    isInputFocused ? "opacity-100 animate-gradient-x" : "opacity-0"
+                    "bg-gradient-to-r from-ai-blue-500/5 via-ai-purple-500/5 to-ai-green-500/5",
+                    isInputFocused ? "opacity-100" : "opacity-0"
                   )}></div>
                 </div>
               </div>
