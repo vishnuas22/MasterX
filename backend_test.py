@@ -3,10 +3,11 @@ import requests
 import json
 import uuid
 import time
+import sseclient
 from typing import Dict, Any, List, Optional
 
 # Configuration
-BACKEND_URL = "https://35590f30-23b0-4ccf-8a1f-e0ce19b882f3.preview.emergentagent.com/api"
+BACKEND_URL = "http://localhost:8001/api"
 TEST_USER_EMAIL = "test@masterx.ai"
 TEST_USER_NAME = "Test User"
 TEST_SESSION_SUBJECT = "Mathematics"
@@ -239,6 +240,68 @@ def test_analytics_retention_curves(user_id: str):
         log_test("Retention Curves Analytics", False, error=str(e))
         return None
 
+def test_premium_chat_stream(session_id: str):
+    """Test premium streaming chat functionality"""
+    try:
+        chat_data = {
+            "session_id": session_id,
+            "user_message": "Explain the concept of derivatives in calculus with examples",
+            "context": {
+                "learning_mode": "adaptive"
+            }
+        }
+        
+        # For streaming endpoints, we need to handle SSE (Server-Sent Events)
+        # We'll just check if the connection is established and some data is received
+        response = requests.post(f"{BACKEND_URL}/chat/premium/stream", json=chat_data, stream=True)
+        
+        if response.status_code != 200:
+            log_test("Premium Chat Streaming", False, response, "Non-200 status code")
+            return None
+            
+        # Check if we receive some data (at least one chunk)
+        received_data = False
+        try:
+            # Read just a bit of data to confirm streaming works
+            for chunk in response.iter_content(chunk_size=1024):
+                if chunk:
+                    received_data = True
+                    break
+                    
+            response.close()  # Close the connection after testing
+            passed = received_data
+            log_test("Premium Chat Streaming", passed, response)
+            return {"streaming": "working"} if passed else None
+            
+        except Exception as e:
+            log_test("Premium Chat Streaming", False, error=f"Streaming error: {str(e)}")
+            return None
+            
+    except Exception as e:
+        log_test("Premium Chat Streaming", False, error=str(e))
+        return None
+
+def test_context_awareness(user_id: str, session_id: str):
+    """Test context awareness functionality"""
+    try:
+        context_data = {
+            "user_id": user_id,
+            "session_id": session_id,
+            "message": "I'm having trouble understanding this concept. Can you explain it differently?",
+            "conversation_context": [
+                {"role": "user", "content": "What is a derivative?"},
+                {"role": "assistant", "content": "A derivative measures the rate of change of a function with respect to one of its variables."}
+            ]
+        }
+        
+        response = requests.post(f"{BACKEND_URL}/context/analyze", json=context_data)
+        passed = response.status_code == 200 and "context_state" in response.json()
+        log_test("Context Awareness", passed, response)
+        return response.json() if passed else None
+    except Exception as e:
+        log_test("Context Awareness", False, error=str(e))
+        return None
+
 def run_all_tests():
     """Run all tests in sequence"""
     print("\n===== MASTERX BACKEND API TESTING =====\n")
@@ -267,6 +330,7 @@ def run_all_tests():
     # 3. Chat & AI Functionality
     test_basic_chat(session_id)
     test_premium_chat(session_id)
+    test_premium_chat_stream(session_id)  # Test streaming functionality
     test_available_models()
     
     # 4. Advanced Analytics Endpoints
@@ -275,6 +339,9 @@ def run_all_tests():
     test_analytics_competency_heatmap(user_id)
     test_analytics_learning_velocity(user_id)
     test_analytics_retention_curves(user_id)
+    
+    # 5. Context Awareness
+    test_context_awareness(user_id, session_id)
     
     # Print summary
     print("\n===== TEST SUMMARY =====")

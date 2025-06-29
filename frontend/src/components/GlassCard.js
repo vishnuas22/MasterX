@@ -199,6 +199,8 @@ export const GlassInput = forwardRef(({
   error = false,
   icon,
   rightIcon,
+  multiline = false,
+  rows = 1,
   ...props 
 }, ref) => {
   const inputClasses = cn(
@@ -215,21 +217,30 @@ export const GlassInput = forwardRef(({
       : 'border-border-medium focus:border-ai-blue-500/50 focus:shadow-glow-blue',
     'focus:outline-none focus:ring-0',
     'focus:scale-[1.01]',
+    multiline && 'resize-none min-h-[24px]',
     icon && 'pl-12',
     rightIcon && 'pr-12',
     className
   );
 
+  const InputComponent = multiline ? 'textarea' : 'input';
+
   return (
     <div className="relative">
       {icon && (
-        <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-text-quaternary">
+        <div className="absolute left-4 top-3 text-text-quaternary">
           {icon}
         </div>
       )}
-      <input ref={ref} className={inputClasses} {...props} />
+      <InputComponent 
+        ref={ref} 
+        className={inputClasses} 
+        rows={multiline ? rows : undefined}
+        style={multiline ? { minHeight: '24px', height: 'auto' } : undefined}
+        {...props} 
+      />
       {rightIcon && (
-        <div className="absolute right-4 top-1/2 transform -translate-y-1/2 text-text-quaternary">
+        <div className="absolute right-4 top-3 text-text-quaternary">
           {rightIcon}
         </div>
       )}

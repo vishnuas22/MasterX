@@ -484,6 +484,76 @@ body {
 }
 
 /* ===============================
+   🎨 GOOGLE AI LABS GRADIENT ANIMATIONS
+   =============================== */
+
+/* Gradient X Animation - Google AI Labs Style */
+@keyframes gradient-x {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes gradient-y {
+  0%, 100% {
+    background-position: 50% 0%;
+  }
+  50% {
+    background-position: 50% 100%;
+  }
+}
+
+@keyframes gradient-xy {
+  0%, 100% {
+    background-position: 0% 0%;
+  }
+  25% {
+    background-position: 100% 0%;
+  }
+  50% {
+    background-position: 100% 100%;
+  }
+  75% {
+    background-position: 0% 100%;
+  }
+}
+
+/* Animated Gradient Classes */
+.animate-gradient-x {
+  background-size: 400% 400%;
+  animation: gradient-x 3s ease infinite;
+}
+
+.animate-gradient-y {
+  background-size: 400% 400%;
+  animation: gradient-y 3s ease infinite;
+}
+
+.animate-gradient-xy {
+  background-size: 400% 400%;
+  animation: gradient-xy 4s ease infinite;
+}
+
+/* Pulse Soft Animation */
+@keyframes pulse-soft {
+  0%, 100% {
+    opacity: 0.8;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.02);
+  }
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 2s ease-in-out infinite;
+}
+
+/* ===============================
    🎨 PREMIUM ANIMATION SYSTEM
    =============================== */
 
