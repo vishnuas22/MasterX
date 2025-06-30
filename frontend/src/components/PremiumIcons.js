@@ -358,6 +358,89 @@ export const TypingIndicator = () => (
   </div>
 );
 
+export const SearchIcon = ({ size = 'md', animated = false, gradient = false, glow = false, className = '', ...props }) => (
+  <IconWrapper size={size} animated={animated} gradient={gradient} glow={glow} className={className} {...props}>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <circle cx="11" cy="11" r="8"/>
+      <path d="M21 21l-4.35-4.35"/>
+    </svg>
+  </IconWrapper>
+);
+
+export const PlusIcon = ({ size = 'md', animated = false, gradient = false, glow = false, className = '', ...props }) => (
+  <IconWrapper size={size} animated={animated} gradient={gradient} glow={glow} className={className} {...props}>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M12 5v14M5 12h14"/>
+    </svg>
+  </IconWrapper>
+);
+
+export const MoreHorizontalIcon = ({ size = 'md', animated = false, gradient = false, glow = false, className = '', ...props }) => (
+  <IconWrapper size={size} animated={animated} gradient={gradient} glow={glow} className={className} {...props}>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <circle cx="12" cy="12" r="1"/>
+      <circle cx="19" cy="12" r="1"/>
+      <circle cx="5" cy="12" r="1"/>
+    </svg>
+  </IconWrapper>
+);
+
+export const ShareIcon = ({ size = 'md', animated = false, gradient = false, glow = false, className = '', ...props }) => (
+  <IconWrapper size={size} animated={animated} gradient={gradient} glow={glow} className={className} {...props}>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+      <polyline points="16,6 12,2 8,6"/>
+      <line x1="12" y1="2" x2="12" y2="15"/>
+    </svg>
+  </IconWrapper>
+);
+
+export const EditIcon = ({ size = 'md', animated = false, gradient = false, glow = false, className = '', ...props }) => (
+  <IconWrapper size={size} animated={animated} gradient={gradient} glow={glow} className={className} {...props}>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
+    </svg>
+  </IconWrapper>
+);
+
+export const TrashIcon = ({ size = 'md', animated = false, gradient = false, glow = false, className = '', ...props }) => (
+  <IconWrapper size={size} animated={animated} gradient={gradient} glow={glow} className={className} {...props}>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <polyline points="3,6 5,6 21,6"/>
+      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+      <line x1="10" y1="11" x2="10" y2="17"/>
+      <line x1="14" y1="11" x2="14" y2="17"/>
+    </svg>
+  </IconWrapper>
+);
+
+export const CrownIcon = ({ size = 'md', animated = false, gradient = false, glow = false, className = '', ...props }) => (
+  <IconWrapper size={size} animated={animated} gradient={gradient} glow={glow} className={className} {...props}>
+    <svg viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 6L9 9l3-8 3 8-3-3zM19 15l-7-7-7 7h14zM21 16H3l-1 4h20l-1-4z"/>
+    </svg>
+  </IconWrapper>
+);
+
+export const StarIcon = ({ size = 'md', animated = false, gradient = false, glow = false, className = '', ...props }) => (
+  <IconWrapper size={size} animated={animated} gradient={gradient} glow={glow} className={className} {...props}>
+    <svg viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+    </svg>
+  </IconWrapper>
+);
+
+export const MicrophoneIcon = ({ size = 'md', animated = false, gradient = false, glow = false, className = '', ...props }) => (
+  <IconWrapper size={size} animated={animated} gradient={gradient} glow={glow} className={className} {...props}>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/>
+      <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+      <line x1="12" y1="19" x2="12" y2="23"/>
+      <line x1="8" y1="23" x2="16" y2="23"/>
+    </svg>
+  </IconWrapper>
+);
+
 export default {
   AIBrainIcon,
   SparkleIcon,
@@ -388,4 +471,13 @@ export default {
   PulsingDot,
   LoadingSpinner,
   TypingIndicator,
+  SearchIcon,
+  PlusIcon,
+  MoreHorizontalIcon,
+  ShareIcon,
+  EditIcon,
+  TrashIcon,
+  CrownIcon,
+  StarIcon,
+  MicrophoneIcon,
 };

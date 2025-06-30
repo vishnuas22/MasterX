@@ -15,7 +15,8 @@ import {
   ZapIcon, 
   ArrowDownIcon,
   PulsingDot,
-  CheckIcon
+  CheckIcon,
+  MicrophoneIcon
 } from './PremiumIcons';
 import { PremiumLearningModes, LearningModeIndicator } from './PremiumLearningModes';
 import { ModelManagement } from './ModelManagement';
@@ -456,6 +457,17 @@ export function ChatInterface() {
                         disabled={state.isLoading}
                       />
                     </div>
+                    
+                    {/* Voice Search Icon */}
+                    <GlassButton
+                      variant="secondary"
+                      onClick={() => console.log('Voice search clicked')} // UI placeholder for now
+                      className="px-3 py-2"
+                      title="Voice search"
+                    >
+                      <MicrophoneIcon size="md" className="text-gray-400 hover:text-white" />
+                    </GlassButton>
+                    
                     <GlassButton
                       variant="gradient"
                       onClick={handleQuickStart}
@@ -549,7 +561,37 @@ export function ChatInterface() {
             </div>
           </div>
           
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-3">
+            {/* AR/VR Controls */}
+            <GlassButton
+              size="sm"
+              variant="secondary"
+              onClick={() => console.log('AR/VR clicked')} // UI placeholder for now
+              title="AR/VR Interface"
+            >
+              <div className="text-xs font-medium">AR/VR</div>
+            </GlassButton>
+            
+            {/* Gestures Controls */}
+            <GlassButton
+              size="sm"
+              variant="secondary"
+              onClick={() => console.log('Gestures clicked')} // UI placeholder for now
+              title="Gesture Controls"
+            >
+              <div className="text-xs font-medium">Gestures</div>
+            </GlassButton>
+            
+            {/* Normal/Live Chat Toggle */}
+            <GlassButton
+              size="sm"
+              variant={currentView === 'live-learning' ? 'gradient' : 'secondary'}
+              onClick={() => setCurrentView(currentView === 'chat' ? 'live-learning' : 'chat')}
+              title="Toggle Chat Mode"
+            >
+              <div className="text-xs font-medium">{currentView === 'live-learning' ? 'Live' : 'Chat'}</div>
+            </GlassButton>
+            
             <GlassButton
               size="sm"
               variant={useContextAwareness ? 'gradient' : 'secondary'}
@@ -567,6 +609,23 @@ export function ChatInterface() {
             >
               <SettingsIcon size="sm" />
             </GlassButton>
+            
+            {/* User Profile Button - ChatGPT Style */}
+            {state.user && (
+              <GlassButton
+                size="sm"
+                variant="secondary"
+                onClick={() => console.log('User profile clicked')} // UI placeholder for now
+                title={`${state.user.name} Profile`}
+                className="p-1"
+              >
+                <div className="w-8 h-8 bg-gradient-to-br from-ai-green-400 to-ai-blue-500 rounded-lg flex items-center justify-center shadow-lg">
+                  <span className="text-white text-sm font-bold">
+                    {state.user.name.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+              </GlassButton>
+            )}
             
             <LearningModeIndicator 
               currentMode={learningMode}
@@ -602,30 +661,56 @@ export function ChatInterface() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
-                  className={cn(
-                    "mb-6 flex",
-                    "justify-start" // AI messages always on left like ChatGPT
-                  )}
+                  className="mb-6 flex justify-start"
                 >
-                  <div className="flex items-start space-x-3 max-w-[85%]">
+                  <div className="flex items-start space-x-3 max-w-full w-full">
                     <div className="flex-shrink-0 mt-1">
-                      <div className="w-8 h-8 glass-ai-primary rounded-full flex items-center justify-center">
+                      <div className="w-8 h-8 glass-ai-primary rounded-full flex items-center justify-center shadow-glow-blue">
                         <AIBrainIcon size="sm" className="text-ai-blue-400" animated />
                       </div>
                     </div>
-                    <div className="flex-1">
-                      <GlassCard variant="ai-primary" size="sm" className="glass-medium">
+                    <div className="flex-1 min-w-0 max-w-4xl">
+                      <div className="mb-2">
+                        <span className="text-sm font-medium text-text-primary">MasterX</span>
+                        <span className="ml-2 text-xs text-ai-blue-400 flex items-center space-x-1">
+                          <SparkleIcon size="xs" />
+                          <span>Streaming</span>
+                        </span>
+                      </div>
+                      
+                      <GlassCard 
+                        variant="ai-primary" 
+                        size="sm" 
+                        className="glass-medium shadow-lg bg-glass-light border border-border-subtle"
+                      >
                         {state.streamingMessage ? (
-                          <div className="prose-premium max-w-none">
-                            <ReactMarkdown>{state.streamingMessage}</ReactMarkdown>
-                            <motion.span 
-                              className="inline-block w-0.5 h-4 bg-ai-blue-400 ml-1"
-                              animate={{ opacity: [1, 0] }}
-                              transition={{ duration: 0.8, repeat: Infinity }}
-                            />
+                          <div className="prose prose-lg prose-invert max-w-none">
+                            <div className="premium-response text-text-primary leading-relaxed">
+                              <ReactMarkdown
+                                components={{
+                                  h1: ({children}) => <h1 className="text-xl font-bold text-gradient-primary mb-4 flex items-center space-x-2"><SparkleIcon size="sm" className="text-ai-blue-400" /><span>{children}</span></h1>,
+                                  h2: ({children}) => <h2 className="text-lg font-semibold text-ai-blue-300 mb-3 mt-6">{children}</h2>,
+                                  h3: ({children}) => <h3 className="text-base font-semibold text-ai-purple-300 mb-2 mt-4">{children}</h3>,
+                                  p: ({children}) => <p className="mb-4 text-text-secondary leading-relaxed">{children}</p>,
+                                  ul: ({children}) => <ul className="mb-4 space-y-2 ml-4">{children}</ul>,
+                                  ol: ({children}) => <ol className="mb-4 space-y-2 ml-4 list-decimal">{children}</ol>,
+                                  li: ({children}) => <li className="text-text-secondary flex items-start space-x-2"><span className="text-ai-blue-400 mt-1">•</span><span className="flex-1">{children}</span></li>,
+                                  strong: ({children}) => <strong className="font-semibold text-ai-blue-300">{children}</strong>,
+                                  em: ({children}) => <em className="italic text-ai-purple-300">{children}</em>,
+                                  code: ({children}) => <code className="px-2 py-1 bg-glass-thick rounded text-ai-green-300 text-sm font-mono">{children}</code>
+                                }}
+                              >
+                                {state.streamingMessage}
+                              </ReactMarkdown>
+                              <motion.span 
+                                className="inline-block w-0.5 h-4 bg-ai-blue-400 ml-1"
+                                animate={{ opacity: [1, 0] }}
+                                transition={{ duration: 0.8, repeat: Infinity }}
+                              />
+                            </div>
                           </div>
                         ) : (
-                          <TypingIndicator size="sm" message="Thinking..." />
+                          <TypingIndicator size="sm" message="MasterX is thinking..." />
                         )}
                       </GlassCard>
                     </div>
@@ -695,6 +780,16 @@ export function ChatInterface() {
                         </div>
                       )}
                     </div>
+                    
+                    {/* Voice Search Icon */}
+                    <GlassButton
+                      variant="secondary"
+                      onClick={() => console.log('Voice search clicked')} // UI placeholder for now
+                      className="px-3 py-2 flex-shrink-0"
+                      title="Voice search"
+                    >
+                      <MicrophoneIcon size="sm" className="text-gray-400 hover:text-white" />
+                    </GlassButton>
                     
                     <GlassButton
                       type="submit"
@@ -802,27 +897,24 @@ function ChatMessage({ message, isExpanded = true }) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.3, ease: "easeOut" }}
-      className={cn(
-        "mb-6 flex",
-        isUser ? "justify-end" : "justify-start"
-      )}
+      className="mb-6 flex justify-start"
     >
-      <div className={cn(
-        "flex items-start space-x-3",
-        isUser ? "flex-row-reverse space-x-reverse max-w-[85%]" : "max-w-[85%]"
-      )}>
+      <div className="flex items-start space-x-3 max-w-full w-full">
         {/* Avatar */}
         <div className="flex-shrink-0 mt-1">
           <div className={cn(
             "w-8 h-8 rounded-full flex items-center justify-center",
             isUser 
-              ? "glass-thick" 
+              ? "bg-gradient-to-br from-ai-green-400 to-ai-blue-500 shadow-lg" 
               : isPremium 
                 ? "glass-ai-secondary shadow-glow-purple" 
                 : "glass-ai-primary shadow-glow-blue"
           )}>
             {isUser ? (
-              <UserIcon size="sm" className="text-text-primary" />
+              <span className="text-white text-sm font-bold">
+                {/* Get first letter of user name if available */}
+                U
+              </span>
             ) : (
               <AIBrainIcon 
                 size="sm" 
@@ -834,7 +926,20 @@ function ChatMessage({ message, isExpanded = true }) {
         </div>
         
         {/* Message Content */}
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 max-w-4xl">
+          {/* User Label */}
+          <div className="mb-2">
+            <span className="text-sm font-medium text-text-primary">
+              {isUser ? 'You' : 'MasterX'}
+            </span>
+            {isPremium && !isUser && (
+              <span className="ml-2 text-xs text-ai-purple-400 flex items-center space-x-1">
+                <SparkleIcon size="xs" />
+                <span>Premium</span>
+              </span>
+            )}
+          </div>
+          
           <GlassCard 
             variant={
               isUser 
@@ -845,28 +950,51 @@ function ChatMessage({ message, isExpanded = true }) {
             }
             size="sm"
             className={cn(
-              "glass-medium",
-              isUser ? "bg-ai-blue-500/10" : "bg-glass-light"
+              "glass-medium shadow-lg",
+              isUser 
+                ? "bg-ai-blue-500/10 border border-ai-blue-500/20" 
+                : isPremium
+                  ? "bg-ai-purple-500/5 border border-ai-purple-500/20"
+                  : "bg-glass-light border border-border-subtle"
             )}
             hover={false}
           >
             {/* Premium Mode Indicator */}
             {isPremium && !isUser && (
-              <div className="flex items-center space-x-2 mb-3 pb-3 border-b border-border-subtle">
-                <SparkleIcon size="xs" className="text-ai-purple-400" />
-                <span className="text-xs font-semibold text-ai-purple-300 capitalize">
+              <div className="flex items-center space-x-2 mb-4 pb-3 border-b border-border-subtle">
+                <SparkleIcon size="sm" className="text-ai-purple-400" />
+                <span className="text-sm font-semibold text-ai-purple-300 capitalize">
                   {message.learning_mode} Mode
                 </span>
                 <div className="ml-auto">
-                  <CheckIcon size="xs" className="text-ai-green-400" />
+                  <CheckIcon size="sm" className="text-ai-green-400" />
                 </div>
               </div>
             )}
             
-            {/* Message Content */}
+            {/* Message Content with Premium Formatting */}
             {message.message ? (
-              <div className="prose-premium max-w-none text-sm leading-relaxed">
-                <ReactMarkdown>{message.message}</ReactMarkdown>
+              <div className="prose prose-lg prose-invert max-w-none">
+                <div className="premium-response text-text-primary leading-relaxed">
+                  <ReactMarkdown
+                    components={{
+                      h1: ({children}) => <h1 className="text-xl font-bold text-gradient-primary mb-4 flex items-center space-x-2"><SparkleIcon size="sm" className="text-ai-blue-400" /><span>{children}</span></h1>,
+                      h2: ({children}) => <h2 className="text-lg font-semibold text-ai-blue-300 mb-3 mt-6">{children}</h2>,
+                      h3: ({children}) => <h3 className="text-base font-semibold text-ai-purple-300 mb-2 mt-4">{children}</h3>,
+                      p: ({children}) => <p className="mb-4 text-text-secondary leading-relaxed">{children}</p>,
+                      ul: ({children}) => <ul className="mb-4 space-y-2 ml-4">{children}</ul>,
+                      ol: ({children}) => <ol className="mb-4 space-y-2 ml-4 list-decimal">{children}</ol>,
+                      li: ({children}) => <li className="text-text-secondary flex items-start space-x-2"><span className="text-ai-blue-400 mt-1">•</span><span className="flex-1">{children}</span></li>,
+                      strong: ({children}) => <strong className="font-semibold text-ai-blue-300">{children}</strong>,
+                      em: ({children}) => <em className="italic text-ai-purple-300">{children}</em>,
+                      code: ({children}) => <code className="px-2 py-1 bg-glass-thick rounded text-ai-green-300 text-sm font-mono">{children}</code>,
+                      pre: ({children}) => <pre className="mb-4 p-4 bg-glass-thick rounded-lg overflow-x-auto border border-border-subtle">{children}</pre>,
+                      blockquote: ({children}) => <blockquote className="border-l-4 border-ai-blue-500 pl-4 mb-4 italic text-text-tertiary bg-ai-blue-500/5 py-2 rounded-r-lg">{children}</blockquote>
+                    }}
+                  >
+                    {message.message}
+                  </ReactMarkdown>
+                </div>
               </div>
             ) : (
               <TypingIndicator size="sm" />
@@ -874,10 +1002,10 @@ function ChatMessage({ message, isExpanded = true }) {
             
             {/* Message Suggestions */}
             {!isUser && message.suggestions && message.suggestions.length > 0 && (
-              <div className="mt-4 pt-3 border-t border-border-subtle">
-                <p className="text-xs text-text-tertiary mb-3 flex items-center space-x-2">
-                  <SparkleIcon size="xs" />
-                  <span>Suggested actions:</span>
+              <div className="mt-6 pt-4 border-t border-border-subtle">
+                <p className="text-sm text-ai-blue-400 mb-3 flex items-center space-x-2 font-semibold">
+                  <SparkleIcon size="sm" />
+                  <span>Suggested Actions</span>
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {message.suggestions.slice(0, 3).map((suggestion, index) => (
@@ -885,7 +1013,7 @@ function ChatMessage({ message, isExpanded = true }) {
                       key={index}
                       size="sm"
                       variant="tertiary"
-                      className="text-xs hover:variant-secondary"
+                      className="text-sm hover:variant-secondary"
                     >
                       {suggestion}
                     </GlassButton>
@@ -896,30 +1024,29 @@ function ChatMessage({ message, isExpanded = true }) {
 
             {/* Next Steps for Premium Responses */}
             {!isUser && message.next_steps && (
-              <div className="mt-4 pt-3 border-t border-border-subtle">
-                <p className="text-xs text-ai-blue-400 mb-2 flex items-center space-x-2 font-semibold">
-                  <TargetIcon size="xs" />
-                  <span>Next Steps:</span>
+              <div className="mt-6 pt-4 border-t border-border-subtle">
+                <p className="text-sm text-ai-green-400 mb-3 flex items-center space-x-2 font-semibold">
+                  <TargetIcon size="sm" />
+                  <span>Next Steps</span>
                 </p>
-                <p className="text-xs text-text-secondary leading-relaxed">
-                  {message.next_steps}
-                </p>
+                <div className="bg-ai-green-500/5 border border-ai-green-500/20 rounded-lg p-3">
+                  <p className="text-sm text-text-secondary leading-relaxed">
+                    {message.next_steps}
+                  </p>
+                </div>
               </div>
             )}
           </GlassCard>
           
           {/* Message Metadata */}
-          <div className={cn(
-            'flex items-center mt-2 text-xs text-text-quaternary space-x-2',
-            isUser ? 'justify-end' : 'justify-start'
-          )}>
+          <div className="flex items-center mt-2 text-xs text-text-quaternary space-x-2">
             <span>{new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
             {isPremium && (
               <>
                 <span>•</span>
                 <div className="flex items-center space-x-1">
                   <SparkleIcon size="xs" className="text-ai-purple-400" />
-                  <span className="text-ai-purple-400 font-medium">Premium</span>
+                  <span className="text-ai-purple-400 font-medium">Premium Response</span>
                 </div>
               </>
             )}
