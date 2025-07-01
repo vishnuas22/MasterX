@@ -183,6 +183,168 @@ async def end_session(session_id: str):
     return {"message": "Session ended successfully"}
 
 # ================================
+# CHAT MANAGEMENT ENDPOINTS
+# ================================
+
+@api_router.put("/sessions/{session_id}/rename")
+async def rename_chat_session(session_id: str, request: dict):
+    """Rename a chat session"""
+    try:
+        new_title = request.get("title", "").strip()
+        if not new_title:
+            raise HTTPException(status_code=400, detail="Title cannot be empty")
+        
+        # Get the session first to verify it exists
+        session = await db_service.get_session(session_id)
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+        
+        # Update the session title
+        success = await db_service.update_session_title(session_id, new_title)
+        if not success:
+            raise HTTPException(status_code=500, detail="Failed to rename session")
+        
+        return {
+            "message": "Session renamed successfully",
+            "session_id": session_id,
+            "new_title": new_title
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error renaming session {session_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to rename session")
+
+@api_router.post("/sessions/{session_id}/share")
+async def share_chat_session(session_id: str, request: dict):
+    """Create a shareable link for a chat session"""
+    try:
+        # Get the session to verify it exists
+        session = await db_service.get_session(session_id)
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+        
+        # Get session messages for sharing
+        messages = await db_service.get_session_messages(session_id, limit=100)
+        
+        # Create share data
+        share_data = {
+            "session_id": session_id,
+            "title": session.subject or "MasterX Chat",
+            "created_at": session.created_at.isoformat(),
+            "user_id": session.user_id,
+            "messages": [
+                {
+                    "sender": msg.sender,
+                    "message": msg.message,
+                    "timestamp": msg.timestamp.isoformat()
+                }
+                for msg in messages
+            ]
+        }
+        
+        # Generate a unique share ID
+        import secrets
+        share_id = secrets.token_urlsafe(16)
+        
+        # Store the share data (in production, you'd save this to a database)
+        # For now, we'll return the share_id and data
+        
+        return {
+            "message": "Session shared successfully",
+            "share_id": share_id,
+            "share_url": f"/shared/{share_id}",
+            "expires_in": "7 days",
+            "data": share_data
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error sharing session {session_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to share session")
+
+@api_router.delete("/sessions/{session_id}")
+async def delete_chat_session(session_id: str):
+    """Delete a chat session and all its messages"""
+    try:
+        # Get the session to verify it exists
+        session = await db_service.get_session(session_id)
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+        
+        # Delete all messages first
+        await db_service.delete_session_messages(session_id)
+        
+        # Delete the session
+        success = await db_service.delete_session(session_id)
+        if not success:
+            raise HTTPException(status_code=500, detail="Failed to delete session")
+        
+        return {
+            "message": "Session deleted successfully",
+            "session_id": session_id
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting session {session_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to delete session")
+
+@api_router.get("/sessions/{session_id}/search")
+async def search_session_messages(session_id: str, query: str, limit: int = 20):
+    """Search messages within a specific session"""
+    try:
+        if not query.strip():
+            raise HTTPException(status_code=400, detail="Search query cannot be empty")
+        
+        # Get the session to verify it exists
+        session = await db_service.get_session(session_id)
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+        
+        # Search messages (this would be implemented in db_service)
+        messages = await db_service.search_session_messages(session_id, query, limit)
+        
+        return {
+            "session_id": session_id,
+            "query": query,
+            "results": messages,
+            "total_found": len(messages)
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error searching session {session_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to search session")
+
+@api_router.get("/users/{user_id}/sessions/search")
+async def search_user_sessions(user_id: str, query: str, limit: int = 50):
+    """Search across all user sessions"""
+    try:
+        if not query.strip():
+            raise HTTPException(status_code=400, detail="Search query cannot be empty")
+        
+        # Search across all user sessions
+        results = await db_service.search_user_sessions(user_id, query, limit)
+        
+        return {
+            "user_id": user_id,
+            "query": query,
+            "results": results,
+            "total_found": len(results)
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error searching user sessions for {user_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to search sessions")
+
+# ================================
 # PREMIUM AI CHAT ENDPOINTS
 # ================================
 

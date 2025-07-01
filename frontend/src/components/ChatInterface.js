@@ -29,7 +29,8 @@ import { GestureControl } from './GestureControl';
 import { ARVRInterface } from './ARVRInterface';
 import { ThemeProvider, AdaptiveThemePanel, useAdaptiveTheme } from './AdaptiveThemeSystem';
 import { useApp } from '../context/AppContext';
-import { cn } from '../utils/cn';
+import { EnhancedChatMessage } from './ChatInterface_Enhanced';
+import { PremiumUserProfile } from './PremiumUserProfile';
 
 // Helper function to record learning analytics events
 const recordLearningEvent = async (userId, sessionId, eventData) => {
@@ -610,21 +611,38 @@ export function ChatInterface() {
               <SettingsIcon size="sm" />
             </GlassButton>
             
-            {/* User Profile Button - ChatGPT Style */}
+            {/* Premium User Profile Dropdown */}
             {state.user && (
-              <GlassButton
-                size="sm"
-                variant="secondary"
-                onClick={() => console.log('User profile clicked')} // UI placeholder for now
-                title={`${state.user.name} Profile`}
-                className="p-1"
-              >
-                <div className="w-8 h-8 bg-gradient-to-br from-ai-green-400 to-ai-blue-500 rounded-lg flex items-center justify-center shadow-lg">
-                  <span className="text-white text-sm font-bold">
-                    {state.user.name.charAt(0).toUpperCase()}
-                  </span>
-                </div>
-              </GlassButton>
+              <PremiumUserProfile 
+                user={state.user}
+                onAction={(action) => {
+                  console.log('User profile action:', action);
+                  // TODO: Implement actual actions
+                  switch(action) {
+                    case 'profile':
+                      // Navigate to profile settings
+                      break;
+                    case 'progress':
+                      actions.setActiveView('analytics');
+                      break;
+                    case 'achievements':
+                      actions.setActiveView('achievements');
+                      break;
+                    case 'upgrade':
+                      // Show upgrade modal
+                      break;
+                    case 'settings':
+                      setShowThemePanel(true);
+                      break;
+                    case 'logout':
+                      // Implement logout logic
+                      break;
+                    default:
+                      break;
+                  }
+                }}
+                className="relative"
+              />
             )}
             
             <LearningModeIndicator 
@@ -648,11 +666,12 @@ export function ChatInterface() {
         >
           <div className={cn(
             "w-full mx-auto transition-all duration-500",
-            isChatExpanded ? "max-w-4xl" : "max-w-2xl"
+            // Match input box width exactly for consistent layout
+            isChatExpanded ? "max-w-3xl" : "max-w-2xl"
           )}>
             <AnimatePresence>
               {state.messages.map((message, index) => (
-                <ChatMessage key={message.id || index} message={message} isExpanded={isChatExpanded} />
+                <EnhancedChatMessage key={message.id || index} message={message} isExpanded={isChatExpanded} />
               ))}
               
               {/* Premium Streaming message */}
@@ -893,84 +912,138 @@ function ChatMessage({ message, isExpanded = true }) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.3, ease: "easeOut" }}
-      className="mb-6 flex justify-start"
+      initial={{ opacity: 0, y: 30, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: -10, scale: 0.98 }}
+      transition={{ 
+        duration: 0.4, 
+        ease: [0.4, 0.0, 0.2, 1],
+        delay: 0.1 
+      }}
+      className="mb-6 flex justify-start group"
     >
       <div className="flex items-start space-x-3 max-w-full w-full">
-        {/* Avatar */}
-        <div className="flex-shrink-0 mt-1">
+        {/* Enhanced Avatar with Premium Glow */}
+        <motion.div 
+          className="flex-shrink-0 mt-1"
+          whileHover={{ scale: 1.05 }}
+          transition={{ type: "spring", stiffness: 400, damping: 20 }}
+        >
           <div className={cn(
-            "w-8 h-8 rounded-full flex items-center justify-center",
+            "w-8 h-8 rounded-full flex items-center justify-center relative",
+            "transition-all duration-300 group-hover:shadow-lg",
             isUser 
               ? "bg-gradient-to-br from-ai-green-400 to-ai-blue-500 shadow-lg" 
               : isPremium 
-                ? "glass-ai-secondary shadow-glow-purple" 
-                : "glass-ai-primary shadow-glow-blue"
+                ? "glass-ai-secondary shadow-glow-purple group-hover:shadow-glow-purple-intense" 
+                : "glass-ai-primary shadow-glow-blue group-hover:shadow-glow-blue-intense"
           )}>
-            {isUser ? (
-              <span className="text-white text-sm font-bold">
-                {/* Get first letter of user name if available */}
-                U
-              </span>
-            ) : (
-              <AIBrainIcon 
-                size="sm" 
-                className={isPremium ? 'text-ai-purple-400' : 'text-ai-blue-400'}
-                animated
-              />
+            {/* Premium Animated Border */}
+            {!isUser && (
+              <div className="absolute -inset-0.5 rounded-full bg-gradient-to-r from-ai-blue-500 via-ai-purple-500 to-ai-green-500 opacity-0 group-hover:opacity-60 animate-pulse transition-opacity duration-300" />
             )}
+            <div className="relative">
+              {isUser ? (
+                <span className="text-white text-sm font-bold">U</span>
+              ) : (
+                <AIBrainIcon 
+                  size="sm" 
+                  className={isPremium ? 'text-ai-purple-400' : 'text-ai-blue-400'}
+                  animated
+                />
+              )}
+            </div>
           </div>
-        </div>
+        </motion.div>
         
-        {/* Message Content */}
-        <div className="flex-1 min-w-0 max-w-4xl">
+        {/* Enhanced Message Content */}
+        <div className="flex-1 min-w-0">
           {/* User Label */}
-          <div className="mb-2">
+          <motion.div 
+            className="mb-2"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+          >
             <span className="text-sm font-medium text-text-primary">
               {isUser ? 'You' : 'MasterX'}
             </span>
             {isPremium && !isUser && (
-              <span className="ml-2 text-xs text-ai-purple-400 flex items-center space-x-1">
+              <motion.span 
+                className="ml-2 text-xs text-ai-purple-400 flex items-center space-x-1"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.3, type: "spring" }}
+              >
                 <SparkleIcon size="xs" />
                 <span>Premium</span>
-              </span>
+              </motion.span>
             )}
           </div>
           
-          <GlassCard 
-            variant={
-              isUser 
-                ? 'ai-primary'
-                : isPremium
-                  ? 'ai-secondary'
-                  : 'medium'
-            }
-            size="sm"
-            className={cn(
-              "glass-medium shadow-lg",
-              isUser 
-                ? "bg-ai-blue-500/10 border border-ai-blue-500/20" 
-                : isPremium
-                  ? "bg-ai-purple-500/5 border border-ai-purple-500/20"
-                  : "bg-glass-light border border-border-subtle"
-            )}
-            hover={false}
+          {/* Premium Glass Message Container */}
+          <motion.div
+            className="relative group/message"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
           >
-            {/* Premium Mode Indicator */}
-            {isPremium && !isUser && (
-              <div className="flex items-center space-x-2 mb-4 pb-3 border-b border-border-subtle">
-                <SparkleIcon size="sm" className="text-ai-purple-400" />
-                <span className="text-sm font-semibold text-ai-purple-300 capitalize">
-                  {message.learning_mode} Mode
-                </span>
-                <div className="ml-auto">
-                  <CheckIcon size="sm" className="text-ai-green-400" />
-                </div>
-              </div>
-            )}
+            {/* Premium Gradient Border */}
+            <div className={cn(
+              "absolute -inset-[1px] rounded-xl transition-opacity duration-300",
+              "bg-gradient-to-r from-ai-blue-500/30 via-ai-purple-500/30 to-ai-green-500/30",
+              "opacity-0 group-hover/message:opacity-100",
+              !isUser && "animate-gradient-x"
+            )} />
+            
+            <GlassCard 
+              variant={
+                isUser 
+                  ? 'ai-primary'
+                  : isPremium
+                    ? 'ai-secondary'
+                    : 'medium'
+              }
+              size="sm"
+              className={cn(
+                "relative glass-medium shadow-lg backdrop-blur-xl",
+                "transition-all duration-300 group-hover/message:shadow-xl",
+                isUser 
+                  ? "bg-ai-blue-500/10 border border-ai-blue-500/20 group-hover/message:bg-ai-blue-500/15" 
+                  : isPremium
+                    ? "bg-ai-purple-500/5 border border-ai-purple-500/20 group-hover/message:bg-ai-purple-500/10"
+                    : "bg-glass-light border border-border-subtle group-hover/message:bg-glass-medium"
+              )}
+              hover={false}
+            >
+              {/* Premium Mode Indicator */}
+              {isPremium && !isUser && (
+                <motion.div 
+                  className="flex items-center space-x-2 mb-4 pb-3 border-b border-border-subtle"
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <motion.div
+                    animate={{ rotate: [0, 360] }}
+                    transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                  >
+                    <SparkleIcon size="sm" className="text-ai-purple-400" />
+                  </motion.div>
+                  <span className="text-sm font-semibold text-ai-purple-300 capitalize">
+                    {message.learning_mode} Mode
+                  </span>
+                  <div className="ml-auto">
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ delay: 0.5, type: "spring" }}
+                    >
+                      <CheckIcon size="sm" className="text-ai-green-400" />
+                    </motion.div>
+                  </div>
+                </motion.div>
+              )}
             
             {/* Message Content with Premium Formatting */}
             {message.message ? (
@@ -1037,6 +1110,7 @@ function ChatMessage({ message, isExpanded = true }) {
               </div>
             )}
           </GlassCard>
+          </motion.div>
           
           {/* Message Metadata */}
           <div className="flex items-center mt-2 text-xs text-text-quaternary space-x-2">

@@ -37,6 +37,7 @@ export function Sidebar({ isCollapsed, onToggle }) {
   const { state, actions } = useApp();
   const [searchQuery, setSearchQuery] = useState('');
   const [showChatOptions, setShowChatOptions] = useState(null);
+  const [hoveredFeature, setHoveredFeature] = useState(null);
   const searchRef = useRef(null);
 
   // Premium Features - Alphabetical order as requested
@@ -143,7 +144,7 @@ export function Sidebar({ isCollapsed, onToggle }) {
         </div>
       </div>
 
-      {/* New Chat Button */}
+      {/* Enhanced New Chat Button */}
       <AnimatePresence>
         {!isCollapsed && (
           <motion.div
@@ -152,19 +153,35 @@ export function Sidebar({ isCollapsed, onToggle }) {
             exit={{ opacity: 0, y: -10 }}
             className="flex-shrink-0 p-3"
           >
-            <GlassButton
-              onClick={handleNewChat}
-              className="w-full justify-start space-x-3 p-3 glass-medium hover:glass-thick border border-gray-700/50 hover:border-gray-600/50"
-              variant="secondary"
+            <motion.div
+              className="relative group"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              transition={{ type: "spring", stiffness: 400, damping: 25 }}
             >
-              <PlusIcon size="sm" className="text-gray-400" />
-              <span className="text-sm font-medium text-white">New chat</span>
-            </GlassButton>
+              {/* Premium Gradient Border */}
+              <div className="absolute -inset-[1px] rounded-lg bg-gradient-to-r from-ai-blue-500/50 via-ai-purple-500/50 to-ai-green-500/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 animate-gradient-x" />
+              
+              <GlassButton
+                onClick={handleNewChat}
+                className="relative w-full justify-start space-x-3 p-3 glass-medium hover:glass-thick border border-gray-700/50 hover:border-gray-600/50 backdrop-blur-xl transition-all duration-300 group-hover:bg-gray-800/60"
+                variant="secondary"
+              >
+                <motion.div
+                  animate={{ rotate: [0, 90, 0] }}
+                  transition={{ duration: 0.3 }}
+                  className="group-hover:text-ai-blue-400 transition-colors duration-300"
+                >
+                  <PlusIcon size="sm" className="text-gray-400 group-hover:text-ai-blue-400" />
+                </motion.div>
+                <span className="text-sm font-medium text-white group-hover:text-ai-blue-300 transition-colors duration-300">New chat</span>
+              </GlassButton>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Search Chats */}
+      {/* Enhanced Search Chats */}
       <AnimatePresence>
         {!isCollapsed && (
           <motion.div
@@ -173,17 +190,38 @@ export function Sidebar({ isCollapsed, onToggle }) {
             exit={{ opacity: 0, y: -10 }}
             className="flex-shrink-0 px-3 pb-4"
           >
-            <div className="relative">
-              <SearchIcon size="sm" className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <input
-                ref={searchRef}
-                type="text"
-                value={searchQuery}
-                onChange={(e) => handleSearchChats(e.target.value)}
-                placeholder="Search chats..."
-                className="w-full pl-10 pr-4 py-2 text-sm bg-gray-800/50 border border-gray-700/50 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-ai-blue-500/50 focus:bg-gray-800/70 transition-all"
-              />
-            </div>
+            <motion.div 
+              className="relative group"
+              whileHover={{ scale: 1.01 }}
+              transition={{ type: "spring", stiffness: 300, damping: 25 }}
+            >
+              {/* Premium Input Container */}
+              <div className="absolute -inset-[1px] rounded-lg bg-gradient-to-r from-ai-blue-500/30 via-ai-purple-500/30 to-ai-green-500/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              
+              <div className="relative">
+                <motion.div
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2"
+                  whileHover={{ scale: 1.1 }}
+                  transition={{ type: "spring", stiffness: 400 }}
+                >
+                  <SearchIcon size="sm" className="text-gray-400 group-hover:text-ai-blue-400 transition-colors duration-300" />
+                </motion.div>
+                <input
+                  ref={searchRef}
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => handleSearchChats(e.target.value)}
+                  placeholder="Search chats..."
+                  className={cn(
+                    "w-full pl-10 pr-4 py-2 text-sm rounded-lg text-white placeholder-gray-400",
+                    "bg-gray-800/50 border border-gray-700/50 backdrop-blur-sm",
+                    "focus:outline-none focus:border-ai-blue-500/50 focus:bg-gray-800/70",
+                    "transition-all duration-300",
+                    "group-hover:bg-gray-800/60 group-hover:border-gray-600/50"
+                  )}
+                />
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -303,55 +341,112 @@ function SidebarItem({
   isCompact = false
 }) {
   const Icon = item.icon;
+  const [isHovered, setIsHovered] = useState(false);
 
   return (
     <motion.button
       onClick={onClick}
       disabled={!item.implemented}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       className={cn(
-        'w-full flex items-center space-x-3 p-2 rounded-lg transition-all duration-200 group relative text-left',
+        'w-full flex items-center space-x-3 p-2 rounded-lg transition-all duration-300 group relative text-left',
         'focus:outline-none focus-visible:ring-1 focus-visible:ring-ai-blue-500/50',
+        'backdrop-blur-sm overflow-hidden',
         isActive
-          ? 'bg-ai-blue-500/20 text-ai-blue-300 border border-ai-blue-500/30'
+          ? 'bg-ai-blue-500/20 text-ai-blue-300 border border-ai-blue-500/30 shadow-glow-blue'
           : item.implemented
-            ? 'text-gray-300 hover:bg-gray-800/50 hover:text-white'
+            ? 'text-gray-300 hover:bg-gray-800/50 hover:text-white hover:border hover:border-gray-600/30'
             : 'opacity-40 cursor-not-allowed text-gray-500',
-        isCompact && 'py-2'
+        isCompact && 'py-2',
+        isPremium && !isActive && 'hover:bg-ai-purple-500/10 hover:border-ai-purple-500/30'
       )}
-      whileHover={item.implemented ? { x: 2 } : undefined}
+      whileHover={item.implemented ? { 
+        x: 3,
+        scale: 1.02,
+        transition: { type: "spring", stiffness: 400, damping: 25 }
+      } : undefined}
       whileTap={item.implemented ? { scale: 0.98 } : undefined}
+      initial={{ opacity: 0, x: -10 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay: 0.1 }}
     >
-      <div className="flex-shrink-0 relative">
-        <Icon 
-          size={isCompact ? "sm" : "md"} 
-          className={cn(
-            'transition-colors duration-200',
-            isActive 
-              ? 'text-ai-blue-400' 
-              : isPremium 
-                ? 'text-ai-purple-400'
-                : 'text-gray-400 group-hover:text-white'
-          )}
+      {/* Premium Gradient Border Animation */}
+      {isPremium && isHovered && (
+        <motion.div
+          className="absolute -inset-[1px] rounded-lg bg-gradient-to-r from-ai-purple-500/50 via-ai-blue-500/50 to-ai-green-500/50 animate-gradient-x"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3 }}
         />
-        {isPremium && (
-          <div className="absolute -top-1 -right-1">
-            <SparkleIcon size="xs" className="text-ai-purple-400" />
-          </div>
-        )}
-      </div>
+      )}
+      
+      {/* Content container */}
+      <div className="relative z-10 w-full flex items-center space-x-3">
+        <motion.div 
+          className="flex-shrink-0 relative"
+          whileHover={{ rotate: isPremium ? 5 : 0 }}
+          transition={{ type: "spring", stiffness: 300 }}
+        >
+          <Icon 
+            size={isCompact ? "sm" : "md"} 
+            className={cn(
+              'transition-all duration-300',
+              isActive 
+                ? 'text-ai-blue-400 drop-shadow-glow-blue' 
+                : isPremium 
+                  ? 'text-ai-purple-400 group-hover:text-ai-purple-300'
+                  : 'text-gray-400 group-hover:text-white'
+            )}
+          />
+          {isPremium && (
+            <motion.div 
+              className="absolute -top-1 -right-1"
+              animate={{ 
+                scale: [1, 1.2, 1],
+                rotate: [0, 180, 360] 
+              }}
+              transition={{ 
+                duration: 2, 
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+            >
+              <SparkleIcon size="xs" className="text-ai-purple-400" />
+            </motion.div>
+          )}
+        </motion.div>
 
-      <div className="text-left min-w-0 flex-1">
-        <div className={cn(
-          'font-medium truncate',
-          isCompact ? 'text-sm' : 'text-sm',
-          isActive ? 'text-ai-blue-300' : 'text-inherit'
-        )}>
-          {item.label}
+        <div className="text-left min-w-0 flex-1">
+          <motion.div 
+            className={cn(
+              'font-medium truncate transition-colors duration-300',
+              isCompact ? 'text-sm' : 'text-sm',
+              isActive ? 'text-ai-blue-300' : 'text-inherit'
+            )}
+            animate={{ x: isHovered ? 2 : 0 }}
+            transition={{ type: "spring", stiffness: 300, damping: 25 }}
+          >
+            {item.label}
+          </motion.div>
+          {!item.implemented && (
+            <motion.div 
+              className="text-xs text-gray-500"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+            >
+              Coming Soon
+            </motion.div>
+          )}
         </div>
-        {!item.implemented && (
-          <div className="text-xs text-gray-500">Coming Soon</div>
-        )}
       </div>
+      
+      {/* Premium Glow Effect */}
+      {isPremium && isActive && (
+        <div className="absolute inset-0 bg-gradient-to-r from-ai-purple-500/5 to-ai-blue-500/5 rounded-lg pointer-events-none" />
+      )}
     </motion.button>
   );
 }
