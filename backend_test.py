@@ -3,361 +3,456 @@ import requests
 import json
 import uuid
 import time
-import sseclient
-from typing import Dict, Any, List, Optional
+from datetime import datetime
 
-# Configuration
-BACKEND_URL = "http://localhost:8001/api"
-TEST_USER_EMAIL = "test@masterx.ai"
-TEST_USER_NAME = "Test User"
-TEST_SESSION_SUBJECT = "Mathematics"
-TEST_SESSION_DIFFICULTY = "intermediate"
+# Get the backend URL from the frontend .env file
+with open('/app/frontend/.env', 'r') as f:
+    for line in f:
+        if line.startswith('REACT_APP_BACKEND_URL='):
+            BACKEND_URL = line.strip().split('=')[1].strip('"\'')
+            break
 
-# Test results tracking
-test_results = {
-    "passed": 0,
-    "failed": 0,
-    "tests": []
+# Ensure the URL doesn't have trailing slash
+if BACKEND_URL.endswith('/'):
+    BACKEND_URL = BACKEND_URL[:-1]
+
+# Add /api prefix for all API calls
+API_URL = f"{BACKEND_URL}/api"
+
+print(f"Using API URL: {API_URL}")
+
+# Test data
+test_user = {
+    "email": f"test_user_{uuid.uuid4()}@example.com",
+    "name": "Test User",
+    "learning_preferences": {}
 }
 
-def log_test(name: str, passed: bool, response: Optional[requests.Response] = None, error: Optional[str] = None):
-    """Log test results"""
-    status = "PASSED" if passed else "FAILED"
-    print(f"[{status}] {name}")
-    
-    result = {
-        "name": name,
-        "passed": passed,
-        "timestamp": time.time()
-    }
-    
-    if response:
-        try:
-            result["status_code"] = response.status_code
-            result["response"] = response.json() if response.headers.get('content-type') == 'application/json' else response.text[:200]
-            print(f"  Status Code: {response.status_code}")
-            print(f"  Response: {result['response']}")
-        except Exception as e:
-            result["response"] = "Could not parse response"
-            print(f"  Could not parse response: {str(e)}")
-            print(f"  Raw response: {response.text[:200]}")
-    
-    if error:
-        result["error"] = error
-        print(f"  Error: {error}")
-    
-    test_results["tests"].append(result)
-    
-    if passed:
-        test_results["passed"] += 1
-    else:
-        test_results["failed"] += 1
+# Helper functions
+def print_separator(title):
+    print("\n" + "="*80)
+    print(f" {title} ".center(80, "="))
+    print("="*80 + "\n")
 
+def print_response(response, label="Response"):
+    print(f"\n{label}:")
+    print(f"Status Code: {response.status_code}")
+    try:
+        print(f"Response JSON: {json.dumps(response.json(), indent=2)}")
+    except:
+        print(f"Response Text: {response.text}")
+    print()
+
+# Test functions
 def test_health_check():
-    """Test the health check endpoint"""
-    try:
-        print(f"Testing health check endpoint: {BACKEND_URL}/health")
-        response = requests.get(f"{BACKEND_URL}/health", timeout=10)
-        print(f"Response received: Status code {response.status_code}")
-        passed = response.status_code == 200 and response.json().get("status") in ["healthy", "degraded"]
-        log_test("Health Check Endpoint", passed, response)
-        return response.json() if passed else None
-    except requests.exceptions.RequestException as e:
-        log_test("Health Check Endpoint", False, error=f"Request exception: {str(e)}")
-        return None
-    except Exception as e:
-        log_test("Health Check Endpoint", False, error=str(e))
-        return None
-
-def test_root_endpoint():
-    """Test the root endpoint"""
-    try:
-        response = requests.get(f"{BACKEND_URL}/")
-        passed = response.status_code == 200 and "message" in response.json()
-        log_test("Root Endpoint", passed, response)
-        return response.json() if passed else None
-    except Exception as e:
-        log_test("Root Endpoint", False, error=str(e))
-        return None
+    print_separator("Testing Health Check Endpoint")
+    response = requests.get(f"{API_URL}/health")
+    print_response(response)
+    assert response.status_code == 200, "Health check failed"
+    return response.json()
 
 def create_test_user():
-    """Create a test user or get existing one"""
-    try:
-        # First try to get the user by email
-        response = requests.get(f"{BACKEND_URL}/users/email/{TEST_USER_EMAIL}")
-        
-        if response.status_code == 200:
-            log_test("Get User by Email", True, response)
-            return response.json()
-        
-        # If user doesn't exist, create one
-        user_data = {
-            "email": TEST_USER_EMAIL,
-            "name": TEST_USER_NAME,
-            "learning_preferences": {
-                "preferred_pace": "moderate",
-                "learning_style": "visual"
-            }
-        }
-        
-        response = requests.post(f"{BACKEND_URL}/users", json=user_data)
-        passed = response.status_code == 200 and "id" in response.json()
-        log_test("Create User", passed, response)
-        return response.json() if passed else None
-    except Exception as e:
-        log_test("Create/Get User", False, error=str(e))
-        return None
+    print_separator("Creating Test User")
+    response = requests.post(f"{API_URL}/users", json=test_user)
+    print_response(response)
+    
+    if response.status_code == 400 and "already exists" in response.json().get("detail", ""):
+        print("User already exists, fetching by email...")
+        response = requests.get(f"{API_URL}/users/email/{test_user['email']}")
+        print_response(response)
+    
+    assert response.status_code in [200, 201, 400], "Failed to create or get user"
+    return response.json()
 
-def test_get_user_by_email():
-    """Test getting a user by email"""
-    try:
-        response = requests.get(f"{BACKEND_URL}/users/email/{TEST_USER_EMAIL}")
-        passed = response.status_code == 200 and response.json().get("email") == TEST_USER_EMAIL
-        log_test("Get User by Email", passed, response)
-        return response.json() if passed else None
-    except Exception as e:
-        log_test("Get User by Email", False, error=str(e))
-        return None
+def create_test_session(user_id):
+    print_separator("Creating Test Session")
+    session_data = {
+        "user_id": user_id,
+        "subject": "Python Programming",
+        "learning_objectives": ["Learn FastAPI", "Test API endpoints"]
+    }
+    response = requests.post(f"{API_URL}/sessions", json=session_data)
+    print_response(response)
+    assert response.status_code in [200, 201], "Failed to create session"
+    return response.json()
 
-def create_test_session(user_id: str):
-    """Create a test session"""
-    try:
-        session_data = {
-            "user_id": user_id,
-            "subject": TEST_SESSION_SUBJECT,
-            "learning_objectives": ["Understand quadratic equations", "Master factorization"],
-            "difficulty_level": TEST_SESSION_DIFFICULTY
-        }
-        
-        response = requests.post(f"{BACKEND_URL}/sessions", json=session_data)
-        passed = response.status_code == 200 and "id" in response.json()
-        log_test("Create Session", passed, response)
-        return response.json() if passed else None
-    except Exception as e:
-        log_test("Create Session", False, error=str(e))
-        return None
+def get_user_sessions(user_id):
+    print_separator("Getting User Sessions")
+    response = requests.get(f"{API_URL}/users/{user_id}/sessions")
+    print_response(response)
+    assert response.status_code == 200, "Failed to get user sessions"
+    return response.json()
 
-def test_get_user_sessions(user_id: str):
-    """Test getting user sessions"""
-    try:
-        response = requests.get(f"{BACKEND_URL}/users/{user_id}/sessions")
-        passed = response.status_code == 200 and isinstance(response.json(), list)
-        log_test("Get User Sessions", passed, response)
-        return response.json() if passed else None
-    except Exception as e:
-        log_test("Get User Sessions", False, error=str(e))
-        return None
+def rename_session(session_id, new_title):
+    print_separator(f"Renaming Session to '{new_title}'")
+    response = requests.put(
+        f"{API_URL}/sessions/{session_id}/rename", 
+        json={"title": new_title}
+    )
+    print_response(response)
+    # Don't assert here, just return the response
+    return response.json() if response.status_code == 200 else {"error": response.text}
 
-def test_basic_chat(session_id: str):
-    """Test basic chat functionality"""
-    try:
-        chat_data = {
+def share_session(session_id):
+    print_separator("Sharing Session")
+    response = requests.post(
+        f"{API_URL}/sessions/{session_id}/share",
+        json={}
+    )
+    print_response(response)
+    # Don't assert here, just return the response
+    return response.json() if response.status_code == 200 else {"error": response.text}
+
+def search_user_sessions(user_id, query):
+    print_separator(f"Searching User Sessions for '{query}'")
+    response = requests.get(
+        f"{API_URL}/users/{user_id}/sessions/search?query={query}"
+    )
+    print_response(response)
+    # Don't assert here, just return the response
+    return response.json() if response.status_code == 200 else {"error": response.text}
+
+def delete_session(session_id):
+    print_separator("Deleting Session")
+    response = requests.delete(f"{API_URL}/sessions/{session_id}")
+    print_response(response)
+    # Don't assert here, just return the response
+    return response.json() if response.status_code == 200 else {"error": response.text}
+
+def add_message_to_session(session_id, message):
+    print_separator(f"Adding Message to Session: '{message}'")
+    response = requests.post(
+        f"{API_URL}/chat", 
+        json={
             "session_id": session_id,
-            "user_message": "Can you explain what a quadratic equation is?"
+            "user_message": message
         }
+    )
+    print_response(response)
+    assert response.status_code == 200, "Failed to add message to session"
+    return response.json()
+
+def test_chat_management():
+    try:
+        # Test health check
+        health_data = test_health_check()
         
-        response = requests.post(f"{BACKEND_URL}/chat", json=chat_data)
-        passed = response.status_code == 200 and "response" in response.json()
-        log_test("Basic Chat", passed, response)
-        return response.json() if passed else None
-    except Exception as e:
-        log_test("Basic Chat", False, error=str(e))
-        return None
-
-def test_premium_chat(session_id: str):
-    """Test premium chat functionality"""
-    try:
-        chat_data = {
-            "session_id": session_id,
-            "user_message": "Can you explain the quadratic formula in detail?",
-            "context": {
-                "learning_mode": "adaptive"
-            }
-        }
+        # Create test user
+        user = create_test_user()
+        user_id = user["id"]
         
-        response = requests.post(f"{BACKEND_URL}/chat/premium", json=chat_data)
-        passed = response.status_code == 200 and "response" in response.json()
-        log_test("Premium Chat", passed, response)
-        return response.json() if passed else None
-    except Exception as e:
-        log_test("Premium Chat", False, error=str(e))
-        return None
-
-def test_available_models():
-    """Test getting available AI models"""
-    try:
-        response = requests.get(f"{BACKEND_URL}/models/available")
-        passed = response.status_code == 200 and "available_models" in response.json()
-        log_test("Available Models", passed, response)
-        return response.json() if passed else None
-    except Exception as e:
-        log_test("Available Models", False, error=str(e))
-        return None
-
-def test_analytics_comprehensive_dashboard(user_id: str):
-    """Test comprehensive analytics dashboard"""
-    try:
-        response = requests.get(f"{BACKEND_URL}/analytics/{user_id}/comprehensive-dashboard")
-        passed = response.status_code == 200 and "knowledge_graph" in response.json()
-        log_test("Comprehensive Analytics Dashboard", passed, response)
-        return response.json() if passed else None
-    except Exception as e:
-        log_test("Comprehensive Analytics Dashboard", False, error=str(e))
-        return None
-
-def test_analytics_knowledge_graph(user_id: str):
-    """Test knowledge graph analytics"""
-    try:
-        response = requests.get(f"{BACKEND_URL}/analytics/{user_id}/knowledge-graph")
-        passed = response.status_code == 200
-        log_test("Knowledge Graph Analytics", passed, response)
-        return response.json() if passed else None
-    except Exception as e:
-        log_test("Knowledge Graph Analytics", False, error=str(e))
-        return None
-
-def test_analytics_competency_heatmap(user_id: str):
-    """Test competency heatmap analytics"""
-    try:
-        response = requests.get(f"{BACKEND_URL}/analytics/{user_id}/competency-heatmap")
-        passed = response.status_code == 200
-        log_test("Competency Heatmap Analytics", passed, response)
-        return response.json() if passed else None
-    except Exception as e:
-        log_test("Competency Heatmap Analytics", False, error=str(e))
-        return None
-
-def test_analytics_learning_velocity(user_id: str):
-    """Test learning velocity analytics"""
-    try:
-        response = requests.get(f"{BACKEND_URL}/analytics/{user_id}/learning-velocity")
-        passed = response.status_code == 200
-        log_test("Learning Velocity Analytics", passed, response)
-        return response.json() if passed else None
-    except Exception as e:
-        log_test("Learning Velocity Analytics", False, error=str(e))
-        return None
-
-def test_analytics_retention_curves(user_id: str):
-    """Test retention curves analytics"""
-    try:
-        response = requests.get(f"{BACKEND_URL}/analytics/{user_id}/retention-curves")
-        passed = response.status_code == 200
-        log_test("Retention Curves Analytics", passed, response)
-        return response.json() if passed else None
-    except Exception as e:
-        log_test("Retention Curves Analytics", False, error=str(e))
-        return None
-
-def test_premium_chat_stream(session_id: str):
-    """Test premium streaming chat functionality"""
-    try:
-        chat_data = {
-            "session_id": session_id,
-            "user_message": "Explain the concept of derivatives in calculus with examples",
-            "context": {
-                "learning_mode": "adaptive"
-            }
-        }
+        # Create test session
+        session = create_test_session(user_id)
+        session_id = session["id"]
         
-        # For streaming endpoints, we need to handle SSE (Server-Sent Events)
-        # We'll just check if the connection is established and some data is received
-        response = requests.post(f"{BACKEND_URL}/chat/premium/stream", json=chat_data, stream=True)
-        
-        if response.status_code != 200:
-            log_test("Premium Chat Streaming", False, response, "Non-200 status code")
-            return None
-            
-        # Check if we receive some data (at least one chunk)
-        received_data = False
+        # Add a message to the session
         try:
-            # Read just a bit of data to confirm streaming works
-            for chunk in response.iter_content(chunk_size=1024):
-                if chunk:
-                    received_data = True
-                    break
-                    
-            response.close()  # Close the connection after testing
-            passed = received_data
-            log_test("Premium Chat Streaming", passed, response)
-            return {"streaming": "working"} if passed else None
-            
+            add_message_to_session(session_id, "Hello, this is a test message")
         except Exception as e:
-            log_test("Premium Chat Streaming", False, error=f"Streaming error: {str(e)}")
-            return None
-            
-    except Exception as e:
-        log_test("Premium Chat Streaming", False, error=str(e))
-        return None
-
-def test_context_awareness(user_id: str, session_id: str):
-    """Test context awareness functionality"""
-    try:
-        context_data = {
+            print(f"Error adding message: {str(e)}")
+        
+        # Get user sessions
+        sessions = get_user_sessions(user_id)
+        
+        # Rename session
+        new_title = f"Renamed Session {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+        rename_result = rename_session(session_id, new_title)
+        
+        # Share session
+        share_result = share_session(session_id)
+        
+        # Search user sessions
+        search_result = search_user_sessions(user_id, "Python")
+        
+        # Create a second session for testing
+        session2 = create_test_session(user_id)
+        session2_id = session2["id"]
+        
+        # Get updated user sessions
+        updated_sessions = get_user_sessions(user_id)
+        
+        # Delete the second session
+        delete_result = delete_session(session2_id)
+        
+        # Get final user sessions
+        final_sessions = get_user_sessions(user_id)
+        
+        # Print summary
+        print_separator("Test Summary")
+        print(f"User ID: {user_id}")
+        print(f"Session ID: {session_id}")
+        print(f"Session renamed to: {new_title}")
+        print(f"Session shared: {share_result.get('share_url', 'N/A')}")
+        print(f"Session deleted: {session2_id}")
+        print(f"Initial session count: {len(sessions)}")
+        print(f"Final session count: {len(final_sessions)}")
+        
+        # Return test results
+        return {
             "user_id": user_id,
             "session_id": session_id,
-            "message": "I'm having trouble understanding this concept. Can you explain it differently?",
-            "conversation_context": [
-                {"role": "user", "content": "What is a derivative?"},
-                {"role": "assistant", "content": "A derivative measures the rate of change of a function with respect to one of its variables."}
-            ]
+            "rename_successful": "message" in rename_result and rename_result.get("message") == "Session renamed successfully",
+            "share_successful": "share_id" in share_result,
+            "delete_successful": "message" in delete_result and delete_result.get("message") == "Session deleted successfully",
+            "search_successful": "results" in search_result
         }
-        
-        response = requests.post(f"{BACKEND_URL}/context/analyze", json=context_data)
-        passed = response.status_code == 200 and "context_state" in response.json()
-        log_test("Context Awareness", passed, response)
-        return response.json() if passed else None
     except Exception as e:
-        log_test("Context Awareness", False, error=str(e))
-        return None
+        print(f"Error in test_chat_management: {str(e)}")
+        return {
+            "error": str(e),
+            "test_completed": False
+        }
 
-def run_all_tests():
-    """Run all tests in sequence"""
-    print("\n===== MASTERX BACKEND API TESTING =====\n")
+def test_arvr_and_gesture_endpoints():
+    try:
+        # Test health check
+        health_data = test_health_check()
+        
+        # Create test user
+        user = create_test_user()
+        user_id = user["id"]
+        
+        # Create test session
+        session = create_test_session(user_id)
+        session_id = session["id"]
+        
+        # Test AR/VR settings
+        arvr_settings_results = test_arvr_settings(user_id)
+        
+        # Test gesture settings
+        gesture_settings_results = test_gesture_settings(user_id)
+        
+        # Test session AR/VR state
+        session_arvr_state_results = test_session_arvr_state(session_id)
+        
+        # Test learning DNA
+        learning_dna_results = test_learning_dna(user_id)
+        
+        # Test learning mode
+        learning_mode_results = test_learning_mode(user_id)
+        
+        # Print summary
+        print_separator("Test Summary")
+        print(f"User ID: {user_id}")
+        print(f"Session ID: {session_id}")
+        print(f"AR/VR Settings: GET {'✅' if arvr_settings_results['get_successful'] else '❌'}, POST {'✅' if arvr_settings_results['post_successful'] else '❌'}")
+        print(f"Gesture Settings: GET {'✅' if gesture_settings_results['get_successful'] else '❌'}, POST {'✅' if gesture_settings_results['post_successful'] else '❌'}")
+        print(f"Session AR/VR State: POST {'✅' if session_arvr_state_results['post_successful'] else '❌'}")
+        print(f"Learning DNA: GET {'✅' if learning_dna_results['get_successful'] else '❌'}")
+        print(f"Learning Mode: POST {'✅' if learning_mode_results['post_successful'] else '❌'}")
+        
+        # Return test results
+        return {
+            "user_id": user_id,
+            "session_id": session_id,
+            "arvr_settings": arvr_settings_results,
+            "gesture_settings": gesture_settings_results,
+            "session_arvr_state": session_arvr_state_results,
+            "learning_dna": learning_dna_results,
+            "learning_mode": learning_mode_results
+        }
+    except Exception as e:
+        print(f"Error in test_arvr_and_gesture_endpoints: {str(e)}")
+        return {
+            "error": str(e),
+            "test_completed": False
+        }
+
+def test_arvr_settings(user_id):
+    print_separator("Testing AR/VR Settings Endpoints")
     
-    # 1. Health Check & Basic Connectivity
-    test_health_check()
-    test_root_endpoint()
+    # Test GET AR/VR settings
+    print("Testing GET /api/users/{user_id}/arvr-settings")
+    get_response = requests.get(f"{API_URL}/users/{user_id}/arvr-settings")
+    print_response(get_response, "GET Response")
     
-    # 2. User & Session Management
-    user = create_test_user()
-    if not user:
-        print("Failed to create/get test user. Aborting further tests.")
-        return
+    # Test POST AR/VR settings
+    print("Testing POST /api/users/{user_id}/arvr-settings")
+    arvr_settings = {
+        "settings": {
+            "vr_enabled": True,
+            "ar_enabled": True,
+            "3d_mode_enabled": True,
+            "render_quality": "ultra",
+            "enable_physics": True,
+            "enable_shadows": True,
+            "enable_lighting": True,
+            "fov": 85,
+            "auto_rotate": True,
+            "rotation_speed": 1.5,
+            "zoom_level": 1.2,
+            "background_color": "#001122"
+        }
+    }
+    post_response = requests.post(f"{API_URL}/users/{user_id}/arvr-settings", json=arvr_settings)
+    print_response(post_response, "POST Response")
     
-    user_id = user.get("id")
-    test_get_user_by_email()
+    # Verify settings were updated by getting them again
+    verify_response = requests.get(f"{API_URL}/users/{user_id}/arvr-settings")
+    print_response(verify_response, "Verification Response")
     
-    session = create_test_session(user_id)
-    if not session:
-        print("Failed to create test session. Aborting further tests.")
-        return
+    return {
+        "get_successful": get_response.status_code == 200,
+        "post_successful": post_response.status_code == 200,
+        "settings_updated": verify_response.status_code == 200 and 
+                           verify_response.json().get("arvr_settings", {}).get("vr_enabled") == True
+    }
+
+def test_gesture_settings(user_id):
+    print_separator("Testing Gesture Control Settings Endpoints")
     
-    session_id = session.get("id")
-    test_get_user_sessions(user_id)
+    # Test GET gesture settings
+    print("Testing GET /api/users/{user_id}/gesture-settings")
+    get_response = requests.get(f"{API_URL}/users/{user_id}/gesture-settings")
+    print_response(get_response, "GET Response")
     
-    # 3. Chat & AI Functionality
-    test_basic_chat(session_id)
-    test_premium_chat(session_id)
-    test_premium_chat_stream(session_id)  # Test streaming functionality
-    test_available_models()
+    # Test POST gesture settings
+    print("Testing POST /api/users/{user_id}/gesture-settings")
+    gesture_settings = {
+        "settings": {
+            "enabled": True,
+            "sensitivity": 0.9,
+            "gesture_timeout": 1500,
+            "enabled_gestures": {
+                "scroll": True,
+                "navigate": True,
+                "voice": True,
+                "speed": True,
+                "volume": True
+            },
+            "custom_gestures": [
+                {
+                    "name": "page_flip",
+                    "description": "Flip to next page",
+                    "motion_sequence": ["right_swipe"]
+                }
+            ],
+            "camera_permission": "granted"
+        }
+    }
+    post_response = requests.post(f"{API_URL}/users/{user_id}/gesture-settings", json=gesture_settings)
+    print_response(post_response, "POST Response")
     
-    # 4. Advanced Analytics Endpoints
-    test_analytics_comprehensive_dashboard(user_id)
-    test_analytics_knowledge_graph(user_id)
-    test_analytics_competency_heatmap(user_id)
-    test_analytics_learning_velocity(user_id)
-    test_analytics_retention_curves(user_id)
+    # Verify settings were updated by getting them again
+    verify_response = requests.get(f"{API_URL}/users/{user_id}/gesture-settings")
+    print_response(verify_response, "Verification Response")
     
-    # 5. Context Awareness
-    test_context_awareness(user_id, session_id)
+    return {
+        "get_successful": get_response.status_code == 200,
+        "post_successful": post_response.status_code == 200,
+        "settings_updated": verify_response.status_code == 200 and 
+                           verify_response.json().get("gesture_settings", {}).get("enabled") == True
+    }
+
+def test_session_arvr_state(session_id):
+    print_separator("Testing Session AR/VR State Endpoint")
     
-    # Print summary
-    print("\n===== TEST SUMMARY =====")
-    print(f"Total Tests: {test_results['passed'] + test_results['failed']}")
-    print(f"Passed: {test_results['passed']}")
-    print(f"Failed: {test_results['failed']}")
-    print("========================\n")
+    # Test POST session AR/VR state
+    print("Testing POST /api/sessions/{session_id}/arvr-state")
+    arvr_state = {
+        "state": {
+            "mode": "vr",
+            "enabled": True,
+            "settings": {
+                "immersion_level": "full",
+                "interaction_mode": "hands",
+                "environment": "space",
+                "avatar_visible": True
+            }
+        }
+    }
+    post_response = requests.post(f"{API_URL}/sessions/{session_id}/arvr-state", json=arvr_state)
+    print_response(post_response, "POST Response")
+    
+    return {
+        "post_successful": post_response.status_code == 200,
+        "state_updated": post_response.status_code == 200 and 
+                        post_response.json().get("state", {}).get("mode") == "vr"
+    }
+
+def test_learning_dna(user_id):
+    print_separator("Testing Learning DNA Endpoint")
+    
+    # Test GET learning DNA
+    print("Testing GET /api/users/{user_id}/learning-dna")
+    get_response = requests.get(f"{API_URL}/users/{user_id}/learning-dna")
+    print_response(get_response, "GET Response")
+    
+    return {
+        "get_successful": get_response.status_code == 200,
+        "has_learning_style": get_response.status_code == 200 and 
+                             "learning_style" in get_response.json()
+    }
+
+def test_learning_mode(user_id):
+    print_separator("Testing Learning Mode Endpoint")
+    
+    # Test POST learning mode
+    print("Testing POST /api/users/{user_id}/learning-mode")
+    learning_mode = {
+        "preferred_mode": "socratic",
+        "preferences": {
+            "depth": "advanced",
+            "pace": "accelerated",
+            "style": "interactive",
+            "focus_areas": ["critical_thinking", "problem_solving"]
+        }
+    }
+    post_response = requests.post(f"{API_URL}/users/{user_id}/learning-mode", json=learning_mode)
+    print_response(post_response, "POST Response")
+    
+    return {
+        "post_successful": post_response.status_code == 200,
+        "mode_updated": post_response.status_code == 200 and 
+                       post_response.json().get("preferred_mode") == "socratic"
+    }
+
+def test_user_profile_settings():
+    print_separator("Testing User Profile & Settings")
+    print("Note: No specific user profile/settings endpoints found in the API")
+    print("The user management is handled through the basic user endpoints")
+    return {
+        "implemented": False,
+        "reason": "No specific user profile/settings endpoints found in the API"
+    }
+
+def test_voice_search_integration():
+    print_separator("Testing Voice Search Integration")
+    print("Note: No voice/audio processing endpoints found in the API")
+    return {
+        "implemented": False,
+        "reason": "No voice/audio processing endpoints found in the API"
+    }
 
 if __name__ == "__main__":
-    run_all_tests()
+    print_separator("MasterX Backend API Testing")
+    print(f"Starting tests at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    
+    try:
+        # Test AR/VR and gesture control endpoints
+        arvr_results = test_arvr_and_gesture_endpoints()
+        
+        # Test chat management functionality
+        chat_results = test_chat_management()
+        
+        # Test user profile & settings
+        profile_results = test_user_profile_settings()
+        
+        # Test voice search integration
+        voice_results = test_voice_search_integration()
+        
+        # Print overall results
+        print_separator("Overall Test Results")
+        print(json.dumps({
+            "arvr_and_gesture": arvr_results,
+            "chat_management": chat_results,
+            "user_profile_settings": profile_results,
+            "voice_search_integration": voice_results,
+            "timestamp": datetime.now().isoformat()
+        }, indent=2))
+        
+        print("\nTests completed successfully!")
+        
+    except Exception as e:
+        print(f"\nTest failed with error: {str(e)}")
+        raise

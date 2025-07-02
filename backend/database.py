@@ -3,6 +3,7 @@ from typing import List, Optional, Dict, Any
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+from datetime import datetime
 from models import (
     User, UserCreate, ChatSession, SessionCreate, ChatMessage, MessageCreate,
     LearningProgress, Exercise, ExerciseSubmission, LearningPath,
@@ -355,6 +356,109 @@ class DatabaseService:
         """Save fact check result"""
         await self.db.fact_check_results.insert_one(fact_check.dict())
         return fact_check
+
+    # Chat Management Operations
+    async def update_session_title(self, session_id: str, title: str) -> bool:
+        """Update session title/name"""
+        try:
+            result = await self.db.sessions.update_one(
+                {"id": session_id},
+                {"$set": {"subject": title, "updated_at": datetime.utcnow()}}
+            )
+            return result.modified_count > 0
+        except Exception as e:
+            logger.error(f"Error updating session title: {str(e)}")
+            return False
+    
+    async def delete_session_messages(self, session_id: str) -> bool:
+        """Delete all messages for a session"""
+        try:
+            result = await self.db.messages.delete_many({"session_id": session_id})
+            logger.info(f"Deleted {result.deleted_count} messages for session {session_id}")
+            return True
+        except Exception as e:
+            logger.error(f"Error deleting session messages: {str(e)}")
+            return False
+    
+    async def delete_session(self, session_id: str) -> bool:
+        """Delete a session and all its messages"""
+        try:
+            # First delete all messages
+            await self.delete_session_messages(session_id)
+            
+            # Then delete the session
+            result = await self.db.sessions.delete_one({"id": session_id})
+            logger.info(f"Deleted session {session_id}")
+            return result.deleted_count > 0
+        except Exception as e:
+            logger.error(f"Error deleting session: {str(e)}")
+            return False
+    
+    async def search_user_sessions(self, user_id: str, query: str, limit: int = 50) -> List[ChatSession]:
+        """Search user sessions by title or message content"""
+        try:
+            # Create case-insensitive regex pattern
+            regex_pattern = {"$regex": query, "$options": "i"}
+            
+            # Search in session titles (subject field)
+            session_matches = await self.db.sessions.find({
+                "user_id": user_id,
+                "subject": regex_pattern
+            }).to_list(limit)
+            
+            # Also search in message content
+            message_matches = await self.db.messages.find({
+                "message": regex_pattern
+            }).to_list(limit * 2)  # Search more messages
+            
+            # Get unique session IDs from message matches
+            message_session_ids = list(set([msg["session_id"] for msg in message_matches]))
+            
+            # Get sessions from message matches
+            if message_session_ids:
+                message_session_matches = await self.db.sessions.find({
+                    "user_id": user_id,
+                    "id": {"$in": message_session_ids}
+                }).to_list(limit)
+                session_matches.extend(message_session_matches)
+            
+            # Remove duplicates and convert to ChatSession objects
+            unique_sessions = {}
+            for session in session_matches:
+                unique_sessions[session["id"]] = ChatSession(**session)
+            
+            # Return limited results
+            results = list(unique_sessions.values())[:limit]
+            return results
+            
+        except Exception as e:
+            logger.error(f"Error searching user sessions: {str(e)}")
+            return []
+
+    # User Preferences and Settings Operations
+    async def update_user_preferences(self, user_id: str, preferences: Dict[str, Any]) -> bool:
+        """Update user learning preferences"""
+        try:
+            result = await self.db.users.update_one(
+                {"id": user_id},
+                {"$set": {"learning_preferences": preferences}}
+            )
+            return result.modified_count > 0
+        except Exception as e:
+            logger.error(f"Error updating user preferences: {str(e)}")
+            return False
+    
+    async def update_session_metadata(self, session_id: str, metadata: Dict[str, Any]) -> bool:
+        """Update session metadata"""
+        try:
+            result = await self.db.sessions.update_one(
+                {"id": session_id},
+                {"$set": {"metadata": metadata}}
+            )
+            return result.modified_count > 0
+        except Exception as e:
+            logger.error(f"Error updating session metadata: {str(e)}")
+            return False
 
 # Global database instance
 db_service = DatabaseService()

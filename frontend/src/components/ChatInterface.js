@@ -31,6 +31,7 @@ import { ThemeProvider, AdaptiveThemePanel, useAdaptiveTheme } from './AdaptiveT
 import { useApp } from '../context/AppContext';
 import { EnhancedChatMessage } from './ChatInterface_Enhanced';
 import { PremiumUserProfile } from './PremiumUserProfile';
+import { api } from '../services/api';
 
 // Helper function to record learning analytics events
 const recordLearningEvent = async (userId, sessionId, eventData) => {
@@ -596,15 +597,51 @@ export function ChatInterface() {
             <GlassButton
               size="sm"
               variant={is3DMode || isVRMode || isARMode ? "gradient" : "secondary"}
-              onClick={() => {
-                if (is3DMode) {
-                  setIs3DMode(false);
-                } else if (vrSupported) {
-                  startVRSession();
-                } else if (arSupported) {
-                  startARSession();
-                } else {
-                  setIs3DMode(true);
+              onClick={async () => {
+                try {
+                  if (is3DMode) {
+                    setIs3DMode(false);
+                    // Update session state
+                    if (state.currentSession?.id) {
+                      await api.updateSessionARVRState(state.currentSession.id, {
+                        mode: 'normal',
+                        enabled: false,
+                        settings: {}
+                      });
+                    }
+                  } else if (vrSupported) {
+                    startVRSession();
+                    // Update session state
+                    if (state.currentSession?.id) {
+                      await api.updateSessionARVRState(state.currentSession.id, {
+                        mode: 'vr',
+                        enabled: true,
+                        settings: { quality: 'high' }
+                      });
+                    }
+                  } else if (arSupported) {
+                    startARSession();
+                    // Update session state
+                    if (state.currentSession?.id) {
+                      await api.updateSessionARVRState(state.currentSession.id, {
+                        mode: 'ar',
+                        enabled: true,
+                        settings: { quality: 'high' }
+                      });
+                    }
+                  } else {
+                    setIs3DMode(true);
+                    // Update session state
+                    if (state.currentSession?.id) {
+                      await api.updateSessionARVRState(state.currentSession.id, {
+                        mode: '3d',
+                        enabled: true,
+                        settings: { quality: 'high', physics: true }
+                      });
+                    }
+                  }
+                } catch (error) {
+                  console.error('Error updating AR/VR state:', error);
                 }
               }}
               title={
@@ -625,8 +662,39 @@ export function ChatInterface() {
             <GlassButton
               size="sm"
               variant="secondary"
-              onClick={() => console.log('Gestures clicked')} // UI placeholder for now
-              title="Gesture Controls"
+              onClick={async () => {
+                try {
+                  // Toggle gesture recognition
+                  const gestureEnabled = !voiceSettings.gestureEnabled;
+                  
+                  // Update local state (you'd need to add this to voice settings)
+                  setVoiceSettings(prev => ({
+                    ...prev,
+                    gestureEnabled
+                  }));
+                  
+                  // Update backend settings
+                  if (state.user?.id) {
+                    await api.updateUserGestureSettings(state.user.id, {
+                      enabled: gestureEnabled,
+                      sensitivity: 0.7,
+                      gesture_timeout: 2000,
+                      enabled_gestures: {
+                        scroll: true,
+                        navigate: true,
+                        voice: true,
+                        speed: true,
+                        volume: true
+                      }
+                    });
+                    
+                    console.log(`Gesture controls ${gestureEnabled ? 'enabled' : 'disabled'}`);
+                  }
+                } catch (error) {
+                  console.error('Error updating gesture settings:', error);
+                }
+              }}
+              title="Toggle Gesture Controls"
             >
               <div className="text-xs font-medium">Gestures</div>
             </GlassButton>

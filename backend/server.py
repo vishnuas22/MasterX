@@ -2582,6 +2582,196 @@ async def add_custom_concept(request: Dict[str, Any]):
         logger.error(f"Error adding concept: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to add concept")
 
+# ===============================
+# 🎨 AR/VR AND GESTURE CONTROL ENDPOINTS
+# ===============================
+
+@api_router.get("/users/{user_id}/arvr-settings")
+async def get_arvr_settings(user_id: str):
+    """Get user's AR/VR settings and preferences"""
+    try:
+        # Get user to verify existence
+        user = await db_service.get_user(user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Get settings from user preferences or return defaults
+        settings = user.learning_preferences.get('arvr_settings', {
+            'vr_enabled': False,
+            'ar_enabled': False,
+            '3d_mode_enabled': True,
+            'render_quality': 'high',
+            'enable_physics': True,
+            'enable_shadows': True,
+            'enable_lighting': True,
+            'fov': 75,
+            'auto_rotate': False,
+            'rotation_speed': 1,
+            'zoom_level': 1,
+            'background_color': '#000011'
+        })
+        
+        return {
+            "user_id": user_id,
+            "arvr_settings": settings,
+            "capabilities": {
+                "vr_supported": True,  # This would be detected on frontend
+                "ar_supported": True,   # This would be detected on frontend
+                "webxr_available": True
+            }
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting AR/VR settings: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get AR/VR settings")
+
+@api_router.post("/users/{user_id}/arvr-settings")
+async def update_arvr_settings(user_id: str, request: dict):
+    """Update user's AR/VR settings and preferences"""
+    try:
+        # Get user to verify existence
+        user = await db_service.get_user(user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        settings = request.get('settings', {})
+        
+        # Update user preferences with new AR/VR settings
+        updated_preferences = user.learning_preferences.copy()
+        updated_preferences['arvr_settings'] = settings
+        
+        # Update user in database
+        success = await db_service.update_user_preferences(user_id, updated_preferences)
+        if not success:
+            raise HTTPException(status_code=500, detail="Failed to update settings")
+        
+        return {
+            "message": "AR/VR settings updated successfully",
+            "user_id": user_id,
+            "settings": settings
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating AR/VR settings: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to update AR/VR settings")
+
+@api_router.get("/users/{user_id}/gesture-settings")
+async def get_gesture_settings(user_id: str):
+    """Get user's gesture control settings"""
+    try:
+        # Get user to verify existence
+        user = await db_service.get_user(user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Get settings from user preferences or return defaults
+        settings = user.learning_preferences.get('gesture_settings', {
+            'enabled': False,
+            'sensitivity': 0.7,
+            'gesture_timeout': 2000,
+            'enabled_gestures': {
+                'scroll': True,
+                'navigate': True,
+                'voice': True,
+                'speed': True,
+                'volume': True
+            },
+            'custom_gestures': [],
+            'camera_permission': 'prompt'
+        })
+        
+        return {
+            "user_id": user_id,
+            "gesture_settings": settings,
+            "available_gestures": [
+                {"name": "scroll", "description": "Scroll through content"},
+                {"name": "navigate", "description": "Navigate between sections"},
+                {"name": "voice", "description": "Control voice input"},
+                {"name": "speed", "description": "Adjust reading speed"},
+                {"name": "volume", "description": "Control audio volume"}
+            ]
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting gesture settings: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get gesture settings")
+
+@api_router.post("/users/{user_id}/gesture-settings")
+async def update_gesture_settings(user_id: str, request: dict):
+    """Update user's gesture control settings"""
+    try:
+        # Get user to verify existence
+        user = await db_service.get_user(user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        settings = request.get('settings', {})
+        
+        # Update user preferences with new gesture settings
+        updated_preferences = user.learning_preferences.copy()
+        updated_preferences['gesture_settings'] = settings
+        
+        # Update user in database
+        success = await db_service.update_user_preferences(user_id, updated_preferences)
+        if not success:
+            raise HTTPException(status_code=500, detail="Failed to update settings")
+        
+        return {
+            "message": "Gesture settings updated successfully",
+            "user_id": user_id,
+            "settings": settings
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating gesture settings: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to update gesture settings")
+
+@api_router.post("/sessions/{session_id}/arvr-state")
+async def update_session_arvr_state(session_id: str, request: dict):
+    """Update the AR/VR state for a specific session"""
+    try:
+        # Get session to verify existence
+        session = await db_service.get_session(session_id)
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+        
+        state = request.get('state', {})
+        mode = state.get('mode', 'normal')  # 'vr', 'ar', '3d', or 'normal'
+        
+        # Update session metadata with AR/VR state
+        session_metadata = session.metadata or {}
+        session_metadata['arvr_state'] = {
+            'mode': mode,
+            'enabled': state.get('enabled', False),
+            'timestamp': datetime.utcnow().isoformat(),
+            'settings': state.get('settings', {})
+        }
+        
+        # Update session in database
+        success = await db_service.update_session_metadata(session_id, session_metadata)
+        if not success:
+            raise HTTPException(status_code=500, detail="Failed to update session state")
+        
+        return {
+            "message": "AR/VR state updated successfully",
+            "session_id": session_id,
+            "state": state
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating AR/VR state: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to update AR/VR state")
+
 # ================================
 # ROUTER AND MIDDLEWARE REGISTRATION
 # (Must be done after all endpoints are defined)

@@ -414,6 +414,52 @@ class ApiService {
     const response = await this.axiosInstance.post('/learning-psychology/transfer-learning/create-scenario', scenarioData);
     return response.data;
   }
+
+  // ===============================
+  // 🎨 AR/VR AND GESTURE CONTROL API METHODS
+  // ===============================
+
+  // AR/VR Settings
+  async getUserARVRSettings(userId) {
+    const response = await this.axiosInstance.get(`/users/${userId}/arvr-settings`);
+    return response.data;
+  }
+
+  async updateUserARVRSettings(userId, settings) {
+    const response = await this.axiosInstance.post(`/users/${userId}/arvr-settings`, { settings });
+    return response.data;
+  }
+
+  // Gesture Control Settings
+  async getUserGestureSettings(userId) {
+    const response = await this.axiosInstance.get(`/users/${userId}/gesture-settings`);
+    return response.data;
+  }
+
+  async updateUserGestureSettings(userId, settings) {
+    const response = await this.axiosInstance.post(`/users/${userId}/gesture-settings`, { settings });
+    return response.data;
+  }
+
+  // Session AR/VR State
+  async updateSessionARVRState(sessionId, state) {
+    const response = await this.axiosInstance.post(`/sessions/${sessionId}/arvr-state`, { state });
+    return response.data;
+  }
+
+  // User Profile and Learning DNA
+  async getUserLearningDNA(userId) {
+    const response = await this.axiosInstance.get(`/users/${userId}/learning-dna`);
+    return response.data;
+  }
+
+  async updateUserLearningMode(userId, preferredMode, preferences = {}) {
+    const response = await this.axiosInstance.post(`/users/${userId}/learning-mode`, { 
+      preferred_mode: preferredMode, 
+      preferences 
+    });
+    return response.data;
+  }
 }
 
 // Create and export API instance
