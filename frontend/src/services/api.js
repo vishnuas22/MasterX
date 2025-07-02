@@ -218,6 +218,38 @@ class ApiService {
     return response.data;
   }
 
+  // Chat Management endpoints
+  async renameSession(sessionId, newTitle) {
+    const response = await this.axiosInstance.put(`/sessions/${sessionId}/rename`, {
+      title: newTitle
+    });
+    return response.data;
+  }
+
+  async shareSession(sessionId) {
+    const response = await this.axiosInstance.post(`/sessions/${sessionId}/share`, {});
+    return response.data;
+  }
+
+  async deleteSession(sessionId) {
+    const response = await this.axiosInstance.delete(`/sessions/${sessionId}`);
+    return response.data;
+  }
+
+  async searchSessionMessages(sessionId, query, limit = 20) {
+    const response = await this.axiosInstance.get(`/sessions/${sessionId}/search`, {
+      params: { query, limit }
+    });
+    return response.data;
+  }
+
+  async searchUserSessions(userId, query, limit = 50) {
+    const response = await this.axiosInstance.get(`/users/${userId}/sessions/search`, {
+      params: { query, limit }
+    });
+    return response.data;
+  }
+
   // Exercise endpoints
   async generateExercise(topic, difficulty = 'medium', exerciseType = 'multiple_choice') {
     const response = await this.axiosInstance.post('/exercises/generate', null, {

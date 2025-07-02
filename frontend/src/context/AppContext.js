@@ -18,6 +18,8 @@ const initialState = {
   achievements: [],
   streak: null,
   rewards: null,
+  // Chat data
+  userChats: [],
   // UI state
   activeView: 'chat' // 'chat', 'learning-psychology', 'metacognitive-training', 'memory-palace', etc.
 };
@@ -39,6 +41,8 @@ const ActionTypes = {
   SET_PROGRESS: 'SET_PROGRESS',
   // UI actions
   SET_ACTIVE_VIEW: 'SET_ACTIVE_VIEW',
+  // Chat actions
+  SET_USER_CHATS: 'SET_USER_CHATS',
   // Gamification actions
   SET_GAMIFICATION_DATA: 'SET_GAMIFICATION_DATA',
   UPDATE_STREAK: 'UPDATE_STREAK',
@@ -91,6 +95,10 @@ function appReducer(state, action) {
     // UI reducer cases
     case ActionTypes.SET_ACTIVE_VIEW:
       return { ...state, activeView: action.payload };
+    
+    // Chat reducer cases
+    case ActionTypes.SET_USER_CHATS:
+      return { ...state, userChats: action.payload };
     
     // Gamification reducer cases
     case ActionTypes.SET_GAMIFICATION_DATA:
@@ -162,6 +170,9 @@ export function AppProvider({ children }) {
 
     // UI Actions
     setActiveView: (view) => dispatch({ type: ActionTypes.SET_ACTIVE_VIEW, payload: view }),
+
+    // Chat Actions
+    setUserChats: (chats) => dispatch({ type: ActionTypes.SET_USER_CHATS, payload: chats }),
 
     // API Actions
     async healthCheck() {

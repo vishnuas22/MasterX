@@ -24,9 +24,9 @@ import { GamificationDashboard } from './GamificationDashboard';
 import { AdvancedStreamingInterface } from './AdvancedStreamingInterface';
 import ContextAwareChatInterface from './ContextAwareChatInterface';
 import LiveLearningInterface from './LiveLearningInterface';
-import { VoiceInterface } from './VoiceInterface';
-import { GestureControl } from './GestureControl';
-import { ARVRInterface } from './ARVRInterface';
+import { VoiceInterface, useVoiceInterface } from './VoiceInterface';
+import { GestureControl, useGestureControl } from './GestureControl';
+import { ARVRInterface, useARVRVisualization } from './ARVRInterface';
 import { ThemeProvider, AdaptiveThemePanel, useAdaptiveTheme } from './AdaptiveThemeSystem';
 import { useApp } from '../context/AppContext';
 import { EnhancedChatMessage } from './ChatInterface_Enhanced';
@@ -85,6 +85,29 @@ export function ChatInterface() {
   const autoScrollTimeoutRef = useRef(null);
   const scrollCheckIntervalRef = useRef(null);
   const isAutoScrollingRef = useRef(false);
+
+  // Voice interface integration
+  const voiceInterface = useVoiceInterface();
+  const { 
+    isListening, 
+    isSpeaking, 
+    startListening, 
+    stopListening, 
+    voiceSettings 
+  } = voiceInterface;
+
+  // AR/VR interface integration
+  const {
+    isVRMode,
+    isARMode,
+    is3DMode,
+    setIs3DMode,
+    vrSupported,
+    arSupported,
+    startVRSession,
+    startARSession,
+    stopXRSession
+  } = useARVRVisualization();
 
   // Helper function for quick start - defined early with useCallback to avoid hoisting issues
   const handleQuickStart = useCallback(async () => {
@@ -461,12 +484,18 @@ export function ChatInterface() {
                     
                     {/* Voice Search Icon */}
                     <GlassButton
-                      variant="secondary"
-                      onClick={() => console.log('Voice search clicked')} // UI placeholder for now
+                      variant={isListening ? "success" : "secondary"}
+                      onClick={() => {
+                        if (isListening) {
+                          stopListening();
+                        } else {
+                          startListening();
+                        }
+                      }}
                       className="px-3 py-2"
-                      title="Voice search"
+                      title={isListening ? "Stop voice input" : "Start voice input"}
                     >
-                      <MicrophoneIcon size="md" className="text-gray-400 hover:text-white" />
+                      <MicrophoneIcon size="md" className={isListening ? "text-green-400" : "text-gray-400 hover:text-white"} />
                     </GlassButton>
                     
                     <GlassButton
@@ -566,11 +595,30 @@ export function ChatInterface() {
             {/* AR/VR Controls */}
             <GlassButton
               size="sm"
-              variant="secondary"
-              onClick={() => console.log('AR/VR clicked')} // UI placeholder for now
-              title="AR/VR Interface"
+              variant={is3DMode || isVRMode || isARMode ? "gradient" : "secondary"}
+              onClick={() => {
+                if (is3DMode) {
+                  setIs3DMode(false);
+                } else if (vrSupported) {
+                  startVRSession();
+                } else if (arSupported) {
+                  startARSession();
+                } else {
+                  setIs3DMode(true);
+                }
+              }}
+              title={
+                is3DMode ? "Exit 3D Mode" : 
+                isVRMode ? "Exit VR Mode" : 
+                isARMode ? "Exit AR Mode" : 
+                vrSupported ? "Enter VR Mode" :
+                arSupported ? "Enter AR Mode" : 
+                "Enter 3D Mode"
+              }
             >
-              <div className="text-xs font-medium">AR/VR</div>
+              <div className="text-xs font-medium">
+                {is3DMode ? "3D" : isVRMode ? "VR" : isARMode ? "AR" : "AR/VR"}
+              </div>
             </GlassButton>
             
             {/* Gestures Controls */}
@@ -761,7 +809,7 @@ export function ChatInterface() {
           <div className={cn(
             "mx-auto transition-all duration-500",
             // Match the chat messages width with slightly wider margins
-            isChatExpanded ? "max-w-3xl" : "max-w-xl"
+            isChatExpanded ? "max-w-3xl" : "max-w-2xl"
           )}>
             <form onSubmit={handleSendMessage} className="relative">
               <div className="relative group">
@@ -802,12 +850,18 @@ export function ChatInterface() {
                     
                     {/* Voice Search Icon */}
                     <GlassButton
-                      variant="secondary"
-                      onClick={() => console.log('Voice search clicked')} // UI placeholder for now
+                      variant={isListening ? "success" : "secondary"}
+                      onClick={() => {
+                        if (isListening) {
+                          stopListening();
+                        } else {
+                          startListening();
+                        }
+                      }}
                       className="px-3 py-2 flex-shrink-0"
-                      title="Voice search"
+                      title={isListening ? "Stop voice input" : "Start voice input"}
                     >
-                      <MicrophoneIcon size="sm" className="text-gray-400 hover:text-white" />
+                      <MicrophoneIcon size="sm" className={isListening ? "text-green-400" : "text-gray-400 hover:text-white"} />
                     </GlassButton>
                     
                     <GlassButton

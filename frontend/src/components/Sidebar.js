@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '../context/AppContext';
+import { api } from '../services/api';
 import { GlassCard, GlassBadge, GlassButton } from './GlassCard';
 import { 
   MessageIcon, 
@@ -75,23 +76,106 @@ export function Sidebar({ isCollapsed, onToggle }) {
   // Get actual chats from app state - no mock data
   const userChats = state.userChats || []; // Use actual chat data from state
 
-  const handleNewChat = () => {
-    // Will implement backend functionality later
-    console.log('New chat clicked');
-    // For now, just navigate to chat
-    actions.setActiveView('chat');
+  const handleNewChat = async () => {
+    try {
+      // Create new session for the user
+      if (state.user) {
+        const newSession = await api.createSession({
+          user_id: state.user.id,
+          subject: 'New Learning Session'
+        });
+        
+        // Update app state with new session
+        actions.setCurrentSession(newSession);
+        actions.setActiveView('chat');
+        
+        console.log('New chat session created:', newSession.id);
+      } else {
+        console.error('No user found to create session');
+      }
+    } catch (error) {
+      console.error('Error creating new chat session:', error);
+      actions.setError('Failed to create new chat session');
+    }
   };
 
-  const handleSearchChats = (query) => {
+  const handleSearchChats = async (query) => {
     setSearchQuery(query);
-    // Will implement search functionality later
-    console.log('Searching chats:', query);
+    if (query.trim() && state.user) {
+      try {
+        const searchResults = await api.searchUserSessions(state.user.id, query);
+        // Update the chat list with search results
+        actions.setUserChats(searchResults.results || []);
+        console.log('Search results:', searchResults);
+      } catch (error) {
+        console.error('Error searching chats:', error);
+      }
+    } else if (!query.trim()) {
+      // If search is cleared, reload all chats
+      try {
+        const allChats = await api.getUserSessions(state.user.id);
+        actions.setUserChats(allChats);
+      } catch (error) {
+        console.error('Error reloading chats:', error);
+      }
+    }
   };
 
-  const handleChatAction = (chatId, action) => {
-    console.log(`Chat ${chatId} - ${action}`);
+  const handleChatAction = async (chatId, action) => {
     setShowChatOptions(null);
-    // Will implement backend functionality later
+    
+    try {
+      switch (action) {
+        case 'share':
+          const shareResult = await api.shareSession(chatId);
+          console.log('Session shared:', shareResult);
+          actions.setError(null);
+          // You could show a success message or copy link to clipboard here
+          if (navigator.clipboard) {
+            const shareUrl = `${window.location.origin}${shareResult.share_url}`;
+            await navigator.clipboard.writeText(shareUrl);
+            actions.setError('Share link copied to clipboard!');
+            setTimeout(() => actions.setError(null), 3000);
+          }
+          break;
+          
+        case 'rename':
+          const newTitle = prompt('Enter new title for this chat:', 'Untitled Chat');
+          if (newTitle && newTitle.trim()) {
+            await api.renameSession(chatId, newTitle.trim());
+            console.log('Session renamed successfully');
+            // Refresh the chat list to show updated title
+            if (state.user) {
+              const updatedChats = await api.getUserSessions(state.user.id);
+              actions.setUserChats(updatedChats);
+            }
+          }
+          break;
+          
+        case 'delete':
+          const confirmDelete = window.confirm('Are you sure you want to delete this chat? This action cannot be undone.');
+          if (confirmDelete) {
+            await api.deleteSession(chatId);
+            console.log('Session deleted successfully');
+            // Refresh the chat list
+            if (state.user) {
+              const updatedChats = await api.getUserSessions(state.user.id);
+              actions.setUserChats(updatedChats);
+            }
+            // If deleted session was current, clear current session
+            if (state.currentSession && state.currentSession.id === chatId) {
+              actions.setCurrentSession(null);
+            }
+          }
+          break;
+          
+        default:
+          console.log(`Unknown action: ${action}`);
+      }
+    } catch (error) {
+      console.error(`Error performing ${action} on chat ${chatId}:`, error);
+      actions.setError(`Failed to ${action} chat`);
+    }
   };
 
   const handleItemClick = (itemId) => {
