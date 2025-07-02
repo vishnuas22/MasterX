@@ -2746,9 +2746,9 @@ async def update_session_arvr_state(session_id: str, request: dict):
         state = request.get('state', {})
         mode = state.get('mode', 'normal')  # 'vr', 'ar', '3d', or 'normal'
         
-        # Update session metadata with AR/VR state
-        session_metadata = session.metadata or {}
-        session_metadata['arvr_state'] = {
+        # Update session state with AR/VR state
+        session_state = session.session_state or {}
+        session_state['arvr_state'] = {
             'mode': mode,
             'enabled': state.get('enabled', False),
             'timestamp': datetime.utcnow().isoformat(),
@@ -2756,7 +2756,7 @@ async def update_session_arvr_state(session_id: str, request: dict):
         }
         
         # Update session in database
-        success = await db_service.update_session_metadata(session_id, session_metadata)
+        success = await db_service.update_session(session_id, {"session_state": session_state})
         if not success:
             raise HTTPException(status_code=500, detail="Failed to update session state")
         

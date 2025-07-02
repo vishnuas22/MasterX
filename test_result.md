@@ -221,15 +221,21 @@ backend:
 
   - task: "Session AR/VR State Endpoint"
     implemented: true
-    working: false
+    working: true
     file: "backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: false
         agent: "testing"
         comment: "❌ ENDPOINT FAILING: The POST endpoint for session AR/VR state (/api/sessions/{session_id}/arvr-state) is returning a 500 error. The endpoint is defined in server.py but there appears to be an issue with the implementation. The error occurs when trying to update the session metadata with the AR/VR state. This needs to be fixed for AR/VR functionality to work properly in sessions."
+      - working: true
+        agent: "main"
+        comment: "✅ FIXED: Updated Session AR/VR State endpoint to use session_state instead of session_metadata. Changed from session_metadata = session.metadata to session_state = session.session_state, and updated database call from update_session_metadata to update_session with session_state parameter as requested by user."
+      - working: true
+        agent: "testing"
+        comment: "✅ SUCCESSFULLY VERIFIED: The Session AR/VR State endpoint (/api/sessions/{session_id}/arvr-state) is now working correctly after the fix. The endpoint properly updates the session_state with AR/VR state information and returns a successful response. Tested with a variety of AR/VR settings and all worked as expected."
 
   - task: "User Profile Endpoints"
     implemented: true
@@ -415,3 +421,5 @@ agent_communication:
     message: "✅ CHAT MANAGEMENT ENDPOINTS FIXED: Successfully fixed all chat management endpoints. The issue was that the database methods were using incorrect collection names. Fixed by updating the collection names in database.py: 1) update_session_title now uses db.sessions instead of db.chat_sessions and updates the 'subject' field, 2) delete_session_messages now uses db.messages instead of db.chat_messages, 3) delete_session now uses db.sessions instead of db.chat_sessions, 4) search_user_sessions now uses db.sessions and db.messages instead of db.chat_sessions and db.chat_messages. All endpoints were tested successfully: rename session, delete session, search user sessions, and share session. The sidebar chat management functionality should now work properly."
   - agent: "testing"
     message: "✅ AR/VR AND GESTURE CONTROL ENDPOINTS TESTED: Successfully tested the newly implemented AR/VR and gesture control endpoints. The GET and POST endpoints for both AR/VR settings (/api/users/{user_id}/arvr-settings) and gesture settings (/api/users/{user_id}/gesture-settings) are working correctly. Settings are properly stored in the user's learning_preferences and can be retrieved after updating. The user profile endpoints (/api/users/{user_id}/learning-dna and /api/users/{user_id}/learning-mode) are also working correctly. However, the session AR/VR state endpoint (/api/sessions/{session_id}/arvr-state) is failing with a 500 error. This endpoint needs to be fixed for AR/VR functionality to work properly in sessions."
+  - agent: "testing"
+    message: "✅ SESSION AR/VR STATE ENDPOINT FIXED AND VERIFIED: Successfully tested the fixed Session AR/VR State endpoint (/api/sessions/{session_id}/arvr-state). The endpoint now correctly uses session_state instead of session_metadata and properly updates the session with AR/VR state information. All AR/VR and gesture control endpoints are now working correctly, including AR/VR settings, gesture settings, session AR/VR state, learning DNA, and learning mode. Created a dedicated test script (backend_test_arvr.py) to verify these endpoints. The AR/VR functionality is now fully operational and ready for frontend integration."
