@@ -144,11 +144,20 @@ export function UserOnboarding() {
           };
           
           console.log('Creating session with data:', sessionData);
-          await actions.createSession(sessionData);
-          console.log('Session created successfully');
+          const session = await actions.createSession(sessionData);
+          console.log('Session created successfully:', session);
         }
         
-        // If we reach here, everything succeeded
+        // Load user sessions to populate the sidebar
+        if (verifiedUser?.id) {
+          await actions.loadUserSessions(verifiedUser.id);
+        }
+        
+        // Important: Set the user again to ensure state is properly updated
+        actions.setUser(verifiedUser);
+        
+        console.log('✅ Onboarding completed successfully!');
+        // If we reach here, everything succeeded - the App component will automatically transition
         break;
         
       } catch (error) {
