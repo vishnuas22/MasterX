@@ -12,6 +12,9 @@ with open('/app/frontend/.env', 'r') as f:
             BACKEND_URL = line.strip().split('=')[1].strip('"\'')
             break
 
+# For local testing, use localhost
+BACKEND_URL = "http://localhost:8001"
+
 # Ensure the URL doesn't have trailing slash
 if BACKEND_URL.endswith('/'):
     BACKEND_URL = BACKEND_URL[:-1]
@@ -435,19 +438,13 @@ if __name__ == "__main__":
         # Test chat management functionality
         chat_results = test_chat_management()
         
-        # Test user profile & settings
-        profile_results = test_user_profile_settings()
-        
-        # Test voice search integration
-        voice_results = test_voice_search_integration()
-        
         # Print overall results
         print_separator("Overall Test Results")
         print(json.dumps({
             "arvr_and_gesture": arvr_results,
             "chat_management": chat_results,
-            "user_profile_settings": profile_results,
-            "voice_search_integration": voice_results,
+            "user_profile_settings": test_user_profile_settings(),
+            "voice_search_integration": test_voice_search_integration(),
             "timestamp": datetime.now().isoformat()
         }, indent=2))
         
