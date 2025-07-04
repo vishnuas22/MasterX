@@ -427,11 +427,110 @@ def test_voice_search_integration():
         "reason": "No voice/audio processing endpoints found in the API"
     }
 
+def test_core_functionality():
+    """Test the core functionality required for the onboarding flow"""
+    try:
+        print_separator("Testing Core Functionality for Onboarding Flow")
+        
+        # 1. Test health check endpoint
+        print("1. Testing Health Check Endpoint")
+        health_response = requests.get(f"{API_URL}/health")
+        print_response(health_response)
+        health_check_success = health_response.status_code == 200
+        
+        # 2. Test user creation
+        print("2. Testing User Creation")
+        test_email = f"onboarding_test_{uuid.uuid4()}@example.com"
+        test_name = "Onboarding Test User"
+        user_data = {
+            "email": test_email,
+            "name": test_name,
+            "learning_preferences": {}
+        }
+        user_response = requests.post(f"{API_URL}/users", json=user_data)
+        print_response(user_response)
+        user_creation_success = user_response.status_code in [200, 201]
+        
+        if user_creation_success:
+            user_id = user_response.json()["id"]
+        else:
+            # If user creation failed, try to get by email
+            print("User creation failed, trying to get by email...")
+            user_response = requests.get(f"{API_URL}/users/email/{test_email}")
+            print_response(user_response)
+            user_id = user_response.json()["id"] if user_response.status_code == 200 else None
+        
+        # 3. Test user retrieval by email
+        print("3. Testing User Retrieval by Email")
+        email_response = requests.get(f"{API_URL}/users/email/{test_email}")
+        print_response(email_response)
+        user_retrieval_success = email_response.status_code == 200
+        
+        # 4. Test session creation
+        print("4. Testing Session Creation")
+        session_data = {
+            "user_id": user_id,
+            "subject": "Programming",
+            "learning_objectives": ["Learn Python", "Build APIs"]
+        }
+        session_response = requests.post(f"{API_URL}/sessions", json=session_data)
+        print_response(session_response)
+        session_creation_success = session_response.status_code in [200, 201]
+        
+        if session_creation_success:
+            session_id = session_response.json()["id"]
+        else:
+            session_id = None
+        
+        # 5. Test basic chat functionality
+        print("5. Testing Basic Chat Functionality")
+        chat_success = False
+        if session_id:
+            chat_data = {
+                "session_id": session_id,
+                "user_message": "Hello, I'm testing the chat functionality."
+            }
+            chat_response = requests.post(f"{API_URL}/chat", json=chat_data)
+            print_response(chat_response)
+            chat_success = chat_response.status_code == 200
+        
+        # Print summary
+        print_separator("Core Functionality Test Summary")
+        print(f"1. Health Check: {'✅' if health_check_success else '❌'}")
+        print(f"2. User Creation: {'✅' if user_creation_success else '❌'}")
+        print(f"3. User Retrieval by Email: {'✅' if user_retrieval_success else '❌'}")
+        print(f"4. Session Creation: {'✅' if session_creation_success else '❌'}")
+        print(f"5. Basic Chat: {'✅' if chat_success else '❌'}")
+        
+        return {
+            "health_check": health_check_success,
+            "user_creation": user_creation_success,
+            "user_retrieval": user_retrieval_success,
+            "session_creation": session_creation_success,
+            "basic_chat": chat_success,
+            "all_passed": all([
+                health_check_success,
+                user_creation_success,
+                user_retrieval_success,
+                session_creation_success,
+                chat_success
+            ])
+        }
+    except Exception as e:
+        print(f"Error in test_core_functionality: {str(e)}")
+        return {
+            "error": str(e),
+            "test_completed": False
+        }
+
 if __name__ == "__main__":
     print_separator("MasterX Backend API Testing")
     print(f"Starting tests at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     
     try:
+        # Test core functionality for onboarding flow
+        core_results = test_core_functionality()
+        
         # Test AR/VR and gesture control endpoints
         arvr_results = test_arvr_and_gesture_endpoints()
         
@@ -441,6 +540,7 @@ if __name__ == "__main__":
         # Print overall results
         print_separator("Overall Test Results")
         print(json.dumps({
+            "core_functionality": core_results,
             "arvr_and_gesture": arvr_results,
             "chat_management": chat_results,
             "user_profile_settings": test_user_profile_settings(),

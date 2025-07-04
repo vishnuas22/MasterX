@@ -153,10 +153,13 @@ export function UserOnboarding() {
           await actions.loadUserSessions(verifiedUser.id);
         }
         
-        // Important: Set the user again to ensure state is properly updated
+        // Important: Set the user and clear loading state
         actions.setUser(verifiedUser);
+        actions.setLoading(false);
         
         console.log('✅ Onboarding completed successfully!');
+        console.log('✅ User set in context:', verifiedUser);
+        console.log('✅ App should transition to main interface');
         // If we reach here, everything succeeded - the App component will automatically transition
         break;
         
@@ -173,7 +176,7 @@ export function UserOnboarding() {
           await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
         }
       } finally {
-        if (attempt >= maxRetries || !state.isLoading) {
+        if (attempt >= maxRetries) {
           actions.setLoading(false);
         }
       }

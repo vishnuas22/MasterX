@@ -519,8 +519,16 @@ export function AppProvider({ children }) {
     if (savedUser) {
       try {
         const user = JSON.parse(savedUser);
-        actions.setUser(user);
-        actions.loadUserSessions(user.id);
+        dispatch({ type: ActionTypes.SET_USER, payload: user });
+        // Load sessions asynchronously after user is set
+        (async () => {
+          try {
+            const sessions = await api.getUserSessions(user.id);
+            dispatch({ type: ActionTypes.SET_SESSIONS, payload: sessions });
+          } catch (error) {
+            console.error('Error loading user sessions:', error);
+          }
+        })();
       } catch (error) {
         console.error('Error loading saved user:', error);
         localStorage.removeItem('masterx_user');
