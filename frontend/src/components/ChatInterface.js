@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
+import { cn } from '../utils/cn';
 import { GlassCard, GlassButton, GlassInput } from './GlassCard';
 import { TypingIndicator, LoadingStates } from './LoadingSpinner';
 import { 
