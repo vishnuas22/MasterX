@@ -12,9 +12,6 @@ with open('/app/frontend/.env', 'r') as f:
             BACKEND_URL = line.strip().split('=')[1].strip('"\'')
             break
 
-# For local testing, use localhost
-BACKEND_URL = "http://localhost:8001"
-
 # Ensure the URL doesn't have trailing slash
 if BACKEND_URL.endswith('/'):
     BACKEND_URL = BACKEND_URL[:-1]
@@ -523,6 +520,103 @@ def test_core_functionality():
             "test_completed": False
         }
 
+def test_premium_chat_streaming():
+    """Test the premium chat streaming endpoint"""
+    try:
+        print_separator("Testing Premium Chat Streaming")
+        
+        # Create test user
+        user = create_test_user()
+        user_id = user["id"]
+        
+        # Create test session
+        session = create_test_session(user_id)
+        session_id = session["id"]
+        
+        # Test premium chat streaming
+        print("Testing POST /api/chat/premium/stream")
+        
+        # Prepare request data
+        stream_data = {
+            "session_id": session_id,
+            "user_message": "Explain quantum computing in simple terms",
+            "context": {
+                "learning_mode": "adaptive"
+            }
+        }
+        
+        # Make the request
+        try:
+            # Using stream=True to handle streaming response
+            stream_response = requests.post(
+                f"{API_URL}/chat/premium/stream", 
+                json=stream_data,
+                stream=True,
+                timeout=30  # Set a timeout to avoid hanging
+            )
+            
+            print(f"Status Code: {stream_response.status_code}")
+            
+            # Check if the request was successful
+            if stream_response.status_code == 200:
+                print("Stream started successfully")
+                
+                # Read a few chunks to verify streaming works
+                chunk_count = 0
+                for chunk in stream_response.iter_lines():
+                    if chunk:
+                        # Process the chunk (remove 'data: ' prefix if present)
+                        chunk_str = chunk.decode('utf-8')
+                        if chunk_str.startswith('data: '):
+                            chunk_str = chunk_str[6:]
+                        
+                        try:
+                            chunk_data = json.loads(chunk_str)
+                            chunk_type = chunk_data.get('type', '')
+                            
+                            if chunk_type == 'chunk':
+                                print(f"Received content chunk: {chunk_data.get('content', '')[:30]}...")
+                            elif chunk_type == 'complete':
+                                print(f"Stream completed with suggestions: {chunk_data.get('suggestions', [])}")
+                                break
+                            elif chunk_type == 'error':
+                                print(f"Stream error: {chunk_data.get('message', '')}")
+                                break
+                        except json.JSONDecodeError:
+                            print(f"Received non-JSON chunk: {chunk_str[:50]}...")
+                        
+                        chunk_count += 1
+                        if chunk_count >= 5:  # Limit to 5 chunks for testing
+                            print("Received 5 chunks, stopping stream read...")
+                            break
+                
+                print(f"Successfully read {chunk_count} chunks from the stream")
+                streaming_success = True
+            else:
+                print(f"Stream request failed with status code: {stream_response.status_code}")
+                print(f"Response: {stream_response.text}")
+                streaming_success = False
+                
+        except requests.exceptions.RequestException as e:
+            print(f"Error making streaming request: {str(e)}")
+            streaming_success = False
+        
+        # Print summary
+        print_separator("Premium Chat Streaming Test Summary")
+        print(f"Premium Chat Streaming: {'✅' if streaming_success else '❌'}")
+        
+        return {
+            "user_id": user_id,
+            "session_id": session_id,
+            "premium_streaming": streaming_success
+        }
+    except Exception as e:
+        print(f"Error in test_premium_chat_streaming: {str(e)}")
+        return {
+            "error": str(e),
+            "test_completed": False
+        }
+
 if __name__ == "__main__":
     print_separator("MasterX Backend API Testing")
     print(f"Starting tests at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
@@ -530,6 +624,9 @@ if __name__ == "__main__":
     try:
         # Test core functionality for onboarding flow
         core_results = test_core_functionality()
+        
+        # Test premium chat streaming
+        premium_streaming_results = test_premium_chat_streaming()
         
         # Test AR/VR and gesture control endpoints
         arvr_results = test_arvr_and_gesture_endpoints()
@@ -541,6 +638,7 @@ if __name__ == "__main__":
         print_separator("Overall Test Results")
         print(json.dumps({
             "core_functionality": core_results,
+            "premium_streaming": premium_streaming_results,
             "arvr_and_gesture": arvr_results,
             "chat_management": chat_results,
             "user_profile_settings": test_user_profile_settings(),
