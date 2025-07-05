@@ -5,12 +5,8 @@ import uuid
 import time
 from datetime import datetime
 
-# Get the backend URL from the frontend .env file
-with open('/app/frontend/.env', 'r') as f:
-    for line in f:
-        if line.startswith('REACT_APP_BACKEND_URL='):
-            BACKEND_URL = line.strip().split('=')[1].strip('"\'')
-            break
+# Use local backend URL for testing
+BACKEND_URL = "http://localhost:8001"
 
 # Ensure the URL doesn't have trailing slash
 if BACKEND_URL.endswith('/'):
