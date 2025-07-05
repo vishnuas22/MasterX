@@ -17,7 +17,12 @@ import {
   ArrowDownIcon,
   PulsingDot,
   CheckIcon,
-  MicrophoneIcon
+  MicrophoneIcon,
+  CopyIcon,
+  ThumbsUpIcon,
+  ThumbsDownIcon,
+  BookmarkIcon,
+  ShareIcon
 } from './PremiumIcons';
 import { PremiumLearningModes, LearningModeIndicator } from './PremiumLearningModes';
 import { ModelManagement } from './ModelManagement';
@@ -33,6 +38,289 @@ import { useApp } from '../context/AppContext';
 import { EnhancedChatMessage } from './ChatInterface_Enhanced';
 import { PremiumUserProfile } from './PremiumUserProfile';
 import { api } from '../services/api';
+
+// ===============================
+// 🍎 PREMIUM MESSAGE BUBBLE COMPONENT
+// ===============================
+
+const PremiumMessageBubble = ({ message, isUser, isLastInGroup, isTyping, onReaction, onCopy, onBookmark }) => {
+  const [showActions, setShowActions] = useState(false);
+  const [copySuccess, setCopySuccess] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(message.message);
+      setCopySuccess(true);
+      onCopy?.(message);
+      setTimeout(() => setCopySuccess(false), 2000);
+    } catch (error) {
+      console.error('Failed to copy message:', error);
+    }
+  };
+
+  const bubbleVariants = {
+    hidden: { opacity: 0, scale: 0.8, y: 20 },
+    visible: { 
+      opacity: 1, 
+      scale: 1, 
+      y: 0,
+      transition: {
+        type: "spring",
+        stiffness: 500,
+        damping: 30,
+        mass: 0.5
+      }
+    },
+    hover: {
+      scale: 1.02,
+      transition: { duration: 0.2 }
+    }
+  };
+
+  const actionsVariants = {
+    hidden: { opacity: 0, scale: 0.8, y: 10 },
+    visible: { 
+      opacity: 1, 
+      scale: 1, 
+      y: 0,
+      transition: {
+        type: "spring",
+        stiffness: 400,
+        damping: 25
+      }
+    }
+  };
+
+  return (
+    <motion.div
+      variants={bubbleVariants}
+      initial="hidden"
+      animate="visible"
+      whileHover="hover"
+      className={cn(
+        "group flex flex-col space-y-1",
+        isUser ? "items-end" : "items-start"
+      )}
+      onMouseEnter={() => setShowActions(true)}
+      onMouseLeave={() => setShowActions(false)}
+    >
+      <div className={cn(
+        "flex items-end space-x-2 max-w-[85%] md:max-w-[75%]",
+        isUser ? "flex-row-reverse space-x-reverse" : "flex-row"
+      )}>
+        {/* Avatar */}
+        {!isUser && (
+          <motion.div
+            className="flex-shrink-0 mb-1"
+            animate={{
+              scale: isTyping ? [1, 1.1, 1] : 1,
+              transition: { duration: 1.5, repeat: isTyping ? Infinity : 0 }
+            }}
+          >
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
+              <AIBrainIcon size="sm" className="text-white" />
+            </div>
+          </motion.div>
+        )}
+
+        {/* Message Bubble */}
+        <motion.div
+          className={cn(
+            "relative px-4 py-3 rounded-[20px] shadow-lg backdrop-blur-xl border",
+            isUser 
+              ? "bg-gradient-to-br from-blue-500 to-blue-600 text-white border-blue-400/20" 
+              : "bg-white/80 dark:bg-gray-800/80 text-gray-900 dark:text-gray-100 border-gray-200/50 dark:border-gray-700/50",
+            isLastInGroup 
+              ? (isUser ? "rounded-br-md" : "rounded-bl-md")
+              : ""
+          )}
+          whileHover={{
+            y: -1,
+            transition: { duration: 0.2 }
+          }}
+        >
+          {/* Message Content */}
+          <div className="prose prose-sm max-w-none">
+            {isTyping ? (
+              <div className="flex items-center space-x-1">
+                <span>AI is thinking</span>
+                <motion.div
+                  className="flex space-x-1"
+                  animate={{
+                    opacity: [0.4, 1, 0.4],
+                    transition: { duration: 1.5, repeat: Infinity }
+                  }}
+                >
+                  <div className="w-1 h-1 bg-current rounded-full" />
+                  <div className="w-1 h-1 bg-current rounded-full" />
+                  <div className="w-1 h-1 bg-current rounded-full" />
+                </motion.div>
+              </div>
+            ) : (
+              <ReactMarkdown 
+                className={cn(
+                  "prose-headings:text-current prose-p:text-current prose-strong:text-current",
+                  "prose-code:bg-black/10 prose-code:px-1 prose-code:rounded prose-code:text-current",
+                  isUser ? "prose-invert" : ""
+                )}
+              >
+                {message.message}
+              </ReactMarkdown>
+            )}
+          </div>
+
+          {/* Premium Message Tail */}
+          <div className={cn(
+            "absolute bottom-0 w-4 h-4",
+            isUser 
+              ? "-right-2 bg-gradient-to-br from-blue-500 to-blue-600" 
+              : "-left-2 bg-white/80 dark:bg-gray-800/80 border-l border-b border-gray-200/50 dark:border-gray-700/50",
+            isLastInGroup ? "block" : "hidden"
+          )} 
+          style={{
+            clipPath: isUser 
+              ? "polygon(0 0, 100% 100%, 0 100%)" 
+              : "polygon(0 100%, 100% 0, 100% 100%)"
+          }} />
+        </motion.div>
+
+        {/* User Avatar */}
+        {isUser && (
+          <div className="flex-shrink-0 mb-1">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gray-400 to-gray-600 flex items-center justify-center shadow-lg">
+              <UserIcon size="sm" className="text-white" />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Message Timestamp */}
+      <div className={cn(
+        "text-xs text-gray-500 dark:text-gray-400 px-2",
+        isUser ? "text-right" : "text-left"
+      )}>
+        {new Date(message.timestamp).toLocaleTimeString([], { 
+          hour: '2-digit', 
+          minute: '2-digit' 
+        })}
+      </div>
+
+      {/* Premium Action Buttons */}
+      <AnimatePresence>
+        {showActions && !isTyping && (
+          <motion.div
+            variants={actionsVariants}
+            initial="hidden"
+            animate="visible"
+            exit="hidden"
+            className={cn(
+              "flex items-center space-x-1 mt-2",
+              isUser ? "justify-end" : "justify-start"
+            )}
+          >
+            <motion.button
+              onClick={handleCopy}
+              className="p-1.5 rounded-lg bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+              title="Copy message"
+            >
+              {copySuccess ? (
+                <CheckIcon size="xs" className="text-green-500" />
+              ) : (
+                <CopyIcon size="xs" className="text-gray-600 dark:text-gray-400" />
+              )}
+            </motion.button>
+
+            {!isUser && (
+              <>
+                <motion.button
+                  onClick={() => onReaction?.(message, 'like')}
+                  className="p-1.5 rounded-lg bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                  title="Like message"
+                >
+                  <ThumbsUpIcon size="xs" className="text-gray-600 dark:text-gray-400" />
+                </motion.button>
+
+                <motion.button
+                  onClick={() => onBookmark?.(message)}
+                  className="p-1.5 rounded-lg bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                  title="Bookmark message"
+                >
+                  <BookmarkIcon size="xs" className="text-gray-600 dark:text-gray-400" />
+                </motion.button>
+              </>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+};
+
+// ===============================
+// 🍎 PREMIUM TYPING INDICATOR
+// ===============================
+
+const PremiumTypingIndicator = () => {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      className="flex items-end space-x-2 mb-4"
+    >
+      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
+        <AIBrainIcon size="sm" className="text-white" />
+      </div>
+      
+      <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-[20px] rounded-bl-md px-4 py-3 border border-gray-200/50 dark:border-gray-700/50">
+        <div className="flex items-center space-x-1">
+          <motion.div
+            className="w-2 h-2 bg-gray-400 rounded-full"
+            animate={{
+              scale: [1, 1.2, 1],
+              opacity: [0.5, 1, 0.5]
+            }}
+            transition={{
+              duration: 1.5,
+              repeat: Infinity,
+              delay: 0
+            }}
+          />
+          <motion.div
+            className="w-2 h-2 bg-gray-400 rounded-full"
+            animate={{
+              scale: [1, 1.2, 1],
+              opacity: [0.5, 1, 0.5]
+            }}
+            transition={{
+              duration: 1.5,
+              repeat: Infinity,
+              delay: 0.2
+            }}
+          />
+          <motion.div
+            className="w-2 h-2 bg-gray-400 rounded-full"
+            animate={{
+              scale: [1, 1.2, 1],
+              opacity: [0.5, 1, 0.5]
+            }}
+            transition={{
+              duration: 1.5,
+              repeat: Infinity,
+              delay: 0.4
+            }}
+          />
+        </div>
+      </div>
+    </motion.div>
+  );
+};
 
 // Helper function to record learning analytics events
 const recordLearningEvent = async (userId, sessionId, eventData) => {
@@ -666,13 +954,7 @@ export function ChatInterface() {
               onClick={async () => {
                 try {
                   // Toggle gesture recognition
-                  const gestureEnabled = !voiceSettings.gestureEnabled;
-                  
-                  // Update local state (you'd need to add this to voice settings)
-                  setVoiceSettings(prev => ({
-                    ...prev,
-                    gestureEnabled
-                  }));
+                  const gestureEnabled = !voiceSettings?.gestureEnabled;
                   
                   // Update backend settings
                   if (state.user?.id) {
@@ -771,12 +1053,12 @@ export function ChatInterface() {
       </div>
 
       {/* Main Chat Area - Centered and Expandable */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Messages Container - ChatGPT Style */}
+      <div className="flex-1 flex flex-col overflow-hidden bg-gradient-to-b from-gray-50/50 to-white dark:from-gray-900/50 dark:to-gray-900">
+        {/* Messages Container - Premium iOS Messages Style */}
         <motion.div 
           className={cn(
             "flex-1 overflow-y-auto transition-all duration-500 ease-out",
-            isChatExpanded ? "p-4" : "flex items-end pb-4"
+            isChatExpanded ? "p-6" : "flex items-end pb-6"
           )}
           ref={messagesContainerRef}
           onScroll={handleScroll}
@@ -784,76 +1066,56 @@ export function ChatInterface() {
           <div className={cn(
             "w-full mx-auto transition-all duration-500",
             // Ensure response section matches input box width exactly
-            isChatExpanded ? "max-w-3xl" : "max-w-2xl"
+            isChatExpanded ? "max-w-4xl" : "max-w-3xl"
           )}>
-            <AnimatePresence>
-              {state.messages.map((message, index) => (
-                <EnhancedChatMessage key={message.id || index} message={message} isExpanded={isChatExpanded} />
-              ))}
-              
-              {/* Premium Streaming message */}
-              {state.isTyping && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  className="mb-6 flex justify-start"
-                >
-                  <div className="flex items-start space-x-3 max-w-full w-full">
-                    <div className="flex-shrink-0 mt-1">
-                      <div className="w-8 h-8 glass-ai-primary rounded-full flex items-center justify-center shadow-glow-blue">
-                        <AIBrainIcon size="sm" className="text-ai-blue-400" animated />
-                      </div>
-                    </div>
-                    <div className="flex-1 min-w-0 max-w-4xl">
-                      <div className="mb-2">
-                        <span className="text-sm font-medium text-text-primary">MasterX</span>
-                        <span className="ml-2 text-xs text-ai-blue-400 flex items-center space-x-1">
-                          <SparkleIcon size="xs" />
-                          <span>Streaming</span>
-                        </span>
-                      </div>
-                      
-                      <GlassCard 
-                        variant="ai-primary" 
-                        size="sm" 
-                        className="glass-medium shadow-lg bg-glass-light border border-border-subtle"
-                      >
-                        {state.streamingMessage ? (
-                          <div className="prose prose-lg prose-invert max-w-none">
-                            <div className="premium-response text-text-primary leading-relaxed">
-                              <ReactMarkdown
-                                components={{
-                                  h1: ({children}) => <h1 className="text-xl font-bold text-gradient-primary mb-4 flex items-center space-x-2"><SparkleIcon size="sm" className="text-ai-blue-400" /><span>{children}</span></h1>,
-                                  h2: ({children}) => <h2 className="text-lg font-semibold text-ai-blue-300 mb-3 mt-6">{children}</h2>,
-                                  h3: ({children}) => <h3 className="text-base font-semibold text-ai-purple-300 mb-2 mt-4">{children}</h3>,
-                                  p: ({children}) => <p className="mb-4 text-text-secondary leading-relaxed">{children}</p>,
-                                  ul: ({children}) => <ul className="mb-4 space-y-2 ml-4">{children}</ul>,
-                                  ol: ({children}) => <ol className="mb-4 space-y-2 ml-4 list-decimal">{children}</ol>,
-                                  li: ({children}) => <li className="text-text-secondary flex items-start space-x-2"><span className="text-ai-blue-400 mt-1">•</span><span className="flex-1">{children}</span></li>,
-                                  strong: ({children}) => <strong className="font-semibold text-ai-blue-300">{children}</strong>,
-                                  em: ({children}) => <em className="italic text-ai-purple-300">{children}</em>,
-                                  code: ({children}) => <code className="px-2 py-1 bg-glass-thick rounded text-ai-green-300 text-sm font-mono">{children}</code>
-                                }}
-                              >
-                                {state.streamingMessage}
-                              </ReactMarkdown>
-                              <motion.span 
-                                className="inline-block w-0.5 h-4 bg-ai-blue-400 ml-1"
-                                animate={{ opacity: [1, 0] }}
-                                transition={{ duration: 0.8, repeat: Infinity }}
-                              />
-                            </div>
-                          </div>
-                        ) : (
-                          <TypingIndicator size="sm" message="MasterX is thinking..." />
-                        )}
-                      </GlassCard>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            <div className="space-y-4">
+              <AnimatePresence>
+                {state.messages.map((message, index) => {
+                  const isUser = message.sender === 'user';
+                  const nextMessage = state.messages[index + 1];
+                  const isLastInGroup = !nextMessage || nextMessage.sender !== message.sender;
+                  
+                  return (
+                    <PremiumMessageBubble
+                      key={message.id || index}
+                      message={message}
+                      isUser={isUser}
+                      isLastInGroup={isLastInGroup}
+                      onReaction={(msg, reaction) => {
+                        console.log('Reaction:', reaction, 'to message:', msg.id);
+                        // Here you can implement reaction functionality
+                      }}
+                      onCopy={(msg) => {
+                        console.log('Copied message:', msg.id);
+                        // Analytics or feedback
+                      }}
+                      onBookmark={(msg) => {
+                        console.log('Bookmarked message:', msg.id);
+                        // Here you can implement bookmark functionality
+                      }}
+                    />
+                  );
+                })}
+                
+                {/* Premium Typing Indicator */}
+                {state.isTyping && <PremiumTypingIndicator />}
+                
+                {/* Streaming Message with Premium Style */}
+                {state.streamingMessage && (
+                  <PremiumMessageBubble
+                    message={{
+                      id: 'streaming',
+                      message: state.streamingMessage,
+                      sender: 'mentor',
+                      timestamp: new Date().toISOString()
+                    }}
+                    isUser={false}
+                    isLastInGroup={true}
+                    isTyping={false}
+                  />
+                )}
+              </AnimatePresence>
+            </div>
             <div ref={messagesEndRef} />
           </div>
         </motion.div>

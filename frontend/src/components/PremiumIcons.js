@@ -441,6 +441,55 @@ export const MicrophoneIcon = ({ size = 'md', animated = false, gradient = false
   </IconWrapper>
 );
 
+export const CopyIcon = ({ size = 'md', animated = false, gradient = false, glow = false, className = '', ...props }) => (
+  <svg
+    className={cn(iconSizes[size], animated && 'animate-pulse', gradient && 'text-gradient-primary', className)}
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+    {...props}
+  >
+    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+    <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
+  </svg>
+);
+
+export const ThumbsUpIcon = ({ size = 'md', animated = false, gradient = false, glow = false, className = '', ...props }) => (
+  <svg
+    className={cn(iconSizes[size], animated && 'animate-pulse', gradient && 'text-gradient-primary', className)}
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+    {...props}
+  >
+    <path d="M14 9V5a3 3 0 00-3-3l-4 9v11h11.28a2 2 0 002-1.7l1.38-9a2 2 0 00-2-2.3zM7 22H4a2 2 0 01-2-2v-7a2 2 0 012-2h3" />
+  </svg>
+);
+
+export const ThumbsDownIcon = ({ size = 'md', animated = false, gradient = false, glow = false, className = '', ...props }) => (
+  <svg
+    className={cn(iconSizes[size], animated && 'animate-pulse', gradient && 'text-gradient-primary', className)}
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+    {...props}
+  >
+    <path d="M10 15v4a3 3 0 003 3l4-9V2H5.72a2 2 0 00-2 1.7l-1.38 9a2 2 0 002 2.3zm7-13h2.67A2.31 2.31 0 0122 4v7a2.31 2.31 0 01-2.33 2H17" />
+  </svg>
+);
+
+export const BookmarkIcon = ({ size = 'md', animated = false, gradient = false, glow = false, className = '', ...props }) => (
+  <svg
+    className={cn(iconSizes[size], animated && 'animate-pulse', gradient && 'text-gradient-primary', className)}
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+    {...props}
+  >
+    <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" />
+  </svg>
+);
+
 export default {
   AIBrainIcon,
   SparkleIcon,
@@ -480,4 +529,8 @@ export default {
   CrownIcon,
   StarIcon,
   MicrophoneIcon,
+  CopyIcon,
+  ThumbsUpIcon,
+  ThumbsDownIcon,
+  BookmarkIcon,
 };

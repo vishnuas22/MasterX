@@ -594,4 +594,463 @@ export const AppleSelect = ({
   );
 };
 
+// ===============================
+// 🍎 APPLE BUTTON COMPONENT
+// ===============================
+
+export const AppleButton = forwardRef(({ 
+  variant = 'primary',
+  size = 'medium',
+  material = 'regular',
+  disabled = false,
+  loading = false,
+  icon,
+  iconPosition = 'left',
+  className,
+  children,
+  onClick,
+  ...props
+}, ref) => {
+  const [isPressed, setIsPressed] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+
+  const variants = {
+    primary: {
+      light: 'bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white border-blue-500',
+      dark: 'bg-blue-400 hover:bg-blue-500 active:bg-blue-600 text-white border-blue-400'
+    },
+    secondary: {
+      light: 'bg-gray-100 hover:bg-gray-200 active:bg-gray-300 text-gray-900 border-gray-200',
+      dark: 'bg-gray-800 hover:bg-gray-700 active:bg-gray-600 text-gray-100 border-gray-700'
+    },
+    tahoeAccent: {
+      light: 'bg-gradient-to-br from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white border-blue-500',
+      dark: 'bg-gradient-to-br from-blue-400 to-purple-500 hover:from-blue-500 hover:to-purple-600 text-white border-blue-400'
+    },
+    controlCenter: {
+      light: 'bg-white/80 backdrop-blur-[12px] hover:bg-white/90 active:bg-white/95 text-gray-900 border-white/40',
+      dark: 'bg-white/[0.18] backdrop-blur-[12px] hover:bg-white/[0.24] active:bg-white/[0.32] text-white border-white/[0.18]'
+    },
+    destructive: {
+      light: 'bg-red-500 hover:bg-red-600 active:bg-red-700 text-white border-red-500',
+      dark: 'bg-red-400 hover:bg-red-500 active:bg-red-600 text-white border-red-400'
+    }
+  };
+
+  const sizes = {
+    small: 'px-3 py-1.5 text-sm min-h-[32px]',
+    medium: 'px-4 py-2 text-base min-h-[44px]',
+    large: 'px-6 py-3 text-lg min-h-[52px]'
+  };
+
+  const springConfig = {
+    type: "spring",
+    stiffness: 500,
+    damping: 30,
+    mass: 0.5
+  };
+
+  return (
+    <motion.button
+      ref={ref}
+      className={cn(
+        "relative inline-flex items-center justify-center",
+        "rounded-[12px] border font-medium",
+        "transition-all duration-200 ease-out",
+        "focus:outline-none focus:ring-2 focus:ring-blue-500/50",
+        "disabled:opacity-50 disabled:cursor-not-allowed",
+        "select-none overflow-hidden",
+        "shadow-sm hover:shadow-md active:shadow-sm",
+        variants[variant]?.light,
+        'dark:' + variants[variant]?.dark,
+        sizes[size],
+        className
+      )}
+      disabled={disabled || loading}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      onMouseDown={() => setIsPressed(true)}
+      onMouseUp={() => setIsPressed(false)}
+      onClick={onClick}
+      whileHover={{
+        scale: 1.02,
+        transition: springConfig
+      }}
+      whileTap={{
+        scale: 0.98,
+        transition: springConfig
+      }}
+      animate={{
+        scale: isPressed ? 0.95 : 1,
+        transition: springConfig
+      }}
+      {...props}
+    >
+      {/* Background Blur Effect */}
+      <motion.div
+        className="absolute inset-0 bg-gradient-to-br from-white/[0.1] to-transparent rounded-[12px]"
+        animate={{
+          opacity: isHovered ? 1 : 0,
+          transition: { duration: 0.2 }
+        }}
+      />
+      
+      {/* Content */}
+      <div className="relative flex items-center justify-center gap-2">
+        {icon && iconPosition === 'left' && (
+          <motion.div
+            animate={{
+              scale: isPressed ? 0.9 : 1,
+              transition: springConfig
+            }}
+          >
+            {icon}
+          </motion.div>
+        )}
+        
+        {loading ? (
+          <motion.div
+            className="w-4 h-4 border-2 border-current border-t-transparent rounded-full"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          />
+        ) : (
+          <span className="truncate">{children}</span>
+        )}
+        
+        {icon && iconPosition === 'right' && (
+          <motion.div
+            animate={{
+              scale: isPressed ? 0.9 : 1,
+              transition: springConfig
+            }}
+          >
+            {icon}
+          </motion.div>
+        )}
+      </div>
+    </motion.button>
+  );
+});
+
+// ===============================
+// 🍎 APPLE INPUT COMPONENT
+// ===============================
+
+export const AppleInput = forwardRef(({ 
+  variant = 'default',
+  size = 'medium',
+  material = 'regular',
+  label,
+  placeholder,
+  error,
+  helperText,
+  leftIcon,
+  rightIcon,
+  className,
+  ...props
+}, ref) => {
+  const [isFocused, setIsFocused] = useState(false);
+  const [hasValue, setHasValue] = useState(false);
+
+  const variants = {
+    default: {
+      light: 'bg-white/80 backdrop-blur-[8px] border-gray-200/50 focus:border-blue-500/50 focus:bg-white/90',
+      dark: 'bg-white/[0.08] backdrop-blur-[8px] border-white/[0.12] focus:border-blue-400/50 focus:bg-white/[0.12]'
+    },
+    filled: {
+      light: 'bg-gray-50 border-gray-200 focus:border-blue-500 focus:bg-white',
+      dark: 'bg-gray-900 border-gray-800 focus:border-blue-400 focus:bg-gray-800'
+    }
+  };
+
+  const sizes = {
+    small: 'px-3 py-2 text-sm min-h-[36px]',
+    medium: 'px-4 py-3 text-base min-h-[44px]',
+    large: 'px-5 py-4 text-lg min-h-[52px]'
+  };
+
+  return (
+    <div className="space-y-2">
+      {label && (
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          {label}
+        </label>
+      )}
+      
+      <div className="relative">
+        {leftIcon && (
+          <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+            {leftIcon}
+          </div>
+        )}
+        
+        <motion.input
+          ref={ref}
+          className={cn(
+            "w-full rounded-[12px] border",
+            "transition-all duration-200 ease-out",
+            "focus:outline-none focus:ring-2 focus:ring-blue-500/20",
+            "placeholder:text-gray-400 dark:placeholder:text-gray-500",
+            "text-gray-900 dark:text-gray-100",
+            variants[variant]?.light,
+            'dark:' + variants[variant]?.dark,
+            sizes[size],
+            leftIcon && 'pl-10',
+            rightIcon && 'pr-10',
+            error && 'border-red-500 focus:border-red-500 focus:ring-red-500/20',
+            className
+          )}
+          placeholder={placeholder}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
+          onChange={(e) => setHasValue(e.target.value.length > 0)}
+          whileFocus={{
+            scale: 1.01,
+            transition: { duration: 0.2 }
+          }}
+          {...props}
+        />
+        
+        {rightIcon && (
+          <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+            {rightIcon}
+          </div>
+        )}
+      </div>
+      
+      {(error || helperText) && (
+        <p className={cn(
+          "text-sm",
+          error ? "text-red-500" : "text-gray-500 dark:text-gray-400"
+        )}>
+          {error || helperText}
+        </p>
+      )}
+    </div>
+  );
+});
+
+// ===============================
+// 🍎 APPLE TEXTAREA COMPONENT
+// ===============================
+
+export const AppleTextarea = forwardRef(({ 
+  variant = 'default',
+  size = 'medium',
+  material = 'regular',
+  label,
+  placeholder,
+  error,
+  helperText,
+  autoResize = false,
+  maxRows = 6,
+  className,
+  ...props
+}, ref) => {
+  const [isFocused, setIsFocused] = useState(false);
+  const textareaRef = useRef(null);
+
+  const variants = {
+    default: {
+      light: 'bg-white/80 backdrop-blur-[8px] border-gray-200/50 focus:border-blue-500/50 focus:bg-white/90',
+      dark: 'bg-white/[0.08] backdrop-blur-[8px] border-white/[0.12] focus:border-blue-400/50 focus:bg-white/[0.12]'
+    },
+    filled: {
+      light: 'bg-gray-50 border-gray-200 focus:border-blue-500 focus:bg-white',
+      dark: 'bg-gray-900 border-gray-800 focus:border-blue-400 focus:bg-gray-800'
+    }
+  };
+
+  const sizes = {
+    small: 'px-3 py-2 text-sm',
+    medium: 'px-4 py-3 text-base',
+    large: 'px-5 py-4 text-lg'
+  };
+
+  useEffect(() => {
+    if (autoResize && textareaRef.current) {
+      const textarea = textareaRef.current;
+      textarea.style.height = 'auto';
+      const scrollHeight = textarea.scrollHeight;
+      const lineHeight = parseInt(getComputedStyle(textarea).lineHeight);
+      const maxHeight = lineHeight * maxRows;
+      textarea.style.height = `${Math.min(scrollHeight, maxHeight)}px`;
+    }
+  }, [autoResize, maxRows]);
+
+  return (
+    <div className="space-y-2">
+      {label && (
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          {label}
+        </label>
+      )}
+      
+      <motion.textarea
+        ref={ref}
+        className={cn(
+          "w-full rounded-[12px] border resize-none",
+          "transition-all duration-200 ease-out",
+          "focus:outline-none focus:ring-2 focus:ring-blue-500/20",
+          "placeholder:text-gray-400 dark:placeholder:text-gray-500",
+          "text-gray-900 dark:text-gray-100",
+          variants[variant]?.light,
+          'dark:' + variants[variant]?.dark,
+          sizes[size],
+          error && 'border-red-500 focus:border-red-500 focus:ring-red-500/20',
+          className
+        )}
+        placeholder={placeholder}
+        onFocus={() => setIsFocused(true)}
+        onBlur={() => setIsFocused(false)}
+        whileFocus={{
+          scale: 1.01,
+          transition: { duration: 0.2 }
+        }}
+        {...props}
+      />
+      
+      {(error || helperText) && (
+        <p className={cn(
+          "text-sm",
+          error ? "text-red-500" : "text-gray-500 dark:text-gray-400"
+        )}>
+          {error || helperText}
+        </p>
+      )}
+    </div>
+  );
+});
+
+// ===============================
+// 🍎 APPLE TOGGLE COMPONENT
+// ===============================
+
+export const AppleToggle = forwardRef(({ 
+  checked = false,
+  onChange,
+  disabled = false,
+  size = 'medium',
+  label,
+  className,
+  ...props
+}, ref) => {
+  const [isChecked, setIsChecked] = useState(checked);
+
+  const sizes = {
+    small: 'w-8 h-5',
+    medium: 'w-12 h-6',
+    large: 'w-16 h-8'
+  };
+
+  const thumbSizes = {
+    small: 'w-4 h-4',
+    medium: 'w-5 h-5',
+    large: 'w-6 h-6'
+  };
+
+  const handleToggle = () => {
+    if (disabled) return;
+    setIsChecked(!isChecked);
+    onChange?.(!isChecked);
+  };
+
+  return (
+    <div className={cn("flex items-center gap-3", className)}>
+      <motion.button
+        ref={ref}
+        className={cn(
+          "relative rounded-full border-2 transition-all duration-200",
+          "focus:outline-none focus:ring-2 focus:ring-blue-500/50",
+          "disabled:opacity-50 disabled:cursor-not-allowed",
+          sizes[size],
+          isChecked 
+            ? "bg-blue-500 border-blue-500 dark:bg-blue-400 dark:border-blue-400"
+            : "bg-gray-200 border-gray-200 dark:bg-gray-700 dark:border-gray-700"
+        )}
+        disabled={disabled}
+        onClick={handleToggle}
+        whileHover={{ scale: disabled ? 1 : 1.05 }}
+        whileTap={{ scale: disabled ? 1 : 0.95 }}
+        {...props}
+      >
+        <motion.div
+          className={cn(
+            "absolute top-0.5 rounded-full bg-white shadow-sm",
+            thumbSizes[size]
+          )}
+          animate={{
+            x: isChecked ? 
+              (size === 'small' ? 12 : size === 'medium' ? 24 : 36) : 2,
+            transition: { type: "spring", stiffness: 500, damping: 30 }
+          }}
+        />
+      </motion.button>
+      
+      {label && (
+        <label 
+          className="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer"
+          onClick={handleToggle}
+        >
+          {label}
+        </label>
+      )}
+    </div>
+  );
+});
+
+// ===============================
+// 🍎 APPLE BADGE COMPONENT
+// ===============================
+
+export const AppleBadge = ({ 
+  variant = 'default',
+  size = 'medium',
+  children,
+  className,
+  ...props
+}) => {
+  const variants = {
+    default: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200',
+    primary: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+    success: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+    warning: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
+    error: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+  };
+
+  const sizes = {
+    small: 'px-2 py-1 text-xs',
+    medium: 'px-3 py-1.5 text-sm',
+    large: 'px-4 py-2 text-base'
+  };
+
+  return (
+    <motion.span
+      className={cn(
+        "inline-flex items-center rounded-full font-medium",
+        "backdrop-blur-[4px] border border-current/20",
+        variants[variant],
+        sizes[size],
+        className
+      )}
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+      {...props}
+    >
+      {children}
+    </motion.span>
+  );
+};
+
+// ===============================
+// 🍎 GLASS BUTTON ALIAS
+// ===============================
+
+export const GlassButton = AppleButton;
+export const GlassInput = AppleInput;
+export const GlassTextarea = AppleTextarea;
+export const GlassToggle = AppleToggle;
+export const GlassBadge = AppleBadge;
+
 export default GlassCard;
