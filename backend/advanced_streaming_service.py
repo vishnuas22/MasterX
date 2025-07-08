@@ -14,7 +14,7 @@ from models import (
     StreamingSession, StreamInterruption, FactCheckResult, ChatSession, MentorResponse
 )
 from database import db_service
-from ai_service import ai_service
+from compatibility_layer import ai_service
 
 logger = logging.getLogger(__name__)
 
