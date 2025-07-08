@@ -78,8 +78,8 @@ load_dotenv(ROOT_DIR / '.env')
 
 # Initialize advanced analytics service as a global instance
 if not hasattr(advanced_analytics_service, 'knowledge_graph'):
-    from advanced_analytics_service import AdvancedAnalyticsService
-    advanced_analytics_service = AdvancedAnalyticsService()
+    from compatibility_layer import CompatibilityAnalyticsService
+    advanced_analytics_service = CompatibilityAnalyticsService()
 
 # Create the main app with optimized settings
 app = FastAPI(
