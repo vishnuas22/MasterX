@@ -61,13 +61,13 @@ from sklearn.cluster import DBSCAN
 # Local imports
 from models import ChatSession, ChatMessage, MentorResponse
 from database import db_service
-from personalization_engine import (
+from compatibility_layer import (
     personalization_engine, LearningDNA, AdaptiveContentParameters, 
     MoodBasedAdaptation, LearningStyle, EmotionalState, LearningPace
 )
-from model_manager import premium_model_manager, TaskType, ModelProvider
-from knowledge_graph_engine import AdvancedKnowledgeGraphEngine, Concept, ConceptRelationship
-from advanced_analytics_service import LearningEvent
+from compatibility_layer import premium_model_manager, TaskType, ModelProvider
+from compatibility_layer import AdvancedKnowledgeGraphEngine, Concept, ConceptRelationship
+from compatibility_layer import LearningEvent
 
 # Load environment variables
 load_dotenv(Path(__file__).parent / '.env')
