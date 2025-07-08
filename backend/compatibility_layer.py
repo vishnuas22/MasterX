@@ -8,49 +8,80 @@ This ensures smooth transition to the Quantum Intelligence Engine.
 All legacy AI services now point to the Quantum Intelligence Engine.
 """
 
-from quantum_intelligence_engine import quantum_intelligence_engine
+from enum import Enum
+from typing import Dict, List, Any, Optional
+from dataclasses import dataclass, field
+from datetime import datetime
 
-# Legacy service compatibility
-ai_service = quantum_intelligence_engine
-premium_ai_service = quantum_intelligence_engine  
-adaptive_ai_service = quantum_intelligence_engine
+# First, create all the enums and classes that the quantum engine needs
+class LearningStyle(Enum):
+    VISUAL = "visual"
+    AUDITORY = "auditory"
+    KINESTHETIC = "kinesthetic"
+    READING_WRITING = "reading_writing"
 
-# Model manager compatibility
-class CompatibilityModelManager:
-    def __init__(self):
-        self.quantum_engine = quantum_intelligence_engine
-    
-    async def get_optimized_response(self, *args, **kwargs):
-        # Redirect to quantum engine
-        return await self.quantum_engine.get_mentor_response(*args, **kwargs)
+class EmotionalState(Enum):
+    NEUTRAL = "neutral"
+    EXCITED = "excited"
+    CURIOUS = "curious"
+    CONFUSED = "confused"
+    FRUSTRATED = "frustrated"
+    CONFIDENT = "confident"
+    STRESSED = "stressed"
+    OVERWHELMED = "overwhelmed"
 
-premium_model_manager = CompatibilityModelManager()
+class LearningPace(Enum):
+    SLOW_DEEP = "slow_deep"
+    MODERATE = "moderate"
+    FAST_OVERVIEW = "fast_overview"
 
-# Personalization engine compatibility
-class CompatibilityPersonalizationEngine:
-    async def analyze_learning_dna(self, user_id):
-        return {"status": "quantum_enhanced"}
-    
-    async def analyze_mood_and_adapt(self, user_id, messages, context):
-        return {"status": "quantum_enhanced"}
-    
-    async def get_adaptive_content_parameters(self, user_id, context):
-        return {"status": "quantum_enhanced"}
+class TaskType(Enum):
+    EXPLANATION = "explanation"
+    SOCRATIC = "socratic"
+    DEBUG = "debug"
+    CHALLENGE = "challenge"
+    MENTOR = "mentor"
+    CREATIVE = "creative"
+    ANALYSIS = "analysis"
 
-personalization_engine = CompatibilityPersonalizationEngine()
+class ModelProvider(Enum):
+    GROQ = "groq"
+    OPENAI = "openai"
+    ANTHROPIC = "anthropic"
+    GOOGLE = "google"
 
-# Data classes for compatibility
+@dataclass
 class LearningDNA:
-    def __init__(self, **kwargs):
-        self.user_id = kwargs.get('user_id', '')
+    user_id: str
+    learning_style: LearningStyle = LearningStyle.VISUAL
+    cognitive_patterns: List[str] = field(default_factory=list)
+    preferred_pace: LearningPace = LearningPace.MODERATE
+    motivation_style: str = "achievement"
+    difficulty_preference: float = 0.5
+    curiosity_index: float = 0.7
+    learning_velocity: float = 0.6
+    metacognitive_awareness: float = 0.5
+    attention_span_minutes: int = 30
+    concept_retention_rate: float = 0.7
+    confidence_score: float = 0.6
 
+@dataclass
 class AdaptiveContentParameters:
-    def __init__(self, **kwargs):
-        pass
+    complexity_level: float = 0.5
+    explanation_depth: str = "moderate"
+    example_count: int = 2
+    interactive_elements: bool = True
+    visual_elements: bool = True
 
+@dataclass
 class MoodBasedAdaptation:
-    def __init__(self, **kwargs):
-        pass
+    detected_mood: EmotionalState = EmotionalState.NEUTRAL
+    energy_level: float = 0.7
+    stress_level: float = 0.3
+    recommended_pace: LearningPace = LearningPace.MODERATE
+    content_tone: str = "supportive"
+    interaction_style: str = "collaborative"
+    break_recommendation: bool = False
 
 # Advanced analytics compatibility
 class CompatibilityAnalyticsService:
