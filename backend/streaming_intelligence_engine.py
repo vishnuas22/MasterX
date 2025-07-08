@@ -1786,5 +1786,8 @@ async def example_usage():
     # Stop streaming engine
     await streaming_engine.stop()
 
+# Create global instance
+streaming_intelligence_engine = StreamingIntelligenceEngine()
+
 if __name__ == "__main__":
     asyncio.run(example_usage())
