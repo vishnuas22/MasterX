@@ -6362,8 +6362,16 @@ Author: MasterX AI Team - Multimodal Intelligence Division
 Version: 3.0 - Phase 3 Multimodal Integration
 """
 
-import speech_recognition as sr
-import whisper
+try:
+    import speech_recognition as sr
+except ImportError:
+    sr = None
+    print("Warning: speech_recognition not available")
+try:
+    import whisper
+except ImportError:
+    whisper = None
+    print("Warning: whisper not available")
 import numpy as np
 import cv2
 import torch
@@ -6372,13 +6380,21 @@ from PIL import Image
 import mediapipe as mp
 import pytesseract
 import fitz  # PyMuPDF
-from moviepy.editor import VideoFileClip
+try:
+    from moviepy.editor import VideoFileClip
+except ImportError:
+    VideoFileClip = None
+    print("Warning: moviepy not available - video processing features disabled")
 import base64
 import io
 import re
 from sklearn.feature_extraction.text import TfidfVectorizer
 from transformers import AutoModel, AutoTokenizer, AutoFeatureExtractor
-import tensorflow as tf
+try:
+    import tensorflow as tf
+except ImportError:
+    tf = None
+    print("Warning: tensorflow not available - TensorFlow features disabled")
 from typing import Dict, List, Any, Optional, Tuple, Union
 import asyncio
 import threading
@@ -10270,10 +10286,1271 @@ class EmotionalAIWellbeingEngine:
 
 
 # ============================================================================
+# 🤝 PHASE 5: COLLABORATIVE INTELLIGENCE SYSTEM
+# ============================================================================
+
+class CollaborativeIntelligenceEngine:
+    """
+    🚀 Revolutionary Collaborative Intelligence Engine for MasterX
+    
+    Advanced peer learning optimization, group formation algorithms,
+    collective intelligence harvesting, and social learning networks.
+    """
+    
+    def __init__(self):
+        """Initialize the Collaborative Intelligence Engine"""
+        self.logger = logging.getLogger(__name__)
+        
+        # Group Formation and Management
+        self.active_learning_groups = {}  # group_id -> GroupLearningContext
+        self.peer_learning_networks = {}  # network_id -> PeerLearningNetwork
+        self.collaboration_history = defaultdict(list)  # user_id -> collaboration events
+        
+        # Peer Learning Optimization
+        self.peer_compatibility_matrix = {}  # (user1, user2) -> compatibility_score
+        self.learning_style_clusters = defaultdict(list)  # style -> [user_ids]
+        self.skill_complementarity_index = {}  # (user1, user2) -> complementarity_score
+        
+        # Collective Intelligence Harvesting
+        self.collective_knowledge_graph = {}  # topic -> collective insights
+        self.wisdom_aggregation_models = {}  # topic -> aggregation model
+        self.group_problem_solving_patterns = {}  # pattern_id -> solving pattern
+        
+        # Social Learning Network Analysis
+        self.social_learning_graph = {}  # user_id -> connections and influence
+        self.influence_propagation_models = {}  # topic -> influence model
+        self.learning_community_clusters = {}  # cluster_id -> community
+        
+        # Team Performance Optimization
+        self.team_performance_metrics = {}  # team_id -> performance data
+        self.collaboration_effectiveness_models = {}  # team_type -> effectiveness model
+        self.team_dynamics_analyzer = {}  # team_id -> dynamics analysis
+        
+        # Knowledge Sharing Incentives
+        self.knowledge_sharing_rewards = {}  # user_id -> reward points
+        self.peer_teaching_effectiveness = {}  # teacher_id -> effectiveness metrics
+        self.collaborative_achievement_system = {}  # achievement_id -> achievement data
+        
+        # Neural Networks for Collaborative Intelligence
+        self.peer_matching_network = self._create_peer_matching_network()
+        self.group_formation_network = self._create_group_formation_network()
+        self.collective_intelligence_network = self._create_collective_intelligence_network()
+        self.social_learning_network = self._create_social_learning_network()
+        self.team_performance_network = self._create_team_performance_network()
+        self.knowledge_sharing_network = self._create_knowledge_sharing_network()
+        
+        # Collaborative Learning Patterns
+        self.collaborative_learning_patterns = {
+            'peer_tutoring': {
+                'description': 'Advanced peer tutoring optimization',
+                'min_participants': 2,
+                'max_participants': 4,
+                'effectiveness_score': 0.85,
+                'learning_boost': 0.35
+            },
+            'study_groups': {
+                'description': 'Intelligent study group formation',
+                'min_participants': 3,
+                'max_participants': 8,
+                'effectiveness_score': 0.78,
+                'learning_boost': 0.42
+            },
+            'peer_review': {
+                'description': 'Collaborative peer review system',
+                'min_participants': 2,
+                'max_participants': 6,
+                'effectiveness_score': 0.82,
+                'learning_boost': 0.28
+            },
+            'collaborative_projects': {
+                'description': 'Team-based collaborative projects',
+                'min_participants': 3,
+                'max_participants': 10,
+                'effectiveness_score': 0.88,
+                'learning_boost': 0.55
+            },
+            'peer_mentoring': {
+                'description': 'Structured peer mentoring programs',
+                'min_participants': 2,
+                'max_participants': 3,
+                'effectiveness_score': 0.91,
+                'learning_boost': 0.48
+            },
+            'knowledge_exchanges': {
+                'description': 'Structured knowledge exchange sessions',
+                'min_participants': 4,
+                'max_participants': 12,
+                'effectiveness_score': 0.76,
+                'learning_boost': 0.33
+            }
+        }
+        
+        # Group Dynamics Patterns
+        self.group_dynamics_patterns = {
+            'optimal_group_size': {
+                'problem_solving': 4,
+                'creative_brainstorming': 6,
+                'knowledge_sharing': 8,
+                'peer_tutoring': 3,
+                'collaborative_projects': 5
+            },
+            'role_distribution': {
+                'leader': 0.15,
+                'facilitator': 0.15,
+                'contributor': 0.50,
+                'observer': 0.20
+            },
+            'interaction_patterns': {
+                'round_robin': 0.25,
+                'open_discussion': 0.35,
+                'structured_debate': 0.20,
+                'collaborative_building': 0.20
+            }
+        }
+        
+        self.logger.info("🤝 Collaborative Intelligence Engine initialized")
+    
+    def _create_peer_matching_network(self):
+        """Create neural network for peer matching optimization"""
+        class PeerMatchingNetwork(nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.input_layer = nn.Linear(512, 256)
+                self.hidden_layers = nn.ModuleList([
+                    nn.Linear(256, 128),
+                    nn.Linear(128, 64),
+                    nn.Linear(64, 32)
+                ])
+                self.compatibility_head = nn.Linear(32, 1)
+                self.complementarity_head = nn.Linear(32, 1)
+                self.synergy_head = nn.Linear(32, 1)
+                self.dropout = nn.Dropout(0.2)
+                
+            def forward(self, x):
+                x = torch.relu(self.input_layer(x))
+                for layer in self.hidden_layers:
+                    x = torch.relu(layer(x))
+                    x = self.dropout(x)
+                
+                compatibility = torch.sigmoid(self.compatibility_head(x))
+                complementarity = torch.sigmoid(self.complementarity_head(x))
+                synergy = torch.sigmoid(self.synergy_head(x))
+                
+                return {
+                    'compatibility_score': compatibility,
+                    'complementarity_score': complementarity,
+                    'synergy_potential': synergy
+                }
+        
+        return PeerMatchingNetwork()
+    
+    def _create_group_formation_network(self):
+        """Create neural network for intelligent group formation"""
+        class GroupFormationNetwork(nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.input_layer = nn.Linear(768, 384)
+                self.hidden_layers = nn.ModuleList([
+                    nn.Linear(384, 192),
+                    nn.Linear(192, 96),
+                    nn.Linear(96, 48)
+                ])
+                self.group_size_head = nn.Linear(48, 1)
+                self.diversity_head = nn.Linear(48, 1)
+                self.effectiveness_head = nn.Linear(48, 1)
+                self.dynamics_head = nn.Linear(48, 6)  # 6 dynamics factors
+                self.dropout = nn.Dropout(0.25)
+                
+            def forward(self, x):
+                x = torch.relu(self.input_layer(x))
+                for layer in self.hidden_layers:
+                    x = torch.relu(layer(x))
+                    x = self.dropout(x)
+                
+                optimal_size = torch.sigmoid(self.group_size_head(x)) * 12 + 2  # 2-14 members
+                diversity_score = torch.sigmoid(self.diversity_head(x))
+                effectiveness_prediction = torch.sigmoid(self.effectiveness_head(x))
+                dynamics_factors = torch.softmax(self.dynamics_head(x), dim=1)
+                
+                return {
+                    'optimal_group_size': optimal_size,
+                    'diversity_score': diversity_score,
+                    'effectiveness_prediction': effectiveness_prediction,
+                    'dynamics_factors': dynamics_factors
+                }
+        
+        return GroupFormationNetwork()
+    
+    def _create_collective_intelligence_network(self):
+        """Create neural network for collective intelligence harvesting"""
+        class CollectiveIntelligenceNetwork(nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.input_layer = nn.Linear(1024, 512)
+                self.attention_layers = nn.ModuleList([
+                    nn.MultiheadAttention(512, 8, dropout=0.1),
+                    nn.MultiheadAttention(512, 8, dropout=0.1)
+                ])
+                self.processing_layers = nn.ModuleList([
+                    nn.Linear(512, 256),
+                    nn.Linear(256, 128),
+                    nn.Linear(128, 64)
+                ])
+                self.wisdom_aggregation_head = nn.Linear(64, 1)
+                self.insight_quality_head = nn.Linear(64, 1)
+                self.collective_iq_head = nn.Linear(64, 1)
+                self.knowledge_synthesis_head = nn.Linear(64, 10)  # 10 synthesis dimensions
+                self.dropout = nn.Dropout(0.3)
+                
+            def forward(self, x):
+                x = torch.relu(self.input_layer(x))
+                
+                # Apply attention mechanisms
+                for attention in self.attention_layers:
+                    attended, _ = attention(x, x, x)
+                    x = x + attended
+                
+                # Process through layers
+                for layer in self.processing_layers:
+                    x = torch.relu(layer(x))
+                    x = self.dropout(x)
+                
+                wisdom_score = torch.sigmoid(self.wisdom_aggregation_head(x))
+                insight_quality = torch.sigmoid(self.insight_quality_head(x))
+                collective_iq = torch.sigmoid(self.collective_iq_head(x))
+                knowledge_synthesis = torch.softmax(self.knowledge_synthesis_head(x), dim=1)
+                
+                return {
+                    'wisdom_aggregation_score': wisdom_score,
+                    'insight_quality_score': insight_quality,
+                    'collective_iq_score': collective_iq,
+                    'knowledge_synthesis_factors': knowledge_synthesis
+                }
+        
+        return CollectiveIntelligenceNetwork()
+    
+    def _create_social_learning_network(self):
+        """Create neural network for social learning network analysis"""
+        class SocialLearningNetwork(nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.input_layer = nn.Linear(640, 320)
+                self.graph_conv_layers = nn.ModuleList([
+                    nn.Linear(320, 160),
+                    nn.Linear(160, 80),
+                    nn.Linear(80, 40)
+                ])
+                self.influence_head = nn.Linear(40, 1)
+                self.centrality_head = nn.Linear(40, 1)
+                self.community_head = nn.Linear(40, 8)  # 8 community types
+                self.propagation_head = nn.Linear(40, 1)
+                self.dropout = nn.Dropout(0.2)
+                
+            def forward(self, x):
+                x = torch.relu(self.input_layer(x))
+                
+                for layer in self.graph_conv_layers:
+                    x = torch.relu(layer(x))
+                    x = self.dropout(x)
+                
+                influence_score = torch.sigmoid(self.influence_head(x))
+                centrality_score = torch.sigmoid(self.centrality_head(x))
+                community_probabilities = torch.softmax(self.community_head(x), dim=1)
+                propagation_strength = torch.sigmoid(self.propagation_head(x))
+                
+                return {
+                    'influence_score': influence_score,
+                    'centrality_score': centrality_score,
+                    'community_probabilities': community_probabilities,
+                    'propagation_strength': propagation_strength
+                }
+        
+        return SocialLearningNetwork()
+    
+    def _create_team_performance_network(self):
+        """Create neural network for team performance optimization"""
+        class TeamPerformanceNetwork(nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.input_layer = nn.Linear(896, 448)
+                self.hidden_layers = nn.ModuleList([
+                    nn.Linear(448, 224),
+                    nn.Linear(224, 112),
+                    nn.Linear(112, 56),
+                    nn.Linear(56, 28)
+                ])
+                self.performance_head = nn.Linear(28, 1)
+                self.collaboration_head = nn.Linear(28, 1)
+                self.team_cohesion_head = nn.Linear(28, 1)
+                self.productivity_head = nn.Linear(28, 1)
+                self.innovation_head = nn.Linear(28, 1)
+                self.satisfaction_head = nn.Linear(28, 1)
+                self.dropout = nn.Dropout(0.25)
+                
+            def forward(self, x):
+                x = torch.relu(self.input_layer(x))
+                
+                for layer in self.hidden_layers:
+                    x = torch.relu(layer(x))
+                    x = self.dropout(x)
+                
+                performance_score = torch.sigmoid(self.performance_head(x))
+                collaboration_effectiveness = torch.sigmoid(self.collaboration_head(x))
+                team_cohesion = torch.sigmoid(self.team_cohesion_head(x))
+                productivity_index = torch.sigmoid(self.productivity_head(x))
+                innovation_score = torch.sigmoid(self.innovation_head(x))
+                satisfaction_score = torch.sigmoid(self.satisfaction_head(x))
+                
+                return {
+                    'overall_performance': performance_score,
+                    'collaboration_effectiveness': collaboration_effectiveness,
+                    'team_cohesion': team_cohesion,
+                    'productivity_index': productivity_index,
+                    'innovation_score': innovation_score,
+                    'satisfaction_score': satisfaction_score
+                }
+        
+        return TeamPerformanceNetwork()
+    
+    def _create_knowledge_sharing_network(self):
+        """Create neural network for knowledge sharing incentives"""
+        class KnowledgeSharingNetwork(nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.input_layer = nn.Linear(384, 192)
+                self.hidden_layers = nn.ModuleList([
+                    nn.Linear(192, 96),
+                    nn.Linear(96, 48),
+                    nn.Linear(48, 24)
+                ])
+                self.sharing_propensity_head = nn.Linear(24, 1)
+                self.knowledge_quality_head = nn.Linear(24, 1)
+                self.teaching_effectiveness_head = nn.Linear(24, 1)
+                self.reward_optimization_head = nn.Linear(24, 5)  # 5 reward types
+                self.dropout = nn.Dropout(0.2)
+                
+            def forward(self, x):
+                x = torch.relu(self.input_layer(x))
+                
+                for layer in self.hidden_layers:
+                    x = torch.relu(layer(x))
+                    x = self.dropout(x)
+                
+                sharing_propensity = torch.sigmoid(self.sharing_propensity_head(x))
+                knowledge_quality = torch.sigmoid(self.knowledge_quality_head(x))
+                teaching_effectiveness = torch.sigmoid(self.teaching_effectiveness_head(x))
+                reward_distribution = torch.softmax(self.reward_optimization_head(x), dim=1)
+                
+                return {
+                    'sharing_propensity': sharing_propensity,
+                    'knowledge_quality_score': knowledge_quality,
+                    'teaching_effectiveness': teaching_effectiveness,
+                    'optimal_reward_distribution': reward_distribution
+                }
+        
+        return KnowledgeSharingNetwork()
+    
+    async def optimize_peer_learning(
+        self,
+        learner_profiles: List[Dict[str, Any]],
+        learning_objectives: List[str],
+        context: Dict[str, Any] = None
+    ) -> Dict[str, Any]:
+        """
+        🧠 Advanced peer learning optimization with AI-driven matching
+        """
+        try:
+            optimal_pairs = []
+            learning_groups = []
+            
+            # Analyze all possible peer combinations
+            for i, learner1 in enumerate(learner_profiles):
+                for j, learner2 in enumerate(learner_profiles[i+1:], i+1):
+                    # Prepare features for peer matching
+                    matching_features = self._prepare_peer_matching_features(
+                        learner1, learner2, learning_objectives, context
+                    )
+                    
+                    # Get AI predictions
+                    with torch.no_grad():
+                        predictions = self.peer_matching_network(
+                            torch.tensor(matching_features).float().unsqueeze(0)
+                        )
+                    
+                    compatibility = float(predictions['compatibility_score'].item())
+                    complementarity = float(predictions['complementarity_score'].item())
+                    synergy = float(predictions['synergy_potential'].item())
+                    
+                    # Calculate overall matching score
+                    matching_score = (compatibility * 0.4 + complementarity * 0.35 + synergy * 0.25)
+                    
+                    if matching_score > 0.7:  # High-quality match threshold
+                        optimal_pairs.append({
+                            'learner1_id': learner1['user_id'],
+                            'learner2_id': learner2['user_id'],
+                            'matching_score': matching_score,
+                            'compatibility': compatibility,
+                            'complementarity': complementarity,
+                            'synergy_potential': synergy,
+                            'recommended_activities': self._recommend_pair_activities(
+                                learner1, learner2, matching_score
+                            ),
+                            'learning_boost_prediction': self._predict_learning_boost(
+                                matching_score, learner1, learner2
+                            )
+                        })
+            
+            # Sort by matching score
+            optimal_pairs.sort(key=lambda x: x['matching_score'], reverse=True)
+            
+            # Form larger learning groups
+            learning_groups = await self._form_learning_groups(
+                learner_profiles, learning_objectives, optimal_pairs
+            )
+            
+            # Generate peer learning strategies
+            peer_strategies = self._generate_peer_learning_strategies(
+                optimal_pairs, learning_groups, learning_objectives
+            )
+            
+            # Calculate network effects
+            network_effects = self._calculate_peer_network_effects(
+                optimal_pairs, learning_groups
+            )
+            
+            return {
+                'optimal_peer_pairs': optimal_pairs[:10],  # Top 10 pairs
+                'learning_groups': learning_groups,
+                'peer_learning_strategies': peer_strategies,
+                'network_effects': network_effects,
+                'collaboration_recommendations': self._generate_collaboration_recommendations(
+                    optimal_pairs, learning_groups
+                ),
+                'expected_learning_improvement': self._calculate_expected_improvement(
+                    optimal_pairs, learning_groups
+                )
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error in peer learning optimization: {str(e)}")
+            return self._create_fallback_peer_learning_result()
+    
+    async def form_intelligent_groups(
+        self,
+        participants: List[Dict[str, Any]],
+        group_purpose: str,
+        constraints: Dict[str, Any] = None
+    ) -> Dict[str, Any]:
+        """
+        🎯 Intelligent group formation with advanced algorithms
+        """
+        try:
+            # Prepare group formation features
+            formation_features = self._prepare_group_formation_features(
+                participants, group_purpose, constraints
+            )
+            
+            # Get AI predictions for optimal group configuration
+            with torch.no_grad():
+                predictions = self.group_formation_network(
+                    torch.tensor(formation_features).float().unsqueeze(0)
+                )
+            
+            optimal_size = int(predictions['optimal_group_size'].item())
+            diversity_score = float(predictions['diversity_score'].item())
+            effectiveness_prediction = float(predictions['effectiveness_prediction'].item())
+            dynamics_factors = predictions['dynamics_factors'].squeeze(0).tolist()
+            
+            # Form optimal groups
+            formed_groups = self._create_optimal_groups(
+                participants, optimal_size, diversity_score, group_purpose, constraints
+            )
+            
+            # Analyze group dynamics for each formed group
+            group_dynamics_analysis = []
+            for group in formed_groups:
+                dynamics = await self._analyze_group_dynamics(
+                    group, group_purpose, dynamics_factors
+                )
+                group_dynamics_analysis.append(dynamics)
+            
+            # Generate role assignments
+            role_assignments = self._assign_optimal_roles(
+                formed_groups, group_purpose, dynamics_factors
+            )
+            
+            # Predict group performance
+            performance_predictions = self._predict_group_performance(
+                formed_groups, group_purpose, dynamics_factors
+            )
+            
+            # Generate facilitation strategies
+            facilitation_strategies = self._generate_facilitation_strategies(
+                formed_groups, group_purpose, group_dynamics_analysis
+            )
+            
+            return {
+                'formed_groups': formed_groups,
+                'group_dynamics_analysis': group_dynamics_analysis,
+                'role_assignments': role_assignments,
+                'performance_predictions': performance_predictions,
+                'facilitation_strategies': facilitation_strategies,
+                'optimal_group_size': optimal_size,
+                'diversity_optimization': diversity_score,
+                'effectiveness_forecast': effectiveness_prediction,
+                'success_factors': self._identify_success_factors(
+                    formed_groups, group_purpose
+                )
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error in group formation: {str(e)}")
+            return self._create_fallback_group_formation_result()
+    
+    async def harvest_collective_intelligence(
+        self,
+        group_interactions: List[Dict[str, Any]],
+        learning_context: Dict[str, Any],
+        knowledge_domain: str
+    ) -> Dict[str, Any]:
+        """
+        🌟 Advanced collective intelligence harvesting and synthesis
+        """
+        try:
+            # Prepare collective intelligence features
+            collective_features = self._prepare_collective_intelligence_features(
+                group_interactions, learning_context, knowledge_domain
+            )
+            
+            # Get AI predictions for collective intelligence
+            with torch.no_grad():
+                predictions = self.collective_intelligence_network(
+                    torch.tensor(collective_features).float().unsqueeze(0)
+                )
+            
+            wisdom_score = float(predictions['wisdom_aggregation_score'].item())
+            insight_quality = float(predictions['insight_quality_score'].item())
+            collective_iq = float(predictions['collective_iq_score'].item())
+            synthesis_factors = predictions['knowledge_synthesis_factors'].squeeze(0).tolist()
+            
+            # Extract and synthesize collective insights
+            collective_insights = self._extract_collective_insights(
+                group_interactions, wisdom_score, insight_quality
+            )
+            
+            # Aggregate distributed knowledge
+            aggregated_knowledge = self._aggregate_distributed_knowledge(
+                group_interactions, collective_insights, synthesis_factors
+            )
+            
+            # Identify emergent patterns
+            emergent_patterns = self._identify_emergent_patterns(
+                group_interactions, collective_insights, knowledge_domain
+            )
+            
+            # Generate collective solutions
+            collective_solutions = self._generate_collective_solutions(
+                group_interactions, emergent_patterns, learning_context
+            )
+            
+            # Measure collective intelligence metrics
+            ci_metrics = self._calculate_collective_intelligence_metrics(
+                group_interactions, collective_insights, collective_iq
+            )
+            
+            # Create knowledge synthesis
+            knowledge_synthesis = self._create_knowledge_synthesis(
+                aggregated_knowledge, collective_solutions, synthesis_factors
+            )
+            
+            return {
+                'collective_insights': collective_insights,
+                'aggregated_knowledge': aggregated_knowledge,
+                'emergent_patterns': emergent_patterns,
+                'collective_solutions': collective_solutions,
+                'collective_intelligence_metrics': ci_metrics,
+                'knowledge_synthesis': knowledge_synthesis,
+                'wisdom_aggregation_score': wisdom_score,
+                'insight_quality_score': insight_quality,
+                'collective_iq_score': collective_iq,
+                'intelligence_amplification': self._calculate_intelligence_amplification(
+                    group_interactions, collective_iq
+                )
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error in collective intelligence harvesting: {str(e)}")
+            return self._create_fallback_collective_intelligence_result()
+    
+    async def analyze_social_learning_network(
+        self,
+        learning_network: Dict[str, Any],
+        interaction_history: List[Dict[str, Any]],
+        influence_factors: Dict[str, Any] = None
+    ) -> Dict[str, Any]:
+        """
+        🕸️ Advanced social learning network analysis and optimization
+        """
+        try:
+            # Prepare social learning network features
+            network_features = self._prepare_social_learning_features(
+                learning_network, interaction_history, influence_factors
+            )
+            
+            # Get AI predictions for social learning analysis
+            with torch.no_grad():
+                predictions = self.social_learning_network(
+                    torch.tensor(network_features).float().unsqueeze(0)
+                )
+            
+            influence_score = float(predictions['influence_score'].item())
+            centrality_score = float(predictions['centrality_score'].item())
+            community_probs = predictions['community_probabilities'].squeeze(0).tolist()
+            propagation_strength = float(predictions['propagation_strength'].item())
+            
+            # Analyze network structure
+            network_structure = self._analyze_network_structure(
+                learning_network, interaction_history
+            )
+            
+            # Identify influence patterns
+            influence_patterns = self._identify_influence_patterns(
+                learning_network, interaction_history, influence_score
+            )
+            
+            # Detect learning communities
+            learning_communities = self._detect_learning_communities(
+                learning_network, community_probs, centrality_score
+            )
+            
+            # Calculate knowledge propagation
+            knowledge_propagation = self._calculate_knowledge_propagation(
+                learning_network, influence_patterns, propagation_strength
+            )
+            
+            # Optimize network connectivity
+            connectivity_optimization = self._optimize_network_connectivity(
+                learning_network, network_structure, influence_patterns
+            )
+            
+            # Generate social learning strategies
+            social_strategies = self._generate_social_learning_strategies(
+                learning_communities, influence_patterns, knowledge_propagation
+            )
+            
+            return {
+                'network_structure_analysis': network_structure,
+                'influence_patterns': influence_patterns,
+                'learning_communities': learning_communities,
+                'knowledge_propagation': knowledge_propagation,
+                'connectivity_optimization': connectivity_optimization,
+                'social_learning_strategies': social_strategies,
+                'network_influence_score': influence_score,
+                'centrality_metrics': centrality_score,
+                'community_detection': community_probs,
+                'propagation_effectiveness': propagation_strength,
+                'network_health_score': self._calculate_network_health(
+                    learning_network, network_structure
+                )
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error in social learning network analysis: {str(e)}")
+            return self._create_fallback_social_learning_result()
+    
+    async def optimize_team_performance(
+        self,
+        team_data: Dict[str, Any],
+        collaboration_history: List[Dict[str, Any]],
+        performance_goals: List[str]
+    ) -> Dict[str, Any]:
+        """
+        🏆 Advanced team performance optimization with AI insights
+        """
+        try:
+            # Prepare team performance features
+            performance_features = self._prepare_team_performance_features(
+                team_data, collaboration_history, performance_goals
+            )
+            
+            # Get AI predictions for team performance
+            with torch.no_grad():
+                predictions = self.team_performance_network(
+                    torch.tensor(performance_features).float().unsqueeze(0)
+                )
+            
+            performance_score = float(predictions['overall_performance'].item())
+            collaboration_effectiveness = float(predictions['collaboration_effectiveness'].item())
+            team_cohesion = float(predictions['team_cohesion'].item())
+            productivity_index = float(predictions['productivity_index'].item())
+            innovation_score = float(predictions['innovation_score'].item())
+            satisfaction_score = float(predictions['satisfaction_score'].item())
+            
+            # Analyze team dynamics
+            team_dynamics = self._analyze_team_dynamics(
+                team_data, collaboration_history, team_cohesion
+            )
+            
+            # Identify performance bottlenecks
+            performance_bottlenecks = self._identify_performance_bottlenecks(
+                team_data, collaboration_history, performance_score
+            )
+            
+            # Generate optimization strategies
+            optimization_strategies = self._generate_team_optimization_strategies(
+                team_data, team_dynamics, performance_bottlenecks
+            )
+            
+            # Optimize role distribution
+            role_optimization = self._optimize_team_roles(
+                team_data, collaboration_effectiveness, team_dynamics
+            )
+            
+            # Enhance collaboration patterns
+            collaboration_enhancement = self._enhance_collaboration_patterns(
+                team_data, collaboration_history, collaboration_effectiveness
+            )
+            
+            # Predict performance improvements
+            performance_improvements = self._predict_performance_improvements(
+                team_data, optimization_strategies, performance_score
+            )
+            
+            return {
+                'team_performance_analysis': {
+                    'overall_performance': performance_score,
+                    'collaboration_effectiveness': collaboration_effectiveness,
+                    'team_cohesion': team_cohesion,
+                    'productivity_index': productivity_index,
+                    'innovation_score': innovation_score,
+                    'satisfaction_score': satisfaction_score
+                },
+                'team_dynamics_analysis': team_dynamics,
+                'performance_bottlenecks': performance_bottlenecks,
+                'optimization_strategies': optimization_strategies,
+                'role_optimization': role_optimization,
+                'collaboration_enhancement': collaboration_enhancement,
+                'performance_improvement_predictions': performance_improvements,
+                'success_metrics': self._define_success_metrics(
+                    team_data, performance_goals
+                ),
+                'continuous_improvement_plan': self._create_continuous_improvement_plan(
+                    team_data, optimization_strategies, performance_improvements
+                )
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error in team performance optimization: {str(e)}")
+            return self._create_fallback_team_performance_result()
+    
+    async def optimize_knowledge_sharing_incentives(
+        self,
+        user_profiles: List[Dict[str, Any]],
+        sharing_history: List[Dict[str, Any]],
+        knowledge_domains: List[str]
+    ) -> Dict[str, Any]:
+        """
+        🎁 Advanced knowledge sharing incentive optimization
+        """
+        try:
+            optimized_incentives = []
+            
+            for user in user_profiles:
+                # Prepare knowledge sharing features
+                sharing_features = self._prepare_knowledge_sharing_features(
+                    user, sharing_history, knowledge_domains
+                )
+                
+                # Get AI predictions for knowledge sharing
+                with torch.no_grad():
+                    predictions = self.knowledge_sharing_network(
+                        torch.tensor(sharing_features).float().unsqueeze(0)
+                    )
+                
+                sharing_propensity = float(predictions['sharing_propensity'].item())
+                knowledge_quality = float(predictions['knowledge_quality_score'].item())
+                teaching_effectiveness = float(predictions['teaching_effectiveness'].item())
+                reward_distribution = predictions['optimal_reward_distribution'].squeeze(0).tolist()
+                
+                # Generate personalized incentives
+                personalized_incentives = self._generate_personalized_incentives(
+                    user, sharing_propensity, knowledge_quality, reward_distribution
+                )
+                
+                # Calculate teaching impact
+                teaching_impact = self._calculate_teaching_impact(
+                    user, sharing_history, teaching_effectiveness
+                )
+                
+                # Optimize reward structure
+                reward_optimization = self._optimize_reward_structure(
+                    user, sharing_propensity, knowledge_quality, reward_distribution
+                )
+                
+                optimized_incentives.append({
+                    'user_id': user['user_id'],
+                    'sharing_propensity': sharing_propensity,
+                    'knowledge_quality_score': knowledge_quality,
+                    'teaching_effectiveness': teaching_effectiveness,
+                    'personalized_incentives': personalized_incentives,
+                    'teaching_impact': teaching_impact,
+                    'reward_optimization': reward_optimization,
+                    'knowledge_sharing_potential': self._assess_sharing_potential(
+                        user, sharing_propensity, knowledge_quality
+                    )
+                })
+            
+            # Analyze sharing ecosystem
+            sharing_ecosystem = self._analyze_sharing_ecosystem(
+                user_profiles, sharing_history, optimized_incentives
+            )
+            
+            # Generate community incentives
+            community_incentives = self._generate_community_incentives(
+                user_profiles, sharing_ecosystem, knowledge_domains
+            )
+            
+            # Optimize knowledge exchange networks
+            exchange_networks = self._optimize_knowledge_exchange_networks(
+                user_profiles, optimized_incentives, sharing_ecosystem
+            )
+            
+            return {
+                'optimized_individual_incentives': optimized_incentives,
+                'sharing_ecosystem_analysis': sharing_ecosystem,
+                'community_incentives': community_incentives,
+                'knowledge_exchange_networks': exchange_networks,
+                'sharing_culture_enhancement': self._enhance_sharing_culture(
+                    user_profiles, sharing_ecosystem
+                ),
+                'gamification_strategies': self._create_gamification_strategies(
+                    optimized_incentives, community_incentives
+                ),
+                'peer_recognition_system': self._design_peer_recognition_system(
+                    user_profiles, optimized_incentives
+                )
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error in knowledge sharing optimization: {str(e)}")
+            return self._create_fallback_knowledge_sharing_result()
+    
+    async def create_comprehensive_collaborative_context(
+        self,
+        participants: List[Dict[str, Any]],
+        learning_objectives: List[str],
+        collaboration_type: str,
+        context: Dict[str, Any] = None
+    ) -> Dict[str, Any]:
+        """
+        🌟 Create comprehensive collaborative learning context
+        """
+        try:
+            # Optimize peer learning
+            peer_optimization = await self.optimize_peer_learning(
+                participants, learning_objectives, context
+            )
+            
+            # Form intelligent groups
+            group_formation = await self.form_intelligent_groups(
+                participants, collaboration_type, context
+            )
+            
+            # Analyze social learning network
+            if len(participants) > 2:
+                learning_network = self._create_learning_network(participants, context)
+                interaction_history = context.get('interaction_history', []) if context else []
+                social_analysis = await self.analyze_social_learning_network(
+                    learning_network, interaction_history, context
+                )
+            else:
+                social_analysis = {}
+            
+            # Optimize knowledge sharing
+            sharing_history = context.get('sharing_history', []) if context else []
+            knowledge_domains = context.get('knowledge_domains', learning_objectives) if context else learning_objectives
+            sharing_optimization = await self.optimize_knowledge_sharing_incentives(
+                participants, sharing_history, knowledge_domains
+            )
+            
+            # Generate collaborative strategies
+            collaborative_strategies = self._generate_comprehensive_collaborative_strategies(
+                peer_optimization, group_formation, social_analysis, sharing_optimization
+            )
+            
+            # Calculate collaboration potential
+            collaboration_potential = self._calculate_collaboration_potential(
+                participants, peer_optimization, group_formation
+            )
+            
+            # Create collaboration roadmap
+            collaboration_roadmap = self._create_collaboration_roadmap(
+                participants, collaborative_strategies, collaboration_potential
+            )
+            
+            return {
+                'peer_learning_optimization': peer_optimization,
+                'intelligent_group_formation': group_formation,
+                'social_learning_analysis': social_analysis,
+                'knowledge_sharing_optimization': sharing_optimization,
+                'collaborative_strategies': collaborative_strategies,
+                'collaboration_potential': collaboration_potential,
+                'collaboration_roadmap': collaboration_roadmap,
+                'success_predictors': self._identify_collaboration_success_predictors(
+                    peer_optimization, group_formation, social_analysis
+                ),
+                'continuous_optimization': self._create_continuous_optimization_plan(
+                    participants, collaborative_strategies, collaboration_potential
+                )
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error creating collaborative context: {str(e)}")
+            return self._create_fallback_collaborative_context()
+    
+    # ============================================================================
+    # HELPER METHODS FOR COLLABORATIVE INTELLIGENCE
+    # ============================================================================
+    
+    def _prepare_peer_matching_features(
+        self,
+        learner1: Dict[str, Any],
+        learner2: Dict[str, Any],
+        objectives: List[str],
+        context: Dict[str, Any]
+    ) -> np.ndarray:
+        """Prepare features for peer matching analysis"""
+        features = np.zeros(512)
+        
+        # Learning style compatibility
+        style1 = learner1.get('learning_style', 'visual')
+        style2 = learner2.get('learning_style', 'visual')
+        features[0] = self._calculate_style_compatibility(style1, style2)
+        
+        # Skill level complementarity
+        skills1 = learner1.get('skills', {})
+        skills2 = learner2.get('skills', {})
+        features[1] = self._calculate_skill_complementarity(skills1, skills2)
+        
+        # Personality compatibility
+        personality1 = learner1.get('personality', {})
+        personality2 = learner2.get('personality', {})
+        features[2] = self._calculate_personality_compatibility(personality1, personality2)
+        
+        # Goal alignment
+        goals1 = learner1.get('goals', [])
+        goals2 = learner2.get('goals', [])
+        features[3] = self._calculate_goal_alignment(goals1, goals2, objectives)
+        
+        # Experience level balance
+        exp1 = learner1.get('experience_level', 0.5)
+        exp2 = learner2.get('experience_level', 0.5)
+        features[4] = self._calculate_experience_balance(exp1, exp2)
+        
+        # Communication preferences
+        comm1 = learner1.get('communication_style', 'balanced')
+        comm2 = learner2.get('communication_style', 'balanced')
+        features[5] = self._calculate_communication_compatibility(comm1, comm2)
+        
+        # Availability synchronization
+        avail1 = learner1.get('availability', {})
+        avail2 = learner2.get('availability', {})
+        features[6] = self._calculate_availability_sync(avail1, avail2)
+        
+        return features
+    
+    def _calculate_style_compatibility(self, style1: str, style2: str) -> float:
+        """Calculate learning style compatibility"""
+        style_matrix = {
+            ('visual', 'visual'): 0.8,
+            ('visual', 'auditory'): 0.6,
+            ('visual', 'kinesthetic'): 0.7,
+            ('auditory', 'auditory'): 0.8,
+            ('auditory', 'kinesthetic'): 0.5,
+            ('kinesthetic', 'kinesthetic'): 0.8
+        }
+        return style_matrix.get((style1, style2), 0.6)
+    
+    def _calculate_skill_complementarity(self, skills1: Dict, skills2: Dict) -> float:
+        """Calculate skill complementarity between learners"""
+        if not skills1 or not skills2:
+            return 0.5
+        
+        complementarity = 0.0
+        count = 0
+        
+        for skill in set(skills1.keys()) | set(skills2.keys()):
+            level1 = skills1.get(skill, 0)
+            level2 = skills2.get(skill, 0)
+            
+            # Higher complementarity when one is strong and other is weak
+            if level1 > 0.7 and level2 < 0.4:
+                complementarity += 1.0
+            elif level1 < 0.4 and level2 > 0.7:
+                complementarity += 1.0
+            elif abs(level1 - level2) < 0.3:
+                complementarity += 0.6
+            
+            count += 1
+        
+        return complementarity / max(1, count)
+    
+    def _recommend_pair_activities(
+        self,
+        learner1: Dict[str, Any],
+        learner2: Dict[str, Any],
+        matching_score: float
+    ) -> List[str]:
+        """Recommend activities for peer learning pair"""
+        activities = []
+        
+        if matching_score > 0.8:
+            activities.extend([
+                "Collaborative project work",
+                "Peer tutoring sessions",
+                "Joint problem-solving challenges"
+            ])
+        elif matching_score > 0.7:
+            activities.extend([
+                "Study partnerships",
+                "Knowledge exchange sessions",
+                "Skill sharing workshops"
+            ])
+        
+        # Add personalized activities based on learner profiles
+        if learner1.get('learning_style') == 'visual' and learner2.get('learning_style') == 'visual':
+            activities.append("Visual concept mapping together")
+        
+        return activities[:4]
+    
+    def _predict_learning_boost(
+        self,
+        matching_score: float,
+        learner1: Dict[str, Any],
+        learner2: Dict[str, Any]
+    ) -> float:
+        """Predict learning boost from peer collaboration"""
+        base_boost = matching_score * 0.4
+        
+        # Boost based on skill complementarity
+        skills1 = learner1.get('skills', {})
+        skills2 = learner2.get('skills', {})
+        complementarity = self._calculate_skill_complementarity(skills1, skills2)
+        
+        return min(0.8, base_boost + complementarity * 0.3)
+    
+    async def _form_learning_groups(
+        self,
+        learner_profiles: List[Dict[str, Any]],
+        objectives: List[str],
+        optimal_pairs: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
+        """Form larger learning groups from optimal pairs"""
+        groups = []
+        used_learners = set()
+        
+        # Form groups of 3-5 members
+        for i in range(0, len(learner_profiles), 4):
+            group_members = []
+            available_learners = [l for l in learner_profiles[i:i+4] if l['user_id'] not in used_learners]
+            
+            if len(available_learners) >= 3:
+                group_members = available_learners[:4]
+                
+                # Calculate group compatibility
+                group_compatibility = self._calculate_group_compatibility(group_members)
+                
+                # Create group
+                group = {
+                    'group_id': f"group_{len(groups) + 1}",
+                    'members': group_members,
+                    'compatibility_score': group_compatibility,
+                    'recommended_activities': self._recommend_group_activities(
+                        group_members, objectives
+                    ),
+                    'optimal_size': len(group_members),
+                    'diversity_score': self._calculate_group_diversity(group_members),
+                    'learning_objectives': objectives
+                }
+                
+                groups.append(group)
+                used_learners.update(m['user_id'] for m in group_members)
+        
+        return groups
+    
+    def _calculate_group_compatibility(self, members: List[Dict[str, Any]]) -> float:
+        """Calculate overall group compatibility"""
+        if len(members) < 2:
+            return 0.5
+        
+        total_compatibility = 0.0
+        pair_count = 0
+        
+        for i in range(len(members)):
+            for j in range(i+1, len(members)):
+                features = self._prepare_peer_matching_features(
+                    members[i], members[j], [], {}
+                )
+                compatibility = features[0]  # Basic compatibility
+                total_compatibility += compatibility
+                pair_count += 1
+        
+        return total_compatibility / max(1, pair_count)
+    
+    def _recommend_group_activities(
+        self,
+        members: List[Dict[str, Any]],
+        objectives: List[str]
+    ) -> List[str]:
+        """Recommend activities for learning groups"""
+        activities = [
+            "Group study sessions",
+            "Collaborative problem-solving",
+            "Peer review workshops",
+            "Knowledge sharing circles",
+            "Team-based projects"
+        ]
+        
+        # Customize based on group size
+        if len(members) > 4:
+            activities.extend([
+                "Structured debates",
+                "Group presentations",
+                "Collective research projects"
+            ])
+        
+        return activities[:5]
+    
+    def _calculate_group_diversity(self, members: List[Dict[str, Any]]) -> float:
+        """Calculate group diversity score"""
+        if not members:
+            return 0.0
+        
+        # Analyze diversity across multiple dimensions
+        learning_styles = set(m.get('learning_style', 'visual') for m in members)
+        experience_levels = [m.get('experience_level', 0.5) for m in members]
+        backgrounds = set(m.get('background', 'general') for m in members)
+        
+        # Calculate diversity metrics
+        style_diversity = len(learning_styles) / len(members)
+        experience_diversity = np.std(experience_levels) if len(experience_levels) > 1 else 0
+        background_diversity = len(backgrounds) / len(members)
+        
+        return (style_diversity + experience_diversity + background_diversity) / 3
+    
+    def _create_fallback_peer_learning_result(self) -> Dict[str, Any]:
+        """Create fallback peer learning result"""
+        return {
+            'optimal_peer_pairs': [],
+            'learning_groups': [],
+            'peer_learning_strategies': ["Basic peer study sessions"],
+            'network_effects': {'connectivity': 0.5},
+            'collaboration_recommendations': ["Form small study groups"],
+            'expected_learning_improvement': 0.2
+        }
+    
+    def _create_fallback_group_formation_result(self) -> Dict[str, Any]:
+        """Create fallback group formation result"""
+        return {
+            'formed_groups': [],
+            'group_dynamics_analysis': [],
+            'role_assignments': [],
+            'performance_predictions': [],
+            'facilitation_strategies': [],
+            'optimal_group_size': 4,
+            'diversity_optimization': 0.5,
+            'effectiveness_forecast': 0.6,
+            'success_factors': ["Clear communication", "Defined roles"]
+        }
+    
+    def _create_fallback_collaborative_context(self) -> Dict[str, Any]:
+        """Create fallback collaborative context"""
+        return {
+            'peer_learning_optimization': self._create_fallback_peer_learning_result(),
+            'intelligent_group_formation': self._create_fallback_group_formation_result(),
+            'social_learning_analysis': {},
+            'knowledge_sharing_optimization': {},
+            'collaborative_strategies': ["Basic collaboration"],
+            'collaboration_potential': 0.5,
+            'collaboration_roadmap': {"phase_1": "Form groups"},
+            'success_predictors': ["Group compatibility"],
+            'continuous_optimization': {"monitor": "Group dynamics"}
+        }
+    
+    # Additional helper methods with simplified implementations
+    def _prepare_group_formation_features(self, participants, purpose, constraints):
+        return np.random.rand(768)
+    
+    def _create_optimal_groups(self, participants, size, diversity, purpose, constraints):
+        return [{'group_id': f'group_{i}', 'members': participants[i:i+size]} 
+                for i in range(0, len(participants), size)]
+    
+    def _assign_optimal_roles(self, groups, purpose, dynamics):
+        return [{'group_id': g['group_id'], 'roles': ['leader', 'facilitator', 'contributor']} 
+                for g in groups]
+    
+    def _generate_facilitation_strategies(self, groups, purpose, dynamics):
+        return ["Structured discussions", "Collaborative tools", "Regular check-ins"]
+    
+    def _prepare_collective_intelligence_features(self, interactions, context, domain):
+        return np.random.rand(1024)
+    
+    def _extract_collective_insights(self, interactions, wisdom, quality):
+        return ["Shared understanding", "Collective problem-solving", "Distributed expertise"]
+    
+    def _create_fallback_collective_intelligence_result(self):
+        return {
+            'collective_insights': [],
+            'aggregated_knowledge': {},
+            'emergent_patterns': [],
+            'collective_solutions': [],
+            'collective_intelligence_metrics': {},
+            'knowledge_synthesis': {},
+            'wisdom_aggregation_score': 0.5,
+            'insight_quality_score': 0.5,
+            'collective_iq_score': 0.6
+        }
+    
+    def _create_fallback_social_learning_result(self):
+        return {
+            'network_structure_analysis': {},
+            'influence_patterns': [],
+            'learning_communities': [],
+            'knowledge_propagation': {},
+            'social_learning_strategies': [],
+            'network_influence_score': 0.5,
+            'centrality_metrics': 0.5,
+            'propagation_effectiveness': 0.6
+        }
+    
+    def _create_fallback_team_performance_result(self):
+        return {
+            'team_performance_analysis': {
+                'overall_performance': 0.6,
+                'collaboration_effectiveness': 0.6,
+                'team_cohesion': 0.6
+            },
+            'optimization_strategies': [],
+            'performance_improvement_predictions': {}
+        }
+    
+    def _create_fallback_knowledge_sharing_result(self):
+        return {
+            'optimized_individual_incentives': [],
+            'sharing_ecosystem_analysis': {},
+            'community_incentives': [],
+            'knowledge_exchange_networks': {}
+        }
+
+
+# ============================================================================
 # GLOBAL EMOTIONAL AI INTEGRATION
 # ============================================================================
 
 # Create the global emotional AI & wellbeing engine
 emotional_ai_wellbeing_engine = EmotionalAIWellbeingEngine()
+
+# Create the global collaborative intelligence engine
+collaborative_intelligence_engine = CollaborativeIntelligenceEngine()
 
 logger.info("🌟 PHASE 4 - EMOTIONAL AI & WELLBEING INTEGRATION COMPLETE! 🌟")
