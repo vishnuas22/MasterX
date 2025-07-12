@@ -11585,3 +11585,2470 @@ This enhancement adds 1,200+ lines of cutting-edge gamification capabilities.
 
 Phase 6 of 8 - Advanced Gamification Intelligence Enhancement
 """
+
+# ============================================================================
+# GAMIFICATION ENUMS & DATA STRUCTURES
+# ============================================================================
+
+class AchievementType(Enum):
+    """Types of dynamic achievements"""
+    LEARNING_MILESTONE = "learning_milestone"
+    STREAK_ACHIEVEMENT = "streak_achievement"
+    MASTERY_BADGE = "mastery_badge"
+    SOCIAL_RECOGNITION = "social_recognition"
+    INNOVATION_AWARD = "innovation_award"
+    PERSISTENCE_TROPHY = "persistence_trophy"
+    COLLABORATION_HONOR = "collaboration_honor"
+    BREAKTHROUGH_MEDAL = "breakthrough_medal"
+
+class ChallengeCategory(Enum):
+    """Categories of personalized challenges"""
+    SKILL_BUILDING = "skill_building"
+    KNOWLEDGE_APPLICATION = "knowledge_application"
+    CREATIVE_SYNTHESIS = "creative_synthesis"
+    PEER_COLLABORATION = "peer_collaboration"
+    REAL_WORLD_PROJECT = "real_world_project"
+    RAPID_FIRE_QUIZ = "rapid_fire_quiz"
+    DEEP_DIVE_RESEARCH = "deep_dive_research"
+    TEACHING_OTHERS = "teaching_others"
+
+class CompetitionType(Enum):
+    """Types of social competitions"""
+    INDIVIDUAL_LEADERBOARD = "individual_leaderboard"
+    TEAM_CHALLENGE = "team_challenge"
+    KNOWLEDGE_DUEL = "knowledge_duel"
+    COLLABORATIVE_PROJECT = "collaborative_project"
+    SPEED_LEARNING = "speed_learning"
+    CREATIVITY_CONTEST = "creativity_contest"
+    MENTORSHIP_CIRCLE = "mentorship_circle"
+    GLOBAL_TOURNAMENT = "global_tournament"
+
+class RewardPsychology(Enum):
+    """Psychological reward optimization types"""
+    INTRINSIC_MOTIVATION = "intrinsic_motivation"
+    ACHIEVEMENT_ORIENTED = "achievement_oriented"
+    SOCIAL_RECOGNITION = "social_recognition"
+    PROGRESS_SATISFACTION = "progress_satisfaction"
+    MASTERY_FULFILLMENT = "mastery_fulfillment"
+    SURPRISE_DELIGHT = "surprise_delight"
+    ANTICIPATION_BUILDING = "anticipation_building"
+    COMPLETION_EUPHORIA = "completion_euphoria"
+
+@dataclass
+class DynamicAchievement:
+    """Dynamic AI-generated achievement"""
+    achievement_id: str
+    title: str
+    description: str
+    category: AchievementType
+    difficulty_tier: int  # 1-10
+    points_reward: int
+    badge_design: Dict[str, Any]
+    unlock_criteria: Dict[str, Any]
+    personalization_factors: List[str]
+    rarity_score: float  # 0.0-1.0
+    social_sharing_bonus: int
+    created_at: datetime
+    expires_at: Optional[datetime] = None
+    is_limited_time: bool = False
+
+@dataclass
+class PersonalizedChallenge:
+    """AI-personalized learning challenge"""
+    challenge_id: str
+    title: str
+    description: str
+    category: ChallengeCategory
+    difficulty_level: float  # 1.0-10.0
+    estimated_duration: timedelta
+    learning_objectives: List[str]
+    prerequisite_skills: List[str]
+    adaptive_parameters: Dict[str, Any]
+    success_criteria: Dict[str, Any]
+    reward_structure: Dict[str, int]
+    collaboration_required: bool
+    real_world_application: str
+    motivation_hooks: List[str]
+    created_at: datetime
+
+@dataclass
+class CompetitionEvent:
+    """Social competition event"""
+    event_id: str
+    title: str
+    description: str
+    competition_type: CompetitionType
+    start_time: datetime
+    end_time: datetime
+    max_participants: int
+    current_participants: List[str]
+    prize_pool: Dict[str, Any]
+    fairness_algorithm: str
+    skill_matching: bool
+    leaderboard: List[Dict[str, Any]]
+    rules: Dict[str, Any]
+    social_features: List[str]
+
+@dataclass
+class ProgressVisualization:
+    """Multi-dimensional progress tracking"""
+    user_id: str
+    skill_radar: Dict[str, float]  # Radar chart data
+    learning_velocity: List[float]  # Time series
+    mastery_heat_map: Dict[str, Dict[str, float]]
+    achievement_timeline: List[Dict[str, Any]]
+    knowledge_graph: Dict[str, Any]
+    habit_streaks: Dict[str, int]
+    social_connections: List[str]
+    growth_predictions: Dict[str, float]
+    bottleneck_analysis: List[str]
+
+@dataclass
+class HabitFormationMetrics:
+    """Neuroscience-based habit formation tracking"""
+    habit_id: str
+    habit_name: str
+    formation_stage: str  # cue, routine, reward, repeat
+    neural_pathway_strength: float  # 0.0-1.0
+    consistency_score: float
+    environmental_triggers: List[str]
+    reward_sensitivity: float
+    automaticity_level: float
+    relapse_risk_factors: List[str]
+    reinforcement_schedule: Dict[str, Any]
+
+# ============================================================================
+# DYNAMIC ACHIEVEMENT GENERATOR
+# ============================================================================
+
+class DynamicAchievementGenerator:
+    """
+    AI-powered dynamic achievement generation system
+    Creates personalized achievements based on user behavior and learning patterns
+    """
+    
+    def __init__(self):
+        self.achievement_templates = {}
+        self.rarity_thresholds = {
+            'common': 0.7,
+            'rare': 0.5,
+            'epic': 0.2,
+            'legendary': 0.05,
+            'mythical': 0.01
+        }
+        self.personality_mappings = {}
+        self.achievement_history = defaultdict(list)
+        self.ai_creativity_engine = self._initialize_creativity_engine()
+        
+        logger.info("🎯 Dynamic Achievement Generator initialized")
+    
+    def _initialize_creativity_engine(self) -> Dict[str, Any]:
+        """Initialize AI creativity engine for achievement generation"""
+        return {
+            'metaphor_bank': [
+                'digital architect', 'knowledge navigator', 'wisdom seeker',
+                'learning alchemist', 'skill craftsman', 'insight pioneer'
+            ],
+            'action_verbs': [
+                'mastered', 'conquered', 'unlocked', 'discovered', 'achieved',
+                'transcended', 'pioneered', 'illuminated', 'crystallized'
+            ],
+            'power_words': [
+                'breakthrough', 'milestone', 'triumph', 'excellence', 'mastery',
+                'innovation', 'dedication', 'persistence', 'brilliance'
+            ],
+            'emotional_triggers': [
+                'pride', 'accomplishment', 'satisfaction', 'excitement',
+                'wonder', 'confidence', 'empowerment', 'fulfillment'
+            ]
+        }
+    
+    async def generate_personalized_achievement(
+        self, 
+        user_id: str, 
+        learning_context: Dict[str, Any],
+        behavioral_patterns: Dict[str, Any]
+    ) -> DynamicAchievement:
+        """Generate AI-personalized achievement"""
+        try:
+            # Analyze user's learning DNA
+            learning_dna = await self._analyze_user_learning_dna(user_id)
+            
+            # Determine achievement category based on recent activities
+            category = await self._determine_optimal_category(learning_context, behavioral_patterns)
+            
+            # Calculate difficulty tier
+            difficulty_tier = await self._calculate_optimal_difficulty(user_id, learning_context)
+            
+            # Generate creative content
+            title, description = await self._generate_creative_content(
+                category, difficulty_tier, learning_dna, behavioral_patterns
+            )
+            
+            # Calculate rarity score
+            rarity_score = await self._calculate_rarity_score(category, difficulty_tier, user_id)
+            
+            # Design unlock criteria
+            unlock_criteria = await self._design_unlock_criteria(
+                category, difficulty_tier, learning_context
+            )
+            
+            # Calculate rewards
+            points_reward = await self._calculate_reward_points(difficulty_tier, rarity_score)
+            
+            # Generate badge design
+            badge_design = await self._generate_badge_design(category, difficulty_tier, rarity_score)
+            
+            achievement = DynamicAchievement(
+                achievement_id=str(uuid.uuid4()),
+                title=title,
+                description=description,
+                category=category,
+                difficulty_tier=difficulty_tier,
+                points_reward=points_reward,
+                badge_design=badge_design,
+                unlock_criteria=unlock_criteria,
+                personalization_factors=await self._extract_personalization_factors(learning_dna),
+                rarity_score=rarity_score,
+                social_sharing_bonus=int(points_reward * 0.2),
+                created_at=datetime.now(),
+                is_limited_time=rarity_score < 0.1
+            )
+            
+            # Set expiration for limited time achievements
+            if achievement.is_limited_time:
+                achievement.expires_at = datetime.now() + timedelta(days=7)
+            
+            # Store achievement
+            self.achievement_history[user_id].append(achievement)
+            
+            logger.info(f"✨ Generated personalized achievement: {title} for user {user_id}")
+            return achievement
+            
+        except Exception as e:
+            logger.error(f"Error generating personalized achievement: {str(e)}")
+            # Return fallback achievement
+            return await self._generate_fallback_achievement(user_id)
+    
+    async def _analyze_user_learning_dna(self, user_id: str) -> Dict[str, Any]:
+        """Analyze user's learning DNA for personalization"""
+        try:
+            # Get user data from database
+            user_data = await db_service.get_user(user_id)
+            if not user_data:
+                return self._default_learning_dna()
+            
+            # Extract learning patterns
+            sessions = await db_service.get_user_sessions(user_id, active_only=False)
+            progress = await db_service.get_user_progress(user_id)
+            
+            # Analyze patterns
+            learning_dna = {
+                'preferred_learning_style': await self._detect_learning_style(sessions),
+                'motivation_drivers': await self._detect_motivation_drivers(sessions, progress),
+                'difficulty_preference': await self._calculate_difficulty_preference(sessions),
+                'social_tendency': await self._analyze_social_tendency(user_id),
+                'achievement_sensitivity': await self._calculate_achievement_sensitivity(user_id),
+                'creativity_index': await self._calculate_creativity_index(sessions),
+                'persistence_level': await self._calculate_persistence_level(sessions),
+                'collaboration_preference': await self._analyze_collaboration_preference(user_id)
+            }
+            
+            return learning_dna
+            
+        except Exception as e:
+            logger.error(f"Error analyzing learning DNA: {str(e)}")
+            return self._default_learning_dna()
+    
+    def _default_learning_dna(self) -> Dict[str, Any]:
+        """Default learning DNA structure"""
+        return {
+            'preferred_learning_style': 'adaptive',
+            'motivation_drivers': ['achievement', 'mastery'],
+            'difficulty_preference': 0.6,
+            'social_tendency': 0.5,
+            'achievement_sensitivity': 0.7,
+            'creativity_index': 0.6,
+            'persistence_level': 0.7,
+            'collaboration_preference': 0.5
+        }
+    
+    async def _determine_optimal_category(
+        self, 
+        learning_context: Dict[str, Any],
+        behavioral_patterns: Dict[str, Any]
+    ) -> AchievementType:
+        """Determine optimal achievement category"""
+        
+        # Analyze recent activities
+        recent_streak = learning_context.get('consecutive_days', 0)
+        mastery_events = behavioral_patterns.get('mastery_events', 0)
+        social_interactions = behavioral_patterns.get('social_interactions', 0)
+        innovation_attempts = behavioral_patterns.get('innovation_attempts', 0)
+        persistence_incidents = behavioral_patterns.get('persistence_incidents', 0)
+        
+        # Decision logic
+        if recent_streak >= 7:
+            return AchievementType.STREAK_ACHIEVEMENT
+        elif mastery_events >= 3:
+            return AchievementType.MASTERY_BADGE
+        elif social_interactions >= 5:
+            return AchievementType.SOCIAL_RECOGNITION
+        elif innovation_attempts >= 2:
+            return AchievementType.INNOVATION_AWARD
+        elif persistence_incidents >= 3:
+            return AchievementType.PERSISTENCE_TROPHY
+        else:
+            return AchievementType.LEARNING_MILESTONE
+    
+    async def _calculate_optimal_difficulty(
+        self, 
+        user_id: str, 
+        learning_context: Dict[str, Any]
+    ) -> int:
+        """Calculate optimal difficulty tier (1-10)"""
+        
+        # Get user's historical performance
+        user_achievements = self.achievement_history.get(user_id, [])
+        avg_difficulty = np.mean([a.difficulty_tier for a in user_achievements[-10:]]) if user_achievements else 5
+        
+        # Factor in recent performance
+        recent_performance = learning_context.get('recent_performance_score', 0.7)
+        engagement_level = learning_context.get('engagement_level', 0.6)
+        
+        # Calculate optimal difficulty
+        base_difficulty = avg_difficulty + (recent_performance - 0.7) * 3
+        engagement_modifier = (engagement_level - 0.5) * 2
+        
+        optimal_difficulty = int(np.clip(base_difficulty + engagement_modifier, 1, 10))
+        
+        return optimal_difficulty
+    
+    async def _generate_creative_content(
+        self,
+        category: AchievementType,
+        difficulty_tier: int,
+        learning_dna: Dict[str, Any],
+        behavioral_patterns: Dict[str, Any]
+    ) -> Tuple[str, str]:
+        """Generate creative title and description"""
+        
+        creativity_engine = self.ai_creativity_engine
+        
+        # Select metaphor based on learning DNA
+        preferred_style = learning_dna.get('preferred_learning_style', 'adaptive')
+        metaphor = np.random.choice(creativity_engine['metaphor_bank'])
+        action_verb = np.random.choice(creativity_engine['action_verbs'])
+        power_word = np.random.choice(creativity_engine['power_words'])
+        
+        # Generate title based on category
+        title_templates = {
+            AchievementType.LEARNING_MILESTONE: f"{power_word} {metaphor.title()}",
+            AchievementType.STREAK_ACHIEVEMENT: f"{difficulty_tier}-Day {power_word} Streak",
+            AchievementType.MASTERY_BADGE: f"{action_verb.title()} {power_word} Master",
+            AchievementType.SOCIAL_RECOGNITION: f"Community {power_word} Leader",
+            AchievementType.INNOVATION_AWARD: f"Innovation {power_word} Pioneer",
+            AchievementType.PERSISTENCE_TROPHY: f"Unstoppable {power_word} Force",
+            AchievementType.COLLABORATION_HONOR: f"Collaborative {power_word} Champion",
+            AchievementType.BREAKTHROUGH_MEDAL: f"Breakthrough {power_word} Achiever"
+        }
+        
+        title = title_templates.get(category, f"Exceptional {power_word} Achiever")
+        
+        # Generate personalized description
+        description_elements = [
+            f"You have {action_verb} exceptional {power_word.lower()} in your learning journey.",
+            f"Your dedication as a {metaphor} has unlocked new levels of understanding.",
+            f"This achievement represents your commitment to continuous growth and excellence."
+        ]
+        
+        # Add personalization based on learning DNA
+        if learning_dna.get('social_tendency', 0.5) > 0.7:
+            description_elements.append("Your collaborative spirit inspires others in the community.")
+        
+        if learning_dna.get('creativity_index', 0.5) > 0.7:
+            description_elements.append("Your innovative thinking sets you apart as a creative learner.")
+        
+        description = " ".join(description_elements[:2])  # Keep it concise
+        
+        return title, description
+    
+    async def _calculate_rarity_score(
+        self, 
+        category: AchievementType, 
+        difficulty_tier: int, 
+        user_id: str
+    ) -> float:
+        """Calculate achievement rarity score"""
+        
+        # Base rarity by category
+        category_rarity = {
+            AchievementType.LEARNING_MILESTONE: 0.8,
+            AchievementType.STREAK_ACHIEVEMENT: 0.6,
+            AchievementType.MASTERY_BADGE: 0.4,
+            AchievementType.SOCIAL_RECOGNITION: 0.3,
+            AchievementType.INNOVATION_AWARD: 0.2,
+            AchievementType.PERSISTENCE_TROPHY: 0.3,
+            AchievementType.COLLABORATION_HONOR: 0.25,
+            AchievementType.BREAKTHROUGH_MEDAL: 0.1
+        }
+        
+        base_rarity = category_rarity.get(category, 0.5)
+        
+        # Adjust for difficulty
+        difficulty_modifier = (11 - difficulty_tier) / 10.0  # Higher difficulty = lower rarity score (more rare)
+        
+        # Factor in user's achievement history
+        user_achievements_count = len(self.achievement_history.get(user_id, []))
+        experience_modifier = min(0.1, user_achievements_count / 100.0)  # Slight rarity increase for experienced users
+        
+        final_rarity = max(0.01, base_rarity * difficulty_modifier - experience_modifier)
+        
+        return final_rarity
+    
+    async def _design_unlock_criteria(
+        self,
+        category: AchievementType,
+        difficulty_tier: int,
+        learning_context: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Design unlock criteria for achievement"""
+        
+        base_criteria = {
+            AchievementType.LEARNING_MILESTONE: {
+                'sessions_completed': difficulty_tier * 2,
+                'concepts_mastered': difficulty_tier,
+                'minimum_performance': 0.7
+            },
+            AchievementType.STREAK_ACHIEVEMENT: {
+                'consecutive_days': difficulty_tier,
+                'daily_session_completion': True,
+                'minimum_daily_engagement': 0.8
+            },
+            AchievementType.MASTERY_BADGE: {
+                'subject_mastery_level': difficulty_tier / 10.0,
+                'advanced_concepts_completed': difficulty_tier,
+                'peer_teaching_sessions': max(1, difficulty_tier // 3)
+            },
+            AchievementType.SOCIAL_RECOGNITION: {
+                'community_contributions': difficulty_tier * 3,
+                'helpful_responses': difficulty_tier * 2,
+                'positive_feedback_received': difficulty_tier
+            },
+            AchievementType.INNOVATION_AWARD: {
+                'creative_solutions_submitted': difficulty_tier,
+                'unique_approach_demonstrations': difficulty_tier // 2,
+                'innovation_score_threshold': 0.8
+            },
+            AchievementType.PERSISTENCE_TROPHY: {
+                'challenging_problems_attempted': difficulty_tier * 2,
+                'retry_attempts_on_failures': difficulty_tier * 3,
+                'persistence_score_threshold': 0.9
+            }
+        }
+        
+        return base_criteria.get(category, {'general_excellence': difficulty_tier})
+    
+    async def _calculate_reward_points(self, difficulty_tier: int, rarity_score: float) -> int:
+        """Calculate reward points for achievement"""
+        
+        base_points = difficulty_tier * 50
+        rarity_multiplier = (1.0 - rarity_score) * 2 + 1  # More rare = higher multiplier
+        
+        total_points = int(base_points * rarity_multiplier)
+        
+        # Ensure minimum and maximum bounds
+        return max(50, min(2000, total_points))
+    
+    async def _generate_badge_design(
+        self,
+        category: AchievementType,
+        difficulty_tier: int,
+        rarity_score: float
+    ) -> Dict[str, Any]:
+        """Generate badge design parameters"""
+        
+        # Color scheme based on rarity
+        if rarity_score <= 0.01:  # Mythical
+            colors = {'primary': '#FFD700', 'secondary': '#FF6B35', 'accent': '#8B5CF6'}
+        elif rarity_score <= 0.05:  # Legendary
+            colors = {'primary': '#8B5CF6', 'secondary': '#3B82F6', 'accent': '#10B981'}
+        elif rarity_score <= 0.2:  # Epic
+            colors = {'primary': '#3B82F6', 'secondary': '#10B981', 'accent': '#F59E0B'}
+        elif rarity_score <= 0.5:  # Rare
+            colors = {'primary': '#10B981', 'secondary': '#8B5CF6', 'accent': '#EF4444'}
+        else:  # Common
+            colors = {'primary': '#6B7280', 'secondary': '#9CA3AF', 'accent': '#D1D5DB'}
+        
+        # Icon selection based on category
+        category_icons = {
+            AchievementType.LEARNING_MILESTONE: 'trophy',
+            AchievementType.STREAK_ACHIEVEMENT: 'flame',
+            AchievementType.MASTERY_BADGE: 'crown',
+            AchievementType.SOCIAL_RECOGNITION: 'users',
+            AchievementType.INNOVATION_AWARD: 'lightbulb',
+            AchievementType.PERSISTENCE_TROPHY: 'mountain',
+            AchievementType.COLLABORATION_HONOR: 'handshake',
+            AchievementType.BREAKTHROUGH_MEDAL: 'star'
+        }
+        
+        badge_design = {
+            'colors': colors,
+            'icon': category_icons.get(category, 'award'),
+            'tier_indicator': difficulty_tier,
+            'glow_effect': rarity_score <= 0.2,
+            'animated': rarity_score <= 0.05,
+            'sparkle_density': max(0, int((1.0 - rarity_score) * 10)),
+            'border_style': 'legendary' if rarity_score <= 0.05 else 'epic' if rarity_score <= 0.2 else 'standard',
+            'size_modifier': 1.0 + (1.0 - rarity_score) * 0.3  # Rarer achievements are slightly larger
+        }
+        
+        return badge_design
+    
+    async def _extract_personalization_factors(self, learning_dna: Dict[str, Any]) -> List[str]:
+        """Extract personalization factors from learning DNA"""
+        factors = []
+        
+        if learning_dna.get('social_tendency', 0.5) > 0.7:
+            factors.append('social_learner')
+        
+        if learning_dna.get('creativity_index', 0.5) > 0.7:
+            factors.append('creative_thinker')
+        
+        if learning_dna.get('persistence_level', 0.5) > 0.8:
+            factors.append('persistent_achiever')
+        
+        if learning_dna.get('collaboration_preference', 0.5) > 0.6:
+            factors.append('collaborative_spirit')
+        
+        if learning_dna.get('achievement_sensitivity', 0.5) > 0.8:
+            factors.append('achievement_motivated')
+        
+        return factors if factors else ['general_learner']
+    
+    async def _generate_fallback_achievement(self, user_id: str) -> DynamicAchievement:
+        """Generate fallback achievement when main generation fails"""
+        return DynamicAchievement(
+            achievement_id=str(uuid.uuid4()),
+            title="Learning Progress Champion",
+            description="Your dedication to continuous learning is recognized and celebrated.",
+            category=AchievementType.LEARNING_MILESTONE,
+            difficulty_tier=3,
+            points_reward=150,
+            badge_design={
+                'colors': {'primary': '#10B981', 'secondary': '#3B82F6', 'accent': '#8B5CF6'},
+                'icon': 'award',
+                'tier_indicator': 3,
+                'glow_effect': False,
+                'animated': False
+            },
+            unlock_criteria={'sessions_completed': 3, 'engagement_threshold': 0.6},
+            personalization_factors=['general_learner'],
+            rarity_score=0.7,
+            social_sharing_bonus=30,
+            created_at=datetime.now()
+        )
+    
+    # Helper methods for DNA analysis
+    async def _detect_learning_style(self, sessions: List) -> str:
+        """Detect user's preferred learning style from session data"""
+        if not sessions:
+            return 'adaptive'
+        
+        # Analyze session patterns
+        avg_session_length = np.mean([s.get('duration', 30) for s in sessions])
+        interactive_ratio = len([s for s in sessions if s.get('interactive_elements', 0) > 3]) / len(sessions)
+        
+        if avg_session_length > 45 and interactive_ratio < 0.3:
+            return 'deep_focus'
+        elif interactive_ratio > 0.7:
+            return 'interactive'
+        elif avg_session_length < 20:
+            return 'micro_learning'
+        else:
+            return 'adaptive'
+    
+    async def _detect_motivation_drivers(self, sessions: List, progress: List) -> List[str]:
+        """Detect user's primary motivation drivers"""
+        drivers = []
+        
+        if len(progress) > 5:
+            drivers.append('mastery')
+        
+        if len(sessions) > 10:
+            drivers.append('achievement')
+        
+        # Default drivers
+        if not drivers:
+            drivers = ['progress', 'learning']
+        
+        return drivers
+    
+    async def _calculate_difficulty_preference(self, sessions: List) -> float:
+        """Calculate user's difficulty preference (0.0-1.0)"""
+        if not sessions:
+            return 0.6
+        
+        difficulty_scores = [s.get('difficulty_level', 'intermediate') for s in sessions]
+        difficulty_values = {'beginner': 0.3, 'intermediate': 0.6, 'advanced': 0.9}
+        
+        avg_difficulty = np.mean([difficulty_values.get(d, 0.6) for d in difficulty_scores])
+        return avg_difficulty
+    
+    async def _analyze_social_tendency(self, user_id: str) -> float:
+        """Analyze user's social learning tendency"""
+        # Simplified analysis - would use actual social interaction data
+        return np.random.uniform(0.3, 0.8)
+    
+    async def _calculate_achievement_sensitivity(self, user_id: str) -> float:
+        """Calculate how sensitive user is to achievements"""
+        user_achievements = self.achievement_history.get(user_id, [])
+        if len(user_achievements) > 10:
+            return 0.9  # High achievement sensitivity
+        elif len(user_achievements) > 5:
+            return 0.7
+        else:
+            return 0.5
+    
+    async def _calculate_creativity_index(self, sessions: List) -> float:
+        """Calculate user's creativity index"""
+        if not sessions:
+            return 0.6
+        
+        # Look for creative indicators in session data
+        creative_sessions = len([s for s in sessions if s.get('creative_elements', 0) > 0])
+        return min(1.0, creative_sessions / len(sessions) + 0.5)
+    
+    async def _calculate_persistence_level(self, sessions: List) -> float:
+        """Calculate user's persistence level"""
+        if len(sessions) < 5:
+            return 0.5
+        
+        # Analyze session completion rates and retry patterns
+        completed_sessions = len([s for s in sessions if s.get('completed', True)])
+        completion_rate = completed_sessions / len(sessions)
+        
+        return min(1.0, completion_rate + 0.2)
+    
+    async def _analyze_collaboration_preference(self, user_id: str) -> float:
+        """Analyze user's collaboration preference"""
+        # Simplified analysis - would use actual collaboration data
+        return np.random.uniform(0.2, 0.9)
+
+# ============================================================================
+# PERSONALIZED CHALLENGE CREATOR
+# ============================================================================
+
+class PersonalizedChallengeCreator:
+    """
+    AI-driven personalized challenge generation system
+    Creates adaptive challenges based on user's learning profile and goals
+    """
+    
+    def __init__(self):
+        self.challenge_templates = {}
+        self.difficulty_calibration = {}
+        self.user_challenge_history = defaultdict(list)
+        self.adaptive_algorithms = self._initialize_adaptive_algorithms()
+        self.real_world_connections = self._initialize_real_world_db()
+        
+        logger.info("🎯 Personalized Challenge Creator initialized")
+    
+    def _initialize_adaptive_algorithms(self) -> Dict[str, Any]:
+        """Initialize adaptive challenge algorithms"""
+        return {
+            'difficulty_progression': {
+                'aggressive': 1.3,
+                'moderate': 1.1,
+                'gentle': 1.05
+            },
+            'challenge_variety': {
+                'high': 0.8,
+                'medium': 0.6,
+                'low': 0.4
+            },
+            'real_world_integration': {
+                'maximum': 0.9,
+                'high': 0.7,
+                'medium': 0.5,
+                'low': 0.3
+            }
+        }
+    
+    def _initialize_real_world_db(self) -> Dict[str, List[str]]:
+        """Initialize real-world application database"""
+        return {
+            'programming': [
+                'Build a personal productivity app',
+                'Create an automated data analysis tool',
+                'Develop a community problem-solving platform',
+                'Design a sustainable living tracker'
+            ],
+            'mathematics': [
+                'Optimize local business operations',
+                'Analyze environmental data patterns',
+                'Create investment strategy models',
+                'Design educational game mechanics'
+            ],
+            'science': [
+                'Investigate local environmental issues',
+                'Design sustainable technology solutions',
+                'Analyze health and wellness data',
+                'Create science communication content'
+            ],
+            'language': [
+                'Create multilingual community resources',
+                'Develop cultural exchange programs',
+                'Write compelling educational content',
+                'Design language learning tools'
+            ]
+        }
+    
+    async def create_personalized_challenge(
+        self,
+        user_id: str,
+        learning_objectives: List[str],
+        available_time: timedelta,
+        difficulty_preference: float = None
+    ) -> PersonalizedChallenge:
+        """Create AI-personalized challenge"""
+        try:
+            # Analyze user profile
+            user_profile = await self._analyze_user_profile(user_id)
+            
+            # Determine optimal challenge category
+            category = await self._determine_challenge_category(learning_objectives, user_profile)
+            
+            # Calculate adaptive difficulty
+            difficulty_level = await self._calculate_adaptive_difficulty(
+                user_id, difficulty_preference, user_profile
+            )
+            
+            # Generate challenge content
+            title, description = await self._generate_challenge_content(
+                category, difficulty_level, learning_objectives, user_profile
+            )
+            
+            # Design adaptive parameters
+            adaptive_parameters = await self._design_adaptive_parameters(
+                user_profile, difficulty_level, available_time
+            )
+            
+            # Create success criteria
+            success_criteria = await self._define_success_criteria(
+                category, difficulty_level, learning_objectives
+            )
+            
+            # Design reward structure
+            reward_structure = await self._design_reward_structure(
+                category, difficulty_level, available_time
+            )
+            
+            # Select real-world application
+            real_world_app = await self._select_real_world_application(
+                category, learning_objectives, user_profile
+            )
+            
+            # Generate motivation hooks
+            motivation_hooks = await self._generate_motivation_hooks(
+                user_profile, category, difficulty_level
+            )
+            
+            challenge = PersonalizedChallenge(
+                challenge_id=str(uuid.uuid4()),
+                title=title,
+                description=description,
+                category=category,
+                difficulty_level=difficulty_level,
+                estimated_duration=available_time,
+                learning_objectives=learning_objectives,
+                prerequisite_skills=await self._identify_prerequisites(category, difficulty_level),
+                adaptive_parameters=adaptive_parameters,
+                success_criteria=success_criteria,
+                reward_structure=reward_structure,
+                collaboration_required=user_profile.get('collaboration_preference', 0.5) > 0.7,
+                real_world_application=real_world_app,
+                motivation_hooks=motivation_hooks,
+                created_at=datetime.now()
+            )
+            
+            # Store challenge history
+            self.user_challenge_history[user_id].append(challenge)
+            
+            logger.info(f"🎯 Created personalized challenge: {title} for user {user_id}")
+            return challenge
+            
+        except Exception as e:
+            logger.error(f"Error creating personalized challenge: {str(e)}")
+            return await self._create_fallback_challenge(user_id, learning_objectives)
+    
+    async def _analyze_user_profile(self, user_id: str) -> Dict[str, Any]:
+        """Analyze comprehensive user profile for challenge personalization"""
+        try:
+            # Get user data
+            user_data = await db_service.get_user(user_id)
+            sessions = await db_service.get_user_sessions(user_id, active_only=False)
+            progress = await db_service.get_user_progress(user_id)
+            
+            # Calculate profile metrics
+            profile = {
+                'skill_levels': await self._calculate_skill_levels(progress),
+                'learning_velocity': await self._calculate_learning_velocity(sessions),
+                'challenge_completion_rate': await self._calculate_completion_rate(user_id),
+                'preferred_challenge_types': await self._analyze_preferred_types(user_id),
+                'collaboration_preference': await self._analyze_collaboration_pref(user_id),
+                'creativity_score': await self._calculate_creativity_score(sessions),
+                'persistence_metrics': await self._calculate_persistence_metrics(sessions),
+                'real_world_orientation': await self._analyze_real_world_orientation(sessions)
+            }
+            
+            return profile
+            
+        except Exception as e:
+            logger.error(f"Error analyzing user profile: {str(e)}")
+            return self._default_user_profile()
+    
+    def _default_user_profile(self) -> Dict[str, Any]:
+        """Default user profile"""
+        return {
+            'skill_levels': {'general': 0.6},
+            'learning_velocity': 0.7,
+            'challenge_completion_rate': 0.6,
+            'preferred_challenge_types': ['skill_building'],
+            'collaboration_preference': 0.5,
+            'creativity_score': 0.6,
+            'persistence_metrics': 0.7,
+            'real_world_orientation': 0.6
+        }
+    
+    async def _determine_challenge_category(
+        self,
+        learning_objectives: List[str],
+        user_profile: Dict[str, Any]
+    ) -> ChallengeCategory:
+        """Determine optimal challenge category"""
+        
+        # Analyze learning objectives
+        objective_keywords = ' '.join(learning_objectives).lower()
+        
+        # Category scoring
+        category_scores = {
+            ChallengeCategory.SKILL_BUILDING: 0.0,
+            ChallengeCategory.KNOWLEDGE_APPLICATION: 0.0,
+            ChallengeCategory.CREATIVE_SYNTHESIS: 0.0,
+            ChallengeCategory.PEER_COLLABORATION: 0.0,
+            ChallengeCategory.REAL_WORLD_PROJECT: 0.0,
+            ChallengeCategory.RAPID_FIRE_QUIZ: 0.0,
+            ChallengeCategory.DEEP_DIVE_RESEARCH: 0.0,
+            ChallengeCategory.TEACHING_OTHERS: 0.0
+        }
+        
+        # Keyword-based scoring
+        if any(word in objective_keywords for word in ['skill', 'learn', 'practice']):
+            category_scores[ChallengeCategory.SKILL_BUILDING] += 3
+        
+        if any(word in objective_keywords for word in ['apply', 'use', 'implement']):
+            category_scores[ChallengeCategory.KNOWLEDGE_APPLICATION] += 3
+        
+        if any(word in objective_keywords for word in ['create', 'design', 'innovate']):
+            category_scores[ChallengeCategory.CREATIVE_SYNTHESIS] += 3
+        
+        if any(word in objective_keywords for word in ['collaborate', 'team', 'group']):
+            category_scores[ChallengeCategory.PEER_COLLABORATION] += 3
+        
+        if any(word in objective_keywords for word in ['project', 'real', 'practical']):
+            category_scores[ChallengeCategory.REAL_WORLD_PROJECT] += 3
+        
+        # User preference-based scoring
+        if user_profile.get('collaboration_preference', 0.5) > 0.7:
+            category_scores[ChallengeCategory.PEER_COLLABORATION] += 2
+            category_scores[ChallengeCategory.TEACHING_OTHERS] += 1
+        
+        if user_profile.get('creativity_score', 0.5) > 0.7:
+            category_scores[ChallengeCategory.CREATIVE_SYNTHESIS] += 2
+        
+        if user_profile.get('real_world_orientation', 0.5) > 0.7:
+            category_scores[ChallengeCategory.REAL_WORLD_PROJECT] += 2
+        
+        # Select category with highest score
+        best_category = max(category_scores, key=category_scores.get)
+        
+        # If no clear winner, default to skill building
+        if category_scores[best_category] == 0:
+            return ChallengeCategory.SKILL_BUILDING
+        
+        return best_category
+    
+    async def _calculate_adaptive_difficulty(
+        self,
+        user_id: str,
+        difficulty_preference: Optional[float],
+        user_profile: Dict[str, Any]
+    ) -> float:
+        """Calculate adaptive difficulty level"""
+        
+        # Base difficulty from user preference
+        if difficulty_preference is not None:
+            base_difficulty = difficulty_preference * 10.0
+        else:
+            # Calculate from user profile
+            completion_rate = user_profile.get('challenge_completion_rate', 0.6)
+            learning_velocity = user_profile.get('learning_velocity', 0.7)
+            base_difficulty = (completion_rate + learning_velocity) * 5.0
+        
+        # Get user's challenge history
+        user_challenges = self.user_challenge_history.get(user_id, [])
+        
+        if user_challenges:
+            # Analyze recent performance
+            recent_challenges = user_challenges[-5:]  # Last 5 challenges
+            avg_difficulty = np.mean([c.difficulty_level for c in recent_challenges])
+            
+            # Adaptive adjustment
+            if completion_rate > 0.8:  # User is succeeding too easily
+                target_difficulty = min(10.0, avg_difficulty + 0.5)
+            elif completion_rate < 0.4:  # User is struggling
+                target_difficulty = max(1.0, avg_difficulty - 0.5)
+            else:  # Maintain current level
+                target_difficulty = avg_difficulty
+        else:
+            target_difficulty = base_difficulty
+        
+        # Ensure bounds
+        return max(1.0, min(10.0, target_difficulty))
+    
+    async def _generate_challenge_content(
+        self,
+        category: ChallengeCategory,
+        difficulty_level: float,
+        learning_objectives: List[str],
+        user_profile: Dict[str, Any]
+    ) -> Tuple[str, str]:
+        """Generate personalized challenge title and description"""
+        
+        # Title templates by category
+        title_templates = {
+            ChallengeCategory.SKILL_BUILDING: [
+                f"Master {learning_objectives[0] if learning_objectives else 'Essential Skills'} - Level {int(difficulty_level)}",
+                f"Skill Evolution Challenge: {learning_objectives[0] if learning_objectives else 'Core Competencies'}",
+                f"Progressive Mastery Quest: {learning_objectives[0] if learning_objectives else 'Advanced Techniques'}"
+            ],
+            ChallengeCategory.KNOWLEDGE_APPLICATION: [
+                f"Real-World Application: {learning_objectives[0] if learning_objectives else 'Problem Solving'}",
+                f"Practical Implementation Challenge: {learning_objectives[0] if learning_objectives else 'Applied Knowledge'}",
+                f"Theory to Practice: {learning_objectives[0] if learning_objectives else 'Hands-On Application'}"
+            ],
+            ChallengeCategory.CREATIVE_SYNTHESIS: [
+                f"Creative Innovation Challenge: {learning_objectives[0] if learning_objectives else 'Original Solutions'}",
+                f"Synthesis & Design Quest: {learning_objectives[0] if learning_objectives else 'Creative Thinking'}",
+                f"Innovation Lab: {learning_objectives[0] if learning_objectives else 'Creative Problem Solving'}"
+            ],
+            ChallengeCategory.PEER_COLLABORATION: [
+                f"Collaborative Excellence: {learning_objectives[0] if learning_objectives else 'Team Achievement'}",
+                f"Community Learning Challenge: {learning_objectives[0] if learning_objectives else 'Group Dynamics'}",
+                f"Peer Partnership Quest: {learning_objectives[0] if learning_objectives else 'Collective Intelligence'}"
+            ],
+            ChallengeCategory.REAL_WORLD_PROJECT: [
+                f"Impact Project: {learning_objectives[0] if learning_objectives else 'Real-World Solution'}",
+                f"Community Contribution Challenge: {learning_objectives[0] if learning_objectives else 'Practical Impact'}",
+                f"Applied Research Quest: {learning_objectives[0] if learning_objectives else 'Meaningful Application'}"
+            ]
+        }
+        
+        # Select title
+        templates = title_templates.get(category, ["Learning Challenge: Advanced Skills"])
+        title = np.random.choice(templates)
+        
+        # Generate description
+        description_parts = []
+        
+        # Opening
+        description_parts.append(f"This personalized challenge is designed to advance your expertise in {learning_objectives[0] if learning_objectives else 'key learning areas'}.")
+        
+        # Challenge specifics
+        if category == ChallengeCategory.SKILL_BUILDING:
+            description_parts.append(f"You'll develop mastery through progressive exercises calibrated to Level {int(difficulty_level)} difficulty.")
+        elif category == ChallengeCategory.KNOWLEDGE_APPLICATION:
+            description_parts.append("You'll apply theoretical knowledge to solve real-world problems and create practical solutions.")
+        elif category == ChallengeCategory.CREATIVE_SYNTHESIS:
+            description_parts.append("You'll synthesize diverse concepts to generate innovative solutions and creative approaches.")
+        elif category == ChallengeCategory.PEER_COLLABORATION:
+            description_parts.append("You'll work with peers to achieve collective learning goals and shared understanding.")
+        elif category == ChallengeCategory.REAL_WORLD_PROJECT:
+            description_parts.append("You'll create a meaningful project that addresses real community or industry needs.")
+        
+        # Personalization
+        if user_profile.get('creativity_score', 0.5) > 0.7:
+            description_parts.append("Creative problem-solving approaches are encouraged and will be specially recognized.")
+        
+        if user_profile.get('collaboration_preference', 0.5) > 0.7:
+            description_parts.append("Collaborative elements have been integrated to match your team-oriented learning style.")
+        
+        description = " ".join(description_parts)
+        
+        return title, description
+    
+    async def _design_adaptive_parameters(
+        self,
+        user_profile: Dict[str, Any],
+        difficulty_level: float,
+        available_time: timedelta
+    ) -> Dict[str, Any]:
+        """Design adaptive parameters for challenge"""
+        
+        return {
+            'difficulty_adjustment_rate': 0.1 if user_profile.get('learning_velocity', 0.7) > 0.8 else 0.05,
+            'hint_availability': 3 if difficulty_level > 7.0 else 5,
+            'time_pressure_factor': 0.8 if user_profile.get('persistence_metrics', 0.7) > 0.8 else 1.2,
+            'collaboration_weight': 0.3 if user_profile.get('collaboration_preference', 0.5) > 0.7 else 0.1,
+            'creativity_bonus_multiplier': 1.5 if user_profile.get('creativity_score', 0.5) > 0.7 else 1.0,
+            'real_world_emphasis': 0.8 if user_profile.get('real_world_orientation', 0.5) > 0.7 else 0.5,
+            'progress_check_frequency': int(available_time.total_seconds() / 300),  # Every 5 minutes
+            'adaptive_feedback_enabled': True,
+            'peer_comparison_enabled': user_profile.get('collaboration_preference', 0.5) > 0.5
+        }
+    
+    async def _define_success_criteria(
+        self,
+        category: ChallengeCategory,
+        difficulty_level: float,
+        learning_objectives: List[str]
+    ) -> Dict[str, Any]:
+        """Define success criteria for challenge"""
+        
+        base_criteria = {
+            'completion_threshold': max(0.7, 1.0 - (difficulty_level - 1) * 0.03),
+            'quality_standards': {
+                'accuracy_required': max(0.6, 1.0 - (difficulty_level - 1) * 0.04),
+                'creativity_bonus_threshold': 0.8,
+                'innovation_recognition_threshold': 0.9
+            },
+            'time_constraints': {
+                'optimal_completion_time': 1.0,
+                'acceptable_range': (0.7, 1.5)
+            }
+        }
+        
+        # Category-specific criteria
+        if category == ChallengeCategory.SKILL_BUILDING:
+            base_criteria['skill_demonstration_required'] = True
+            base_criteria['mastery_indicators'] = ['consistent_performance', 'technique_proficiency']
+        
+        elif category == ChallengeCategory.KNOWLEDGE_APPLICATION:
+            base_criteria['practical_application_required'] = True
+            base_criteria['real_world_relevance_score'] = 0.7
+        
+        elif category == ChallengeCategory.CREATIVE_SYNTHESIS:
+            base_criteria['originality_required'] = True
+            base_criteria['innovation_metrics'] = ['uniqueness', 'feasibility', 'impact']
+        
+        elif category == ChallengeCategory.PEER_COLLABORATION:
+            base_criteria['collaboration_quality_metrics'] = ['participation', 'contribution', 'teamwork']
+            base_criteria['individual_contribution_required'] = 0.3
+        
+        elif category == ChallengeCategory.REAL_WORLD_PROJECT:
+            base_criteria['impact_measurement_required'] = True
+            base_criteria['feasibility_assessment'] = True
+            base_criteria['sustainability_consideration'] = True
+        
+        return base_criteria
+    
+    async def _design_reward_structure(
+        self,
+        category: ChallengeCategory,
+        difficulty_level: float,
+        available_time: timedelta
+    ) -> Dict[str, int]:
+        """Design reward structure for challenge"""
+        
+        # Base points calculation
+        base_points = int(difficulty_level * 100)
+        time_bonus = max(50, int(available_time.total_seconds() / 3600 * 25))  # 25 points per hour
+        
+        # Category multipliers
+        category_multipliers = {
+            ChallengeCategory.SKILL_BUILDING: 1.0,
+            ChallengeCategory.KNOWLEDGE_APPLICATION: 1.2,
+            ChallengeCategory.CREATIVE_SYNTHESIS: 1.5,
+            ChallengeCategory.PEER_COLLABORATION: 1.3,
+            ChallengeCategory.REAL_WORLD_PROJECT: 1.8,
+            ChallengeCategory.RAPID_FIRE_QUIZ: 0.8,
+            ChallengeCategory.DEEP_DIVE_RESEARCH: 1.4,
+            ChallengeCategory.TEACHING_OTHERS: 1.6
+        }
+        
+        multiplier = category_multipliers.get(category, 1.0)
+        total_points = int((base_points + time_bonus) * multiplier)
+        
+        return {
+            'completion_points': total_points,
+            'excellence_bonus': int(total_points * 0.5),
+            'speed_bonus': int(total_points * 0.2),
+            'creativity_bonus': int(total_points * 0.3),
+            'collaboration_bonus': int(total_points * 0.25),
+            'innovation_bonus': int(total_points * 0.4),
+            'community_impact_bonus': int(total_points * 0.6)
+        }
+    
+    async def _select_real_world_application(
+        self,
+        category: ChallengeCategory,
+        learning_objectives: List[str],
+        user_profile: Dict[str, Any]
+    ) -> str:
+        """Select relevant real-world application"""
+        
+        # Determine subject area from learning objectives
+        objective_text = ' '.join(learning_objectives).lower()
+        
+        subject_area = 'general'
+        if any(word in objective_text for word in ['code', 'program', 'software', 'web', 'app']):
+            subject_area = 'programming'
+        elif any(word in objective_text for word in ['math', 'calculus', 'algebra', 'statistics']):
+            subject_area = 'mathematics'
+        elif any(word in objective_text for word in ['science', 'biology', 'chemistry', 'physics']):
+            subject_area = 'science'
+        elif any(word in objective_text for word in ['language', 'writing', 'communication']):
+            subject_area = 'language'
+        
+        # Get applications for subject area
+        applications = self.real_world_connections.get(subject_area, [
+            'Apply your skills to solve everyday problems',
+            'Create something meaningful for your community',
+            'Develop solutions that make a positive impact'
+        ])
+        
+        # Select based on user profile
+        if user_profile.get('real_world_orientation', 0.5) > 0.8:
+            return np.random.choice(applications)
+        else:
+            return f"Practice {learning_objectives[0] if learning_objectives else 'new skills'} through hands-on exercises"
+    
+    async def _generate_motivation_hooks(
+        self,
+        user_profile: Dict[str, Any],
+        category: ChallengeCategory,
+        difficulty_level: float
+    ) -> List[str]:
+        """Generate personalized motivation hooks"""
+        
+        hooks = []
+        
+        # Achievement-oriented hooks
+        if user_profile.get('challenge_completion_rate', 0.6) > 0.7:
+            hooks.append("Add another victory to your impressive challenge completion record!")
+        
+        # Social hooks
+        if user_profile.get('collaboration_preference', 0.5) > 0.7:
+            hooks.append("Join fellow learners in this collaborative journey of growth!")
+        
+        # Mastery hooks
+        if any(level > 0.8 for level in user_profile.get('skill_levels', {}).values()):
+            hooks.append("Take your expertise to the next level with this advanced challenge!")
+        
+        # Creativity hooks
+        if user_profile.get('creativity_score', 0.5) > 0.7:
+            hooks.append("Unleash your creative potential and discover innovative solutions!")
+        
+        # Progress hooks
+        hooks.append(f"This Level {int(difficulty_level)} challenge is perfectly calibrated for your current skill level!")
+        
+        # Default motivational hook
+        if not hooks:
+            hooks.append("Embark on this personalized learning adventure designed just for you!")
+        
+        return hooks[:3]  # Return top 3 hooks
+    
+    async def _identify_prerequisites(self, category: ChallengeCategory, difficulty_level: float) -> List[str]:
+        """Identify prerequisite skills for challenge"""
+        
+        prerequisites = []
+        
+        # Base prerequisites by category
+        category_prerequisites = {
+            ChallengeCategory.SKILL_BUILDING: ['basic_understanding', 'practice_willingness'],
+            ChallengeCategory.KNOWLEDGE_APPLICATION: ['theoretical_knowledge', 'problem_solving_basics'],
+            ChallengeCategory.CREATIVE_SYNTHESIS: ['creative_thinking', 'concept_connection_ability'],
+            ChallengeCategory.PEER_COLLABORATION: ['communication_skills', 'teamwork_basics'],
+            ChallengeCategory.REAL_WORLD_PROJECT: ['project_management_basics', 'practical_application_skills'],
+            ChallengeCategory.RAPID_FIRE_QUIZ: ['quick_recall', 'time_management'],
+            ChallengeCategory.DEEP_DIVE_RESEARCH: ['research_skills', 'analytical_thinking'],
+            ChallengeCategory.TEACHING_OTHERS: ['subject_mastery', 'communication_skills']
+        }
+        
+        prerequisites.extend(category_prerequisites.get(category, ['basic_skills']))
+        
+        # Add difficulty-based prerequisites
+        if difficulty_level > 7.0:
+            prerequisites.extend(['advanced_problem_solving', 'independent_learning'])
+        elif difficulty_level > 5.0:
+            prerequisites.extend(['intermediate_skills', 'persistence'])
+        else:
+            prerequisites.extend(['beginner_enthusiasm', 'growth_mindset'])
+        
+        return prerequisites
+    
+    async def _create_fallback_challenge(
+        self, 
+        user_id: str, 
+        learning_objectives: List[str]
+    ) -> PersonalizedChallenge:
+        """Create fallback challenge when main creation fails"""
+        return PersonalizedChallenge(
+            challenge_id=str(uuid.uuid4()),
+            title=f"Personalized Learning Quest: {learning_objectives[0] if learning_objectives else 'Skill Development'}",
+            description="This adaptive challenge is designed to match your learning style and help you achieve your goals through engaging, personalized activities.",
+            category=ChallengeCategory.SKILL_BUILDING,
+            difficulty_level=5.0,
+            estimated_duration=timedelta(hours=1),
+            learning_objectives=learning_objectives or ["Develop new skills"],
+            prerequisite_skills=["basic_understanding", "learning_motivation"],
+            adaptive_parameters={'difficulty_adjustment_rate': 0.1, 'hint_availability': 3},
+            success_criteria={'completion_threshold': 0.8, 'quality_standards': {'accuracy_required': 0.7}},
+            reward_structure={'completion_points': 500, 'excellence_bonus': 250},
+            collaboration_required=False,
+            real_world_application="Apply new skills to personal projects and goals",
+            motivation_hooks=["Embark on your personalized learning journey!", "Unlock your potential!"],
+            created_at=datetime.now()
+        )
+    
+    # Helper methods for user profile analysis
+    async def _calculate_skill_levels(self, progress: List) -> Dict[str, float]:
+        """Calculate user's skill levels across different areas"""
+        if not progress:
+            return {'general': 0.6}
+        
+        skill_levels = {}
+        for p in progress:
+            subject = getattr(p, 'subject', 'general')
+            competency = getattr(p, 'competency_level', 0.6)
+            skill_levels[subject] = competency
+        
+        return skill_levels
+    
+    async def _calculate_learning_velocity(self, sessions: List) -> float:
+        """Calculate user's learning velocity"""
+        if len(sessions) < 2:
+            return 0.7
+        
+        # Simplified velocity calculation
+        recent_sessions = sessions[-10:] if len(sessions) > 10 else sessions
+        avg_duration = np.mean([getattr(s, 'duration', 30) for s in recent_sessions])
+        
+        # Normalize to 0-1 scale
+        return min(1.0, avg_duration / 60.0)
+    
+    async def _calculate_completion_rate(self, user_id: str) -> float:
+        """Calculate challenge completion rate"""
+        user_challenges = self.user_challenge_history.get(user_id, [])
+        if not user_challenges:
+            return 0.6  # Default assumption
+        
+        # Would implement actual completion tracking
+        return 0.75  # Simplified
+    
+    async def _analyze_preferred_types(self, user_id: str) -> List[str]:
+        """Analyze user's preferred challenge types"""
+        user_challenges = self.user_challenge_history.get(user_id, [])
+        if not user_challenges:
+            return ['skill_building']
+        
+        # Count category preferences
+        category_counts = defaultdict(int)
+        for challenge in user_challenges:
+            category_counts[challenge.category.value] += 1
+        
+        # Return top preferences
+        sorted_prefs = sorted(category_counts.items(), key=lambda x: x[1], reverse=True)
+        return [pref[0] for pref in sorted_prefs[:3]]
+    
+    async def _analyze_collaboration_pref(self, user_id: str) -> float:
+        """Analyze collaboration preference"""
+        user_challenges = self.user_challenge_history.get(user_id, [])
+        if not user_challenges:
+            return 0.5
+        
+        collaborative_challenges = len([c for c in user_challenges if c.collaboration_required])
+        return min(1.0, collaborative_challenges / len(user_challenges) + 0.3)
+    
+    async def _calculate_creativity_score(self, sessions: List) -> float:
+        """Calculate creativity score from sessions"""
+        if not sessions:
+            return 0.6
+        
+        # Look for creative indicators
+        creative_sessions = len([s for s in sessions if getattr(s, 'creative_elements', 0) > 0])
+        return min(1.0, creative_sessions / len(sessions) + 0.4)
+    
+    async def _calculate_persistence_metrics(self, sessions: List) -> float:
+        """Calculate persistence metrics"""
+        if not sessions:
+            return 0.7
+        
+        # Analyze session completion and retry patterns
+        completed_sessions = len([s for s in sessions if getattr(s, 'completed', True)])
+        return min(1.0, completed_sessions / len(sessions))
+    
+    async def _analyze_real_world_orientation(self, sessions: List) -> float:
+        """Analyze real-world orientation"""
+        if not sessions:
+            return 0.6
+        
+        # Look for practical application indicators
+        practical_sessions = len([s for s in sessions if 'practical' in str(getattr(s, 'objectives', []))])
+        return min(1.0, practical_sessions / len(sessions) + 0.5)
+
+# ============================================================================
+# SOCIAL COMPETITION ALGORITHMS
+# ============================================================================
+
+class SocialCompetitionAlgorithms:
+    """
+    Quantum-fair social competition system with advanced matching algorithms
+    Creates balanced, engaging, and fair competitive learning experiences
+    """
+    
+    def __init__(self):
+        self.active_competitions = {}
+        self.user_skill_profiles = {}
+        self.fairness_algorithms = self._initialize_fairness_algorithms()
+        self.competition_templates = self._initialize_competition_templates()
+        self.social_dynamics_tracker = SocialDynamicsTracker()
+        self.quantum_matching_engine = QuantumMatchingEngine()
+        
+        logger.info("🏆 Social Competition Algorithms initialized")
+    
+    def _initialize_fairness_algorithms(self) -> Dict[str, Any]:
+        """Initialize quantum fairness algorithms"""
+        return {
+            'skill_balancing': {
+                'variance_threshold': 0.15,  # Maximum skill variance allowed
+                'compensation_factor': 1.2,   # Boost factor for lower-skilled participants
+                'dynamic_adjustment': True
+            },
+            'participation_equity': {
+                'max_advantage_ratio': 1.3,  # Maximum advantage one player can have
+                'experience_balancing': True,
+                'newcomer_protection': 0.8   # Protection factor for new users
+            },
+            'outcome_fairness': {
+                'effort_recognition': 0.3,   # Weight for effort vs results
+                'improvement_bonus': 0.4,    # Bonus for improvement over time
+                'collaboration_credit': 0.2  # Credit for helping others
+            }
+        }
+    
+    def _initialize_competition_templates(self) -> Dict[str, Dict[str, Any]]:
+        """Initialize competition templates"""
+        return {
+            'knowledge_sprint': {
+                'duration': timedelta(minutes=30),
+                'max_participants': 8,
+                'skill_matching_required': True,
+                'real_time_scoring': True,
+                'collaboration_allowed': False
+            },
+            'collaborative_quest': {
+                'duration': timedelta(hours=2),
+                'max_participants': 12,
+                'team_based': True,
+                'skill_diversity_preferred': True,
+                'peer_teaching_encouraged': True
+            },
+            'innovation_championship': {
+                'duration': timedelta(days=3),
+                'max_participants': 20,
+                'creativity_focus': True,
+                'expert_judging': True,
+                'public_voting': True
+            },
+            'rapid_fire_duel': {
+                'duration': timedelta(minutes=15),
+                'max_participants': 2,
+                'perfect_skill_matching': True,
+                'instant_feedback': True,
+                'best_of_series': 3
+            },
+            'community_challenge': {
+                'duration': timedelta(weeks=1),
+                'max_participants': 100,
+                'social_impact_focus': True,
+                'mentor_support': True,
+                'real_world_application': True
+            }
+        }
+    
+    async def create_competition_event(
+        self,
+        competition_type: CompetitionType,
+        organizer_id: str,
+        title: str,
+        description: str,
+        custom_parameters: Dict[str, Any] = None
+    ) -> CompetitionEvent:
+        """Create a new competition event with quantum fair matching"""
+        try:
+            # Get template
+            template_key = self._map_competition_type_to_template(competition_type)
+            template = self.competition_templates.get(template_key, {})
+            
+            # Merge custom parameters
+            if custom_parameters:
+                template.update(custom_parameters)
+            
+            # Create competition event
+            event = CompetitionEvent(
+                event_id=str(uuid.uuid4()),
+                title=title,
+                description=description,
+                competition_type=competition_type,
+                start_time=datetime.now() + timedelta(minutes=5),  # 5 min registration window
+                end_time=datetime.now() + template.get('duration', timedelta(hours=1)),
+                max_participants=template.get('max_participants', 10),
+                current_participants=[organizer_id],
+                prize_pool=await self._calculate_prize_pool(template),
+                fairness_algorithm=await self._select_fairness_algorithm(competition_type),
+                skill_matching=template.get('skill_matching_required', True),
+                leaderboard=[],
+                rules=await self._generate_competition_rules(competition_type, template),
+                social_features=await self._determine_social_features(competition_type)
+            )
+            
+            # Store active competition
+            self.active_competitions[event.event_id] = event
+            
+            logger.info(f"🏆 Created competition: {title} (ID: {event.event_id})")
+            return event
+            
+        except Exception as e:
+            logger.error(f"Error creating competition event: {str(e)}")
+            raise
+    
+    async def join_competition(self, event_id: str, user_id: str) -> Dict[str, Any]:
+        """Join user to competition with quantum fair matching"""
+        try:
+            event = self.active_competitions.get(event_id)
+            if not event:
+                return {'success': False, 'reason': 'Competition not found'}
+            
+            # Check eligibility
+            eligibility = await self._check_user_eligibility(user_id, event)
+            if not eligibility['eligible']:
+                return {'success': False, 'reason': eligibility['reason']}
+            
+            # Check capacity
+            if len(event.current_participants) >= event.max_participants:
+                return {'success': False, 'reason': 'Competition is full'}
+            
+            # Skill matching validation
+            if event.skill_matching:
+                match_quality = await self._evaluate_skill_match(user_id, event)
+                if match_quality < 0.6:  # Minimum match quality threshold
+                    return {
+                        'success': False, 
+                        'reason': 'Skill level mismatch',
+                        'suggested_alternatives': await self._suggest_alternative_competitions(user_id)
+                    }
+            
+            # Add user to competition
+            event.current_participants.append(user_id)
+            
+            # Update user's skill profile
+            await self._update_user_skill_profile(user_id, event)
+            
+            # Trigger quantum matching rebalancing if needed
+            if len(event.current_participants) > 3:
+                await self._rebalance_competition_teams(event)
+            
+            logger.info(f"👤 User {user_id} joined competition {event_id}")
+            return {
+                'success': True,
+                'competition_info': event,
+                'match_quality': match_quality if event.skill_matching else 1.0,
+                'estimated_rank_range': await self._estimate_rank_range(user_id, event)
+            }
+            
+        except Exception as e:
+            logger.error(f"Error joining competition: {str(e)}")
+            return {'success': False, 'reason': 'Internal error'}
+    
+    async def start_competition(self, event_id: str) -> Dict[str, Any]:
+        """Start competition with quantum fair team balancing"""
+        try:
+            event = self.active_competitions.get(event_id)
+            if not event:
+                return {'success': False, 'reason': 'Competition not found'}
+            
+            # Final team balancing
+            if event.competition_type in [CompetitionType.TEAM_CHALLENGE, CompetitionType.COLLABORATIVE_PROJECT]:
+                teams = await self._create_balanced_teams(event)
+                event.leaderboard = [{'team_id': team['id'], 'members': team['members'], 'score': 0} for team in teams]
+            else:
+                # Individual competition - create individual leaderboard
+                event.leaderboard = [
+                    {'user_id': user_id, 'score': 0, 'rank': 0, 'progress': {}}
+                    for user_id in event.current_participants
+                ]
+            
+            # Initialize competition tracking
+            await self.social_dynamics_tracker.initialize_competition_tracking(event)
+            
+            # Start quantum matching monitoring
+            await self.quantum_matching_engine.start_monitoring(event)
+            
+            logger.info(f"🚀 Competition {event_id} started with {len(event.current_participants)} participants")
+            return {
+                'success': True,
+                'competition_started': True,
+                'participants_count': len(event.current_participants),
+                'leaderboard_initialized': True,
+                'quantum_monitoring_active': True
+            }
+            
+        except Exception as e:
+            logger.error(f"Error starting competition: {str(e)}")
+            return {'success': False, 'reason': 'Failed to start competition'}
+    
+    async def update_competition_progress(
+        self, 
+        event_id: str, 
+        user_id: str, 
+        progress_data: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Update user progress in competition with fairness adjustments"""
+        try:
+            event = self.active_competitions.get(event_id)
+            if not event:
+                return {'success': False, 'reason': 'Competition not found'}
+            
+            # Validate user participation
+            if user_id not in event.current_participants:
+                return {'success': False, 'reason': 'User not in competition'}
+            
+            # Apply fairness adjustments
+            adjusted_progress = await self._apply_fairness_adjustments(
+                user_id, progress_data, event
+            )
+            
+            # Update leaderboard
+            await self._update_leaderboard(event, user_id, adjusted_progress)
+            
+            # Check for quantum unfairness and rebalance if needed
+            fairness_metrics = await self._calculate_fairness_metrics(event)
+            if fairness_metrics['overall_fairness'] < 0.7:
+                await self._apply_quantum_rebalancing(event)
+            
+            # Update social dynamics
+            await self.social_dynamics_tracker.update_user_dynamics(
+                user_id, adjusted_progress, event
+            )
+            
+            # Check for competition completion
+            completion_status = await self._check_competition_completion(event)
+            
+            return {
+                'success': True,
+                'updated_score': adjusted_progress.get('score', 0),
+                'current_rank': await self._get_user_rank(user_id, event),
+                'fairness_score': fairness_metrics['user_fairness'].get(user_id, 1.0),
+                'competition_completion': completion_status
+            }
+            
+        except Exception as e:
+            logger.error(f"Error updating competition progress: {str(e)}")
+            return {'success': False, 'reason': 'Failed to update progress'}
+    
+    async def _map_competition_type_to_template(self, competition_type: CompetitionType) -> str:
+        """Map competition type to template"""
+        mapping = {
+            CompetitionType.INDIVIDUAL_LEADERBOARD: 'knowledge_sprint',
+            CompetitionType.TEAM_CHALLENGE: 'collaborative_quest',
+            CompetitionType.KNOWLEDGE_DUEL: 'rapid_fire_duel',
+            CompetitionType.COLLABORATIVE_PROJECT: 'collaborative_quest',
+            CompetitionType.SPEED_LEARNING: 'knowledge_sprint',
+            CompetitionType.CREATIVITY_CONTEST: 'innovation_championship',
+            CompetitionType.MENTORSHIP_CIRCLE: 'community_challenge',
+            CompetitionType.GLOBAL_TOURNAMENT: 'innovation_championship'
+        }
+        return mapping.get(competition_type, 'knowledge_sprint')
+    
+    async def _calculate_prize_pool(self, template: Dict[str, Any]) -> Dict[str, Any]:
+        """Calculate dynamic prize pool"""
+        base_points = template.get('max_participants', 10) * 100
+        duration_multiplier = min(3.0, template.get('duration', timedelta(hours=1)).total_seconds() / 3600)
+        
+        total_points = int(base_points * duration_multiplier)
+        
+        return {
+            'total_points': total_points,
+            'first_place': int(total_points * 0.5),
+            'second_place': int(total_points * 0.3),
+            'third_place': int(total_points * 0.2),
+            'participation_bonus': int(total_points * 0.1),
+            'effort_recognition': int(total_points * 0.15),
+            'improvement_bonus': int(total_points * 0.1)
+        }
+    
+    async def _select_fairness_algorithm(self, competition_type: CompetitionType) -> str:
+        """Select appropriate fairness algorithm"""
+        algorithm_mapping = {
+            CompetitionType.INDIVIDUAL_LEADERBOARD: 'skill_normalized_scoring',
+            CompetitionType.TEAM_CHALLENGE: 'team_balance_optimization',
+            CompetitionType.KNOWLEDGE_DUEL: 'perfect_skill_matching',
+            CompetitionType.COLLABORATIVE_PROJECT: 'contribution_based_fairness',
+            CompetitionType.SPEED_LEARNING: 'adaptive_difficulty_scaling',
+            CompetitionType.CREATIVITY_CONTEST: 'multi_criteria_evaluation',
+            CompetitionType.MENTORSHIP_CIRCLE: 'experience_balanced_grouping',
+            CompetitionType.GLOBAL_TOURNAMENT: 'quantum_fairness_algorithm'
+        }
+        return algorithm_mapping.get(competition_type, 'standard_fairness')
+    
+    async def _generate_competition_rules(
+        self, 
+        competition_type: CompetitionType, 
+        template: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Generate competition rules"""
+        base_rules = {
+            'fair_play_required': True,
+            'collaboration_guidelines': template.get('collaboration_allowed', True),
+            'time_limits': template.get('duration', timedelta(hours=1)).total_seconds(),
+            'scoring_transparency': True,
+            'dispute_resolution': 'automated_review',
+            'privacy_protection': True
+        }
+        
+        # Type-specific rules
+        if competition_type == CompetitionType.KNOWLEDGE_DUEL:
+            base_rules.update({
+                'simultaneous_answers': True,
+                'no_external_resources': True,
+                'instant_scoring': True
+            })
+        elif competition_type == CompetitionType.COLLABORATIVE_PROJECT:
+            base_rules.update({
+                'team_communication_required': True,
+                'individual_contribution_tracking': True,
+                'peer_evaluation_included': True
+            })
+        elif competition_type == CompetitionType.CREATIVITY_CONTEST:
+            base_rules.update({
+                'originality_required': True,
+                'multiple_judging_criteria': True,
+                'public_showcase': True
+            })
+        
+        return base_rules
+    
+    async def _determine_social_features(self, competition_type: CompetitionType) -> List[str]:
+        """Determine social features for competition type"""
+        base_features = ['leaderboard', 'progress_sharing', 'encouragement_system']
+        
+        type_features = {
+            CompetitionType.TEAM_CHALLENGE: ['team_chat', 'role_assignments', 'collective_goals'],
+            CompetitionType.COLLABORATIVE_PROJECT: ['peer_review', 'knowledge_sharing', 'mentorship'],
+            CompetitionType.CREATIVITY_CONTEST: ['public_gallery', 'peer_voting', 'innovation_showcase'],
+            CompetitionType.MENTORSHIP_CIRCLE: ['mentor_matching', 'experience_sharing', 'guidance_system'],
+            CompetitionType.GLOBAL_TOURNAMENT: ['global_rankings', 'cultural_exchange', 'achievement_broadcasting']
+        }
+        
+        return base_features + type_features.get(competition_type, [])
+    
+    async def _check_user_eligibility(self, user_id: str, event: CompetitionEvent) -> Dict[str, Any]:
+        """Check if user is eligible for competition"""
+        # Get user data
+        user_data = await db_service.get_user(user_id)
+        if not user_data:
+            return {'eligible': False, 'reason': 'User not found'}
+        
+        # Check if already participating
+        if user_id in event.current_participants:
+            return {'eligible': False, 'reason': 'Already participating'}
+        
+        # Check skill requirements (simplified)
+        user_skill_level = await self._get_user_skill_level(user_id)
+        if event.competition_type == CompetitionType.KNOWLEDGE_DUEL and user_skill_level < 0.3:
+            return {'eligible': False, 'reason': 'Minimum skill level required'}
+        
+        return {'eligible': True, 'reason': 'All requirements met'}
+    
+    async def _evaluate_skill_match(self, user_id: str, event: CompetitionEvent) -> float:
+        """Evaluate skill match quality for user joining competition"""
+        if not event.current_participants:
+            return 1.0  # First participant always matches
+        
+        user_skill = await self._get_user_skill_level(user_id)
+        
+        # Get skills of current participants
+        participant_skills = []
+        for participant_id in event.current_participants:
+            skill = await self._get_user_skill_level(participant_id)
+            participant_skills.append(skill)
+        
+        # Calculate skill variance
+        all_skills = participant_skills + [user_skill]
+        skill_variance = np.var(all_skills)
+        
+        # Convert variance to match quality (0-1, where 1 is perfect match)
+        match_quality = max(0.0, 1.0 - skill_variance * 10)  # Scale appropriately
+        
+        return match_quality
+    
+    async def _suggest_alternative_competitions(self, user_id: str) -> List[Dict[str, Any]]:
+        """Suggest alternative competitions for user"""
+        user_skill = await self._get_user_skill_level(user_id)
+        
+        alternatives = []
+        for event_id, event in self.active_competitions.items():
+            if user_id not in event.current_participants:
+                match_quality = await self._evaluate_skill_match(user_id, event)
+                if match_quality > 0.7:
+                    alternatives.append({
+                        'event_id': event_id,
+                        'title': event.title,
+                        'match_quality': match_quality,
+                        'participants': len(event.current_participants),
+                        'max_participants': event.max_participants
+                    })
+        
+        return sorted(alternatives, key=lambda x: x['match_quality'], reverse=True)[:3]
+    
+    async def _update_user_skill_profile(self, user_id: str, event: CompetitionEvent):
+        """Update user's skill profile based on competition participation"""
+        if user_id not in self.user_skill_profiles:
+            self.user_skill_profiles[user_id] = {
+                'overall_skill': 0.5,
+                'competition_history': [],
+                'improvement_rate': 0.1,
+                'specializations': []
+            }
+        
+        profile = self.user_skill_profiles[user_id]
+        profile['competition_history'].append({
+            'event_id': event.event_id,
+            'competition_type': event.competition_type.value,
+            'joined_at': datetime.now()
+        })
+    
+    async def _rebalance_competition_teams(self, event: CompetitionEvent):
+        """Rebalance competition teams for fairness"""
+        if event.competition_type not in [CompetitionType.TEAM_CHALLENGE, CompetitionType.COLLABORATIVE_PROJECT]:
+            return
+        
+        # Get all participant skills
+        participant_skills = {}
+        for user_id in event.current_participants:
+            participant_skills[user_id] = await self._get_user_skill_level(user_id)
+        
+        # Apply quantum matching algorithm
+        balanced_teams = await self.quantum_matching_engine.create_balanced_teams(
+            participant_skills, target_team_size=3
+        )
+        
+        # Update event with new team structure
+        event.leaderboard = [
+            {'team_id': team['id'], 'members': team['members'], 'average_skill': team['average_skill']}
+            for team in balanced_teams
+        ]
+    
+    async def _estimate_rank_range(self, user_id: str, event: CompetitionEvent) -> Dict[str, int]:
+        """Estimate user's potential rank range in competition"""
+        user_skill = await self._get_user_skill_level(user_id)
+        
+        # Get skills of all participants
+        participant_skills = []
+        for participant_id in event.current_participants:
+            if participant_id != user_id:
+                skill = await self._get_user_skill_level(participant_id)
+                participant_skills.append(skill)
+        
+        # Estimate rank based on skill comparison
+        better_participants = len([s for s in participant_skills if s > user_skill])
+        worse_participants = len([s for s in participant_skills if s < user_skill])
+        
+        estimated_rank = better_participants + 1
+        rank_variance = 2  # Assume some variance in actual performance
+        
+        return {
+            'best_case_rank': max(1, estimated_rank - rank_variance),
+            'worst_case_rank': min(len(event.current_participants), estimated_rank + rank_variance),
+            'expected_rank': estimated_rank
+        }
+    
+    async def _create_balanced_teams(self, event: CompetitionEvent) -> List[Dict[str, Any]]:
+        """Create balanced teams using quantum matching"""
+        participant_skills = {}
+        for user_id in event.current_participants:
+            participant_skills[user_id] = await self._get_user_skill_level(user_id)
+        
+        return await self.quantum_matching_engine.create_balanced_teams(
+            participant_skills, target_team_size=3
+        )
+    
+    async def _apply_fairness_adjustments(
+        self, 
+        user_id: str, 
+        progress_data: Dict[str, Any], 
+        event: CompetitionEvent
+    ) -> Dict[str, Any]:
+        """Apply quantum fairness adjustments to user progress"""
+        adjusted_progress = progress_data.copy()
+        
+        # Get user's skill level
+        user_skill = await self._get_user_skill_level(user_id)
+        
+        # Get fairness algorithm settings
+        fairness_config = self.fairness_algorithms
+        
+        # Apply skill-based adjustments
+        if event.fairness_algorithm == 'skill_normalized_scoring':
+            # Boost score for lower-skilled users
+            if user_skill < 0.5:
+                boost_factor = fairness_config['skill_balancing']['compensation_factor']
+                adjusted_progress['score'] = int(progress_data.get('score', 0) * boost_factor)
+        
+        # Apply effort recognition
+        effort_weight = fairness_config['outcome_fairness']['effort_recognition']
+        if 'effort_score' in progress_data:
+            effort_bonus = int(progress_data['effort_score'] * effort_weight * 100)
+            adjusted_progress['score'] = adjusted_progress.get('score', 0) + effort_bonus
+        
+        # Apply improvement bonus
+        improvement_weight = fairness_config['outcome_fairness']['improvement_bonus']
+        if 'improvement_rate' in progress_data:
+            improvement_bonus = int(progress_data['improvement_rate'] * improvement_weight * 200)
+            adjusted_progress['score'] = adjusted_progress.get('score', 0) + improvement_bonus
+        
+        return adjusted_progress
+    
+    async def _update_leaderboard(
+        self, 
+        event: CompetitionEvent, 
+        user_id: str, 
+        progress_data: Dict[str, Any]
+    ):
+        """Update competition leaderboard"""
+        # Find user in leaderboard
+        user_entry = None
+        for entry in event.leaderboard:
+            if entry.get('user_id') == user_id:
+                user_entry = entry
+                break
+        
+        if user_entry:
+            # Update existing entry
+            user_entry['score'] = progress_data.get('score', 0)
+            user_entry['progress'] = progress_data
+        else:
+            # Add new entry
+            event.leaderboard.append({
+                'user_id': user_id,
+                'score': progress_data.get('score', 0),
+                'progress': progress_data,
+                'rank': 0
+            })
+        
+        # Re-sort leaderboard and update ranks
+        event.leaderboard.sort(key=lambda x: x['score'], reverse=True)
+        for i, entry in enumerate(event.leaderboard):
+            entry['rank'] = i + 1
+    
+    async def _calculate_fairness_metrics(self, event: CompetitionEvent) -> Dict[str, Any]:
+        """Calculate comprehensive fairness metrics for competition"""
+        if not event.leaderboard:
+            return {'overall_fairness': 1.0, 'user_fairness': {}}
+        
+        # Calculate score variance
+        scores = [entry['score'] for entry in event.leaderboard]
+        score_variance = np.var(scores) if len(scores) > 1 else 0
+        
+        # Calculate fairness for each user
+        user_fairness = {}
+        for entry in event.leaderboard:
+            user_id = entry['user_id']
+            user_skill = await self._get_user_skill_level(user_id)
+            expected_score = user_skill * max(scores) if scores else 0
+            actual_score = entry['score']
+            
+            # Fairness is based on how close actual performance is to expected
+            fairness = 1.0 - abs(actual_score - expected_score) / max(expected_score, 1)
+            user_fairness[user_id] = max(0.0, min(1.0, fairness))
+        
+        # Overall fairness is average of individual fairness scores
+        overall_fairness = np.mean(list(user_fairness.values())) if user_fairness else 1.0
+        
+        return {
+            'overall_fairness': overall_fairness,
+            'user_fairness': user_fairness,
+            'score_variance': score_variance,
+            'fairness_threshold_met': overall_fairness >= 0.7
+        }
+    
+    async def _apply_quantum_rebalancing(self, event: CompetitionEvent):
+        """Apply quantum rebalancing when unfairness is detected"""
+        logger.info(f"🔄 Applying quantum rebalancing for competition {event.event_id}")
+        
+        # Get current fairness metrics
+        fairness_metrics = await self._calculate_fairness_metrics(event)
+        
+        # Apply corrective measures
+        for entry in event.leaderboard:
+            user_id = entry['user_id']
+            user_fairness = fairness_metrics['user_fairness'].get(user_id, 1.0)
+            
+            if user_fairness < 0.5:  # Significant unfairness
+                # Apply quantum correction
+                correction_factor = (0.7 - user_fairness) * 0.5  # Partial correction
+                entry['score'] = int(entry['score'] * (1 + correction_factor))
+        
+        # Re-sort leaderboard
+        event.leaderboard.sort(key=lambda x: x['score'], reverse=True)
+        for i, entry in enumerate(event.leaderboard):
+            entry['rank'] = i + 1
+    
+    async def _get_user_rank(self, user_id: str, event: CompetitionEvent) -> int:
+        """Get user's current rank in competition"""
+        for entry in event.leaderboard:
+            if entry.get('user_id') == user_id:
+                return entry.get('rank', 0)
+        return 0
+    
+    async def _check_competition_completion(self, event: CompetitionEvent) -> Dict[str, Any]:
+        """Check if competition is completed"""
+        now = datetime.now()
+        time_completed = now >= event.end_time
+        
+        # Check for early completion conditions
+        all_participants_finished = False
+        if event.leaderboard:
+            finished_count = len([e for e in event.leaderboard if e.get('progress', {}).get('finished', False)])
+            all_participants_finished = finished_count == len(event.current_participants)
+        
+        completed = time_completed or all_participants_finished
+        
+        if completed and event.event_id in self.active_competitions:
+            # Finalize competition
+            await self._finalize_competition(event)
+        
+        return {
+            'completed': completed,
+            'time_completed': time_completed,
+            'all_finished': all_participants_finished,
+            'completion_percentage': len(event.leaderboard) / len(event.current_participants) if event.current_participants else 0
+        }
+    
+    async def _finalize_competition(self, event: CompetitionEvent):
+        """Finalize competition and distribute rewards"""
+        try:
+            # Calculate final rewards
+            final_rewards = await self._calculate_final_rewards(event)
+            
+            # Distribute rewards to participants
+            for entry in event.leaderboard:
+                user_id = entry['user_id']
+                rank = entry['rank']
+                reward = final_rewards.get(rank, final_rewards.get('participation', 0))
+                
+                # Award points (would integrate with actual reward system)
+                await self._award_competition_points(user_id, reward, event)
+            
+            # Update user skill profiles based on performance
+            await self._update_post_competition_skills(event)
+            
+            # Archive competition
+            del self.active_competitions[event.event_id]
+            
+            logger.info(f"🏁 Competition {event.event_id} finalized with {len(event.leaderboard)} participants")
+            
+        except Exception as e:
+            logger.error(f"Error finalizing competition: {str(e)}")
+    
+    async def _calculate_final_rewards(self, event: CompetitionEvent) -> Dict[str, int]:
+        """Calculate final reward distribution"""
+        prize_pool = event.prize_pool
+        
+        return {
+            1: prize_pool.get('first_place', 500),
+            2: prize_pool.get('second_place', 300),
+            3: prize_pool.get('third_place', 200),
+            'participation': prize_pool.get('participation_bonus', 50),
+            'effort': prize_pool.get('effort_recognition', 75),
+            'improvement': prize_pool.get('improvement_bonus', 100)
+        }
+    
+    async def _award_competition_points(self, user_id: str, points: int, event: CompetitionEvent):
+        """Award competition points to user"""
+        # This would integrate with the actual gamification system
+        logger.info(f"🏆 Awarded {points} points to user {user_id} for competition {event.event_id}")
+    
+    async def _update_post_competition_skills(self, event: CompetitionEvent):
+        """Update user skill profiles after competition completion"""
+        for entry in event.leaderboard:
+            user_id = entry['user_id']
+            performance_ratio = entry['score'] / max([e['score'] for e in event.leaderboard])
+            
+            # Update skill based on performance
+            if user_id in self.user_skill_profiles:
+                current_skill = self.user_skill_profiles[user_id]['overall_skill']
+                improvement = (performance_ratio - 0.5) * 0.1  # Modest skill updates
+                self.user_skill_profiles[user_id]['overall_skill'] = max(0.1, min(1.0, current_skill + improvement))
+    
+    async def _get_user_skill_level(self, user_id: str) -> float:
+        """Get user's overall skill level"""
+        if user_id in self.user_skill_profiles:
+            return self.user_skill_profiles[user_id]['overall_skill']
+        
+        # Default skill level for new users
+        return 0.5
+
+# ============================================================================
+# SUPPORTING CLASSES FOR SOCIAL COMPETITION
+# ============================================================================
+
+class SocialDynamicsTracker:
+    """Track social dynamics within competitions"""
+    
+    def __init__(self):
+        self.competition_dynamics = {}
+    
+    async def initialize_competition_tracking(self, event: CompetitionEvent):
+        """Initialize tracking for competition"""
+        self.competition_dynamics[event.event_id] = {
+            'participant_interactions': defaultdict(list),
+            'collaboration_patterns': {},
+            'leadership_emergence': {},
+            'support_networks': defaultdict(list)
+        }
+    
+    async def update_user_dynamics(self, user_id: str, progress_data: Dict[str, Any], event: CompetitionEvent):
+        """Update user's social dynamics in competition"""
+        dynamics = self.competition_dynamics.get(event.event_id, {})
+        
+        # Track collaboration patterns
+        if progress_data.get('helped_others', 0) > 0:
+            dynamics['support_networks'][user_id].append({
+                'timestamp': datetime.now(),
+                'help_provided': progress_data['helped_others']
+            })
+        
+        # Track leadership indicators
+        if progress_data.get('leadership_actions', 0) > 0:
+            dynamics['leadership_emergence'][user_id] = progress_data['leadership_actions']
+
+class QuantumMatchingEngine:
+    """Quantum-inspired matching algorithm for fair competition"""
+    
+    def __init__(self):
+        self.matching_history = {}
+    
+    async def start_monitoring(self, event: CompetitionEvent):
+        """Start monitoring competition for quantum matching optimization"""
+        self.matching_history[event.event_id] = {
+            'initial_balance': await self._calculate_initial_balance(event),
+            'monitoring_active': True,
+            'rebalancing_events': []
+        }
+    
+    async def create_balanced_teams(self, participant_skills: Dict[str, float], target_team_size: int = 3) -> List[Dict[str, Any]]:
+        """Create balanced teams using quantum matching principles"""
+        participants = list(participant_skills.keys())
+        skills = list(participant_skills.values())
+        
+        # Sort participants by skill
+        sorted_participants = sorted(zip(participants, skills), key=lambda x: x[1])
+        
+        # Create balanced teams using alternating assignment
+        teams = []
+        team_count = len(participants) // target_team_size
+        
+        for i in range(team_count):
+            team_members = []
+            team_skills = []
+            
+            # Assign participants to create balanced skill distribution
+            for j in range(target_team_size):
+                if i * target_team_size + j < len(sorted_participants):
+                    participant, skill = sorted_participants[i * target_team_size + j]
+                    team_members.append(participant)
+                    team_skills.append(skill)
+            
+            teams.append({
+                'id': str(uuid.uuid4()),
+                'members': team_members,
+                'average_skill': np.mean(team_skills) if team_skills else 0.5,
+                'skill_variance': np.var(team_skills) if len(team_skills) > 1 else 0
+            })
+        
+        return teams
+    
+    async def _calculate_initial_balance(self, event: CompetitionEvent) -> float:
+        """Calculate initial balance score for competition"""
+        if len(event.current_participants) < 2:
+            return 1.0
+        
+        # Get participant skills
+        skills = []
+        for user_id in event.current_participants:
+            skill = await self._get_participant_skill(user_id)
+            skills.append(skill)
+        
+        # Calculate balance as inverse of skill variance
+        skill_variance = np.var(skills)
+        balance_score = max(0.0, 1.0 - skill_variance * 2)  # Scale appropriately
+        
+        return balance_score
+    
+    async def _get_participant_skill(self, user_id: str) -> float:
+        """Get participant skill level"""
+        # This would integrate with the actual skill tracking system
+        return 0.5  # Default skill level
+
+# ============================================================================
+# PROGRESS VISUALIZATION SYSTEMS
+# ============================================================================
+
+class ProgressVisualizationEngine:
+    """
+    Multi-dimensional progress visualization and tracking system
+    Creates comprehensive visual representations of learning progress
+    """
+    
+    def __init__(self):
+        self.visualization_cache = {}
+        self.user_progress_models = {}
+        self.visualization_algorithms = self._initialize_visualization_algorithms()
+        self.real_time_updaters = {}
+        
+        logger.info("📊 Progress Visualization Engine initialized")
+    
+    def _initialize_visualization_algorithms(self) -> Dict[str, Any]:
+        """Initialize visualization algorithms"""
+        return {
+            'skill_radar': {
+                'dimensions': ['technical', 'creative', 'analytical', 'collaborative', 'leadership'],
+                'scaling_method': 'normalized',
+                'color_scheme': 'dynamic_gradient',
+                'animation_enabled': True
+            },
+            'learning_velocity': {
+                'time_windows': ['day', 'week', 'month', 'quarter'],
+                'metrics': ['concepts_learned', 'skills_improved', 'challenges_completed'],
+                'trend_analysis': True,
+                'predictive_modeling': True
+            },
+            'mastery_heat_map': {
+                'granularity': 'topic_level',
+                'color_intensity': 'mastery_level',
+                'temporal_evolution': True,
+                'knowledge_connections': True
+            },
+            'knowledge_graph': {
+                'node_types': ['concept', 'skill', 'application'],
+                'edge_types': ['prerequisite', 'related', 'applied'],
+                'layout_algorithm': 'force_directed',
+                'clustering_enabled': True
+            }
+        }
+    
+    async def generate_comprehensive_visualization(self, user_id: str) -> ProgressVisualization:
+        """Generate comprehensive progress visualization for user"""
+        try:
+            # Get user data
+            user_data = await db_service.get_user(user_id)
+            sessions = await db_service.get_user_sessions(user_id, active_only=False)
+            progress = await db_service.get_user_progress(user_id)
+            
+            # Generate skill radar
+            skill_radar = await self._generate_skill_radar(user_id, progress)
+            
+            # Generate learning velocity
+            learning_velocity = await self._generate_learning_velocity(user_id, sessions)
+            
+            # Generate mastery heat map
+            mastery_heat_map = await self._generate_mastery_heat_map(user_id, progress)
+            
+            # Generate achievement timeline
+            achievement_timeline = await self._generate_achievement_timeline(user_id)
+            
+            # Generate knowledge graph
+            knowledge_graph = await self._generate_knowledge_graph(user_id, progress)
+            
+            # Generate habit streaks
+            habit_streaks = await self._generate_habit_streaks(user_id)
+            
+            # Generate social connections
+            social_connections = await self._generate_social_connections(user_id)
+            
+            # Generate growth predictions
+            growth_predictions = await self._generate_growth_predictions(user_id, sessions, progress)
+            
+            # Generate bottleneck analysis
+            bottleneck_analysis = await self._generate_bottleneck_analysis(user_id, progress)
+            
+            visualization = ProgressVisualization(
+                user_id=user_id,
+                skill_radar=skill_radar,
+                learning_velocity=learning_velocity,
+                mastery_heat_map=mastery_heat_map,
+                achievement_timeline=achievement_timeline,
+                knowledge_graph=knowledge_graph,
+                habit_streaks=habit_streaks,
+                social_connections=social_connections,
+                growth_predictions=growth_predictions,
+                bottleneck_analysis=bottleneck_analysis
+            )
+            
+            # Cache visualization
+            self.visualization_cache[user_id] = visualization
+            
+            logger.info(f"📊 Generated comprehensive visualization for user {user_id}")
+            return visualization
+            
+        except Exception as e:
+            logger.error(f"Error generating visualization: {str(e)}")
+            return await self._generate_fallback_visualization(user_id)
+    
+    async def _generate_skill_radar(self, user_id: str, progress: List) -> Dict[str, float]:
+        """Generate skill radar chart data"""
+        skill_dimensions = self.visualization_algorithms['skill_radar']['dimensions']
+        skill_scores = {}
+        
+        for dimension in skill_dimensions:
+            # Calculate skill score for dimension
+            relevant_progress = [p for p in progress if dimension in str(getattr(p, 'subject', '')).lower()]
+            
+            if relevant_progress:
+                avg_competency = np.mean([getattr(p, 'competency_level', 0.5) for p in relevant_progress])
+                skill_scores[dimension] = min(1.0, avg_competency)
+            else:
+                skill_scores[dimension] = 0.3  # Default baseline
+        
+        return skill_scores
+    
+    async def _generate_learning_velocity(self, user_id: str, sessions: List) -> List[float]:
+        """Generate learning velocity time series"""
+        if not sessions:
+            return [0.5] * 30  # 30-day default
+        
+        # Group sessions by day
+        daily_sessions = defaultdict(list)
+        for session in sessions:
+            date_key = getattr(session, 'created_at', datetime.now()).date()
+            daily_sessions[date_key].append(session)
+        
+        # Calculate daily learning velocity
+        velocities = []
+        for i in range(30):  # Last 30 days
+            date = datetime.now().date() - timedelta(days=i)
+            day_sessions = daily_sessions.get(date, [])
+            
+            # Calculate velocity based on session count and quality
+            session_count = len(day_sessions)
+            if session_count > 0:
+                avg_duration = np.mean([getattr(s, 'duration', 30) for s in day_sessions])
+                velocity = min(1.0, (session_count * avg_duration) / 180)  # Normalize to 3 hours max
+            else:
+                velocity = 0.0
+            
+            velocities.append(velocity)
+        
+        return list(reversed(velocities))  # Return chronological order
+    
+    async def _generate_mastery_heat_map(self, user_id: str, progress: List) -> Dict[str, Dict[str, float]]:
+        """Generate mastery heat map"""
+        heat_map = defaultdict(lambda: defaultdict(float))
+        
+        for p in progress:
+            subject = getattr(p, 'subject', 'general')
+            topic = getattr(p, 'topic', 'unknown')
+            competency = getattr(p, 'competency_level', 0.5)
+            
+            heat_map[subject][topic] = competency
+        
+        return dict(heat_map)
+    
+    async def _generate_achievement_timeline(self, user_id: str) -> List[Dict[str, Any]]:
+        """Generate achievement timeline"""
+        try:
+            achievements = await db_service.get_user_achievements(user_id)
+            
+            timeline = []
+            for achievement in achievements:
+                timeline.append({
+                    'date': getattr(achievement, 'unlocked_at', datetime.now()).isoformat(),
+                    'achievement_id': getattr(achievement, 'achievement_id', ''),
+                    'title': 'Achievement Unlocked',  # Would get from achievement details
+                    'category': 'learning',
+                    'significance': 'high'
+                })
+            
+            # Sort by date
+            timeline.sort(key=lambda x: x['date'])
+            return timeline
+            
+        except Exception as e:
+            logger.error(f"Error generating achievement timeline: {str(e)}")
+            return []
+    
+    async def _generate_knowledge_graph(self, user_id: str, progress: List) -> Dict[str, Any]:
+        """Generate knowledge graph visualization data"""
+        nodes = []
+        edges = []
+        
+        # Create nodes for each topic/skill
+        for i, p in enumerate(progress):
+            subject = getattr(p, 'subject', 'general')
+            topic = getattr(p, 'topic', f'topic_{i}')
+            competency = getattr(p, 'competency_level', 0.5)
+            
+            nodes.append({
+                'id': f"{subject}_{topic}",
+                'label': topic,
+                'subject': subject,
+                'competency': competency,
+                'size': competency * 10 + 5,  # Size based on competency
+                'color': self._get_competency_color(competency)
+            })
+        
+        # Create edges based on subject relationships
+        subjects = list(set(getattr(p, 'subject', 'general') for p in progress))
+        for i, subject1 in enumerate(subjects):
+            for subject2 in subjects[i+1:]:
+                # Create connection if subjects are related
+                if self._are_subjects_related(subject1, subject2):
+                    edges.append({
+                        'source': subject1,
+                        'target': subject2,
+                        'strength': 0.5,
+                        'type': 'related'
+                    })
+        
+        return {
+            'nodes': nodes,
+            'edges': edges,
+            'layout': 'force_directed',
+            'clusters': subjects
+        }
+    
+    def _get_competency_color(self, competency: float) -> str:
+        """Get color based on competency level"""
+        if competency >= 0.8:
+            return '#10B981'  # Green - High competency
+        elif competency >= 0.6:
+            return '#3B82F6'  # Blue - Medium competency
+        elif competency >= 0.4:
+            return '#F59E0B'  # Yellow - Low competency
+        else:
+            return '#EF4444'  # Red - Very low competency
+    
+    def _are_subjects_related(self, subject1: str, subject2: str) -> bool:
+        """Check if two subjects are related"""
+        # Simplified relationship detection
+        related_pairs = [
+            ('programming', 'mathematics'),
+            ('science', 'mathematics'),
+            ('language', 'communication'),
+            ('design', 'creative')
+        ]
+        
+        for pair in related_pairs:
+            if (subject1.lower() in pair[0] and subject2.lower() in pair[1]) or \
+               (subject1.lower() in pair[1] and subject2.lower() in pair[0]):
+                return True
+        
+        return False
+    
+    async def _generate_habit_streaks(self, user_id: str) -> Dict[str, int]:
+        """Generate habit streak data"""
+        try:
+            streak = await db_service.get_or_create_streak(user_id)
+            
+            return {
+                'daily_learning': getattr(streak, 'current_streak', 0),
+                'consistent_practice': getattr(streak, 'current_streak', 0) // 2,  # Derived metric
+                'goal_completion': max(0, getattr(streak, 'current_streak', 0) - 3),  # Derived metric
+                'knowledge_application': max(0, getattr(streak, 'current_streak', 0) - 5)  # Derived metric
+            }
+            
+        except Exception as e:
+            logger.error(f"Error generating habit streaks: {str(e)}")
+            return {'daily_learning': 0, 'consistent_practice': 0, 'goal_completion': 0, 'knowledge_application': 0}
+    
+    async def _generate_social_connections(self, user_id: str) -> List[str]:
+        """Generate social connections data"""
+        try:
+            groups = await db_service.get_study_groups(user_id)
+            return [getattr(group, 'id', f'group_{i}') for i, group in enumerate(groups)]
+        except Exception as e:
+            logger.error(f"Error generating social connections: {str(e)}")
+            return []
+    
+    async def _generate_growth_predictions(self, user_id: str, sessions: List, progress: List) -> Dict[str, float]:
+        """Generate growth predictions"""
+        if not sessions or not progress:
+            return {
+                'skill_improvement_next_month': 0.1,
+                'mastery_completion_probability': 0.3,
+                'learning_velocity_trend': 0.05,
+                'achievement_potential': 0.4
+            }
+        
+        # Calculate trends
+        recent_sessions = sessions[-10:] if len(sessions) > 10 else sessions
+        session_trend = len(recent_sessions) / 10.0  # Session frequency trend
+        
+        avg_competency = np.mean([getattr(p, 'competency_level', 0.5) for p in progress])
+        competency_trend = avg_competency
+        
+        return {
+            'skill_improvement_next_month': min(1.0, session_trend * 0.3),
+            'mastery_completion_probability': competency_trend,
+            'learning_velocity_trend': session_trend * 0.2,
+            'achievement_potential': (session_trend + competency_trend) / 2
+        }
+    
+    async def _generate_bottleneck_analysis(self, user_id: str, progress: List) -> List[str]:
+        """Generate bottleneck analysis"""
+        bottlenecks = []
+        
+        if not progress:
+            bottlenecks.append("Limited learning activity detected")
+            return bottlenecks
+        
+        # Analyze competency levels
+        low_competency_areas = [
+            getattr(p, 'subject', 'unknown') 
+            for p in progress 
+            if getattr(p, 'competency_level', 0.5) < 0.4
+        ]
+        
+        if low_competency_areas:
+            bottlenecks.append(f"Low competency in: {', '.join(set(low_competency_areas))}")
+        
+        # Analyze consistency
+        subjects = [getattr(p, 'subject', 'unknown') for p in progress]
+        subject_counts = {s: subjects.count(s) for s in set(subjects)}
+        inconsistent_subjects = [s for s, count in subject_counts.items() if count < 3]
+        
+        if inconsistent_subjects:
+            bottlenecks.append(f"Inconsistent practice in: {', '.join(inconsistent_subjects)}")
+        
+        if not bottlenecks:
+            bottlenecks.append("No significant bottlenecks detected")
+        
+        return bottlenecks
+    
+    async def _generate_fallback_visualization(self, user_id: str) -> ProgressVisualization:
+        """Generate fallback visualization when main generation fails"""
+        return ProgressVisualization(
+            user_id=user_id,
+            skill_radar={'technical': 0.5, 'creative': 0.5, 'analytical': 0.5, 'collaborative': 0.5, 'leadership': 0.5},
+            learning_velocity=[0.3] * 30,
+            mastery_heat_map={'general': {'introduction': 0.5}},
+            achievement_timeline=[],
+            knowledge_graph={'nodes': [], 'edges': []},
+            habit_streaks={'daily_learning': 0},
+            social_connections=[],
+            growth_predictions={'skill_improvement_next_month': 0.2},
+            bottleneck_analysis=['Insufficient data for analysis']
+        )
