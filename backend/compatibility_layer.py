@@ -125,17 +125,6 @@ class CompatibilityPersonalizationEngine:
 personalization_engine = CompatibilityPersonalizationEngine()
 
 # Knowledge graph engine compatibility
-class Concept:
-    def __init__(self, id, name, description=""):
-        self.id = id
-        self.name = name
-        self.description = description
-
-class ConceptRelationship:
-    def __init__(self, source_id, target_id, relationship_type):
-        self.source_id = source_id
-        self.target_id = target_id
-        self.relationship_type = relationship_type
 
 class AdvancedKnowledgeGraphEngine:
     def __init__(self):
@@ -143,6 +132,21 @@ class AdvancedKnowledgeGraphEngine:
     
     async def get_user_knowledge_state(self, user_id):
         return {"status": "quantum_enhanced"}
+
+@dataclass
+class Concept:
+    concept_id: str = ""
+    name: str = ""
+    description: str = ""
+    keywords: List[str] = field(default_factory=list)
+    embedding: Optional[List[float]] = None
+
+@dataclass
+class ConceptRelationship:
+    relationship_id: str = ""
+    source_concept_id: str = ""
+    target_concept_id: str = ""
+    strength: float = 0.0
 
 # Advanced analytics service compatibility
 class CompatibilityAnalyticsService:

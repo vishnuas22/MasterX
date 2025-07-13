@@ -30,7 +30,7 @@ import { GestureControl, useGestureControl } from './GestureControl';
 import { ARVRInterface, useARVRVisualization } from './ARVRInterface';
 import { ThemeProvider, AdaptiveThemePanel, useAdaptiveTheme } from './AdaptiveThemeSystem';
 import { useApp } from '../context/AppContext';
-import { EnhancedChatMessage } from './ChatInterface_Enhanced';
+// EnhancedChatMessage now defined in this file
 import { PremiumUserProfile } from './PremiumUserProfile';
 import { api } from '../services/api';
 
