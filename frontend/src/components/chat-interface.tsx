@@ -14,6 +14,10 @@ interface Message {
     learningMode?: string
     concepts?: string[]
     confidence?: number
+    intelligence_level?: string
+    engagement_prediction?: number
+    knowledge_gaps?: string[]
+    next_concepts?: string[]
   }
 }
 
@@ -34,6 +38,7 @@ export function ChatInterface() {
   const [inputMessage, setInputMessage] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [sessionId, setSessionId] = useState<string>('')
+  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'error'>('connecting')
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -50,10 +55,25 @@ export function ChatInterface() {
 
   const initializeSession = async () => {
     try {
-      const newSessionId = `session_${Date.now()}`
-      setSessionId(newSessionId)
+      setConnectionStatus('connecting')
+      const response = await api.chat.createSession()
+      if (response.data && response.data.session_id) {
+        setSessionId(response.data.session_id)
+        setConnectionStatus('connected')
+        console.log('✅ Session created:', response.data.session_id)
+      } else {
+        // Fallback session ID
+        const fallbackSessionId = `session_${Date.now()}`
+        setSessionId(fallbackSessionId)
+        setConnectionStatus('connected')
+        console.log('⚠️ Using fallback session ID:', fallbackSessionId)
+      }
     } catch (error) {
-      console.error('Failed to initialize session:', error)
+      console.error('❌ Failed to initialize session:', error)
+      // Use fallback session ID
+      const fallbackSessionId = `session_${Date.now()}`
+      setSessionId(fallbackSessionId)
+      setConnectionStatus('error')
     }
   }
 
@@ -72,43 +92,51 @@ export function ChatInterface() {
     setIsLoading(true)
 
     try {
-      setTimeout(() => {
+      // Call real backend API
+      const response = await api.chat.send(inputMessage, sessionId)
+      
+      if (response.data) {
         const aiMessage: Message = {
           id: (Date.now() + 1).toString(),
-          content: generateMockAIResponse(inputMessage),
+          content: response.data.response,
           sender: 'ai',
           timestamp: new Date(),
           metadata: {
-            learningMode: 'socratic_discovery',
-            concepts: extractConcepts(inputMessage),
-            confidence: 0.88
+            learningMode: response.data.metadata?.learning_mode || 'adaptive_quantum',
+            concepts: response.data.metadata?.concepts || [],
+            confidence: response.data.metadata?.confidence || 0.85,
+            intelligence_level: response.data.metadata?.intelligence_level,
+            engagement_prediction: response.data.metadata?.engagement_prediction,
+            knowledge_gaps: response.data.metadata?.knowledge_gaps,
+            next_concepts: response.data.metadata?.next_concepts
           }
         }
         setMessages(prev => [...prev, aiMessage])
-        setIsLoading(false)
-      }, 1500)
-
+        
+        // Update session ID if it changed
+        if (response.data.session_id && response.data.session_id !== sessionId) {
+          setSessionId(response.data.session_id)
+        }
+      }
     } catch (error) {
-      console.error('Failed to send message:', error)
+      console.error('❌ Failed to send message:', error)
+      
+      // Fallback AI response
+      const fallbackMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content: "I apologize, but I'm experiencing some technical difficulties connecting to the Quantum Intelligence Engine. Please try again in a moment.",
+        sender: 'ai',
+        timestamp: new Date(),
+        metadata: {
+          learningMode: 'fallback',
+          concepts: ['error_handling'],
+          confidence: 0.5
+        }
+      }
+      setMessages(prev => [...prev, fallbackMessage])
+    } finally {
       setIsLoading(false)
     }
-  }
-
-  const generateMockAIResponse = (userInput: string): string => {
-    const responses = [
-      `That's a fascinating question about "${userInput}". Let me break this down using the Quantum Intelligence approach. First, let's explore the fundamental concepts...`,
-      `I can see you're curious about this topic. Using our adaptive learning system, I'll guide you through this step by step. What specific aspect interests you most?`,
-      `Excellent! This connects to several key learning principles. Let me engage our Socratic questioning mode to help you discover the answer yourself...`,
-      `This is a perfect opportunity for our Debug Mastery mode. Let's identify any knowledge gaps and build a solid foundation...`
-    ]
-    return responses[Math.floor(Math.random() * responses.length)]
-  }
-
-  const extractConcepts = (input: string): string[] => {
-    const concepts = ['learning', 'quantum', 'AI', 'education']
-    return concepts.filter(concept => 
-      input.toLowerCase().includes(concept.toLowerCase())
-    )
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -126,12 +154,26 @@ export function ChatInterface() {
           <Brain className="h-8 w-8 text-purple-400 quantum-pulse" />
           <h1 className="text-3xl font-bold quantum-text-glow">AI Learning Mentor</h1>
           <Sparkles className="h-6 w-6 text-purple-300 quantum-float" />
+          {/* Connection Status Indicator */}
+          <div className={`ml-auto flex items-center space-x-2 px-3 py-1 rounded-full text-xs font-medium ${
+            connectionStatus === 'connected' 
+              ? 'bg-green-900/50 text-green-300 border border-green-500/30' 
+              : connectionStatus === 'error' 
+              ? 'bg-red-900/50 text-red-300 border border-red-500/30'
+              : 'bg-blue-900/50 text-blue-300 border border-blue-500/30'
+          }`}>
+            <div className={`w-2 h-2 rounded-full ${
+              connectionStatus === 'connected' ? 'bg-green-400' : 
+              connectionStatus === 'error' ? 'bg-red-400' : 'bg-blue-400 animate-pulse'
+            }`}></div>
+            <span>{connectionStatus === 'connected' ? 'Connected' : connectionStatus === 'error' ? 'Error' : 'Connecting'}</span>
+          </div>
         </div>
         <p className="text-gray-400">Powered by Quantum Intelligence Engine</p>
         {sessionId && (
           <div className="flex items-center space-x-2 mt-2">
             <MessageCircle className="h-4 w-4 text-purple-400" />
-            <p className="text-xs text-purple-400">Session: {sessionId}</p>
+            <p className="text-xs text-purple-400">Session: {sessionId.substring(0, 8)}...</p>
           </div>
         )}
       </div>
@@ -204,10 +246,16 @@ function MessageBubble({ message }: { message: Message }) {
                   <span>{message.metadata.learningMode.replace('_', ' ')}</span>
                 </span>
               )}
+              {message.metadata.intelligence_level && (
+                <span className="glass-morph text-cyan-300 px-3 py-1 rounded-full flex items-center space-x-1 border border-cyan-500/30">
+                  <Brain className="h-3 w-3" />
+                  <span>{message.metadata.intelligence_level}</span>
+                </span>
+              )}
               {message.metadata.concepts && message.metadata.concepts.length > 0 && (
                 <span className="glass-morph text-blue-300 px-3 py-1 rounded-full flex items-center space-x-1 border border-blue-500/30">
                   <Target className="h-3 w-3" />
-                  <span>{message.metadata.concepts.join(', ')}</span>
+                  <span>{message.metadata.concepts.slice(0, 3).join(', ')}</span>
                 </span>
               )}
               {message.metadata.confidence && (
@@ -215,7 +263,27 @@ function MessageBubble({ message }: { message: Message }) {
                   {Math.round(message.metadata.confidence * 100)}% confidence
                 </span>
               )}
+              {message.metadata.engagement_prediction && (
+                <span className="glass-morph text-yellow-300 px-3 py-1 rounded-full border border-yellow-500/30">
+                  {Math.round(message.metadata.engagement_prediction * 100)}% engagement
+                </span>
+              )}
             </div>
+            
+            {/* Advanced Metadata */}
+            {(message.metadata.knowledge_gaps && message.metadata.knowledge_gaps.length > 0) && (
+              <div className="mt-3 p-3 glass-morph rounded-lg border border-red-500/20">
+                <p className="text-xs font-semibold text-red-300 mb-1">Knowledge Gaps Identified:</p>
+                <p className="text-xs text-red-200">{message.metadata.knowledge_gaps.slice(0, 2).join(', ')}</p>
+              </div>
+            )}
+            
+            {(message.metadata.next_concepts && message.metadata.next_concepts.length > 0) && (
+              <div className="mt-3 p-3 glass-morph rounded-lg border border-emerald-500/20">
+                <p className="text-xs font-semibold text-emerald-300 mb-1">Next Recommended Concepts:</p>
+                <p className="text-xs text-emerald-200">{message.metadata.next_concepts.slice(0, 3).join(', ')}</p>
+              </div>
+            )}
           </div>
         )}
         
