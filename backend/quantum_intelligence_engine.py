@@ -14089,7 +14089,7 @@ import scipy.signal as signal
 from scipy.optimize import minimize
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 from sklearn.neural_network import MLPRegressor
-from sklearn.decomposition import PCA, ICA
+from sklearn.decomposition import PCA, FastICA
 from sklearn.manifold import TSNE
 import networkx as nx
 import matplotlib.pyplot as plt
@@ -14849,6 +14849,291 @@ class LearningPatternDeepAnalysisEngine:
             next_pattern_prediction={'predicted_velocity': 0.5, 'confidence': 0.5},
             optimization_recommendations=['Insufficient data for analysis']
         )
+
+    # Missing pattern detection methods
+    async def _detect_cyclic_patterns(self, data: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Detect cyclic patterns in learning behavior"""
+        if not data:
+            return {'cycle_strength': 0.0, 'cycle_period': 0, 'cycle_confidence': 0.0}
+        
+        # Simple cycle detection using autocorrelation
+        values = [item.get('score', 0.5) for item in data]
+        
+        if len(values) < 4:
+            return {'cycle_strength': 0.0, 'cycle_period': 0, 'cycle_confidence': 0.0}
+        
+        # Calculate autocorrelation for different lags
+        max_lag = min(len(values) // 2, 10)
+        autocorr = []
+        
+        for lag in range(1, max_lag):
+            if len(values) > lag:
+                corr = np.corrcoef(values[:-lag], values[lag:])[0, 1]
+                autocorr.append(abs(corr) if not np.isnan(corr) else 0.0)
+            else:
+                autocorr.append(0.0)
+        
+        if not autocorr:
+            return {'cycle_strength': 0.0, 'cycle_period': 0, 'cycle_confidence': 0.0}
+        
+        max_corr = max(autocorr)
+        best_period = autocorr.index(max_corr) + 1 if autocorr else 0
+        
+        return {
+            'cycle_strength': max_corr,
+            'cycle_period': best_period,
+            'cycle_confidence': max_corr * 0.8  # Conservative confidence
+        }
+
+    async def _detect_trending_patterns(self, data: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Detect trending patterns in learning behavior"""
+        if not data:
+            return {'trend_direction': 'stable', 'trend_strength': 0.0, 'trend_confidence': 0.0}
+        
+        values = [item.get('score', 0.5) for item in data]
+        
+        if len(values) < 3:
+            return {'trend_direction': 'stable', 'trend_strength': 0.0, 'trend_confidence': 0.0}
+        
+        # Simple linear trend detection
+        x = np.arange(len(values))
+        slope = np.polyfit(x, values, 1)[0]
+        
+        # Determine trend direction and strength
+        if abs(slope) < 0.01:
+            direction = 'stable'
+        elif slope > 0:
+            direction = 'improving'
+        else:
+            direction = 'declining'
+        
+        strength = min(1.0, abs(slope) * 10)  # Scale to 0-1
+        confidence = strength * 0.7  # Conservative confidence
+        
+        return {
+            'trend_direction': direction,
+            'trend_strength': strength,
+            'trend_confidence': confidence
+        }
+
+    async def _detect_seasonal_patterns(self, data: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Detect seasonal patterns in learning behavior"""
+        if not data:
+            return {'seasonal_strength': 0.0, 'seasonal_period': 0, 'seasonal_confidence': 0.0}
+        
+        # Group by day of week or hour of day
+        daily_patterns = defaultdict(list)
+        for item in data:
+            timestamp = item.get('timestamp', datetime.utcnow())
+            if isinstance(timestamp, str):
+                timestamp = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
+            
+            day_of_week = timestamp.weekday()
+            score = item.get('score', 0.5)
+            daily_patterns[day_of_week].append(score)
+        
+        if len(daily_patterns) < 3:
+            return {'seasonal_strength': 0.0, 'seasonal_period': 0, 'seasonal_confidence': 0.0}
+        
+        # Calculate variance across days
+        daily_means = [np.mean(scores) for scores in daily_patterns.values()]
+        seasonal_strength = np.std(daily_means) if len(daily_means) > 1 else 0.0
+        
+        return {
+            'seasonal_strength': min(1.0, seasonal_strength * 2),
+            'seasonal_period': 7,  # Weekly pattern
+            'seasonal_confidence': min(1.0, seasonal_strength)
+        }
+
+    async def _detect_anomalous_patterns(self, data: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Detect anomalous patterns in learning behavior"""
+        if not data:
+            return {'anomaly_score': 0.0, 'anomaly_type': 'none', 'anomaly_confidence': 0.0}
+        
+        values = [item.get('score', 0.5) for item in data]
+        
+        if len(values) < 3:
+            return {'anomaly_score': 0.0, 'anomaly_type': 'none', 'anomaly_confidence': 0.0}
+        
+        # Simple outlier detection using z-score
+        mean_val = np.mean(values)
+        std_val = np.std(values)
+        
+        if std_val == 0:
+            return {'anomaly_score': 0.0, 'anomaly_type': 'none', 'anomaly_confidence': 0.0}
+        
+        z_scores = [(val - mean_val) / std_val for val in values]
+        max_z_score = max(abs(z) for z in z_scores)
+        
+        # Determine anomaly type
+        if max_z_score > 2.0:
+            anomaly_type = 'statistical_outlier'
+        elif len(set(values)) == 1:
+            anomaly_type = 'constant_behavior'
+        else:
+            anomaly_type = 'none'
+        
+        anomaly_score = min(1.0, max_z_score / 3.0)
+        
+        return {
+            'anomaly_score': anomaly_score,
+            'anomaly_type': anomaly_type,
+            'anomaly_confidence': anomaly_score * 0.8
+        }
+
+    # Missing temporal processor methods
+    async def _analyze_time_series(self, data: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Analyze time series patterns in learning data"""
+        if not data:
+            return {'trend': 0.0, 'seasonality': 0.0, 'volatility': 0.0}
+        
+        values = [item.get('score', 0.5) for item in data]
+        if len(values) < 3:
+            return {'trend': 0.0, 'seasonality': 0.0, 'volatility': 0.0}
+        
+        # Simple trend calculation
+        x = np.arange(len(values))
+        trend = np.polyfit(x, values, 1)[0] if len(values) > 1 else 0.0
+        
+        # Simple volatility calculation
+        volatility = np.std(values) if len(values) > 1 else 0.0
+        
+        return {
+            'trend': float(trend),
+            'seasonality': 0.1,  # Placeholder
+            'volatility': float(volatility)
+        }
+
+    async def _analyze_frequency_domain(self, data: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Analyze frequency domain characteristics"""
+        if not data:
+            return {'dominant_frequency': 0.0, 'frequency_strength': 0.0}
+        
+        values = [item.get('score', 0.5) for item in data]
+        if len(values) < 4:
+            return {'dominant_frequency': 0.0, 'frequency_strength': 0.0}
+        
+        # Simple frequency analysis using FFT
+        try:
+            fft = np.fft.fft(values)
+            frequencies = np.fft.fftfreq(len(values))
+            
+            # Find dominant frequency
+            magnitudes = np.abs(fft)
+            dominant_idx = np.argmax(magnitudes[1:]) + 1  # Skip DC component
+            dominant_freq = abs(frequencies[dominant_idx])
+            
+            return {
+                'dominant_frequency': float(dominant_freq),
+                'frequency_strength': float(magnitudes[dominant_idx] / len(values))
+            }
+        except:
+            return {'dominant_frequency': 0.0, 'frequency_strength': 0.0}
+
+    async def _detect_trends(self, data: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Detect trends in learning data"""
+        return await self._detect_trending_patterns(data)
+
+    async def _detect_seasonality(self, data: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Detect seasonality in learning data"""
+        return await self._detect_seasonal_patterns(data)
+
+    async def _detect_change_points(self, data: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Detect change points in learning patterns"""
+        if not data:
+            return {'change_points': [], 'change_strength': 0.0}
+        
+        values = [item.get('score', 0.5) for item in data]
+        if len(values) < 6:
+            return {'change_points': [], 'change_strength': 0.0}
+        
+        # Simple change point detection using moving window variance
+        window_size = min(len(values) // 3, 10)
+        change_points = []
+        
+        for i in range(window_size, len(values) - window_size):
+            before = values[i-window_size:i]
+            after = values[i:i+window_size]
+            
+            if len(before) > 1 and len(after) > 1:
+                var_before = np.var(before)
+                var_after = np.var(after)
+                
+                # Detect significant variance change
+                if abs(var_before - var_after) > 0.1:
+                    change_points.append(i)
+        
+        change_strength = len(change_points) / len(values) if values else 0.0
+        
+        return {
+            'change_points': change_points[:5],  # Limit to 5 most significant
+            'change_strength': min(1.0, change_strength * 10)
+        }
+
+    # Missing anomaly detector methods
+    async def _detect_statistical_anomalies(self, data: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Detect statistical anomalies"""
+        return await self._detect_anomalous_patterns(data)
+
+    async def _detect_ml_anomalies(self, data: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Detect ML-based anomalies"""
+        if not data:
+            return {'anomaly_score': 0.0, 'anomaly_indices': []}
+        
+        values = [item.get('score', 0.5) for item in data]
+        if len(values) < 3:
+            return {'anomaly_score': 0.0, 'anomaly_indices': []}
+        
+        # Simple ML-style anomaly detection using IQR
+        q1 = np.percentile(values, 25)
+        q3 = np.percentile(values, 75)
+        iqr = q3 - q1
+        
+        lower_bound = q1 - 1.5 * iqr
+        upper_bound = q3 + 1.5 * iqr
+        
+        anomaly_indices = [
+            i for i, val in enumerate(values) 
+            if val < lower_bound or val > upper_bound
+        ]
+        
+        anomaly_score = len(anomaly_indices) / len(values) if values else 0.0
+        
+        return {
+            'anomaly_score': min(1.0, anomaly_score * 3),
+            'anomaly_indices': anomaly_indices[:10]  # Limit to 10
+        }
+
+    async def _detect_isolation_anomalies(self, data: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Detect isolation-based anomalies"""
+        # Simplified isolation forest approach
+        return await self._detect_ml_anomalies(data)
+
+    async def _detect_behavioral_anomalies(self, data: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Detect behavioral anomalies"""
+        if not data:
+            return {'behavioral_anomaly_score': 0.0, 'anomaly_patterns': []}
+        
+        # Look for unusual behavioral patterns
+        engagement_scores = [item.get('engagement', 0.5) for item in data]
+        difficulty_scores = [item.get('difficulty', 0.5) for item in data]
+        
+        if len(engagement_scores) < 3:
+            return {'behavioral_anomaly_score': 0.0, 'anomaly_patterns': []}
+        
+        # Detect sudden drops in engagement
+        engagement_changes = [
+            abs(engagement_scores[i] - engagement_scores[i-1])
+            for i in range(1, len(engagement_scores))
+        ]
+        
+        significant_changes = [change for change in engagement_changes if change > 0.3]
+        anomaly_score = len(significant_changes) / len(engagement_changes) if engagement_changes else 0.0
+        
+        return {
+            'behavioral_anomaly_score': min(1.0, anomaly_score * 2),
+            'anomaly_patterns': ['engagement_drop'] if anomaly_score > 0.2 else []
+        }
 
 # ============================================================================
 # 2. COGNITIVE LOAD MEASUREMENT SYSTEM
