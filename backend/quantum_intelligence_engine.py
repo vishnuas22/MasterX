@@ -30197,6 +30197,124 @@ class CognitiveLoadMeasurementSystemMethods:
             return 3  # Smaller chunks
         else:
             return 2  # Very small chunks
+    
+    def _generate_complexity_adaptations(self, intrinsic_load: float) -> List[str]:
+        """Generate adaptation strategies based on intrinsic load"""
+        adaptations = []
+        
+        if intrinsic_load < 0.3:
+            adaptations.extend([
+                "increase_concept_depth",
+                "add_advanced_examples",
+                "introduce_complex_relationships",
+                "accelerate_learning_pace",
+                "add_challenge_problems"
+            ])
+        elif intrinsic_load < 0.6:
+            adaptations.extend([
+                "maintain_current_complexity",
+                "provide_balanced_examples",
+                "moderate_concept_introduction",
+                "optimize_learning_sequence"
+            ])
+        elif intrinsic_load < 0.8:
+            adaptations.extend([
+                "break_down_concepts",
+                "increase_scaffolding",
+                "provide_more_examples",
+                "reduce_cognitive_jumps",
+                "add_visual_aids"
+            ])
+        else:
+            adaptations.extend([
+                "significant_simplification",
+                "prerequisite_review",
+                "step_by_step_guidance",
+                "extensive_scaffolding",
+                "micro_learning_chunks",
+                "multimedia_support"
+            ])
+        
+        return adaptations
+    
+    def _calculate_temporal_demand(self, session_duration: int, task_switches: int) -> float:
+        """Calculate temporal demand based on session duration and task switches"""
+        # Base demand from session duration (optimal session is 45-60 minutes)
+        optimal_duration = 50  # minutes
+        duration_factor = min(1.0, session_duration / optimal_duration)
+        
+        # Task switching cost (each switch adds cognitive overhead)
+        switching_cost = min(0.5, task_switches * 0.1)
+        
+        temporal_demand = (duration_factor * 0.7) + (switching_cost * 0.3)
+        return min(1.0, temporal_demand)
+    
+    def _calculate_load_demand(self, concepts_introduced: int, performance_metrics: Dict[str, Any]) -> float:
+        """Calculate cognitive load demand based on new concepts and performance"""
+        # Base demand from new concepts (optimal is 2-4 new concepts per session)
+        optimal_concepts = 3
+        concept_factor = min(1.0, concepts_introduced / optimal_concepts)
+        
+        # Performance adjustment
+        accuracy = performance_metrics.get('accuracy', 0.7)
+        response_time = performance_metrics.get('avg_response_time', 60)  # seconds
+        
+        # Poor performance indicates high cognitive load
+        performance_factor = (1.0 - accuracy) + min(1.0, response_time / 120)
+        
+        load_demand = (concept_factor * 0.6) + (performance_factor * 0.4)
+        return min(1.0, load_demand)
+    
+    def _calculate_attention_demand(self, user_interactions: List[Dict], attention_level: float) -> float:
+        """Calculate attention demand based on interactions and current attention level"""
+        if not user_interactions:
+            return 0.5
+        
+        # Analyze interaction patterns
+        interaction_frequency = len(user_interactions) / max(1, len(user_interactions))
+        
+        # Count attention-demanding interactions
+        high_attention_types = ['problem_solving', 'analysis', 'synthesis', 'evaluation']
+        attention_demanding = sum(1 for interaction in user_interactions 
+                                if interaction.get('type') in high_attention_types)
+        
+        attention_ratio = attention_demanding / len(user_interactions)
+        
+        # Adjust by current attention level
+        base_demand = attention_ratio * 0.8
+        attention_adjustment = 1.0 - (attention_level * 0.4)
+        
+        attention_demand = base_demand * attention_adjustment
+        return min(1.0, attention_demand)
+    
+    def _calculate_processing_demand(self, learning_session: Dict[str, Any]) -> float:
+        """Calculate processing demand based on session complexity"""
+        # Extract processing indicators
+        multimedia_elements = learning_session.get('multimedia_count', 0)
+        text_complexity = learning_session.get('text_complexity_score', 0.5)
+        interactive_elements = learning_session.get('interactive_count', 0)
+        
+        # Calculate processing demands
+        multimedia_demand = min(0.4, multimedia_elements * 0.1)
+        text_demand = text_complexity * 0.3
+        interaction_demand = min(0.3, interactive_elements * 0.05)
+        
+        processing_demand = multimedia_demand + text_demand + interaction_demand
+        return min(1.0, processing_demand)
+    
+    def _calculate_memory_demand(self, concepts_introduced: int, session_duration: int) -> float:
+        """Calculate memory demand based on concepts and time"""
+        # Working memory capacity (Miller's 7±2 rule)
+        working_memory_capacity = 7
+        
+        # Memory load from new concepts
+        concept_load = min(1.0, concepts_introduced / working_memory_capacity)
+        
+        # Memory decay over time (longer sessions = higher memory demand)
+        time_factor = min(1.0, session_duration / 60)  # Normalized to 1 hour
+        
+        memory_demand = (concept_load * 0.7) + (time_factor * 0.3)
+        return min(1.0, memory_demand)
 
 # ============================================================================
 # IMPLEMENTATION COMPLETION: ADD METHODS TO EXISTING CLASSES
