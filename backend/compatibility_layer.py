@@ -5,13 +5,35 @@
 Compatibility layer for legacy code that still references old services.
 This ensures smooth transition to the Quantum Intelligence Engine.
 
-All legacy AI services now point to the Quantum Intelligence Engine.
+All legacy AI services now point to the new modular Quantum Intelligence Engine.
 """
 
 from enum import Enum
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass, field
 from datetime import datetime
+import structlog
+
+# Import from new modular architecture
+try:
+    from quantum_intelligence import (
+        QuantumLearningIntelligenceEngine,
+        QuantumLearningMode,
+        QuantumState,
+        IntelligenceLevel,
+        QuantumLearningContext,
+        QuantumResponse,
+        QuantumEngineConfig,
+        get_quantum_engine,
+        setup_dependencies
+    )
+    from quantum_intelligence.core.data_structures import LearningDNA, AdaptiveContentParameters, MoodBasedAdaptation
+    MODULAR_ENGINE_AVAILABLE = True
+except ImportError as e:
+    print(f"Modular engine not available, using fallback: {e}")
+    MODULAR_ENGINE_AVAILABLE = False
+
+logger = structlog.get_logger() if MODULAR_ENGINE_AVAILABLE else None
 
 # First, create all the enums and classes that the quantum engine needs
 class LearningStyle(Enum):
