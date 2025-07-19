@@ -30,7 +30,8 @@ from ..models import (
     ChatRequest, ChatResponse, ChatMessage, ChatMessageType,
     UserProfile, BaseResponse
 )
-from ..auth import get_current_user, require_permission
+# Authentication temporarily disabled for development
+# from ..auth import get_current_user, require_permission
 from ..utils import APIResponseHandler, LLMIntegration
 
 # Configure logging
@@ -366,13 +367,22 @@ chat_service = ChatService()
 
 @router.post("/message", response_model=ChatResponse)
 async def send_chat_message(
-    chat_request: ChatRequest,
-    current_user: UserProfile = Depends(require_permission("chat:write"))
+    chat_request: ChatRequest
 ):
     """Send a chat message and get AI response"""
-    
+
     try:
-        response = await chat_service.process_chat_message(current_user, chat_request)
+        # Create mock user for development (authentication disabled)
+        from ..models import UserProfile, UserRole
+        mock_user = UserProfile(
+            user_id="dev_user_001",
+            name="Developer User",
+            username="developer",
+            email="dev@masterx.ai",
+            role=UserRole.STUDENT,
+            created_at="2024-01-01T00:00:00Z"
+        )
+        response = await chat_service.process_chat_message(mock_user, chat_request)
         return response
         
     except HTTPException:
@@ -383,14 +393,23 @@ async def send_chat_message(
 
 @router.post("/stream")
 async def stream_chat_message(
-    chat_request: ChatRequest,
-    current_user: UserProfile = Depends(require_permission("chat:write"))
+    chat_request: ChatRequest
 ):
     """Stream chat response in real-time"""
-    
+
     try:
+        # Create mock user for development (authentication disabled)
+        from ..models import UserProfile, UserRole
+        mock_user = UserProfile(
+            user_id="dev_user_001",
+            name="Developer User",
+            username="developer",
+            email="dev@masterx.ai",
+            role=UserRole.STUDENT,
+            created_at="2024-01-01T00:00:00Z"
+        )
         return EventSourceResponse(
-            chat_service.stream_chat_response(current_user, chat_request),
+            chat_service.stream_chat_response(mock_user, chat_request),
             media_type="text/event-stream"
         )
         
@@ -400,8 +419,7 @@ async def stream_chat_message(
 
 @router.get("/sessions/{session_id}")
 async def get_chat_session(
-    session_id: str,
-    current_user: UserProfile = Depends(require_permission("chat:read"))
+    session_id: str
 ):
     """Get chat session details"""
     
@@ -411,9 +429,9 @@ async def get_chat_session(
         if not session:
             raise HTTPException(status_code=404, detail="Chat session not found")
         
-        # Check if user owns the session
-        if session['user_id'] != current_user.user_id and current_user.role.value not in ['admin', 'teacher']:
-            raise HTTPException(status_code=403, detail="Access denied to this chat session")
+        # Authentication disabled for development - allow access to all sessions
+        # if session['user_id'] != current_user.user_id and current_user.role.value not in ['admin', 'teacher']:
+        #     raise HTTPException(status_code=403, detail="Access denied to this chat session")
         
         return session
         
@@ -425,8 +443,7 @@ async def get_chat_session(
 
 @router.delete("/sessions/{session_id}")
 async def delete_chat_session(
-    session_id: str,
-    current_user: UserProfile = Depends(require_permission("chat:write"))
+    session_id: str
 ):
     """Delete a chat session"""
     
@@ -436,9 +453,9 @@ async def delete_chat_session(
         if not session:
             raise HTTPException(status_code=404, detail="Chat session not found")
         
-        # Check if user owns the session
-        if session['user_id'] != current_user.user_id and current_user.role.value not in ['admin']:
-            raise HTTPException(status_code=403, detail="Access denied to delete this chat session")
+        # Authentication disabled for development - allow deletion of all sessions
+        # if session['user_id'] != current_user.user_id and current_user.role.value not in ['admin']:
+        #     raise HTTPException(status_code=403, detail="Access denied to delete this chat session")
         
         # Delete session
         if session_id in chat_service.chat_sessions:
@@ -453,16 +470,16 @@ async def delete_chat_session(
         raise HTTPException(status_code=500, detail="Chat session deletion error")
 
 @router.get("/sessions")
-async def list_chat_sessions(
-    current_user: UserProfile = Depends(require_permission("chat:read"))
-):
+async def list_chat_sessions():
     """List user's chat sessions"""
     
     try:
         user_sessions = []
         
         for session_id, session in chat_service.chat_sessions.items():
-            if session['user_id'] == current_user.user_id or current_user.role.value in ['admin', 'teacher']:
+            # Authentication disabled for development - return all sessions
+            # if session['user_id'] == current_user.user_id or current_user.role.value in ['admin', 'teacher']:
+            if True:  # Allow access to all sessions for development
                 user_sessions.append({
                     'session_id': session_id,
                     'created_at': session['created_at'],
