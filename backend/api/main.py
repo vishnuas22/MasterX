@@ -25,6 +25,10 @@ from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional, Union
 from contextlib import asynccontextmanager
 
+# Load environment variables
+from dotenv import load_dotenv
+load_dotenv()
+
 # FastAPI and related imports
 from fastapi import FastAPI, HTTPException, Depends, WebSocket, WebSocketDisconnect, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
@@ -58,7 +62,7 @@ from .routers import (
 )
 
 # Import authentication and middleware
-from .auth import AuthManager, get_current_user
+from .auth import get_current_user  # AuthManager removed for development
 from .middleware import RequestLoggingMiddleware, RateLimitingMiddleware
 from .models import *
 from .utils import APIResponseHandler, WebSocketManager
@@ -162,8 +166,9 @@ app.add_middleware(RateLimitingMiddleware)
 # AUTHENTICATION SETUP
 # ============================================================================
 
-auth_manager = AuthManager()
-security = HTTPBearer()
+# Authentication disabled for development
+# auth_manager = AuthManager()
+# security = HTTPBearer()
 
 # ============================================================================
 # API ROUTERS

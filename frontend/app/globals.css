@@ -1,66 +1,524 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100;200;300;400;500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================================================
+   MASTERX QUANTUM INTELLIGENCE PLATFORM - GLOBAL STYLES
+   Production-Grade Design System
+   ============================================================================ */
+
 :root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
+  /* Quantum Color Palette */
+  --quantum-primary: #8B5CF6;
+  --quantum-primary-dark: #7C3AED;
+  --quantum-primary-light: #A78BFA;
+  --quantum-secondary: #06B6D4;
+  --quantum-accent: #F59E0B;
+  --quantum-success: #10B981;
+  --quantum-warning: #F59E0B;
+  --quantum-error: #EF4444;
+
+  /* Neural Network Gradients */
+  --gradient-quantum: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --gradient-neural: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  --gradient-intelligence: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  --gradient-cosmic: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+
+  /* Dark Theme Foundation */
+  --bg-primary: #0F0F23;
+  --bg-secondary: #1A1A2E;
+  --bg-tertiary: #16213E;
+  --bg-glass: rgba(139, 92, 246, 0.1);
+  --bg-glass-hover: rgba(139, 92, 246, 0.2);
+
+  /* Text Colors */
+  --text-primary: #FFFFFF;
+  --text-secondary: #E2E8F0;
+  --text-muted: #94A3B8;
+  --text-quantum: #A78BFA;
+
+  /* Border & Effects */
+  --border-quantum: rgba(139, 92, 246, 0.3);
+  --border-glass: rgba(255, 255, 255, 0.1);
+  --shadow-quantum: 0 0 30px rgba(139, 92, 246, 0.3);
+  --shadow-neural: 0 0 50px rgba(139, 92, 246, 0.2);
+
+  /* Animation Timing */
+  --transition-fast: 0.15s ease-out;
+  --transition-normal: 0.3s ease-out;
+  --transition-slow: 0.5s ease-out;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
-  }
+/* ============================================================================
+   BASE STYLES
+   ============================================================================ */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
 }
 
 body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.6;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
 }
 
-.App {
-  text-align: center;
-}
-
-.App-logo {
-  height: 40vmin;
+/* Cosmic Background Animation */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background:
+    radial-gradient(circle at 20% 80%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(6, 182, 212, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(245, 158, 11, 0.05) 0%, transparent 50%);
   pointer-events: none;
+  z-index: -1;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
+/* ============================================================================
+   QUANTUM DESIGN COMPONENTS
+   ============================================================================ */
+
+.glass-morph {
+  background: var(--bg-glass);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--border-glass);
+  border-radius: 16px;
+  transition: all var(--transition-normal);
+}
+
+.glass-morph:hover {
+  background: var(--bg-glass-hover);
+  border-color: var(--border-quantum);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-quantum);
+}
+
+.quantum-glow {
+  text-shadow: 0 0 20px rgba(139, 92, 246, 0.5);
+  transition: all var(--transition-normal);
+}
+
+.quantum-glow:hover {
+  text-shadow: 0 0 30px rgba(139, 92, 246, 0.8);
+}
+
+.neural-border {
+  position: relative;
+  border-radius: 12px;
+  padding: 2px;
+  background: linear-gradient(45deg, var(--quantum-primary), var(--quantum-secondary));
+}
+
+.neural-border::before {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  background: var(--bg-secondary);
+  border-radius: 10px;
+  z-index: -1;
+}
+
+.interactive-button {
+  position: relative;
+  overflow: hidden;
+  transition: all var(--transition-normal);
+}
+
+.interactive-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transition: left var(--transition-slow);
+}
+
+.interactive-button:hover::before {
+  left: 100%;
+}
+
+.focus-quantum:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.3);
+  border-color: var(--quantum-primary);
+}
+
+/* ============================================================================
+   TYPOGRAPHY SYSTEM
+   ============================================================================ */
+
+.text-gradient-quantum {
+  background: linear-gradient(135deg, var(--quantum-primary), var(--quantum-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-neural {
+  background: linear-gradient(135deg, #f093fb, #f5576c);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.font-mono {
+  font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+}
+
+/* ============================================================================
+   ANIMATIONS & EFFECTS
+   ============================================================================ */
+
+@keyframes quantum-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
   }
 }
 
-.App-header {
-  background-color: #0f0f10;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
-}
-
-.App-link {
-  color: #61dafb;
-}
-
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
+@keyframes neural-flow {
+  0% {
+    background-position: 0% 50%;
   }
-  to {
-    transform: rotate(360deg);
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes cosmic-drift {
+  0% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  33% {
+    transform: translateY(-10px) rotate(1deg);
+  }
+  66% {
+    transform: translateY(5px) rotate(-1deg);
+  }
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+}
+
+@keyframes quantum-float {
+  0%, 100% {
+    transform: translateY(0px) scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translateY(-20px) scale(1.1);
+    opacity: 1;
+  }
+}
+
+@keyframes neural-spark {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+}
+
+@keyframes data-stream {
+  0% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(139, 92, 246, 0.6);
+  }
+}
+
+/* Advanced Enterprise Animations */
+@keyframes matrix-rain {
+  0% {
+    transform: translateY(-100vh) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+@keyframes hologram-flicker {
+  0%, 100% {
+    opacity: 1;
+    filter: brightness(1) contrast(1);
+  }
+  2% {
+    opacity: 0.8;
+    filter: brightness(1.2) contrast(1.1);
+  }
+  4% {
+    opacity: 1;
+    filter: brightness(0.9) contrast(0.9);
+  }
+  6% {
+    opacity: 0.9;
+    filter: brightness(1.1) contrast(1.2);
+  }
+  8% {
+    opacity: 1;
+    filter: brightness(1) contrast(1);
+  }
+}
+
+@keyframes energy-wave {
+  0% {
+    transform: scale(0.8) rotate(0deg);
+    opacity: 0;
+    filter: hue-rotate(0deg);
+  }
+  50% {
+    transform: scale(1.2) rotate(180deg);
+    opacity: 1;
+    filter: hue-rotate(180deg);
+  }
+  100% {
+    transform: scale(1.6) rotate(360deg);
+    opacity: 0;
+    filter: hue-rotate(360deg);
+  }
+}
+
+@keyframes particle-orbit {
+  0% {
+    transform: rotate(0deg) translateX(30px) rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg) translateX(30px) rotate(-360deg);
+  }
+}
+
+@keyframes neural-network-pulse {
+  0%, 100% {
+    stroke-opacity: 0.3;
+    stroke-width: 1;
+    filter: drop-shadow(0 0 2px rgba(139, 92, 246, 0.3));
+  }
+  50% {
+    stroke-opacity: 0.8;
+    stroke-width: 2;
+    filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.8));
+  }
+}
+
+@keyframes quantum-glow {
+  0%, 100% {
+    text-shadow:
+      0 0 5px rgba(139, 92, 246, 0.5),
+      0 0 10px rgba(139, 92, 246, 0.3),
+      0 0 15px rgba(139, 92, 246, 0.2);
+  }
+  50% {
+    text-shadow:
+      0 0 20px rgba(139, 92, 246, 0.8),
+      0 0 30px rgba(139, 92, 246, 0.6),
+      0 0 40px rgba(139, 92, 246, 0.4),
+      0 0 50px rgba(139, 92, 246, 0.2);
+  }
+}
+
+.animate-quantum-pulse {
+  animation: quantum-pulse 2s ease-in-out infinite;
+}
+
+.animate-neural-flow {
+  background-size: 200% 200%;
+  animation: neural-flow 3s ease infinite;
+}
+
+.animate-cosmic-drift {
+  animation: cosmic-drift 6s ease-in-out infinite;
+}
+
+.animate-quantum-float {
+  animation: quantum-float 4s ease-in-out infinite;
+}
+
+.animate-neural-spark {
+  animation: neural-spark 2s ease-in-out infinite;
+}
+
+.animate-data-stream {
+  animation: data-stream 3s linear infinite;
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+/* Advanced Animation Classes */
+.animate-matrix-rain {
+  animation: matrix-rain 8s linear infinite;
+}
+
+.animate-hologram-flicker {
+  animation: hologram-flicker 4s ease-in-out infinite;
+}
+
+.animate-energy-wave {
+  animation: energy-wave 3s ease-in-out infinite;
+}
+
+.animate-particle-orbit {
+  animation: particle-orbit 6s linear infinite;
+}
+
+.animate-neural-network-pulse {
+  animation: neural-network-pulse 2s ease-in-out infinite;
+}
+
+/* Glass Morphism Variants */
+.glass-morph {
+  background: rgba(139, 92, 246, 0.1);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+}
+
+.glass-morph-strong {
+  background: rgba(139, 92, 246, 0.15);
+  backdrop-filter: blur(30px);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  box-shadow:
+    0 8px 32px rgba(139, 92, 246, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.glass-morph-subtle {
+  background: rgba(139, 92, 246, 0.05);
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(139, 92, 246, 0.1);
+}
+
+/* Enterprise Hover Effects */
+.hover-quantum {
+  transition: all 0.3s ease;
+}
+
+.hover-quantum:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow:
+    0 10px 40px rgba(139, 92, 246, 0.2),
+    0 0 20px rgba(139, 92, 246, 0.1);
+  border-color: rgba(139, 92, 246, 0.4);
+}
+
+.hover-neural {
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.hover-neural::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.hover-neural:hover::before {
+  left: 100%;
+}
+
+/* Quantum Glow Effect */
+.quantum-glow {
+  animation: quantum-glow 3s ease-in-out infinite;
+}
+
+/* ============================================================================
+   RESPONSIVE DESIGN
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  .glass-morph {
+    border-radius: 12px;
+    backdrop-filter: blur(15px);
+  }
+
+  .quantum-glow {
+    text-shadow: 0 0 15px rgba(139, 92, 246, 0.4);
+  }
+}
+
+/* ============================================================================
+   ACCESSIBILITY
+   ============================================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  :root {
+    --border-quantum: rgba(139, 92, 246, 0.8);
+    --bg-glass: rgba(139, 92, 246, 0.2);
   }
 }

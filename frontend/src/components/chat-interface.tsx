@@ -1,15 +1,22 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
-import { Send, Bot, User, Loader2, Brain, Zap, Target, Sparkles, MessageCircle } from 'lucide-react'
-import { api } from '@/lib/api'
+import { useState, useRef, useEffect, useCallback } from 'react'
+import { Send, Bot, User, Loader2, Brain, Zap, Target, Sparkles, MessageCircle, Settings, Code, Palette, Eye } from 'lucide-react'
+import { api, sendMessage, streamMessage, ChatRequest, ChatResponse } from '@/lib/api'
 import { cn } from '@/lib/utils'
+import { useAuth } from '@/contexts/AuthContext'
+import useWebSocket from '@/hooks/useWebSocket'
+import { QuantumDropdown, TASK_TYPE_OPTIONS, PROVIDER_OPTIONS } from '@/components/ui/quantum-dropdown'
 
 interface Message {
   id: string
   content: string
   sender: 'user' | 'ai'
   timestamp: Date
+  provider?: string
+  model?: string
+  task_type?: string
+  suggestions?: string[]
   metadata?: {
     learningMode?: string
     concepts?: string[]
@@ -18,27 +25,43 @@ interface Message {
     engagement_prediction?: number
     knowledge_gaps?: string[]
     next_concepts?: string[]
+    response_time?: number
+    tokens_used?: number
+    task_optimization?: string
   }
 }
 
 export function ChatInterface() {
+  const { user, token, isAuthenticated } = useAuth()
+
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      content: 'Hello! I\'m your AI mentor powered by the Quantum Intelligence Engine. I can help you learn using advanced modes like Socratic questioning, debug mastery, and creative synthesis. What would you like to explore today?',
+      content: 'Hello! I\'m your AI mentor powered by the MasterX Quantum Intelligence Engine with multi-LLM integration. I can intelligently select the best AI model for your specific task - whether it\'s reasoning, coding, creative writing, or quick responses. What would you like to explore today?',
       sender: 'ai',
       timestamp: new Date(),
+      provider: 'system',
+      task_type: 'general',
       metadata: {
         learningMode: 'adaptive_quantum',
-        concepts: ['introduction', 'quantum_intelligence'],
+        concepts: ['introduction', 'quantum_intelligence', 'multi_llm'],
         confidence: 0.95
       }
     }
   ])
+
   const [inputMessage, setInputMessage] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [sessionId, setSessionId] = useState<string>('')
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'error'>('connecting')
+
+  // Enhanced features
+  const [taskType, setTaskType] = useState<string>('general')
+  const [selectedProvider, setSelectedProvider] = useState<string>('')
+  const [streamingEnabled, setStreamingEnabled] = useState(true)
+  const [currentStreamingMessage, setCurrentStreamingMessage] = useState('')
+  const [isStreaming, setIsStreaming] = useState(false)
+
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -56,66 +79,130 @@ export function ChatInterface() {
   const initializeSession = async () => {
     try {
       setConnectionStatus('connecting')
-      const response = await api.chat.createSession()
-      if (response.data && response.data.session_id) {
-        setSessionId(response.data.session_id)
-        setConnectionStatus('connected')
-        console.log('✅ Session created:', response.data.session_id)
-      } else {
-        // Fallback session ID
-        const fallbackSessionId = `session_${Date.now()}`
-        setSessionId(fallbackSessionId)
-        setConnectionStatus('connected')
-        console.log('⚠️ Using fallback session ID:', fallbackSessionId)
-      }
-    } catch (error) {
-      console.error('❌ Failed to initialize session:', error)
-      // Use fallback session ID
+
+      // Authentication check removed for development
+      // if (!isAuthenticated) {
+      //   setConnectionStatus('error')
+      //   return
+      // }
+
+      // Session will be created automatically on first message
+      // For now, use a fallback session ID
       const fallbackSessionId = `session_${Date.now()}`
       setSessionId(fallbackSessionId)
+      setConnectionStatus('connected')
+      console.log('✅ Session initialized:', fallbackSessionId)
+    } catch (error) {
+      console.error('❌ Failed to initialize session:', error)
       setConnectionStatus('error')
     }
   }
 
-  const sendMessage = async () => {
-    if (!inputMessage.trim() || isLoading) return
+  const handleSendMessage = async () => {
+    if (!inputMessage.trim() || isLoading) return  // Removed authentication check for development
 
     const userMessage: Message = {
       id: Date.now().toString(),
       content: inputMessage,
       sender: 'user',
-      timestamp: new Date()
+      timestamp: new Date(),
+      task_type: taskType
     }
 
     setMessages(prev => [...prev, userMessage])
+    const currentMessage = inputMessage
     setInputMessage('')
     setIsLoading(true)
 
     try {
-      // Call real backend API
-      const response = await api.chat.send(inputMessage, sessionId)
-      
-      if (response.data) {
-        const aiMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          content: response.data.response,
+      const chatRequest: ChatRequest = {
+        message: currentMessage,
+        session_id: sessionId || undefined,
+        message_type: 'text',
+        task_type: taskType as 'reasoning' | 'coding' | 'creative' | 'fast' | 'multimodal' | 'general',
+        provider: (selectedProvider as 'groq' | 'gemini' | 'openai' | 'anthropic') || undefined,
+        stream: streamingEnabled
+      }
+
+      if (streamingEnabled) {
+        // Handle streaming response
+        setIsStreaming(true)
+        setCurrentStreamingMessage('')
+
+        const streamingMessageId = (Date.now() + 1).toString()
+
+        // Add placeholder message for streaming
+        const placeholderMessage: Message = {
+          id: streamingMessageId,
+          content: '',
           sender: 'ai',
           timestamp: new Date(),
+          task_type: taskType
+        }
+        setMessages(prev => [...prev, placeholderMessage])
+
+        await streamMessage(
+          chatRequest,
+          (chunk) => {
+            if (chunk.content) {
+              setCurrentStreamingMessage(prev => prev + chunk.content)
+              // Update the placeholder message
+              setMessages(prev => prev.map(msg =>
+                msg.id === streamingMessageId
+                  ? { ...msg, content: msg.content + chunk.content }
+                  : msg
+              ))
+            }
+          },
+          () => {
+            setIsStreaming(false)
+            setCurrentStreamingMessage('')
+          },
+          (error) => {
+            console.error('Streaming error:', error)
+            setIsStreaming(false)
+            setCurrentStreamingMessage('')
+          }
+        )
+      } else {
+        // Handle regular response using direct fetch
+        const response = await fetch('http://localhost:8000/api/v1/chat/message', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(chatRequest),
+        })
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+
+        const data = await response.json()
+
+        const aiMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          content: data.response,
+          sender: 'ai',
+          timestamp: new Date(),
+          provider: data.provider_used || selectedProvider,
+          model: data.model,
+          task_type: data.task_type || taskType,
+          suggestions: data.suggestions || [],
           metadata: {
-            learningMode: response.data.metadata?.learning_mode || 'adaptive_quantum',
-            concepts: response.data.metadata?.concepts || [],
-            confidence: response.data.metadata?.confidence || 0.85,
-            intelligence_level: response.data.metadata?.intelligence_level,
-            engagement_prediction: response.data.metadata?.engagement_prediction,
-            knowledge_gaps: response.data.metadata?.knowledge_gaps,
-            next_concepts: response.data.metadata?.next_concepts
+            learningMode: 'adaptive_quantum',
+            concepts: [],
+            confidence: 0.85,
+            response_time: data.processing_time,
+            tokens_used: data.metadata?.tokens_used,
+            task_optimization: data.metadata?.task_optimization
           }
         }
         setMessages(prev => [...prev, aiMessage])
-        
+
         // Update session ID if it changed
-        if (response.data.session_id && response.data.session_id !== sessionId) {
-          setSessionId(response.data.session_id)
+        if (data.session_id && data.session_id !== sessionId) {
+          setSessionId(data.session_id)
         }
       }
     } catch (error) {
@@ -142,40 +229,41 @@ export function ChatInterface() {
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
-      sendMessage()
+      handleSendMessage()
     }
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-6 h-screen flex flex-col">
-      {/* Enhanced Header */}
-      <div className="mb-6 glass-morph p-6 rounded-xl border border-purple-500/20">
-        <div className="flex items-center space-x-3 mb-2">
-          <Brain className="h-8 w-8 text-purple-400 quantum-pulse" />
-          <h1 className="text-3xl font-bold quantum-text-glow">AI Learning Mentor</h1>
-          <Sparkles className="h-6 w-6 text-purple-300 quantum-float" />
-          {/* Connection Status Indicator */}
-          <div className={`ml-auto flex items-center space-x-2 px-3 py-1 rounded-full text-xs font-medium ${
-            connectionStatus === 'connected' 
-              ? 'bg-green-900/50 text-green-300 border border-green-500/30' 
-              : connectionStatus === 'error' 
-              ? 'bg-red-900/50 text-red-300 border border-red-500/30'
-              : 'bg-blue-900/50 text-blue-300 border border-blue-500/30'
-          }`}>
-            <div className={`w-2 h-2 rounded-full ${
-              connectionStatus === 'connected' ? 'bg-green-400' : 
-              connectionStatus === 'error' ? 'bg-red-400' : 'bg-blue-400 animate-pulse'
-            }`}></div>
-            <span>{connectionStatus === 'connected' ? 'Connected' : connectionStatus === 'error' ? 'Error' : 'Connecting'}</span>
+    <div className="h-full flex flex-col p-6">
+      {/* Session Info Bar */}
+      <div className="glass-morph rounded-xl p-4 mb-6 border border-purple-500/20">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <Brain className="h-5 w-5 text-purple-400 animate-quantum-pulse" />
+              <span className="text-white font-medium">Quantum Intelligence Session</span>
+            </div>
+            {sessionId && (
+              <div className="flex items-center space-x-2">
+                <MessageCircle className="h-4 w-4 text-purple-400" />
+                <span className="text-xs text-purple-400 font-mono">ID: {sessionId.substring(0, 8)}...</span>
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-center space-x-4">
+            <div className={`flex items-center space-x-2 text-sm ${
+              connectionStatus === 'connected' ? 'text-green-400' :
+              connectionStatus === 'error' ? 'text-red-400' : 'text-yellow-400'
+            }`}>
+              <div className={`w-2 h-2 rounded-full ${
+                connectionStatus === 'connected' ? 'bg-green-400' :
+                connectionStatus === 'error' ? 'bg-red-400' : 'bg-blue-400 animate-pulse'
+              }`}></div>
+              <span>{connectionStatus === 'connected' ? 'Connected' : connectionStatus === 'error' ? 'Error' : 'Connecting'}</span>
+            </div>
           </div>
         </div>
-        <p className="text-gray-400">Powered by Quantum Intelligence Engine</p>
-        {sessionId && (
-          <div className="flex items-center space-x-2 mt-2">
-            <MessageCircle className="h-4 w-4 text-purple-400" />
-            <p className="text-xs text-purple-400">Session: {sessionId.substring(0, 8)}...</p>
-          </div>
-        )}
       </div>
 
       {/* Enhanced Messages Container */}
@@ -189,21 +277,62 @@ export function ChatInterface() {
         </div>
       </div>
 
+      {/* Enhanced Controls */}
+      <div className="glass-morph rounded-xl p-6 mb-4 border border-purple-500/20">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <QuantumDropdown
+            label="Task Type"
+            options={TASK_TYPE_OPTIONS}
+            value={taskType}
+            onChange={setTaskType}
+            placeholder="Select task type..."
+          />
+
+          <QuantumDropdown
+            label="AI Provider"
+            options={PROVIDER_OPTIONS}
+            value={selectedProvider}
+            onChange={setSelectedProvider}
+            placeholder="Select provider..."
+          />
+
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <label className="text-sm font-medium text-purple-300">Streaming:</label>
+              <input
+                type="checkbox"
+                checked={streamingEnabled}
+                onChange={(e) => setStreamingEnabled(e.target.checked)}
+                className="w-4 h-4 text-purple-600 bg-slate-700 border-slate-600 rounded focus:ring-purple-500"
+              />
+            </div>
+
+            {isAuthenticated && user && (
+              <div className="flex items-center space-x-2">
+                <span className="text-purple-400 border border-purple-400 px-3 py-2 rounded-lg text-sm font-medium">
+                  {user.name} ({user.role})
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* Enhanced Input Area */}
       <div className="glass-morph rounded-xl p-6 border border-purple-500/20">
         <div className="flex space-x-4">
           <textarea
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
-            onKeyPress={handleKeyPress}
+            onKeyDown={handleKeyPress}
             placeholder="Ask me anything about learning, or let me know what you'd like to explore..."
             className="flex-1 bg-slate-700/50 text-white placeholder-gray-400 border border-slate-600 rounded-lg px-4 py-3 focus:border-purple-500 focus:outline-none resize-none focus-quantum transition-all"
             rows={3}
             disabled={isLoading}
           />
           <button
-            onClick={sendMessage}
-            disabled={isLoading || !inputMessage.trim()}
+            onClick={handleSendMessage}
+            disabled={isLoading || !inputMessage.trim()}  // Removed authentication check
             className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-6 py-3 rounded-lg font-semibold quantum-glow interactive-button transition-all flex items-center space-x-2"
           >
             <Send className="h-5 w-5" />

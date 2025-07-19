@@ -24,7 +24,8 @@ from typing import Dict, Any, List, Optional
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, HTTPException
 
 from ..models import WebSocketMessage, UserProfile
-from ..auth import auth_manager
+# Authentication disabled for development
+from ..auth import get_current_user
 from ..utils import WebSocketManager
 
 # Configure logging
@@ -46,11 +47,12 @@ class WebSocketService:
         logger.info("🔌 WebSocket Service initialized")
     
     async def authenticate_websocket(self, websocket: WebSocket, token: str) -> Optional[UserProfile]:
-        """Authenticate WebSocket connection"""
-        
+        """Authenticate WebSocket connection - Development mode: always allow"""
+
         try:
-            user = await auth_manager.get_current_user(token)
-            return user
+            # Development mode: return mock user
+            from ..auth import get_current_user
+            return get_current_user()
         except Exception as e:
             logger.error(f"WebSocket authentication failed: {e}")
             return None
@@ -370,7 +372,7 @@ async def learning_session_websocket(websocket: WebSocket, session_id: str, toke
 @router.post("/broadcast")
 async def broadcast_notification(
     notification: Dict[str, Any],
-    current_user: UserProfile = Depends(auth_manager.get_current_user)
+    current_user: UserProfile = Depends(get_current_user)
 ):
     """Broadcast notification to all WebSocket connections"""
     

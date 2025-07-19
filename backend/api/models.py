@@ -105,6 +105,8 @@ class ChatRequest(BaseModel):
     message_type: ChatMessageType = Field(default=ChatMessageType.TEXT)
     context: Optional[Dict[str, Any]] = Field(None, description="Additional context")
     stream: bool = Field(default=False, description="Enable streaming response")
+    task_type: Optional[str] = Field(None, description="Task type for intelligent model selection")
+    provider: Optional[str] = Field(None, description="Preferred LLM provider")
 
 class ChatResponse(BaseResponse):
     """Chat response model"""
