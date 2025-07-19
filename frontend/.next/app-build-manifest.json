@@ -1,46 +1,20 @@
 {
   "pages": {
-    "/_not-found/page": [
-      "static/chunks/webpack-3500eaa16c69a4db.js",
-      "static/chunks/4bd1b696-c49c6f05a40ba469.js",
-      "static/chunks/964-a34a8ff403f6dc82.js",
-      "static/chunks/main-app-a6eb918725b8032c.js",
-      "static/chunks/app/_not-found/page-c739616850b1cde6.js"
-    ],
     "/layout": [
-      "static/chunks/webpack-3500eaa16c69a4db.js",
-      "static/chunks/4bd1b696-c49c6f05a40ba469.js",
-      "static/chunks/964-a34a8ff403f6dc82.js",
-      "static/chunks/main-app-a6eb918725b8032c.js",
-      "static/css/2beddfbf51f630bd.css",
-      "static/chunks/464-3ff404abb07a56c3.js",
-      "static/chunks/app/layout-d62330a40f4bbf7e.js"
-    ],
-    "/chat/page": [
-      "static/chunks/webpack-3500eaa16c69a4db.js",
-      "static/chunks/4bd1b696-c49c6f05a40ba469.js",
-      "static/chunks/964-a34a8ff403f6dc82.js",
-      "static/chunks/main-app-a6eb918725b8032c.js",
-      "static/chunks/777-865c20eda715eee6.js",
-      "static/chunks/app/chat/page-de1cc7ebbcf4acd1.js"
-    ],
-    "/dashboard/page": [
-      "static/chunks/webpack-3500eaa16c69a4db.js",
-      "static/chunks/4bd1b696-c49c6f05a40ba469.js",
-      "static/chunks/964-a34a8ff403f6dc82.js",
-      "static/chunks/main-app-a6eb918725b8032c.js",
-      "static/chunks/464-3ff404abb07a56c3.js",
-      "static/chunks/956-17280f0e1178890f.js",
-      "static/chunks/777-865c20eda715eee6.js",
-      "static/chunks/app/dashboard/page-559dee16b1feb128.js"
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/css/app/layout.css",
+      "static/chunks/app/layout.js"
     ],
     "/page": [
-      "static/chunks/webpack-3500eaa16c69a4db.js",
-      "static/chunks/4bd1b696-c49c6f05a40ba469.js",
-      "static/chunks/964-a34a8ff403f6dc82.js",
-      "static/chunks/main-app-a6eb918725b8032c.js",
-      "static/chunks/464-3ff404abb07a56c3.js",
-      "static/chunks/app/page-0a0d359ead434e4d.js"
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/page.js"
+    ],
+    "/chat/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/chat/page.js"
     ]
   }
 }
