@@ -36,7 +36,7 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Development mode: Mock user and token
   const [user, setUser] = useState<User | null>({
-    id: 'dev_user_001',
+    user_id: 'dev_user_001',
     name: 'Developer',
     email: 'dev@masterx.ai',
     role: 'student'

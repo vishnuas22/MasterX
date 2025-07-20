@@ -232,8 +232,9 @@ export class ChatService {
     // For development, we'll use a simple approach without authentication
     // Note: EventSource doesn't support POST, so we'll need to modify this approach
 
-    // Create a simple URL with basic parameters
-    const url = `${apiService.defaults.baseURL}/chat/stream`
+    // Create a simple URL with basic parameters  
+    const baseUrl = `${process.env.REACT_APP_BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8001'}/api`
+    const url = `${baseUrl}/chat/stream`
 
     // For now, let's create a basic EventSource connection
     // In production, this would need proper authentication headers

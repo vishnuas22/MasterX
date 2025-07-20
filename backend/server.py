@@ -37,6 +37,26 @@ db = client[os.environ['DB_NAME']]
 # Create the main app without a prefix
 app = FastAPI()
 
+# Add a simple health check at the root level for preview environment
+@app.get("/health")
+async def health_check():
+    return {
+        "status": "healthy",
+        "platform": "MasterX Quantum Intelligence",
+        "version": "3.0",
+        "timestamp": datetime.utcnow().isoformat()
+    }
+
+@app.get("/")
+async def app_root():
+    return {
+        "message": "MasterX Quantum Intelligence Platform",
+        "version": "3.0",
+        "status": "online",
+        "api_docs": "/docs",
+        "api_base": "/api"
+    }
+
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
 

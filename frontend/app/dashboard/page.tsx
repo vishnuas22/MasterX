@@ -197,7 +197,31 @@ export default function DashboardPage() {
           </main>
 
           {/* Status Bar */}
-          <StatusBar systemMetrics={systemMetrics} />
+          <div className="glass-morph border-t border-purple-500/20 px-6 py-3">
+            <div className="flex items-center justify-between text-xs">
+              <div className="flex items-center space-x-6">
+                <div className="flex items-center space-x-2">
+                  <Activity className="h-3 w-3 text-cyan-400" />
+                  <span className="text-purple-300">CPU:</span>
+                  <span className="text-white font-mono">{systemMetrics.cpuUsage}%</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Database className="h-3 w-3 text-purple-400" />
+                  <span className="text-purple-300">Memory:</span>
+                  <span className="text-white font-mono">{systemMetrics.memoryUsage}%</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Globe className="h-3 w-3 text-green-400" />
+                  <span className="text-purple-300">Active:</span>
+                  <span className="text-white font-mono">{systemMetrics.activeUsers}</span>
+                </div>
+              </div>
+              <div className="flex items-center space-x-2 px-2 py-1 rounded bg-purple-500/20">
+                <div className="h-2 w-2 bg-green-400 rounded-full animate-pulse" />
+                <span className="text-purple-300">Online</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 

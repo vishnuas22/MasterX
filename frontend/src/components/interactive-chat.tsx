@@ -128,8 +128,9 @@ export function InteractiveChat({ sessionId, onSessionChange, className = '' }: 
       try {
         console.log('🌐 Making API call:', chatRequest)
 
-        // Use the working API from api.ts
-        const response = await fetch('http://localhost:8000/api/chat/send', {
+        // Use the correct backend URL from environment
+        const backendUrl = process.env.REACT_APP_BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8001'
+        const response = await fetch(`${backendUrl}/api/chat/send`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
