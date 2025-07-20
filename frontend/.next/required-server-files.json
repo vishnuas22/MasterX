@@ -297,7 +297,7 @@
       "afterFiles": [
         {
           "source": "/api/:path*",
-          "destination": "https://cc3ad4b5-2484-4968-80d1-32d80e186b5a.preview.emergentagent.com/api/:path*"
+          "destination": "https://8b52a3fa-46c7-475a-9a61-3655e7360a91.preview.emergentagent.com/api/:path*"
         }
       ],
       "fallback": []
