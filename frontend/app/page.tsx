@@ -3,15 +3,15 @@
 /**
  * Home Page - MasterX Quantum Intelligence Platform
  * 
- * Sophisticated Dashboard with Quantum Intelligence Engine
- * Full-featured interface with sidebar, header, chat, and analytics
+ * Revolutionary Ultra-Premium Interface with Quantum Intelligence Engine
+ * Billion-dollar caliber design with advanced visualizations and interactions
  */
 
 import { useState, useEffect } from 'react'
 import { Sidebar } from '@/components/sidebar'
 import { Header } from '@/components/header'
-import { LearningDashboard } from '@/components/learning-dashboard'
-import { InteractiveChat } from '@/components/interactive-chat'
+import { QuantumLearningDashboard } from '@/components/quantum-enhanced/QuantumLearningDashboard'
+import { QuantumChatInterface } from '@/components/quantum-enhanced/QuantumChatInterface'
 import { sessionManager, SessionState } from '@/lib/session-manager'
 import { Brain, Loader2, Zap } from 'lucide-react'
 
@@ -125,12 +125,12 @@ export default function Home() {
           <main className="flex-1 overflow-auto">
             {activeView === 'dashboard' && (
               <div className="p-6 space-y-6">
-                <LearningDashboard />
+                <QuantumLearningDashboard />
               </div>
             )}
             {activeView === 'chat' && (
               <div className="h-full">
-                <InteractiveChat />
+                <QuantumChatInterface />
               </div>
             )}
             {activeView === 'analytics' && (

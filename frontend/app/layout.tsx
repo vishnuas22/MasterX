@@ -1,12 +1,20 @@
-import './globals.css'
+import '../src/index.css'
 import { Inter } from 'next/font/google'
 import { AuthProvider } from '@/contexts/AuthContext'
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({ 
+  subsets: ['latin'],
+  variable: '--font-inter',
+  display: 'swap'
+})
 
 export const metadata = {
   title: 'MasterX - Quantum Intelligence Platform',
-  description: 'Advanced AI-powered learning platform with quantum intelligence and multi-LLM integration',
+  description: 'Revolutionary AI-powered learning platform with quantum intelligence and ultra-premium interface',
+  keywords: 'AI, machine learning, quantum intelligence, education, premium interface',
+  authors: [{ name: 'MasterX Team' }],
+  colorScheme: 'dark',
+  themeColor: '#A855F7',
 }
 
 export default function RootLayout({
@@ -15,10 +23,17 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
-      <body className={inter.className}>
+    <html lang="en" className="dark">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+      </head>
+      <body className={`${inter.variable} font-inter antialiased bg-quantum-dark text-plasma-white min-h-screen`}>
         <AuthProvider>
-          {children}
+          <div className="relative">
+            {children}
+          </div>
         </AuthProvider>
       </body>
     </html>
