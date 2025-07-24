@@ -4,6 +4,11 @@ Configuration management for Quantum Intelligence Engine
 
 import os
 from typing import Optional, List, Dict, Any
+from dotenv import load_dotenv
+from pathlib import Path
+
+# Load environment variables first
+load_dotenv(Path(__file__).parent.parent.parent / '.env')
 
 # Try to import pydantic settings, provide fallback
 try:
@@ -66,9 +71,13 @@ class QuantumEngineConfig(BaseSettings):
             self.version = kwargs.get("version", "2.0.0")
             self.debug = kwargs.get("debug", False)
             self.environment = kwargs.get("environment", "development")
-            self.groq_api_key = kwargs.get("groq_api_key")
-            self.openai_api_key = kwargs.get("openai_api_key")
-            self.anthropic_api_key = kwargs.get("anthropic_api_key")
+            
+            # Load API keys from environment with fallback to kwargs
+            self.groq_api_key = os.getenv("GROQ_API_KEY") or kwargs.get("groq_api_key")
+            self.openai_api_key = os.getenv("OPENAI_API_KEY") or kwargs.get("openai_api_key") 
+            self.anthropic_api_key = os.getenv("ANTHROPIC_API_KEY") or kwargs.get("anthropic_api_key")
+            self.gemini_api_key = os.getenv("GEMINI_API_KEY") or kwargs.get("gemini_api_key")
+            
             self.primary_model = kwargs.get("primary_model", "deepseek-r1-distill-llama-70b")
             self.enable_neural_networks = kwargs.get("enable_neural_networks", True)
             self.enable_caching = kwargs.get("enable_caching", True)
@@ -76,6 +85,10 @@ class QuantumEngineConfig(BaseSettings):
             self.cache_backend = kwargs.get("cache_backend", "memory")
             self.max_cache_size = kwargs.get("max_cache_size", 1000)
             self.cache_ttl = kwargs.get("cache_ttl", 3600)
+            
+            # Database settings
+            self.mongo_url = os.getenv("MONGO_URL") or kwargs.get("mongo_url")
+            self.database_name = os.getenv("DB_NAME") or kwargs.get("database_name", "masterx_quantum")
         else:
             super().__init__(**kwargs)
     
@@ -86,9 +99,10 @@ class QuantumEngineConfig(BaseSettings):
     environment: str = Field(default="development", env="ENVIRONMENT")
     
     # AI Provider Settings
-    groq_api_key: Optional[str] = Field(default=None, env="GROQ_API_KEY")
-    openai_api_key: Optional[str] = Field(default=None, env="OPENAI_API_KEY")
-    anthropic_api_key: Optional[str] = Field(default=None, env="ANTHROPIC_API_KEY")
+    groq_api_key: Optional[str] = Field(default_factory=lambda: os.getenv("GROQ_API_KEY"), env="GROQ_API_KEY")
+    openai_api_key: Optional[str] = Field(default_factory=lambda: os.getenv("OPENAI_API_KEY"), env="OPENAI_API_KEY")
+    anthropic_api_key: Optional[str] = Field(default_factory=lambda: os.getenv("ANTHROPIC_API_KEY"), env="ANTHROPIC_API_KEY")
+    gemini_api_key: Optional[str] = Field(default_factory=lambda: os.getenv("GEMINI_API_KEY"), env="GEMINI_API_KEY")
     
     # Model Configuration
     primary_model: str = "deepseek-r1-distill-llama-70b"
@@ -168,7 +182,7 @@ class QuantumEngineConfig(BaseSettings):
     @property
     def has_ai_provider(self) -> bool:
         """Check if at least one AI provider is configured"""
-        return bool(self.groq_api_key or self.openai_api_key or self.anthropic_api_key)
+        return bool(self.groq_api_key or self.openai_api_key or self.anthropic_api_key or self.gemini_api_key)
     
     @property
     def database_url(self) -> Optional[str]:
