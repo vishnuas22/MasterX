@@ -13,9 +13,11 @@ from typing import List, Optional, Dict, Any, AsyncGenerator
 import uuid
 from datetime import datetime
 
-# Import Quantum Intelligence Engine (with fallback)
+# Import Quantum Intelligence Engine (with proper path and fallback)
 try:
-    from quantum_intelligence_engine import QuantumLearningIntelligenceEngine
+    from quantum_intelligence.core.engine import QuantumLearningIntelligenceEngine
+    from quantum_intelligence.config.dependencies import setup_dependencies, get_quantum_engine, cleanup_dependencies
+    from quantum_intelligence.config.settings import get_config
     QUANTUM_ENGINE_AVAILABLE = True
     print("✅ Quantum Intelligence Engine loaded successfully")
 except ImportError as e:
@@ -90,13 +92,25 @@ async def app_root():
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
 
-# Initialize Quantum Intelligence Engine (with fallback)
+# Initialize Quantum Intelligence Engine (with proper dependency injection)
+quantum_engine = None
 if QUANTUM_ENGINE_AVAILABLE:
     try:
-        quantum_engine = QuantumLearningIntelligenceEngine()
-        print("🚀 Quantum Intelligence Engine initialized")
+        # Setup dependencies first
+        setup_dependencies()
+        
+        # Get configured quantum engine instance
+        quantum_engine = get_quantum_engine()
+        print("🚀 Quantum Intelligence Engine initialized with dependencies")
+        
+        # Verify configuration
+        config = get_config()
+        print(f"✅ Configuration loaded: {config.app_name} v{config.version}")
+        print(f"✅ AI Providers available: {config.has_ai_provider}")
+        
     except Exception as e:
         print(f"⚠️ Failed to initialize Quantum Engine: {str(e)}")
+        print(f"🔧 Error details: {type(e).__name__}")
         quantum_engine = None
         QUANTUM_ENGINE_AVAILABLE = False
 else:
@@ -294,13 +308,17 @@ async def stream_chat_message(chat_request: ChatRequest):
                     )
 
                 # Get streaming response from quantum engine
-                stream_response = await quantum_engine.get_quantum_response(
-                    user_message=chat_request.message,
-                    session=chat_session,
-                    context={},
-                    learning_mode="adaptive_quantum",
-                    stream=True
-                )
+                try:
+                    stream_response = await quantum_engine.get_quantum_response(
+                        user_message=chat_request.message,
+                        user_id=chat_session.user_id,
+                        session_id=chat_session.id,
+                        learning_dna=None,
+                        context={}
+                    )
+                except Exception as e:
+                    logger.error(f"Quantum streaming error: {str(e)}")
+                    stream_response = f"I understand your question about: {chat_request.message}. Let me help you explore this topic with advanced learning techniques."
 
                 full_response = ""
                 if hasattr(stream_response, '__aiter__'):
@@ -657,40 +675,49 @@ async def generate_quantum_response(user_message: str, session_id: Optional[str]
 
         # Use Quantum Intelligence Engine if available
         if QUANTUM_ENGINE_AVAILABLE and quantum_engine:
-            quantum_response = await quantum_engine.get_quantum_response(
-                user_message=user_message,
-                session=chat_session,
-                context={},
-                learning_mode="adaptive_quantum",
-                stream=False
-            )
+            try:
+                quantum_response = await quantum_engine.get_quantum_response(
+                    user_message=user_message,
+                    user_id=chat_session.user_id,
+                    session_id=chat_session.id,
+                    learning_dna=None,  # Will be populated from user profile
+                    context={}
+                )
 
-            if hasattr(quantum_response, 'content'):
-                # Extract response data from QuantumResponse object
-                response_text = quantum_response.content
-                metadata = {
-                    "learning_mode": quantum_response.quantum_mode.value,
-                    "concepts": quantum_response.concept_connections,
-                    "confidence": quantum_response.personalization_score,
-                    "session_context": session_id is not None,
-                    "intelligence_level": quantum_response.intelligence_level.name,
-                    "engagement_prediction": quantum_response.engagement_prediction,
-                    "learning_velocity_boost": quantum_response.learning_velocity_boost,
-                    "knowledge_gaps": quantum_response.knowledge_gaps_identified,
-                    "next_concepts": quantum_response.next_optimal_concepts,
-                    "emotional_resonance": quantum_response.emotional_resonance_score,
-                    "quantum_powered": True
-                }
-            else:
-                # Fallback if quantum engine returns string
-                response_text = str(quantum_response)
-                metadata = {
-                    "learning_mode": "adaptive_quantum",
-                    "concepts": extract_concepts_from_message(user_message),
-                    "confidence": 0.85,
-                    "session_context": session_id is not None,
-                    "quantum_powered": True
-                }
+                if hasattr(quantum_response, 'content'):
+                    # Extract response data from QuantumResponse object
+                    response_text = quantum_response.content
+                    metadata = {
+                        "learning_mode": quantum_response.quantum_mode.value,
+                        "concepts": quantum_response.concept_connections,
+                        "confidence": quantum_response.personalization_score,
+                        "session_context": session_id is not None,
+                        "intelligence_level": quantum_response.intelligence_level.name,
+                        "engagement_prediction": quantum_response.engagement_prediction,
+                        "learning_velocity_boost": quantum_response.learning_velocity_boost,
+                        "knowledge_gaps": quantum_response.knowledge_gaps_identified,
+                        "next_concepts": quantum_response.next_optimal_concepts,
+                        "emotional_resonance": quantum_response.emotional_resonance_score,
+                        "quantum_powered": True,
+                        "processing_time": getattr(quantum_response, 'processing_time', 0.0),
+                        "quantum_analytics": quantum_response.quantum_analytics
+                    }
+                else:
+                    # Fallback if quantum engine returns string
+                    response_text = str(quantum_response)
+                    metadata = {
+                        "learning_mode": "adaptive_quantum",
+                        "concepts": extract_concepts_from_message(user_message),
+                        "confidence": 0.85,
+                        "session_context": session_id is not None,
+                        "quantum_powered": True
+                    }
+            except Exception as e:
+                logger.error(f"Quantum engine error: {str(e)}")
+                # Enhanced fallback with smart learning mode detection
+                response_text, metadata = await generate_enhanced_fallback_response(user_message, session_id)
+                metadata["quantum_powered"] = False
+                metadata["fallback_reason"] = str(e)
         else:
             # Enhanced fallback with smart learning mode detection
             response_text, metadata = await generate_enhanced_fallback_response(user_message, session_id)
@@ -832,4 +859,13 @@ logger = logging.getLogger(__name__)
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
+    """Cleanup database and quantum engine on shutdown"""
     client.close()
+    
+    # Cleanup quantum engine dependencies
+    if QUANTUM_ENGINE_AVAILABLE:
+        try:
+            await cleanup_dependencies()
+            print("🧹 Quantum Intelligence Engine dependencies cleaned up")
+        except Exception as e:
+            print(f"⚠️ Error cleaning up quantum engine: {e}")
