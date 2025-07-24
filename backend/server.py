@@ -22,6 +22,17 @@ except ImportError as e:
     print(f"⚠️ Quantum Intelligence Engine not available: {str(e)}")
     print("🔄 Using simplified AI response system")
     QUANTUM_ENGINE_AVAILABLE = False
+
+# Import Interactive API (with fallback)
+try:
+    from interactive_api import router as interactive_router
+    from interactive_service import InteractiveContentService
+    INTERACTIVE_FEATURES_AVAILABLE = True
+    print("✅ Interactive Features loaded successfully")
+except ImportError as e:
+    print(f"⚠️ Interactive Features not available: {str(e)}")
+    print("🔄 Using basic message system")
+    INTERACTIVE_FEATURES_AVAILABLE = False
     
 from models import ChatSession, SessionCreate as ModelSessionCreate
 
@@ -35,7 +46,18 @@ client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
 # Create the main app without a prefix
-app = FastAPI()
+app = FastAPI(
+    title="🚀 MasterX Quantum Intelligence API",
+    description="Revolutionary AI learning platform with quantum intelligence and premium interactive experiences",
+    version="3.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc"
+)
+
+# Include interactive API routes if available
+if INTERACTIVE_FEATURES_AVAILABLE:
+    app.include_router(interactive_router)
+    print("✅ Interactive API routes included")
 
 # Add a simple health check at the root level for preview environment
 @app.get("/health")
@@ -44,6 +66,14 @@ async def health_check():
         "status": "healthy",
         "platform": "MasterX Quantum Intelligence",
         "version": "3.0",
+        "quantum_engine": "online" if QUANTUM_ENGINE_AVAILABLE else "offline",
+        "interactive_features": "online" if INTERACTIVE_FEATURES_AVAILABLE else "offline",
+        "features": {
+            "quantum_intelligence": QUANTUM_ENGINE_AVAILABLE,
+            "interactive_content": INTERACTIVE_FEATURES_AVAILABLE,
+            "real_time_collaboration": INTERACTIVE_FEATURES_AVAILABLE,
+            "advanced_analytics": INTERACTIVE_FEATURES_AVAILABLE
+        },
         "timestamp": datetime.utcnow().isoformat()
     }
 
