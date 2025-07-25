@@ -14,7 +14,7 @@ Version: 3.0 - Production Ready
 """
 
 from pydantic import BaseModel, Field, validator
-from typing import List, Optional, Dict, Any, Union, Literal
+from typing import List, Optional, Dict, Any, Union, Literal, ClassVar
 from datetime import datetime
 from enum import Enum
 import uuid
@@ -282,7 +282,7 @@ class VisualizationContent(InteractiveContent):
     config: Dict[str, Any] = Field(default_factory=dict)
     
     # Supported visualization types
-    SUPPORTED_TYPES = [
+    SUPPORTED_TYPES: ClassVar[List[str]] = [
         "3d_scatter", "network_graph", "treemap", "sunburst", 
         "parallel_coordinates", "sankey", "chord_diagram", "force_directed"
     ]

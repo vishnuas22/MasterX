@@ -662,8 +662,8 @@ async def cleanup_expired_sessions():
 
 
 # Schedule cleanup task (in production, use proper task scheduler)
-import asyncio
-asyncio.create_task(cleanup_expired_sessions())
+# Note: Background task scheduling should be handled by the main FastAPI app
+# through startup events, not at module import time.
 
 # Export router
 __all__ = ["router", "connection_manager"]

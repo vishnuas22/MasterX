@@ -462,3 +462,9 @@ class DatabaseService:
 
 # Global database instance
 db_service = DatabaseService()
+
+async def get_database() -> DatabaseService:
+    """Get the global database service instance"""
+    if not db_service.client:
+        await db_service.connect()
+    return db_service
