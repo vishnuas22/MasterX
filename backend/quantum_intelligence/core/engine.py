@@ -173,8 +173,8 @@ class QuantumLearningIntelligenceEngine:
             from ..services.analytics.learning_patterns import LearningPatternAnalysisEngine
             
             self._services = {
-                'personalization': PersonalizationEngine(self.config, self.cache),
-                'analytics': LearningPatternAnalysisEngine(self.config, self.cache),
+                'personalization': PersonalizationEngine(self.cache),
+                'analytics': LearningPatternAnalysisEngine(self.cache),
                 # Add other services as they're implemented
             }
             logger.info("Services initialized")
@@ -185,9 +185,16 @@ class QuantumLearningIntelligenceEngine:
     
     def _register_health_checks(self) -> None:
         """Register health checks for the engine"""
-        self.health.register_check("ai_providers", self._check_ai_providers, critical=True)
-        self.health.register_check("neural_networks", self._check_neural_networks, critical=False)
-        self.health.register_check("cache_service", self._check_cache_service, critical=True)
+        try:
+            # Only register health checks if the service supports it
+            if hasattr(self.health, 'register_check'):
+                self.health.register_check("ai_providers", self._check_ai_providers, critical=True)
+                self.health.register_check("neural_networks", self._check_neural_networks, critical=False)
+                self.health.register_check("cache_service", self._check_cache_service, critical=True)
+            else:
+                logger.info("Health service doesn't support check registration - using simple health service")
+        except Exception as e:
+            logger.warning(f"Failed to register health checks: {e}")
     
     def _check_ai_providers(self) -> bool:
         """Health check for AI providers"""

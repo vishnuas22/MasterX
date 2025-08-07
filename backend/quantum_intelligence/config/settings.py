@@ -199,6 +199,7 @@ class QuantumEngineConfig(BaseSettings):
         env_file = ".env"
         env_prefix = "QUANTUM_"
         case_sensitive = False
+        extra = "ignore"  # Allow extra fields from environment
 
 
 # Global configuration instance
