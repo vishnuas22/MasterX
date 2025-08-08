@@ -1,11 +1,12 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { Send, Bot, User, Loader2, Brain, Zap, Target, Sparkles, MessageCircle, Settings, Mic, Camera, Paperclip, MoreHorizontal } from 'lucide-react'
+import { Send, Bot, User, Loader2, Brain, Zap, Target, Sparkles, MessageCircle, Settings, Mic, MicOff, Camera, Paperclip, MoreHorizontal } from 'lucide-react'
 import { sendMessage, streamMessage, ChatRequest, ChatResponse } from '@/lib/api'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/contexts/AuthContext'
 import useWebSocket from '@/hooks/useWebSocket'
+import { useVoiceInput } from '@/hooks/useVoiceInput'
 
 interface Message {
   id: string
@@ -82,6 +83,29 @@ export function QuantumChatInterface() {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
+  // Voice input functionality
+  const voiceInput = useVoiceInput({
+    continuous: false,
+    interimResults: true,
+    language: 'en-US',
+    onTranscript: (transcript, isFinal) => {
+      if (isFinal) {
+        setInputMessage(prev => prev + transcript + ' ')
+        inputRef.current?.focus()
+      }
+    },
+    onError: (error) => {
+      console.error('Voice input error:', error)
+      setConnectionStatus('error')
+    },
+    onStart: () => {
+      console.log('Voice recording started')
+    },
+    onEnd: () => {
+      console.log('Voice recording ended')
+    }
+  })
+
   useEffect(() => {
     scrollToBottom()
   }, [messages])
@@ -122,6 +146,7 @@ export function QuantumChatInterface() {
     const currentMessage = inputMessage
     setInputMessage('')
     setIsLoading(true)
+    setConnectionStatus('connecting')
 
     try {
       const chatRequest: ChatRequest = {
@@ -134,13 +159,16 @@ export function QuantumChatInterface() {
       }
 
       if (streamingEnabled) {
-        handleStreamingResponse(chatRequest, userMessage.id)
+        await handleStreamingResponse(chatRequest, userMessage.id)
       } else {
-        handleRegularResponse(chatRequest)
+        await handleRegularResponse(chatRequest)
       }
+
+      setConnectionStatus('connected')
     } catch (error) {
       console.error('❌ Failed to send message:', error)
-      addFallbackMessage()
+      setConnectionStatus('error')
+      addFallbackMessage(error)
     } finally {
       setIsLoading(false)
     }
@@ -215,16 +243,17 @@ export function QuantumChatInterface() {
     }
   }
 
-  const addFallbackMessage = () => {
+  const addFallbackMessage = (error?: any) => {
     const fallbackMessage: Message = {
       id: (Date.now() + 1).toString(),
-      content: "I apologize, but I'm experiencing some technical difficulties. Please try again in a moment.",
+      content: "I apologize, but I'm experiencing some technical difficulties. Please check your connection and try again.",
       sender: 'ai',
       timestamp: new Date(),
       metadata: {
         learningMode: 'fallback',
         concepts: ['error_handling'],
-        confidence: 0.5
+        confidence: 0.5,
+        errorDetails: error?.message || 'Connection error'
       }
     }
     setMessages(prev => [...prev, fallbackMessage])
