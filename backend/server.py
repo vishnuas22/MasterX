@@ -42,10 +42,43 @@ from models import ChatSession, SessionCreate as ModelSessionCreate
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
-# MongoDB connection
-mongo_url = os.environ['MONGO_URL']
-client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ['DB_NAME']]
+# MongoDB connection with fallback
+try:
+    mongo_url = os.environ['MONGO_URL']
+    client = AsyncIOMotorClient(mongo_url)
+    db = client[os.environ['DB_NAME']]
+    MONGODB_AVAILABLE = True
+except Exception as e:
+    print(f"⚠️ MongoDB not available: {e}")
+    print("🔄 Using in-memory storage for development")
+    MONGODB_AVAILABLE = False
+    client = None
+    db = None
+
+# In-memory storage fallback
+memory_storage = {
+    'chat_sessions': {},
+    'chat_messages': {},
+    'status_checks': {},
+    'learning_progress': {},
+    'learning_streaks': {},
+    'user_achievements': {},
+    'learning_sessions': {}
+}
+
+# Helper functions for database operations with fallback
+async def save_chat_message(message_data):
+    """Save chat message with MongoDB fallback to memory"""
+    if MONGODB_AVAILABLE and db:
+        try:
+            await db.chat_messages.insert_one(message_data)
+        except Exception as e:
+            print(f"MongoDB save failed, using memory: {e}")
+            memory_storage['chat_messages'][message_data['session_id']] = memory_storage['chat_messages'].get(message_data['session_id'], [])
+            memory_storage['chat_messages'][message_data['session_id']].append(message_data)
+    else:
+        memory_storage['chat_messages'][message_data['session_id']] = memory_storage['chat_messages'].get(message_data['session_id'], [])
+        memory_storage['chat_messages'][message_data['session_id']].append(message_data)
 
 # Create the main app without a prefix
 app = FastAPI(
@@ -234,7 +267,7 @@ async def send_chat_message(chat_request: ChatRequest):
             message=chat_request.message,
             sender="user"
         )
-        await db.chat_messages.insert_one(user_message.dict())
+        await save_chat_message(user_message.model_dump())
         
         # Generate AI response using quantum intelligence
         ai_response_text, metadata = await generate_quantum_response(
