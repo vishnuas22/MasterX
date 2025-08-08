@@ -282,7 +282,7 @@ async def send_chat_message(chat_request: ChatRequest):
             sender="ai",
             metadata=metadata
         )
-        await db.chat_messages.insert_one(ai_message.dict())
+        await save_chat_message(ai_message.model_dump())
         
         logger.info(f"Generated response for session: {user_message.session_id}")
         
