@@ -69,7 +69,7 @@ memory_storage = {
 # Helper functions for database operations with fallback
 async def save_chat_message(message_data):
     """Save chat message with MongoDB fallback to memory"""
-    if MONGODB_AVAILABLE and db:
+    if MONGODB_AVAILABLE and db is not None:
         try:
             await db.chat_messages.insert_one(message_data)
         except Exception as e:
