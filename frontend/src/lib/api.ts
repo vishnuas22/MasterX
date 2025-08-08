@@ -1,7 +1,7 @@
 import axios, { AxiosResponse } from 'axios'
 
 // Environment configuration
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8001'
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000'
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || `${BACKEND_URL}/api`
 
 // Create axios instance with enhanced configuration
