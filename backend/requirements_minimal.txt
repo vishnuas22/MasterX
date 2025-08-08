@@ -1,0 +1,28 @@
+# Essential FastAPI Backend Dependencies
+fastapi>=0.115.7
+uvicorn>=0.26.0
+pydantic>=2.10.5
+python-multipart>=0.0.19
+python-dotenv>=1.0.1
+
+# Database
+motor>=3.7.0
+pymongo>=4.10.1
+
+# Authentication
+bcrypt>=4.2.1
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+
+# HTTP Clients
+requests>=2.32.3
+httpx>=0.28.1
+
+# AI Providers (Essential only)
+openai>=1.57.2
+anthropic>=0.42.0
+groq>=0.13.0
+
+# Basic utilities
+aiofiles>=24.1.0
+websockets>=14.0
