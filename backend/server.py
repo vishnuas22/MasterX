@@ -21,6 +21,9 @@ import re
 import aiofiles
 import mimetypes
 
+# Import AI Integration
+from ai_integration import ai_manager, AIResponse
+
 # Import Quantum Intelligence Engine (with proper path and fallback)
 try:
     from quantum_intelligence.core.engine import QuantumLearningIntelligenceEngine
@@ -593,7 +596,7 @@ I'm committed to giving you the most helpful and insightful response possible.{c
 
 # Optimized response generation
 async def generate_optimized_response(user_message: str, session_id: str, context: Optional[Dict[str, Any]] = None) -> tuple[str, Dict[str, Any]]:
-    """Fast, optimized AI response generation with caching"""
+    """Real AI response generation with caching and fallback"""
     try:
         # Check cache for common queries (without context)
         if not context:
@@ -604,53 +607,57 @@ async def generate_optimized_response(user_message: str, session_id: str, contex
                 if (datetime.utcnow().timestamp() - timestamp) < CACHE_TTL:
                     cached_metadata["cached"] = True
                     return cached_response, cached_metadata
-        # Quick response generation based on message analysis
-        message_lower = user_message.lower()
 
         # Multi-modal context processing
-        context_info = ""
+        context_prompt = ""
         if context and context.get('has_files'):
             files = context.get('files', [])
             if files:
-                context_info = f"\n\n**I can see you've uploaded {len(files)} file(s).** "
+                context_prompt = f"The user has uploaded {len(files)} file(s). "
                 file_types = context.get('file_types', [])
                 if 'code' in file_types:
-                    context_info += "I'll analyze your code and provide suggestions."
+                    context_prompt += "Focus on code analysis, debugging, and programming assistance. "
                 elif 'document' in file_types:
-                    context_info += "I'll review your document and provide insights."
+                    context_prompt += "Focus on document analysis and content insights. "
                 else:
-                    context_info += "I'll examine your files and provide relevant assistance."
+                    context_prompt += "Analyze the uploaded content and provide relevant assistance. "
 
-        # Enhanced intelligent response generation with advanced AI
-        response, learning_mode = await generate_enhanced_ai_response(
-            user_message, message_lower, context, context_info
+        # Generate real AI response
+        ai_response: AIResponse = await ai_manager.generate_response(
+            user_message=user_message,
+            context=context_prompt if context_prompt else None
         )
 
-        # Generate metadata
+        # Generate metadata from AI response
         metadata = {
-            "learning_mode": learning_mode,
-            "confidence": 0.92,
+            "model": ai_response.model,
+            "provider": ai_response.provider,
+            "tokens_used": ai_response.tokens_used,
+            "response_time_ms": round(ai_response.response_time * 1000, 2),
+            "confidence": ai_response.confidence,
             "session_context": True,
             "quantum_powered": True,
-            "response_time": "optimized",
             "multi_modal": context is not None,
-            "intelligence_level": "Advanced"
+            "intelligence_level": "Advanced",
+            "learning_mode": "ai_powered"
         }
 
         # Cache response for common queries (without context)
-        if not context:
+        if not context and ai_response.confidence > 0.8:
             cache_key = user_message.lower().strip()
-            response_cache[cache_key] = (response, metadata, datetime.utcnow().timestamp())
+            response_cache[cache_key] = (ai_response.content, metadata, datetime.utcnow().timestamp())
 
-        return response, metadata
+        return ai_response.content, metadata
 
     except Exception as e:
-        logger.error(f"Error in optimized response generation: {str(e)}")
+        logger.error(f"Error in AI response generation: {str(e)}")
         # Fallback response
         return f"I'm here to help with your question: '{user_message}'. Let me provide you with the best assistance I can.", {
             "learning_mode": "fallback",
             "confidence": 0.75,
-            "error_recovery": True
+            "error_recovery": True,
+            "model": "fallback",
+            "provider": "system"
         }
 
 # Async storage function (non-blocking)
