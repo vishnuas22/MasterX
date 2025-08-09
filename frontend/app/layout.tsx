@@ -29,7 +29,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
       </head>
-      <body className={`${inter.variable} font-inter antialiased bg-quantum-dark text-plasma-white min-h-screen`}>
+      <body className={`${inter.variable} font-inter antialiased min-h-screen bg-quantum-dark text-plasma-white`}>
         <AuthProvider>
           <div className="relative">
             {children}
