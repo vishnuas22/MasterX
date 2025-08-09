@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils'
 import { useAuth } from '@/contexts/AuthContext'
 import useWebSocket from '@/hooks/useWebSocket'
 import { useVoiceInput } from '@/hooks/useVoiceInput'
+import { useTextToSpeech } from '@/hooks/useTextToSpeech'
 
 interface Message {
   id: string
@@ -48,6 +49,8 @@ const PROVIDER_OPTIONS = [
   { value: 'anthropic', label: 'Anthropic Claude', color: 'red' },
 ]
 
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000/api'
+
 export function QuantumChatInterface() {
   const { user, token, isAuthenticated } = useAuth()
 
@@ -79,9 +82,34 @@ export function QuantumChatInterface() {
   const [streamingEnabled, setStreamingEnabled] = useState(true)
   const [isStreaming, setIsStreaming] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
+  const [uploadedFiles, setUploadedFiles] = useState<any[]>([])
+  const [isUploading, setIsUploading] = useState(false)
+  const [autoSpeak, setAutoSpeak] = useState(false)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
+
+  // Voice command processing
+  const processVoiceCommand = (transcript: string) => {
+    const command = transcript.toLowerCase().trim()
+
+    // Voice commands
+    if (command.includes('send message') || command.includes('send it')) {
+      if (inputMessage.trim()) {
+        handleSendMessage()
+        return true
+      }
+    } else if (command.includes('clear chat') || command.includes('clear all')) {
+      setMessages([])
+      setInputMessage('')
+      return true
+    } else if (command.includes('stop recording') || command.includes('stop listening')) {
+      voiceInput.stop()
+      return true
+    }
+
+    return false
+  }
 
   // Voice input functionality
   const voiceInput = useVoiceInput({
@@ -90,7 +118,11 @@ export function QuantumChatInterface() {
     language: 'en-US',
     onTranscript: (transcript, isFinal) => {
       if (isFinal) {
-        setInputMessage(prev => prev + transcript + ' ')
+        // Check for voice commands first
+        if (!processVoiceCommand(transcript)) {
+          // If not a command, add to input message
+          setInputMessage(prev => prev + transcript + ' ')
+        }
         inputRef.current?.focus()
       }
     },
@@ -99,16 +131,43 @@ export function QuantumChatInterface() {
       setConnectionStatus('error')
     },
     onStart: () => {
-      console.log('Voice recording started')
+      console.log('🎤 Voice recording started')
     },
     onEnd: () => {
-      console.log('Voice recording ended')
+      console.log('🎤 Voice recording ended')
+    }
+  })
+
+  // Text-to-speech functionality
+  const tts = useTextToSpeech({
+    rate: 1.1,
+    pitch: 1.0,
+    volume: 0.8,
+    onStart: () => {
+      console.log('🔊 TTS started')
+    },
+    onEnd: () => {
+      console.log('🔊 TTS ended')
+    },
+    onError: (error) => {
+      console.error('🔊 TTS error:', error)
     }
   })
 
   useEffect(() => {
     scrollToBottom()
-  }, [messages])
+
+    // Auto-speak new AI messages
+    if (autoSpeak && messages.length > 0) {
+      const lastMessage = messages[messages.length - 1]
+      if (lastMessage.sender === 'ai' && !lastMessage.metadata?.isFileUpload) {
+        // Small delay to ensure message is rendered
+        setTimeout(() => {
+          tts.speakClean(lastMessage.content)
+        }, 500)
+      }
+    }
+  }, [messages, autoSpeak, tts])
 
   useEffect(() => {
     initializeSession()
@@ -149,13 +208,28 @@ export function QuantumChatInterface() {
     setConnectionStatus('connecting')
 
     try {
+      // Prepare multi-modal context
+      const fileContext = uploadedFiles.length > 0 ? {
+        files: uploadedFiles.map(file => ({
+          filename: file.filename,
+          type: file.file_type,
+          content: file.processed_content?.substring(0, 2000) // Limit context size
+        })),
+        file_count: uploadedFiles.length
+      } : undefined
+
       const chatRequest: ChatRequest = {
         message: currentMessage,
         session_id: sessionId || undefined,
         message_type: 'text',
         task_type: taskType as 'reasoning' | 'coding' | 'creative' | 'fast' | 'multimodal' | 'general',
         provider: (selectedProvider as 'groq' | 'gemini' | 'openai' | 'anthropic') || undefined,
-        stream: streamingEnabled
+        stream: streamingEnabled,
+        context: fileContext ? {
+          files: fileContext.files,
+          has_files: true,
+          file_types: [...new Set(fileContext.files.map(f => f.type))]
+        } : undefined
       }
 
       if (streamingEnabled) {
@@ -263,6 +337,59 @@ export function QuantumChatInterface() {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       handleSendMessage()
+    }
+  }
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (!files || files.length === 0) return
+
+    setIsUploading(true)
+    const uploadResults = []
+
+    try {
+      for (const file of Array.from(files)) {
+        const formData = new FormData()
+        formData.append('file', file)
+
+        const response = await fetch(`${API_BASE}/files/upload`, {
+          method: 'POST',
+          body: formData
+        })
+
+        if (response.ok) {
+          const result = await response.json()
+          uploadResults.push(result)
+
+          // Add file info to chat as a system message
+          const fileMessage: Message = {
+            id: Date.now().toString() + Math.random(),
+            content: `📎 **File uploaded:** ${result.filename}\n**Type:** ${result.file_type}\n**Size:** ${(result.size / 1024).toFixed(1)} KB\n\n${result.processed_content ? `**Content preview:**\n\`\`\`\n${result.processed_content.substring(0, 500)}${result.processed_content.length > 500 ? '...' : ''}\n\`\`\`` : ''}`,
+            sender: 'ai',
+            timestamp: new Date(),
+            metadata: {
+              file_id: result.file_id,
+              file_type: result.file_type,
+              filename: result.filename,
+              isFileUpload: true
+            }
+          }
+
+          setMessages(prev => [...prev, fileMessage])
+        } else {
+          console.error('File upload failed:', await response.text())
+        }
+      }
+
+      setUploadedFiles(prev => [...prev, ...uploadResults])
+
+      // Clear the input
+      e.target.value = ''
+
+    } catch (error) {
+      console.error('File upload error:', error)
+    } finally {
+      setIsUploading(false)
     }
   }
 
@@ -374,6 +501,69 @@ export function QuantumChatInterface() {
               </button>
             </div>
           </div>
+
+          {/* Voice & TTS Controls */}
+          <div className="mt-6 pt-6 border-t border-purple-500/20">
+            <h5 className="precision-small text-purple-300 mb-4">Voice Controls</h5>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="flex items-center justify-between">
+                <label className="precision-small text-gray-300">Auto-Speak AI</label>
+                <button
+                  onClick={() => setAutoSpeak(!autoSpeak)}
+                  className={`w-12 h-6 rounded-full transition-all duration-300 ${
+                    autoSpeak ? 'bg-green-500' : 'bg-gray-600'
+                  }`}
+                >
+                  <div className={`w-5 h-5 bg-white rounded-full transition-transform duration-300 ${
+                    autoSpeak ? 'transform translate-x-6' : 'transform translate-x-0.5'
+                  }`} />
+                </button>
+              </div>
+
+              <div>
+                <label className="precision-small text-gray-300 mb-2 block">Speech Rate</label>
+                <input
+                  type="range"
+                  min="0.5"
+                  max="2"
+                  step="0.1"
+                  value={tts.rate}
+                  onChange={(e) => tts.setRate(parseFloat(e.target.value))}
+                  className="w-full accent-purple-500"
+                />
+                <span className="data-micro text-gray-400">{tts.rate.toFixed(1)}x</span>
+              </div>
+
+              <div>
+                <label className="precision-small text-gray-300 mb-2 block">Voice Pitch</label>
+                <input
+                  type="range"
+                  min="0.5"
+                  max="2"
+                  step="0.1"
+                  value={tts.pitch}
+                  onChange={(e) => tts.setPitch(parseFloat(e.target.value))}
+                  className="w-full accent-purple-500"
+                />
+                <span className="data-micro text-gray-400">{tts.pitch.toFixed(1)}</span>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                {tts.isSpeaking && (
+                  <button
+                    onClick={tts.stop}
+                    className="neural-network-button p-2 bg-red-500/20 border-red-500/30 text-red-400"
+                    title="Stop speaking"
+                  >
+                    <MicOff className="h-4 w-4" />
+                  </button>
+                )}
+                <span className="data-micro text-gray-400">
+                  {tts.isSpeaking ? 'Speaking...' : 'Ready'}
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -381,7 +571,7 @@ export function QuantumChatInterface() {
       <div className="flex-1 overflow-y-auto quantum-scroll relative z-10 px-6">
         <div className="max-w-4xl mx-auto space-y-6 py-4">
           {messages.map((message) => (
-            <QuantumMessageBubble key={message.id} message={message} />
+            <QuantumMessageBubble key={message.id} message={message} tts={tts} />
           ))}
           {(isLoading || isStreaming) && <QuantumLoadingIndicator />}
           <div ref={messagesEndRef} />
@@ -391,17 +581,86 @@ export function QuantumChatInterface() {
       {/* Revolutionary Input Area */}
       <div className="relative z-10 p-6">
         <div className="max-w-4xl mx-auto">
+          {/* Voice Input Status Indicator */}
+          {(voiceInput.isListening || voiceInput.interimTranscript) && (
+            <div className="mb-4 glass-morph-premium rounded-lg p-3 border border-purple-500/30 animate-[fadeIn_0.3s_ease-in-out]">
+              <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-2">
+                  <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                  <span className="data-micro text-red-400 font-medium">
+                    {voiceInput.isListening ? 'Listening...' : 'Processing...'}
+                  </span>
+                </div>
+                {voiceInput.interimTranscript && (
+                  <div className="flex-1">
+                    <span className="precision-small text-gray-300 italic">
+                      "{voiceInput.interimTranscript}"
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* File Upload Status Indicator */}
+          {isUploading && (
+            <div className="mb-4 glass-morph-premium rounded-lg p-3 border border-cyan-500/30 animate-[fadeIn_0.3s_ease-in-out]">
+              <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-2">
+                  <div className="w-3 h-3 bg-cyan-500 rounded-full animate-pulse"></div>
+                  <span className="data-micro text-cyan-400 font-medium">
+                    Uploading files...
+                  </span>
+                </div>
+                <Loader2 className="h-4 w-4 animate-spin text-cyan-400" />
+              </div>
+            </div>
+          )}
+
           <div className="glass-morph-premium rounded-xl p-4 border border-purple-500/30">
             <div className="flex space-x-4">
               <div className="flex space-x-2">
-                <button className="neural-network-button p-2">
+                <button
+                  onClick={() => document.getElementById('file-upload')?.click()}
+                  className="neural-network-button p-2 hover:bg-purple-500/20"
+                  title="Upload file"
+                >
                   <Paperclip className="h-4 w-4" />
                 </button>
+                <input
+                  id="file-upload"
+                  type="file"
+                  multiple
+                  accept=".pdf,.doc,.docx,.txt,.md,.rtf,.jpg,.jpeg,.png,.gif,.bmp,.webp,.svg,.py,.js,.ts,.jsx,.tsx,.html,.css,.json,.xml,.yaml,.yml,.java,.cpp,.c,.h,.cs,.php,.rb,.go,.rs,.swift,.csv,.xlsx,.xls"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
                 <button className="neural-network-button p-2">
                   <Camera className="h-4 w-4" />
                 </button>
-                <button className="neural-network-button p-2">
-                  <Mic className="h-4 w-4" />
+                <button
+                  onClick={voiceInput.toggle}
+                  disabled={!voiceInput.isSupported}
+                  className={`neural-network-button p-2 transition-all duration-300 ${
+                    voiceInput.isListening
+                      ? 'bg-red-500/20 border-red-500/50 text-red-400 animate-pulse'
+                      : voiceInput.isSupported
+                      ? 'hover:bg-purple-500/20'
+                      : 'opacity-50 cursor-not-allowed'
+                  }`}
+                  title={
+                    !voiceInput.isSupported
+                      ? 'Voice input not supported in this browser'
+                      : voiceInput.isListening
+                      ? 'Stop recording'
+                      : 'Start voice input'
+                  }
+                >
+                  {voiceInput.isListening ? (
+                    <MicOff className="h-4 w-4" />
+                  ) : (
+                    <Mic className="h-4 w-4" />
+                  )}
                 </button>
               </div>
 
@@ -435,7 +694,7 @@ export function QuantumChatInterface() {
 }
 
 // Revolutionary Message Bubble Component
-function QuantumMessageBubble({ message }: { message: Message }) {
+function QuantumMessageBubble({ message, tts }: { message: Message, tts: any }) {
   return (
     <div className={cn(
       'flex space-x-4 animate-[fadeIn_0.5s_ease-in-out]',
@@ -456,8 +715,20 @@ function QuantumMessageBubble({ message }: { message: Message }) {
           : 'glass-morph-premium border-purple-500/20'
       )}>
         <div className="relative z-10">
-          <p className="learning-body whitespace-pre-wrap leading-relaxed">{message.content}</p>
-          
+          <div className="flex items-start justify-between">
+            <p className="learning-body whitespace-pre-wrap leading-relaxed flex-1">{message.content}</p>
+            {message.sender === 'ai' && tts.isSupported && !message.metadata?.isFileUpload && (
+              <button
+                onClick={() => tts.speakClean(message.content, true)}
+                disabled={tts.isSpeaking}
+                className="ml-3 neural-network-button p-1.5 opacity-70 hover:opacity-100 transition-opacity"
+                title="Speak this message"
+              >
+                <Mic className="h-3 w-3" />
+              </button>
+            )}
+          </div>
+
           {message.metadata && message.sender === 'ai' && (
             <div className="mt-4 pt-4 border-t border-purple-500/20">
               <div className="flex flex-wrap gap-2">
