@@ -35,15 +35,65 @@
   --quantum-glow: 0 0 20px rgba(168, 85, 247, 0.5);
   --holographic-border: conic-gradient(from 0deg, #a855f7, #06b6d4, #10b981, #f59e0b, #a855f7);
   
-  /* Advanced Spacing */
-  --quantum-xs: 8px;
-  --quantum-sm: 16px;
-  --quantum-md: 24px;
-  --quantum-lg: 32px;
-  --quantum-xl: 48px;
-  --quantum-2xl: 64px;
-  --quantum-3xl: 96px;
-  --quantum-4xl: 128px;
+  /* ========== ENTERPRISE SPACING SYSTEM (8px Grid) ========== */
+  --space-0: 0;
+  --space-1: 0.25rem;  /* 4px */
+  --space-2: 0.5rem;   /* 8px */
+  --space-3: 0.75rem;  /* 12px */
+  --space-4: 1rem;     /* 16px */
+  --space-5: 1.25rem;  /* 20px */
+  --space-6: 1.5rem;   /* 24px */
+  --space-8: 2rem;     /* 32px */
+  --space-10: 2.5rem;  /* 40px */
+  --space-12: 3rem;    /* 48px */
+  --space-16: 4rem;    /* 64px */
+  --space-20: 5rem;    /* 80px */
+  --space-24: 6rem;    /* 96px */
+  --space-32: 8rem;    /* 128px */
+
+  /* ========== COMPONENT SIZING SYSTEM ========== */
+  --size-xs: 1rem;     /* 16px */
+  --size-sm: 1.5rem;   /* 24px */
+  --size-md: 2rem;     /* 32px */
+  --size-lg: 2.5rem;   /* 40px */
+  --size-xl: 3rem;     /* 48px */
+  --size-2xl: 4rem;    /* 64px */
+  --size-3xl: 5rem;    /* 80px */
+  --size-4xl: 6rem;    /* 96px */
+
+  /* ========== BORDER RADIUS SYSTEM ========== */
+  --radius-xs: 0.25rem;  /* 4px */
+  --radius-sm: 0.5rem;   /* 8px */
+  --radius-md: 0.75rem;  /* 12px */
+  --radius-lg: 1rem;     /* 16px */
+  --radius-xl: 1.5rem;   /* 24px */
+  --radius-2xl: 2rem;    /* 32px */
+  --radius-3xl: 3rem;    /* 48px */
+  --radius-full: 9999px;
+
+  /* ========== TYPOGRAPHY SCALE ========== */
+  --text-xs: 0.75rem;    /* 12px */
+  --text-sm: 0.875rem;   /* 14px */
+  --text-base: 1rem;     /* 16px */
+  --text-lg: 1.125rem;   /* 18px */
+  --text-xl: 1.25rem;    /* 20px */
+  --text-2xl: 1.5rem;    /* 24px */
+  --text-3xl: 1.875rem;  /* 30px */
+  --text-4xl: 2.25rem;   /* 36px */
+  --text-5xl: 3rem;      /* 48px */
+  --text-6xl: 3.75rem;   /* 60px */
+
+  /* ========== Z-INDEX SYSTEM ========== */
+  --z-base: 0;
+  --z-dropdown: 10;
+  --z-sticky: 20;
+  --z-fixed: 30;
+  --z-modal-backdrop: 40;
+  --z-modal: 50;
+  --z-popover: 60;
+  --z-tooltip: 70;
+  --z-toast: 80;
+  --z-max: 9999;
 }
 
 /* ============================================================================ */
@@ -138,12 +188,13 @@
 /* REVOLUTIONARY GLASS MORPHISM 3.0 */
 /* ============================================================================ */
 
+/* ========== STANDARDIZED GLASS MORPHISM SYSTEM ========== */
 .glass-morph {
   background: rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 
+  box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -172,6 +223,80 @@
     0 4px 16px rgba(6, 182, 212, 0.1),
     inset 0 2px 0 rgba(255, 255, 255, 0.1);
 }
+
+/* ========== ENTERPRISE TYPOGRAPHY SYSTEM ========== */
+.text-quantum-xs {
+  font-size: var(--text-xs);
+  line-height: 1.4;
+  font-weight: 400;
+}
+
+.text-quantum-sm {
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+.text-quantum-base {
+  font-size: var(--text-base);
+  line-height: 1.6;
+  font-weight: 400;
+}
+
+.text-quantum-lg {
+  font-size: var(--text-lg);
+  line-height: 1.6;
+  font-weight: 500;
+}
+
+.text-quantum-xl {
+  font-size: var(--text-xl);
+  line-height: 1.5;
+  font-weight: 600;
+}
+
+.text-quantum-2xl {
+  font-size: var(--text-2xl);
+  line-height: 1.4;
+  font-weight: 700;
+}
+
+.text-quantum-3xl {
+  font-size: var(--text-3xl);
+  line-height: 1.3;
+  font-weight: 800;
+}
+
+.text-quantum-4xl {
+  font-size: var(--text-4xl);
+  line-height: 1.2;
+  font-weight: 900;
+}
+
+/* ========== SPACING UTILITY CLASSES ========== */
+.p-quantum-0 { padding: var(--space-0); }
+.p-quantum-1 { padding: var(--space-1); }
+.p-quantum-2 { padding: var(--space-2); }
+.p-quantum-3 { padding: var(--space-3); }
+.p-quantum-4 { padding: var(--space-4); }
+.p-quantum-5 { padding: var(--space-5); }
+.p-quantum-6 { padding: var(--space-6); }
+.p-quantum-8 { padding: var(--space-8); }
+.p-quantum-10 { padding: var(--space-10); }
+.p-quantum-12 { padding: var(--space-12); }
+.p-quantum-16 { padding: var(--space-16); }
+
+.m-quantum-0 { margin: var(--space-0); }
+.m-quantum-1 { margin: var(--space-1); }
+.m-quantum-2 { margin: var(--space-2); }
+.m-quantum-3 { margin: var(--space-3); }
+.m-quantum-4 { margin: var(--space-4); }
+.m-quantum-5 { margin: var(--space-5); }
+.m-quantum-6 { margin: var(--space-6); }
+.m-quantum-8 { margin: var(--space-8); }
+.m-quantum-10 { margin: var(--space-10); }
+.m-quantum-12 { margin: var(--space-12); }
+.m-quantum-16 { margin: var(--space-16); }
 
 /* ============================================================================ */
 /* QUANTUM BUTTONS */
