@@ -1,315 +1,300 @@
 'use client'
 
 /**
- * Home Page - MasterX Quantum Intelligence Platform
- * 
- * Revolutionary Ultra-Premium Interface with Quantum Intelligence Engine
- * Billion-dollar caliber design with advanced visualizations and interactions
+ * MasterX Quantum Intelligence Platform
+ * Ultra-Premium Enterprise Interface
  */
 
 import { useState, useEffect } from 'react'
-import { Sidebar } from '@/components/sidebar'
-import { Header } from '@/components/header'
-import { QuantumLearningDashboard } from '@/components/quantum-enhanced/QuantumLearningDashboard'
-import { QuantumChatInterface } from '@/components/quantum-enhanced/QuantumChatInterface'
-import { sessionManager, SessionState } from '@/lib/session-manager'
-import { Brain, Loader2, Zap } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Brain, Sparkles, Zap } from 'lucide-react'
+import { MasterXSidebar } from '@/components/MasterXSidebar'
+import { MasterXChatInterface } from '@/components/MasterXChatInterface'
+import { MasterXSettingsPanel } from '@/components/MasterXSettingsPanel'
+import { MasterXProfileSection } from '@/components/MasterXProfileSection'
 
 export default function Home() {
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
-  const [activeView, setActiveView] = useState('dashboard')
-  const [systemMetrics, setSystemMetrics] = useState({
-    cpuUsage: 45,
-    memoryUsage: 62,
-    networkActivity: 78,
-    activeUsers: 1247,
-    totalSessions: 8934,
-    responseTime: 89
-  })
-  const [sessionState, setSessionState] = useState<SessionState>(sessionManager.getState())
+  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [activeView, setActiveView] = useState('chat')
+  const [isLoaded, setIsLoaded] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
 
-  // Initialize app
   useEffect(() => {
-    const initializeApp = async () => {
-      try {
-        // Subscribe to session state changes
-        const unsubscribeSession = sessionManager.subscribe((newState) => {
-          setSessionState(newState)
+    // Quantum loading sequence
+    const timer = setTimeout(() => {
+      setIsLoaded(true)
+    }, 1200)
 
-          // Update system metrics if available
-          if (newState.systemMetrics) {
-            setSystemMetrics({
-              cpuUsage: newState.systemMetrics.cpu_usage,
-              memoryUsage: newState.systemMetrics.memory_usage,
-              networkActivity: newState.systemMetrics.network_activity,
-              activeUsers: newState.systemMetrics.active_users,
-              totalSessions: newState.systemMetrics.total_sessions,
-              responseTime: newState.systemMetrics.response_time
-            })
-          }
-        })
-
-        // Check if already authenticated
-        if (sessionState.isAuthenticated) {
-          await sessionManager.loadUserData()
-        } else {
-          console.log('Running in demo mode without authentication')
-        }
-
-        return () => {
-          unsubscribeSession()
-        }
-      } catch (error) {
-        console.error('App initialization error:', error)
-      } finally {
-        setTimeout(() => setIsLoading(false), 2000)
-      }
-    }
-
-    initializeApp()
-
-    // Fallback: Update metrics with mock data if real-time fails
-    const metricsInterval = setInterval(() => {
-      if (!sessionState.systemMetrics) {
-        setSystemMetrics(prev => ({
-          cpuUsage: Math.max(20, Math.min(90, prev.cpuUsage + (Math.random() - 0.5) * 10)),
-          memoryUsage: Math.max(30, Math.min(95, prev.memoryUsage + (Math.random() - 0.5) * 8)),
-          networkActivity: Math.max(10, Math.min(100, prev.networkActivity + (Math.random() - 0.5) * 15)),
-          activeUsers: prev.activeUsers + Math.floor((Math.random() - 0.5) * 20),
-          totalSessions: prev.totalSessions + Math.floor(Math.random() * 5),
-          responseTime: Math.max(50, Math.min(200, prev.responseTime + (Math.random() - 0.5) * 20))
-        }))
-      }
-    }, 5000)
-
-    return () => {
-      clearInterval(metricsInterval)
-    }
+    return () => clearTimeout(timer)
   }, [])
 
-  // Get current user for display
-  const user = sessionState.user || {
-    name: 'Demo User',
-    email: 'demo@masterx.ai',
-    role: 'student'
+  const handleSidebarToggle = () => {
+    setSidebarOpen(!sidebarOpen)
   }
 
-  if (isLoading) {
-    return <LoadingScreen />
+  const handleViewChange = (view: string) => {
+    if (view === 'settings') {
+      setSettingsOpen(true)
+    } else {
+      setActiveView(view)
+    }
+  }
+
+  const renderActiveView = () => {
+    switch (activeView) {
+      case 'chat':
+        return <MasterXChatInterface />
+      case 'history':
+        return <PlaceholderView title="Chat History" description="Conversation history management coming soon" icon={Brain} />
+      case 'analytics':
+        return <PlaceholderView title="Intelligence Analytics" description="Advanced analytics dashboard coming soon" icon={Sparkles} />
+      case 'tools':
+        return <PlaceholderView title="AI Tools" description="Quantum AI utilities coming soon" icon={Zap} />
+      case 'profile':
+        return <MasterXProfileSection />
+      default:
+        return <MasterXChatInterface />
+    }
+  }
+
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-quantum-dark via-neural-gray to-quantum-dark flex items-center justify-center">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center"
+        >
+          {/* Quantum Loading Animation */}
+          <motion.div className="relative mb-8">
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+              className="w-20 h-20 border-4 border-transparent bg-gradient-to-r from-purple-500 to-cyan-500 rounded-full mx-auto"
+              style={{
+                background: 'conic-gradient(from 0deg, #a855f7, #06b6d4, #10b981, #f59e0b, #a855f7)',
+                padding: '2px'
+              }}
+            >
+              <div className="w-full h-full bg-quantum-dark rounded-full flex items-center justify-center">
+                <Brain className="w-8 h-8 text-purple-400 animate-pulse" />
+              </div>
+            </motion.div>
+
+            {/* Quantum Particles */}
+            {[...Array(6)].map((_, i) => (
+              <motion.div
+                key={i}
+                className="absolute w-2 h-2 bg-cyan-400 rounded-full"
+                style={{
+                  top: '50%',
+                  left: '50%',
+                  transformOrigin: '0 0'
+                }}
+                animate={{
+                  rotate: [0, 360],
+                  scale: [0.5, 1, 0.5],
+                  opacity: [0.3, 1, 0.3]
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  delay: i * 0.3,
+                  ease: "easeInOut"
+                }}
+              />
+            ))}
+          </motion.div>
+
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="text-4xl font-bold bg-gradient-to-r from-purple-400 via-cyan-400 to-purple-400 bg-clip-text text-transparent mb-3"
+          >
+            MasterX
+          </motion.h2>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="text-plasma-white/70 text-lg"
+          >
+            Quantum Intelligence Initializing...
+          </motion.p>
+
+          {/* Loading Progress */}
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: '100%' }}
+            transition={{ duration: 1, delay: 0.7 }}
+            className="w-48 h-1 bg-gradient-to-r from-purple-500 to-cyan-500 rounded-full mx-auto mt-6"
+          />
+        </motion.div>
+      </div>
+    )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-quantum-dark via-neural-gray to-quantum-dark overflow-hidden">
       {/* Quantum Background Effects */}
-      <QuantumBackground />
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        {/* Primary Quantum Field */}
+        <motion.div
+          animate={{
+            scale: [1, 1.2, 1],
+            opacity: [0.1, 0.3, 0.1],
+            rotate: [0, 180, 360]
+          }}
+          transition={{
+            duration: 20,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+          className="absolute top-1/4 left-1/4 w-96 h-96 bg-gradient-to-r from-purple-500/20 via-cyan-500/20 to-purple-500/20 rounded-full blur-3xl"
+        />
 
-      {/* Main Application Layout */}
+        {/* Secondary Quantum Field */}
+        <motion.div
+          animate={{
+            scale: [1.2, 1, 1.2],
+            opacity: [0.1, 0.25, 0.1],
+            rotate: [360, 180, 0]
+          }}
+          transition={{
+            duration: 25,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 10
+          }}
+          className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-gradient-to-r from-cyan-500/20 via-emerald-500/20 to-cyan-500/20 rounded-full blur-3xl"
+        />
+
+        {/* Quantum Particles */}
+        {[...Array(12)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute w-1 h-1 bg-cyan-400 rounded-full"
+            style={{
+              left: `${(i * 8 + 10) % 90 + 5}%`,
+              top: `${(i * 13 + 15) % 80 + 10}%`,
+            }}
+            animate={{
+              y: [0, -20, 0],
+              opacity: [0.3, 1, 0.3],
+              scale: [0.5, 1, 0.5]
+            }}
+            transition={{
+              duration: 3 + (i % 3),
+              repeat: Infinity,
+              delay: i * 0.2,
+              ease: "easeInOut"
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Main Layout */}
       <div className="relative z-10 flex h-screen">
-        {/* Sidebar */}
-        <Sidebar
+        {/* MasterX Sidebar */}
+        <MasterXSidebar
           isOpen={sidebarOpen}
-          onClose={() => setSidebarOpen(false)}
+          onToggle={handleSidebarToggle}
           activeView={activeView}
-          onViewChange={setActiveView}
-          systemMetrics={systemMetrics}
-          sessionState={sessionState}
+          onViewChange={handleViewChange}
         />
 
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col">
           {/* Header */}
-          <Header user={user} onMenuClick={() => setSidebarOpen(true)} />
-
-          {/* Main Content Area */}
-          <main className="flex-1 overflow-auto">
-            {activeView === 'dashboard' && (
-              <div className="p-6 space-y-6">
-                <QuantumLearningDashboard />
-              </div>
-            )}
-            {activeView === 'chat' && (
-              <div className="h-full">
-                <QuantumChatInterface />
-              </div>
-            )}
-            {activeView === 'analytics' && (
-              <div className="p-6">
-                <div className="text-center text-gray-500">Analytics View - Coming Soon</div>
-              </div>
-            )}
-            {activeView === 'learning' && (
-              <div className="p-6">
-                <div className="text-center text-gray-500">Learning Paths View - Coming Soon</div>
-              </div>
-            )}
-            {activeView === 'goals' && (
-              <div className="p-6">
-                <div className="text-center text-gray-500">Learning Goals View - Coming Soon</div>
-              </div>
-            )}
-            {activeView === 'settings' && (
-              <div className="p-6">
-                <div className="text-center text-gray-500">Settings View - Coming Soon</div>
-              </div>
-            )}
-          </main>
-
-          {/* Status Bar */}
-          <div className="glass-morph border-t border-purple-500/20 px-6 py-3">
-            <div className="flex items-center justify-between text-xs">
-              <div className="flex items-center space-x-6">
-                <div className="flex items-center space-x-2">
-                  <Brain className="h-3 w-3 text-cyan-400" />
-                  <span className="text-purple-300">CPU:</span>
-                  <span className="text-white font-mono">{systemMetrics.cpuUsage}%</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Zap className="h-3 w-3 text-purple-400" />
-                  <span className="text-purple-300">Memory:</span>
-                  <span className="text-white font-mono">{systemMetrics.memoryUsage}%</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Brain className="h-3 w-3 text-green-400" />
-                  <span className="text-purple-300">Active:</span>
-                  <span className="text-white font-mono">{systemMetrics.activeUsers}</span>
-                </div>
-              </div>
-              <div className="flex items-center space-x-2 px-2 py-1 rounded bg-purple-500/20">
-                <div className="h-2 w-2 bg-green-400 rounded-full animate-pulse" />
-                <span className="text-purple-300">Quantum Online</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Mobile Sidebar Overlay */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-    </div>
-  )
-}
-
-function LoadingScreen() {
-  const [progress, setProgress] = useState(0)
-  const [stage, setStage] = useState(0)
-
-  const stages = [
-    'Initializing Quantum Intelligence Engine...',
-    'Connecting to Neural Networks...',
-    'Calibrating Multi-LLM Integration...',
-    'Preparing Enterprise Dashboard...'
-  ]
-
-  useEffect(() => {
-    const progressInterval = setInterval(() => {
-      setProgress(prev => {
-        if (prev < 100) {
-          return prev + Math.random() * 15
-        }
-        return 100
-      })
-    }, 150)
-
-    const stageInterval = setInterval(() => {
-      setStage(prev => (prev < stages.length - 1 ? prev + 1 : prev))
-    }, 500)
-
-    return () => {
-      clearInterval(progressInterval)
-      clearInterval(stageInterval)
-    }
-  }, [])
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center relative overflow-hidden">
-      <div className="absolute inset-0">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyan-500/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-      </div>
-
-      <div className="relative z-10 text-center max-w-md mx-auto px-6">
-        <div className="mb-8">
-          <div className="flex items-center justify-center mb-4">
-            <div className="relative">
-              <Brain className="h-16 w-16 text-purple-400 animate-quantum-pulse" />
-              <div className="absolute inset-0 h-16 w-16 border-2 border-purple-400/30 rounded-full animate-spin" />
-            </div>
-          </div>
-          <h1 className="text-4xl font-bold text-white mb-2 quantum-glow">
-            MasterX
-          </h1>
-          <p className="text-purple-200 text-lg">
-            Quantum Intelligence Platform
-          </p>
-        </div>
-
-        <div className="mb-8">
-          <div className="flex items-center justify-center mb-4">
-            <Loader2 className="h-6 w-6 text-purple-400 mr-3 animate-spin" />
-            <span className="text-white font-medium">
-              {stages[stage]}
-            </span>
-          </div>
-
-          <div className="w-full bg-slate-700/50 rounded-full h-2 mb-4 overflow-hidden">
-            <div
-              className="h-full bg-gradient-to-r from-purple-500 to-cyan-500 rounded-full transition-all duration-300 ease-out relative"
-              style={{ width: `${Math.min(progress, 100)}%` }}
+          <div className="h-16 glass-morph border-b border-purple-500/20 flex items-center justify-between px-6">
+            <button
+              onClick={handleSidebarToggle}
+              className="p-2 rounded-lg glass-morph hover:bg-purple-500/20 transition-all duration-200 lg:hidden"
             >
-              <div className="absolute inset-0 bg-white/20 animate-pulse" />
+              <Brain className="h-5 w-5 text-purple-400" />
+            </button>
+            <h2 className="text-lg font-semibold text-plasma-white capitalize">
+              {activeView === 'chat' ? 'Quantum Intelligence' : activeView.replace(/([A-Z])/g, ' $1').trim()}
+            </h2>
+            <div className="flex items-center space-x-2">
+              <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
+              <span className="text-sm text-plasma-white/60">Online</span>
             </div>
           </div>
 
-          <div className="text-purple-300 text-sm font-mono">
-            {Math.round(Math.min(progress, 100))}% Complete
+          {/* Content Area */}
+          <div className="flex-1">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeView}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+                className="h-full"
+              >
+                {renderActiveView()}
+              </motion.div>
+            </AnimatePresence>
           </div>
         </div>
       </div>
+
+      {/* Settings Panel */}
+      <MasterXSettingsPanel
+        isOpen={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+      />
     </div>
   )
 }
 
-function QuantumBackground() {
-  const [particles, setParticles] = useState<Array<{id: number, x: number, y: number, delay: number}>>([])
+// Placeholder View Component
+interface PlaceholderViewProps {
+  title: string
+  description: string
+  icon: React.ComponentType<{ className?: string }>
+}
 
-  useEffect(() => {
-    const newParticles = Array.from({ length: 50 }, (_, i) => ({
-      id: i,
-      x: Math.random() * 100,
-      y: Math.random() * 100,
-      delay: Math.random() * 5
-    }))
-    setParticles(newParticles)
-  }, [])
-
+function PlaceholderView({ title, description, icon: Icon }: PlaceholderViewProps) {
   return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      <div className="absolute inset-0">
-        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-purple-900/30 via-transparent to-cyan-900/30" />
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
-      </div>
+    <div className="h-full flex items-center justify-center p-8">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="text-center max-w-md"
+      >
+        <motion.div
+          className="w-20 h-20 bg-gradient-to-r from-purple-600 to-cyan-600 rounded-3xl flex items-center justify-center mx-auto mb-6"
+          animate={{
+            boxShadow: [
+              "0 0 20px rgba(168, 85, 247, 0.3)",
+              "0 0 40px rgba(168, 85, 247, 0.6)",
+              "0 0 20px rgba(168, 85, 247, 0.3)"
+            ]
+          }}
+          transition={{ duration: 2, repeat: Infinity }}
+        >
+          <Icon className="w-10 h-10 text-white" />
+        </motion.div>
 
-      <div className="absolute inset-0">
-        {particles.map((particle) => (
-          <div
-            key={particle.id}
-            className="absolute w-1 h-1 bg-purple-400/40 rounded-full animate-quantum-float"
-            style={{
-              left: `${particle.x}%`,
-              top: `${particle.y}%`,
-              animationDelay: `${particle.delay}s`,
-              animationDuration: `${4 + (particle.id % 3)}s`
-            }}
-          />
-        ))}
-      </div>
+        <h3 className="text-2xl font-bold text-plasma-white mb-4">
+          {title}
+        </h3>
+        <p className="text-plasma-white/70 leading-relaxed">
+          {description}
+        </p>
+
+        <motion.div
+          className="mt-8 p-4 glass-morph rounded-xl"
+          whileHover={{ scale: 1.02 }}
+        >
+          <p className="text-sm text-plasma-white/60">
+            This premium component is under development with enterprise-grade quality standards.
+          </p>
+        </motion.div>
+      </motion.div>
     </div>
   )
 }
