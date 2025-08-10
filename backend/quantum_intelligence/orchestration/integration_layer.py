@@ -38,12 +38,31 @@ except ImportError:
     logger = logging.getLogger(__name__)
 
 try:
+    # Compatibility patch for Python 3.11 and aioredis
+    import builtins
+    original_timeout_error = builtins.TimeoutError
+
+    # Temporarily patch TimeoutError to avoid duplicate base class issue
+    import asyncio
+    if hasattr(asyncio, 'TimeoutError') and asyncio.TimeoutError is original_timeout_error:
+        # Create a unique TimeoutError for aioredis
+        class AioredisTimeoutError(Exception):
+            pass
+        builtins.TimeoutError = AioredisTimeoutError
+
     import aioredis
+
+    # Restore original TimeoutError
+    builtins.TimeoutError = original_timeout_error
+
     import aiokafka
     ADVANCED_MESSAGING = True
-except ImportError:
+except ImportError as e:
     ADVANCED_MESSAGING = False
-    logger.warning("Advanced messaging libraries not available - using basic implementations")
+    logger.warning(f"Advanced messaging libraries not available - using basic implementations: {e}")
+except Exception as e:
+    ADVANCED_MESSAGING = False
+    logger.warning(f"Error loading advanced messaging libraries - using basic implementations: {e}")
 
 # ============================================================================
 # INTEGRATION LAYER ENUMS & DATA STRUCTURES

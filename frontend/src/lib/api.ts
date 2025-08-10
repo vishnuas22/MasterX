@@ -176,7 +176,7 @@ export const refreshToken = async (refreshToken: string) => {
 
 // Chat API
 export const sendMessage = async (chatRequest: ChatRequest): Promise<ChatResponse> => {
-  const response = await apiService.post('/chat/message', chatRequest)
+  const response = await apiService.post('/chat/send', chatRequest)
   return response.data
 }
 

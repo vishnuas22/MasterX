@@ -19,7 +19,9 @@ import {
   Volume2,
   VolumeX,
   Settings,
-  MoreHorizontal
+  MoreHorizontal,
+  ChevronRight,
+  BarChart3
 } from 'lucide-react'
 import { API, ChatMessage, ChatRequest } from '@/lib/api-services'
 import { cn } from '@/lib/utils'
@@ -177,9 +179,9 @@ export function MasterXChatInterface({ className = '' }: MasterXChatInterfacePro
   return (
     <div className={cn("flex flex-col h-full", className)}>
       {/* Chat Header */}
-      <div className="h-16 glass-morph border-b border-purple-500/20 flex items-center justify-between px-6">
-        <div className="flex items-center space-x-3">
-          <motion.div 
+      <div className="h-16 glass-morph border-b border-purple-500/20 flex items-center justify-between px-quantum-6">
+        <div className="flex items-center space-x-quantum-3">
+          <motion.div
             className="relative"
             animate={{ rotate: [0, 360] }}
             transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
@@ -188,41 +190,41 @@ export function MasterXChatInterface({ className = '' }: MasterXChatInterfacePro
             <div className="absolute inset-0 h-8 w-8 border border-cyan-400/30 rounded-full animate-ping" />
           </motion.div>
           <div>
-            <h2 className="text-lg font-semibold text-plasma-white">Quantum Intelligence</h2>
-            <p className="text-sm text-plasma-white/60">
+            <h2 className="text-quantum-lg font-semibold text-plasma-white">Quantum Intelligence</h2>
+            <p className="text-quantum-sm text-plasma-white/60">
               {isLoading ? 'Processing...' : 'Ready to assist'}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center space-x-3">
-          <div className="flex items-center space-x-2 text-sm text-plasma-white/60">
+        <div className="flex items-center space-x-quantum-3">
+          <div className="flex items-center space-x-quantum-2 text-quantum-sm text-plasma-white/60">
             <Zap className="h-4 w-4 text-cyan-400" />
             <span>{selectedProvider}</span>
           </div>
-          <button className="p-2 rounded-lg glass-morph hover:bg-purple-500/20 transition-all duration-200">
+          <button className="p-quantum-2 rounded-lg glass-morph hover:bg-purple-500/20 transition-all duration-200">
             <Settings className="h-4 w-4 text-plasma-white/70" />
           </button>
         </div>
       </div>
 
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 overflow-y-auto p-quantum-6">
         {messages.length === 0 ? (
           <EmptyState />
         ) : (
-          <div className="max-w-4xl mx-auto space-y-6">
+          <div className="max-w-4xl mx-auto space-y-quantum-6">
             {messages.map((message) => (
-              <MessageBubble 
+              <MessageBubble
                 key={message.id}
                 message={message}
                 onCopy={() => copyToClipboard(message.content)}
               />
             ))}
-            
+
             {/* Streaming message */}
             {streamingMessage && (
-              <MessageBubble 
+              <MessageBubble
                 message={{
                   id: 'streaming',
                   content: streamingMessage,
@@ -233,18 +235,18 @@ export function MasterXChatInterface({ className = '' }: MasterXChatInterfacePro
                 onCopy={() => copyToClipboard(streamingMessage)}
               />
             )}
-            
+
             {/* Loading indicator */}
             {isLoading && !streamingMessage && (
-              <div className="flex items-start space-x-4">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-600 to-cyan-600 flex items-center justify-center">
+              <div className="flex items-start space-x-quantum-4">
+                <div className="w-quantum-10 h-quantum-10 rounded-full bg-gradient-to-r from-purple-600 to-cyan-600 flex items-center justify-center">
                   <Bot className="h-5 w-5 text-white" />
                 </div>
                 <div className="flex-1">
-                  <div className="glass-morph rounded-2xl p-4 max-w-xs">
-                    <div className="flex items-center space-x-3">
+                  <div className="glass-morph rounded-2xl p-quantum-4 max-w-xs">
+                    <div className="flex items-center space-x-quantum-3">
                       <Loader2 className="h-4 w-4 animate-spin text-purple-400" />
-                      <span className="text-sm text-plasma-white/70">Quantum processing...</span>
+                      <span className="text-quantum-sm text-plasma-white/70">Quantum processing...</span>
                       <Sparkles className="h-4 w-4 text-cyan-400 animate-pulse" />
                     </div>
                   </div>
@@ -257,20 +259,20 @@ export function MasterXChatInterface({ className = '' }: MasterXChatInterfacePro
       </div>
 
       {/* Input Area */}
-      <div className="border-t border-purple-500/20 p-6">
+      <div className="border-t border-purple-500/20 p-quantum-6">
         <div className="max-w-4xl mx-auto">
           <div className="relative">
-            <div className="flex items-end space-x-3">
+            <div className="flex items-end space-x-quantum-3">
               {/* File Upload */}
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={handleFileUpload}
-                className="p-3 glass-morph rounded-xl hover:bg-purple-500/20 transition-all duration-200"
+                className="p-quantum-3 glass-morph rounded-xl hover:bg-purple-500/20 transition-all duration-200"
               >
                 <Paperclip className="h-5 w-5 text-plasma-white/70" />
               </motion.button>
-              
+
               {/* Text Input */}
               <div className="flex-1 relative">
                 <textarea
@@ -279,10 +281,10 @@ export function MasterXChatInterface({ className = '' }: MasterXChatInterfacePro
                   onChange={(e) => setInputMessage(e.target.value)}
                   onKeyDown={handleKeyPress}
                   placeholder="Ask MasterX anything..."
-                  className="w-full resize-none glass-morph rounded-2xl px-6 py-4 pr-14 text-plasma-white placeholder-plasma-white/40 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all max-h-32 min-h-[56px]"
+                  className="w-full resize-none glass-morph rounded-2xl px-quantum-6 py-quantum-4 pr-14 text-quantum-base text-plasma-white placeholder-plasma-white/40 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all max-h-32 min-h-[56px]"
                   rows={1}
                 />
-                
+
                 {/* Send Button */}
                 <motion.button
                   whileHover={{ scale: 1.05 }}
@@ -290,7 +292,7 @@ export function MasterXChatInterface({ className = '' }: MasterXChatInterfacePro
                   onClick={handleSendMessage}
                   disabled={!inputMessage.trim() || isLoading}
                   className={cn(
-                    "absolute right-3 bottom-3 p-2 rounded-lg transition-all duration-200",
+                    "absolute right-3 bottom-3 p-quantum-2 rounded-lg transition-all duration-200",
                     inputMessage.trim() && !isLoading
                       ? "bg-gradient-to-r from-purple-600 to-cyan-600 text-white hover:from-purple-700 hover:to-cyan-700"
                       : "glass-morph text-plasma-white/40 cursor-not-allowed"
@@ -299,14 +301,14 @@ export function MasterXChatInterface({ className = '' }: MasterXChatInterfacePro
                   <Send className="h-4 w-4" />
                 </motion.button>
               </div>
-              
+
               {/* Voice Input */}
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={handleVoiceInput}
                 className={cn(
-                  "p-3 rounded-xl transition-all duration-200",
+                  "p-quantum-3 rounded-xl transition-all duration-200",
                   isListening
                     ? "bg-red-500 text-white animate-pulse"
                     : "glass-morph hover:bg-purple-500/20 text-plasma-white/70"
@@ -316,8 +318,8 @@ export function MasterXChatInterface({ className = '' }: MasterXChatInterfacePro
               </motion.button>
             </div>
           </div>
-          
-          <p className="text-xs text-plasma-white/40 text-center mt-3">
+
+          <p className="text-quantum-xs text-plasma-white/40 text-center mt-quantum-3">
             MasterX uses quantum intelligence to provide accurate responses. Always verify important information.
           </p>
         </div>
@@ -336,92 +338,138 @@ export function MasterXChatInterface({ className = '' }: MasterXChatInterfacePro
   )
 }
 
-// Empty State Component
+// Modern Empty State Component
 function EmptyState() {
   const suggestions = [
     {
+      icon: Brain,
       title: "Explain quantum computing",
-      subtitle: "Learn about quantum mechanics and computing",
-      icon: Brain,
-      gradient: "from-purple-500 to-cyan-500"
+      description: "Learn about quantum mechanics and computing principles",
+      category: "Science"
     },
     {
-      title: "Write Python code",
-      subtitle: "Generate and optimize code solutions",
       icon: Zap,
-      gradient: "from-cyan-500 to-emerald-500"
+      title: "Write Python code",
+      description: "Generate and optimize code solutions",
+      category: "Development"
     },
     {
+      icon: BarChart3,
       title: "Analyze data patterns",
-      subtitle: "Extract insights from complex datasets",
-      icon: Sparkles,
-      gradient: "from-emerald-500 to-yellow-500"
+      description: "Extract insights from complex datasets",
+      category: "Analytics"
     },
     {
+      icon: Sparkles,
       title: "Creative brainstorming",
-      subtitle: "Generate innovative ideas and solutions",
-      icon: Brain,
-      gradient: "from-yellow-500 to-purple-500"
+      description: "Generate innovative ideas and solutions",
+      category: "Creative"
     }
   ]
 
   return (
-    <div className="flex flex-col items-center justify-center h-full text-center px-4">
+    <div className="flex flex-col items-center justify-center h-full text-center px-8 py-16">
+      {/* Hero Section */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="mb-12"
+        className="mb-16 max-w-3xl"
       >
+        {/* Icon */}
         <motion.div
-          className="w-20 h-20 bg-gradient-to-r from-purple-600 to-cyan-600 rounded-3xl flex items-center justify-center mx-auto mb-6"
-          animate={{
-            boxShadow: [
-              "0 0 20px rgba(168, 85, 247, 0.3)",
-              "0 0 40px rgba(168, 85, 247, 0.6)",
-              "0 0 20px rgba(168, 85, 247, 0.3)"
-            ]
-          }}
-          transition={{ duration: 2, repeat: Infinity }}
+          className="w-16 h-16 mx-auto mb-8 rounded-2xl bg-gradient-primary flex items-center justify-center shadow-lg"
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          whileHover={{ scale: 1.05 }}
         >
-          <Brain className="w-10 h-10 text-white" />
+          <Brain className="h-8 w-8 text-white" />
         </motion.div>
 
-        <h2 className="text-3xl font-bold bg-gradient-to-r from-purple-400 via-cyan-400 to-purple-400 bg-clip-text text-transparent mb-4">
-          Welcome to MasterX
-        </h2>
-        <p className="text-plasma-white/70 text-lg max-w-md mx-auto">
-          Your quantum intelligence assistant is ready. Ask me anything or try one of these suggestions:
-        </p>
+        {/* Welcome Text */}
+        <motion.h1
+          className="text-display-xl mb-6"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+        >
+          Welcome to{' '}
+          <span className="bg-gradient-primary bg-clip-text text-transparent">
+            MasterX
+          </span>
+        </motion.h1>
+
+        <motion.p
+          className="text-body-lg text-secondary max-w-2xl mx-auto leading-relaxed"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+        >
+          Your AI assistant is ready to help. Choose a starting point below or ask me anything.
+        </motion.p>
       </motion.div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl w-full">
+      {/* Suggestion Cards */}
+      <motion.div
+        className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl w-full"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.5 }}
+      >
         {suggestions.map((suggestion, index) => (
           <motion.button
             key={index}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: index * 0.1 }}
-            whileHover={{ scale: 1.02, y: -2 }}
+            transition={{
+              duration: 0.4,
+              delay: 0.6 + index * 0.1
+            }}
+            whileHover={{
+              scale: 1.02,
+              y: -4,
+              transition: { duration: 0.2 }
+            }}
             whileTap={{ scale: 0.98 }}
-            className="p-6 glass-morph rounded-2xl text-left hover:bg-purple-500/10 transition-all duration-200 group"
+            className="glass-modern rounded-xl p-6 text-left hover:glass-premium transition-all duration-300 group"
           >
             <div className="flex items-start space-x-4">
-              <div className={`w-12 h-12 bg-gradient-to-r ${suggestion.gradient} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-200`}>
-                <suggestion.icon className="w-6 h-6 text-white" />
+              {/* Icon */}
+              <div className="w-10 h-10 rounded-lg bg-gradient-primary flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow">
+                <suggestion.icon className="h-5 w-5 text-white" />
               </div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-plasma-white mb-1 group-hover:text-cyan-400 transition-colors">
-                  {suggestion.title}
-                </h3>
-                <p className="text-sm text-plasma-white/60">
-                  {suggestion.subtitle}
+
+              {/* Content */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-heading-sm text-primary group-hover:text-accent transition-colors">
+                    {suggestion.title}
+                  </h3>
+                  <span className="text-caption text-quaternary bg-surface-tertiary px-2 py-1 rounded-md">
+                    {suggestion.category}
+                  </span>
+                </div>
+                <p className="text-body-sm text-secondary group-hover:text-primary transition-colors">
+                  {suggestion.description}
                 </p>
               </div>
             </div>
           </motion.button>
         ))}
-      </div>
+      </motion.div>
+
+      {/* Bottom CTA */}
+      <motion.div
+        className="mt-12 text-center"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 1 }}
+      >
+        <p className="text-body-sm text-tertiary">
+          Start typing below to begin your conversation
+        </p>
+      </motion.div>
     </div>
   )
 }

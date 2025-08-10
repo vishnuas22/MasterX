@@ -182,31 +182,24 @@ class SkillMasteryForecast:
     
     Detailed skill mastery forecasting with progression analysis
     """
+    # Required fields (no defaults)
     skill_id: str
     skill_name: str
     user_id: str
-    
-    # Current state
     current_mastery_level: float
-    mastery_threshold: float = 0.8
-    
-    # Forecasting
     predicted_mastery_date: datetime
     mastery_probability: float
-    learning_curve_parameters: Dict[str, float]
-    
-    # Progression analysis
     learning_velocity: float
     plateau_risk: float
-    acceleration_opportunities: List[str]
-    
-    # Resource requirements
     estimated_practice_hours: float
-    recommended_exercises: List[str]
-    prerequisite_skills: List[str]
-    
-    # Metadata
     forecast_confidence: float
+
+    # Optional fields (with defaults)
+    mastery_threshold: float = 0.8
+    learning_curve_parameters: Dict[str, float] = field(default_factory=dict)
+    acceleration_opportunities: List[str] = field(default_factory=list)
+    recommended_exercises: List[str] = field(default_factory=list)
+    prerequisite_skills: List[str] = field(default_factory=list)
     last_updated: datetime = field(default_factory=datetime.now)
 
 

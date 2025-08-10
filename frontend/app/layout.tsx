@@ -1,4 +1,5 @@
 import './globals.css'
+import '../src/styles/modern-design-system.css'
 import { Inter } from 'next/font/google'
 import { AuthProvider } from '@/contexts/AuthContext'
 

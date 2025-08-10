@@ -17,6 +17,7 @@ module.exports = {
     },
     extend: {
       colors: {
+        // Shadcn/ui colors
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
@@ -50,6 +51,40 @@ module.exports = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+
+        // ChatGPT-inspired theme colors
+        'theme-bg': {
+          primary: 'var(--color-bg-primary)',
+          secondary: 'var(--color-bg-secondary)',
+          tertiary: 'var(--color-bg-tertiary)',
+          quaternary: 'var(--color-bg-quaternary)',
+        },
+        'theme-text': {
+          primary: 'var(--color-text-primary)',
+          secondary: 'var(--color-text-secondary)',
+          tertiary: 'var(--color-text-tertiary)',
+        },
+        'theme-border': {
+          light: 'var(--color-border-light)',
+          medium: 'var(--color-border-medium)',
+          heavy: 'var(--color-border-heavy)',
+        },
+        'theme-surface': {
+          primary: 'var(--color-surface-primary)',
+          secondary: 'var(--color-surface-secondary)',
+          tertiary: 'var(--color-surface-tertiary)',
+        },
+        'theme-accent': {
+          primary: 'var(--color-accent-primary)',
+          secondary: 'var(--color-accent-secondary)',
+          tertiary: 'var(--color-accent-tertiary)',
+          bg: 'var(--color-accent-bg)',
+        },
+        'theme-hover': {
+          light: 'var(--color-hover-light)',
+          medium: 'var(--color-hover-medium)',
+        },
+        'theme-active': 'var(--color-active)',
       },
       borderRadius: {
         lg: "var(--radius)",

@@ -1,300 +1,319 @@
 'use client'
 
-/**
- * MasterX Quantum Intelligence Platform
- * Ultra-Premium Enterprise Interface
- */
-
-import { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Brain, Sparkles, Zap } from 'lucide-react'
-import { MasterXSidebar } from '@/components/MasterXSidebar'
-import { MasterXChatInterface } from '@/components/MasterXChatInterface'
-import { MasterXSettingsPanel } from '@/components/MasterXSettingsPanel'
-import { MasterXProfileSection } from '@/components/MasterXProfileSection'
+import { useState } from 'react'
+import {
+  MessageSquare,
+  Plus,
+  Settings,
+  History,
+  Menu,
+  X,
+  Send,
+  Paperclip,
+  Mic,
+  Brain,
+  Code,
+  BarChart3,
+  Lightbulb,
+  ArrowRight
+} from 'lucide-react'
 
 export default function Home() {
-  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   const [activeView, setActiveView] = useState('chat')
-  const [isLoaded, setIsLoaded] = useState(false)
-  const [settingsOpen, setSettingsOpen] = useState(false)
 
-  useEffect(() => {
-    // Quantum loading sequence
-    const timer = setTimeout(() => {
-      setIsLoaded(true)
-    }, 1200)
+  const navigationItems = [
+    { id: 'chat', label: 'Chat', icon: MessageSquare },
+    { id: 'history', label: 'History', icon: History },
+    { id: 'settings', label: 'Settings', icon: Settings }
+  ]
 
-    return () => clearTimeout(timer)
-  }, [])
+  const recentChats = [
+    { id: '1', title: 'Python debugging help', time: '2m ago' },
+    { id: '2', title: 'React component design', time: '1h ago' },
+    { id: '3', title: 'Database optimization', time: '3h ago' },
+    { id: '4', title: 'API integration guide', time: '1d ago' }
+  ]
 
-  const handleSidebarToggle = () => {
-    setSidebarOpen(!sidebarOpen)
-  }
-
-  const handleViewChange = (view: string) => {
-    if (view === 'settings') {
-      setSettingsOpen(true)
-    } else {
-      setActiveView(view)
+  const suggestions = [
+    {
+      icon: Brain,
+      title: "Explain quantum computing",
+      description: "Learn about quantum mechanics and computing principles"
+    },
+    {
+      icon: Code,
+      title: "Write Python code",
+      description: "Generate and optimize code solutions"
+    },
+    {
+      icon: BarChart3,
+      title: "Analyze data",
+      description: "Extract insights from complex datasets"
+    },
+    {
+      icon: Lightbulb,
+      title: "Brainstorm ideas",
+      description: "Generate innovative solutions"
     }
+  ]
+
+  const handleSuggestionClick = (suggestion: any) => {
+    console.log('Suggestion clicked:', suggestion.title)
+    // In a real app, this would populate the input field or send the message
   }
 
-  const renderActiveView = () => {
+  const handleSendMessage = () => {
+    console.log('Send message clicked')
+    // In a real app, this would send the message to the backend
+  }
+
+  const handleNewChat = () => {
+    console.log('New chat clicked')
+    // In a real app, this would create a new conversation
+  }
+
+  const handleRecentChatClick = (chat: any) => {
+    console.log('Recent chat clicked:', chat.title)
+    // In a real app, this would load the conversation
+  }
+
+  const renderMainContent = () => {
     switch (activeView) {
-      case 'chat':
-        return <MasterXChatInterface />
       case 'history':
-        return <PlaceholderView title="Chat History" description="Conversation history management coming soon" icon={Brain} />
-      case 'analytics':
-        return <PlaceholderView title="Intelligence Analytics" description="Advanced analytics dashboard coming soon" icon={Sparkles} />
-      case 'tools':
-        return <PlaceholderView title="AI Tools" description="Quantum AI utilities coming soon" icon={Zap} />
-      case 'profile':
-        return <MasterXProfileSection />
+        return (
+          <div className="flex flex-col items-center justify-center h-full p-8">
+            <div className="text-center">
+              <History className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Chat History</h2>
+              <p className="text-gray-600">Your conversation history will appear here.</p>
+            </div>
+          </div>
+        )
+      case 'settings':
+        return (
+          <div className="flex flex-col items-center justify-center h-full p-8">
+            <div className="text-center">
+              <Settings className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Settings</h2>
+              <p className="text-gray-600">Configure your preferences and account settings.</p>
+            </div>
+          </div>
+        )
       default:
-        return <MasterXChatInterface />
-    }
-  }
+        return (
+          <div className="flex flex-col h-full bg-white">
+            {/* Main Content */}
+            <div className="flex-1 flex flex-col items-center justify-center p-8">
+              {/* Welcome Section */}
+              <div className="text-center mb-12 max-w-2xl">
+                <div className="w-12 h-12 bg-black rounded-xl flex items-center justify-center mx-auto mb-6">
+                  <Brain className="h-6 w-6 text-white" />
+                </div>
 
-  if (!isLoaded) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-quantum-dark via-neural-gray to-quantum-dark flex items-center justify-center">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="text-center"
-        >
-          {/* Quantum Loading Animation */}
-          <motion.div className="relative mb-8">
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-              className="w-20 h-20 border-4 border-transparent bg-gradient-to-r from-purple-500 to-cyan-500 rounded-full mx-auto"
-              style={{
-                background: 'conic-gradient(from 0deg, #a855f7, #06b6d4, #10b981, #f59e0b, #a855f7)',
-                padding: '2px'
-              }}
-            >
-              <div className="w-full h-full bg-quantum-dark rounded-full flex items-center justify-center">
-                <Brain className="w-8 h-8 text-purple-400 animate-pulse" />
+                <h1 className="text-4xl font-bold text-gray-900 mb-4">
+                  How can I help you today?
+                </h1>
+
+                <p className="text-lg text-gray-600">
+                  I'm your AI assistant. Ask me anything or choose a suggestion below.
+                </p>
               </div>
-            </motion.div>
 
-            {/* Quantum Particles */}
-            {[...Array(6)].map((_, i) => (
-              <motion.div
-                key={i}
-                className="absolute w-2 h-2 bg-cyan-400 rounded-full"
-                style={{
-                  top: '50%',
-                  left: '50%',
-                  transformOrigin: '0 0'
-                }}
-                animate={{
-                  rotate: [0, 360],
-                  scale: [0.5, 1, 0.5],
-                  opacity: [0.3, 1, 0.3]
-                }}
-                transition={{
-                  duration: 2,
-                  repeat: Infinity,
-                  delay: i * 0.3,
-                  ease: "easeInOut"
-                }}
-              />
-            ))}
-          </motion.div>
+              {/* Suggestions */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-2xl mb-12">
+                {suggestions.map((suggestion, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleSuggestionClick(suggestion)}
+                    className="p-4 border border-gray-200 rounded-xl text-left hover:border-gray-300 hover:shadow-sm transition-all duration-200 group"
+                  >
+                    <div className="flex items-start space-x-3">
+                      <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center group-hover:bg-gray-200 transition-colors">
+                        <suggestion.icon className="h-4 w-4 text-gray-600" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-medium text-gray-900 mb-1">
+                          {suggestion.title}
+                        </h3>
+                        <p className="text-sm text-gray-600">
+                          {suggestion.description}
+                        </p>
+                      </div>
+                      <ArrowRight className="h-4 w-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
 
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="text-4xl font-bold bg-gradient-to-r from-purple-400 via-cyan-400 to-purple-400 bg-clip-text text-transparent mb-3"
-          >
-            MasterX
-          </motion.h2>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="text-plasma-white/70 text-lg"
-          >
-            Quantum Intelligence Initializing...
-          </motion.p>
+            {/* Input Area */}
+            <div className="border-t border-gray-200 p-4">
+              <div className="max-w-4xl mx-auto">
+                <div className="relative">
+                  <div className="flex items-end space-x-3 bg-gray-50 rounded-2xl p-3">
+                    <button
+                      onClick={() => console.log('File attachment clicked')}
+                      className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+                    >
+                      <Paperclip className="h-4 w-4 text-gray-500" />
+                    </button>
 
-          {/* Loading Progress */}
-          <motion.div
-            initial={{ width: 0 }}
-            animate={{ width: '100%' }}
-            transition={{ duration: 1, delay: 0.7 }}
-            className="w-48 h-1 bg-gradient-to-r from-purple-500 to-cyan-500 rounded-full mx-auto mt-6"
-          />
-        </motion.div>
-      </div>
-    )
+                    <div className="flex-1">
+                      <textarea
+                        placeholder="Message MasterX..."
+                        className="w-full bg-transparent resize-none border-0 outline-none text-gray-900 placeholder-gray-500 text-sm leading-6"
+                        rows={1}
+                        style={{ minHeight: '24px', maxHeight: '200px' }}
+                      />
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => console.log('Voice input clicked')}
+                        className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+                      >
+                        <Mic className="h-4 w-4 text-gray-500" />
+                      </button>
+                      <button
+                        onClick={handleSendMessage}
+                        className="p-2 bg-black hover:bg-gray-800 rounded-lg transition-colors"
+                      >
+                        <Send className="h-4 w-4 text-white" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <p className="text-xs text-gray-500 text-center mt-3">
+                  MasterX can make mistakes. Consider checking important information.
+                </p>
+              </div>
+            </div>
+          </div>
+        )
+    }
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-quantum-dark via-neural-gray to-quantum-dark overflow-hidden">
-      {/* Quantum Background Effects */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        {/* Primary Quantum Field */}
-        <motion.div
-          animate={{
-            scale: [1, 1.2, 1],
-            opacity: [0.1, 0.3, 0.1],
-            rotate: [0, 180, 360]
-          }}
-          transition={{
-            duration: 20,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-          className="absolute top-1/4 left-1/4 w-96 h-96 bg-gradient-to-r from-purple-500/20 via-cyan-500/20 to-purple-500/20 rounded-full blur-3xl"
-        />
-
-        {/* Secondary Quantum Field */}
-        <motion.div
-          animate={{
-            scale: [1.2, 1, 1.2],
-            opacity: [0.1, 0.25, 0.1],
-            rotate: [360, 180, 0]
-          }}
-          transition={{
-            duration: 25,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: 10
-          }}
-          className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-gradient-to-r from-cyan-500/20 via-emerald-500/20 to-cyan-500/20 rounded-full blur-3xl"
-        />
-
-        {/* Quantum Particles */}
-        {[...Array(12)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute w-1 h-1 bg-cyan-400 rounded-full"
-            style={{
-              left: `${(i * 8 + 10) % 90 + 5}%`,
-              top: `${(i * 13 + 15) % 80 + 10}%`,
-            }}
-            animate={{
-              y: [0, -20, 0],
-              opacity: [0.3, 1, 0.3],
-              scale: [0.5, 1, 0.5]
-            }}
-            transition={{
-              duration: 3 + (i % 3),
-              repeat: Infinity,
-              delay: i * 0.2,
-              ease: "easeInOut"
-            }}
-          />
-        ))}
-      </div>
-
-      {/* Main Layout */}
-      <div className="relative z-10 flex h-screen">
-        {/* MasterX Sidebar */}
-        <MasterXSidebar
-          isOpen={sidebarOpen}
-          onToggle={handleSidebarToggle}
-          activeView={activeView}
-          onViewChange={handleViewChange}
-        />
-
-        {/* Main Content Area */}
-        <div className="flex-1 flex flex-col">
+    <div className="h-screen bg-gray-50 overflow-hidden">
+      <div className="flex h-full">
+        {/* Sidebar */}
+        <div className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} fixed left-0 top-0 h-full w-80 bg-white border-r border-gray-200 z-50 lg:relative lg:translate-x-0 lg:z-auto flex flex-col transition-transform duration-300`}>
           {/* Header */}
-          <div className="h-16 glass-morph border-b border-purple-500/20 flex items-center justify-between px-6">
+          <div className="flex items-center justify-between p-4 border-b border-gray-100">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
+                <MessageSquare className="h-4 w-4 text-white" />
+              </div>
+              <span className="font-semibold text-gray-900">MasterX</span>
+            </div>
+
             <button
-              onClick={handleSidebarToggle}
-              className="p-2 rounded-lg glass-morph hover:bg-purple-500/20 transition-all duration-200 lg:hidden"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="p-2 hover:bg-gray-100 rounded-lg lg:hidden"
             >
-              <Brain className="h-5 w-5 text-purple-400" />
+              <X className="h-4 w-4" />
             </button>
-            <h2 className="text-lg font-semibold text-plasma-white capitalize">
-              {activeView === 'chat' ? 'Quantum Intelligence' : activeView.replace(/([A-Z])/g, ' $1').trim()}
-            </h2>
-            <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
-              <span className="text-sm text-plasma-white/60">Online</span>
+          </div>
+
+          {/* New Chat Button */}
+          <div className="p-4">
+            <button
+              onClick={handleNewChat}
+              className="w-full flex items-center justify-center space-x-2 bg-black text-white rounded-lg py-3 px-4 hover:bg-gray-800 transition-colors"
+            >
+              <Plus className="h-4 w-4" />
+              <span className="font-medium">New chat</span>
+            </button>
+          </div>
+
+          {/* Navigation */}
+          <div className="px-4 pb-4">
+            <nav className="space-y-1">
+              {navigationItems.map((item) => {
+                const isActive = activeView === item.id
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setActiveView(item.id)}
+                    className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left transition-colors ${
+                      isActive
+                        ? "bg-gray-100 text-gray-900"
+                        : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                    }`}
+                  >
+                    <item.icon className="h-4 w-4" />
+                    <span className="font-medium">{item.label}</span>
+                  </button>
+                )
+              })}
+            </nav>
+          </div>
+
+          {/* Recent Chats */}
+          <div className="flex-1 px-4 pb-4">
+            <div className="mb-3">
+              <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Recent
+              </h3>
+            </div>
+
+            <div className="space-y-1">
+              {recentChats.map((chat) => (
+                <button
+                  key={chat.id}
+                  onClick={() => handleRecentChatClick(chat)}
+                  className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-left hover:bg-gray-50 transition-colors group"
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium text-gray-900 truncate">
+                      {chat.title}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {chat.time}
+                    </div>
+                  </div>
+                </button>
+              ))}
             </div>
           </div>
 
-          {/* Content Area */}
-          <div className="flex-1">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={activeView}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.3 }}
-                className="h-full"
-              >
-                {renderActiveView()}
-              </motion.div>
-            </AnimatePresence>
+          {/* Footer */}
+          <div className="p-4 border-t border-gray-100">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
+                <span className="text-sm font-medium text-gray-600">U</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-medium text-gray-900">User</div>
+                <div className="text-xs text-gray-500">Free plan</div>
+              </div>
+            </div>
           </div>
         </div>
+
+        {/* Mobile Menu Button */}
+        <button
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          className="fixed top-4 left-4 z-50 p-2 bg-white border border-gray-200 rounded-lg shadow-sm lg:hidden"
+        >
+          <Menu className="h-4 w-4" />
+        </button>
+
+        {/* Main Content */}
+        <main className="flex-1 relative overflow-hidden">
+          {renderMainContent()}
+        </main>
+
+        {/* Mobile Overlay */}
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
       </div>
-
-      {/* Settings Panel */}
-      <MasterXSettingsPanel
-        isOpen={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
-      />
-    </div>
-  )
-}
-
-// Placeholder View Component
-interface PlaceholderViewProps {
-  title: string
-  description: string
-  icon: React.ComponentType<{ className?: string }>
-}
-
-function PlaceholderView({ title, description, icon: Icon }: PlaceholderViewProps) {
-  return (
-    <div className="h-full flex items-center justify-center p-8">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="text-center max-w-md"
-      >
-        <motion.div
-          className="w-20 h-20 bg-gradient-to-r from-purple-600 to-cyan-600 rounded-3xl flex items-center justify-center mx-auto mb-6"
-          animate={{
-            boxShadow: [
-              "0 0 20px rgba(168, 85, 247, 0.3)",
-              "0 0 40px rgba(168, 85, 247, 0.6)",
-              "0 0 20px rgba(168, 85, 247, 0.3)"
-            ]
-          }}
-          transition={{ duration: 2, repeat: Infinity }}
-        >
-          <Icon className="w-10 h-10 text-white" />
-        </motion.div>
-
-        <h3 className="text-2xl font-bold text-plasma-white mb-4">
-          {title}
-        </h3>
-        <p className="text-plasma-white/70 leading-relaxed">
-          {description}
-        </p>
-
-        <motion.div
-          className="mt-8 p-4 glass-morph rounded-xl"
-          whileHover={{ scale: 1.02 }}
-        >
-          <p className="text-sm text-plasma-white/60">
-            This premium component is under development with enterprise-grade quality standards.
-          </p>
-        </motion.div>
-      </motion.div>
     </div>
   )
 }

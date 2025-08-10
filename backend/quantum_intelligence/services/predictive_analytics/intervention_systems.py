@@ -192,23 +192,23 @@ class InterventionExecution:
     end_time: Optional[datetime] = None
     
     # Progress tracking
-    completed_steps: List[str]
+    completed_steps: List[str] = field(default_factory=list)
     current_step: Optional[str] = None
     progress_percentage: float = 0.0
-    
+
     # Effectiveness metrics
-    baseline_metrics: Dict[str, float]
-    current_metrics: Dict[str, float]
-    improvement_metrics: Dict[str, float]
-    
+    baseline_metrics: Dict[str, float] = field(default_factory=dict)
+    current_metrics: Dict[str, float] = field(default_factory=dict)
+    improvement_metrics: Dict[str, float] = field(default_factory=dict)
+
     # Real-time adjustments
-    strategy_adjustments: List[Dict[str, Any]]
+    strategy_adjustments: List[Dict[str, Any]] = field(default_factory=list)
     effectiveness_score: float = 0.0
-    
+
     # Outcomes
-    achieved_outcomes: List[str]
-    unmet_objectives: List[str]
-    side_effects: List[str]
+    achieved_outcomes: List[str] = field(default_factory=list)
+    unmet_objectives: List[str] = field(default_factory=list)
+    side_effects: List[str] = field(default_factory=list)
     
     # Metadata
     execution_timestamp: datetime = field(default_factory=datetime.now)
