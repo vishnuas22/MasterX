@@ -78,6 +78,11 @@ export class VoiceSpeechRecognition {
   }
 
   private initializeRecognition() {
+    // Check if we're in browser environment
+    if (typeof window === 'undefined') {
+      return
+    }
+
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
       console.warn('Speech Recognition not supported in this browser')
       return
@@ -335,6 +340,9 @@ export class VoiceSpeechRecognition {
   }
 
   public isSupported() {
+    if (typeof window === 'undefined') {
+      return false
+    }
     return ('webkitSpeechRecognition' in window) || ('SpeechRecognition' in window)
   }
 
@@ -354,6 +362,11 @@ export class VoiceSpeechRecognition {
 
   private async initializeAudioVisualization() {
     if (!this.settings.visualFeedback) return
+
+    // Check if we're in browser environment
+    if (typeof window === 'undefined') {
+      return
+    }
 
     try {
       this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()

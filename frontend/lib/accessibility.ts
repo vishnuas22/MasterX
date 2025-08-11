@@ -240,11 +240,16 @@ export class AccessibilityManager {
   }
 
   private detectScreenReader() {
+    // Return false during SSR
+    if (typeof window === 'undefined') {
+      return false
+    }
+
     // Various methods to detect screen reader usage
     const indicators = [
       // Check for screen reader specific CSS
       () => window.getComputedStyle(document.body).getPropertyValue('speak') !== '',
-      
+
       // Check for NVDA
       () => 'speechSynthesis' in window && navigator.userAgent.includes('NVDA'),
       

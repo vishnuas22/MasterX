@@ -3,15 +3,32 @@
 import React, { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Activity, Cpu, HardDrive, Wifi, AlertTriangle, CheckCircle } from 'lucide-react'
-import { usePerformanceSelectors, useAppActions, useUIState } from '../store'
+import { usePerformanceSelectors } from '../store/selectors'
+import { useAppActions, useUIState, isStoreReady } from '../store'
 
 // ===== PERFORMANCE MONITOR COMPONENT =====
 
 export const PerformanceMonitor: React.FC = () => {
   const [isVisible, setIsVisible] = useState(false)
-  const performance = usePerformanceSelectors()
-  const { updatePerformanceMetrics } = useAppActions()
-  const { debugMode } = useUIState()
+
+  // Check if store is ready
+  if (!isStoreReady()) {
+    return null
+  }
+
+  // Safe store access with error handling
+  let performance, updatePerformanceMetrics, debugMode
+
+  try {
+    performance = usePerformanceSelectors()
+    const appActions = useAppActions()
+    updatePerformanceMetrics = appActions.updatePerformanceMetrics
+    const uiState = useUIState()
+    debugMode = uiState.debugMode
+  } catch (error) {
+    console.warn('PerformanceMonitor: Store not ready, skipping initialization')
+    return null
+  }
 
   // Toggle visibility with keyboard shortcut
   useEffect(() => {

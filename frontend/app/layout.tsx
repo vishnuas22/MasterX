@@ -1,21 +1,52 @@
-import './globals.css'
-import '../src/styles/modern-design-system.css'
+import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
-import { AuthProvider } from '@/contexts/AuthContext'
+import './globals.css'
+import { AnimationProvider } from '../lib/AnimationProvider'
+import QueryProvider from '../components/QueryProvider'
+import ServiceWorkerProvider from '../components/ServiceWorkerProvider'
+import AccessibilityProvider from '../components/AccessibilityProvider'
+import StoreProvider from '../components/StoreProvider'
+import NotificationSystem from '../components/NotificationSystem'
+import { BackupPanel, UndoRedoToolbar, HistoryViewer } from '../components/StateManagement'
 
 const inter = Inter({ 
   subsets: ['latin'],
   variable: '--font-inter',
-  display: 'swap'
+  display: 'swap',
 })
 
-export const metadata = {
+export const metadata: Metadata = {
   title: 'MasterX - Quantum Intelligence Platform',
-  description: 'Revolutionary AI-powered learning platform with quantum intelligence and ultra-premium interface',
-  keywords: 'AI, machine learning, quantum intelligence, education, premium interface',
-  authors: [{ name: 'MasterX Team' }],
-  colorScheme: 'dark',
-  themeColor: '#A855F7',
+  description: 'Advanced AI conversation platform with quantum intelligence capabilities',
+  keywords: ['AI', 'Machine Learning', 'Quantum Intelligence', 'Chat', 'Education'],
+  authors: [{ name: 'MasterX AI Team' }],
+  creator: 'MasterX',
+  publisher: 'MasterX',
+  robots: 'index, follow',
+  manifest: '/manifest.json',
+  openGraph: {
+    title: 'MasterX - Quantum Intelligence Platform',
+    description: 'Experience the future of AI conversation with our quantum intelligence platform',
+    type: 'website',
+    locale: 'en_US',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'MasterX - Quantum Intelligence Platform',
+    description: 'Experience the future of AI conversation with our quantum intelligence platform',
+  },
+  icons: {
+    icon: '/favicon.ico',
+    apple: '/apple-touch-icon.png',
+  },
+}
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: '#6366f1',
 }
 
 export default function RootLayout({
@@ -24,18 +55,25 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className="dark">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-      </head>
-      <body className={`${inter.variable} font-inter antialiased min-h-screen bg-quantum-dark text-plasma-white`}>
-        <AuthProvider>
-          <div className="relative">
-            {children}
-          </div>
-        </AuthProvider>
+    <html lang="en" className={inter.variable}>
+      <body className={`${inter.className} antialiased`}>
+        <StoreProvider>
+          <AccessibilityProvider>
+            <ServiceWorkerProvider>
+              <QueryProvider>
+                <AnimationProvider>
+                  <div id="root">
+                    {children}
+                    <NotificationSystem />
+                    <BackupPanel />
+                    <UndoRedoToolbar />
+                    <HistoryViewer />
+                  </div>
+                </AnimationProvider>
+              </QueryProvider>
+            </ServiceWorkerProvider>
+          </AccessibilityProvider>
+        </StoreProvider>
       </body>
     </html>
   )

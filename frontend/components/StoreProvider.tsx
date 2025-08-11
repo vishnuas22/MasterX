@@ -1,0 +1,351 @@
+'use client'
+
+import React, { useEffect, useState } from 'react'
+import { useStore, initializeStore } from '../store'
+// Note: PerformanceMonitor is defined internally in this file
+
+interface StoreProviderProps {
+  children: React.ReactNode
+}
+
+// ===== STORE INITIALIZATION COMPONENT =====
+
+const StoreInitializer: React.FC = () => {
+  const [isInitialized, setIsInitialized] = useState(false)
+  
+  // Store actions
+  const trackPageView = useStore((state) => state.trackPageView)
+  const updatePerformanceMetrics = useStore((state) => state.updatePerformanceMetrics)
+  const setOnlineStatus = useStore((state) => state.setOnlineStatus)
+  const checkHealth = useStore((state) => state.checkHealth)
+
+  useEffect(() => {
+    const initialize = async () => {
+      try {
+        console.log('🏪 Initializing MasterX Store...')
+        
+        // Measure initialization time
+        const startTime = performance.now()
+        
+        // Initialize store
+        initializeStore()
+        
+        // Track initial page view
+        trackPageView()
+        
+        // Set initial online status
+        setOnlineStatus(navigator.onLine)
+        
+        // Measure and record initialization performance
+        const initTime = performance.now() - startTime
+        updatePerformanceMetrics({
+          loadTime: initTime,
+        })
+        
+        // Check app health
+        try {
+          await checkHealth()
+        } catch (error) {
+          console.warn('Health check failed:', error)
+        }
+        
+        setIsInitialized(true)
+        console.log(`✅ Store initialized in ${initTime.toFixed(2)}ms`)
+        
+      } catch (error) {
+        console.error('❌ Store initialization failed:', error)
+        setIsInitialized(true) // Continue even if initialization fails
+      }
+    }
+
+    initialize()
+  }, [trackPageView, updatePerformanceMetrics, setOnlineStatus, checkHealth])
+
+  // Performance monitoring
+  useEffect(() => {
+    if (!isInitialized) return
+
+    const measureMemoryUsage = () => {
+      if ('memory' in performance) {
+        const memory = (performance as any).memory
+        const memoryUsageMB = memory.usedJSHeapSize / 1024 / 1024
+        
+        updatePerformanceMetrics({
+          memoryUsage: memoryUsageMB,
+        })
+      }
+    }
+
+    // Measure memory usage every 30 seconds
+    const memoryInterval = setInterval(measureMemoryUsage, 30000)
+    
+    // Initial measurement
+    measureMemoryUsage()
+
+    return () => {
+      clearInterval(memoryInterval)
+    }
+  }, [isInitialized, updatePerformanceMetrics])
+
+  return null
+}
+
+// ===== STORE DEBUGGER (Development Only) =====
+
+const StoreDebugger: React.FC = () => {
+  const [showDebugger, setShowDebugger] = useState(false)
+
+  // Safe store access with error handling
+  let debugMode, storeState
+
+  try {
+    debugMode = useStore((state) => state.ui?.debugMode)
+    storeState = useStore()
+  } catch (error) {
+    console.warn('StoreDebugger: Store not ready')
+    return null
+  }
+
+  // Return early if store data is not available
+  if (!debugMode || !storeState) {
+    return null
+  }
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Toggle debugger with Ctrl+Shift+D
+      if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+        e.preventDefault()
+        setShowDebugger(!showDebugger)
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [showDebugger])
+
+  if (process.env.NODE_ENV !== 'development' || !debugMode || !showDebugger) {
+    return null
+  }
+
+  return (
+    <div className="fixed top-4 right-4 z-[9999] bg-black text-green-400 p-4 rounded-lg shadow-xl max-w-md max-h-96 overflow-auto font-mono text-xs">
+      <div className="flex items-center justify-between mb-2">
+        <h3 className="text-sm font-bold">Store Debugger</h3>
+        <button
+          onClick={() => setShowDebugger(false)}
+          className="text-red-400 hover:text-red-300"
+        >
+          ✕
+        </button>
+      </div>
+      
+      <div className="space-y-2">
+        <div>
+          <strong>Chat:</strong> {storeState.chat.currentMessages.length} messages
+        </div>
+        <div>
+          <strong>UI:</strong> {storeState.ui.sidebarOpen ? 'Sidebar Open' : 'Sidebar Closed'}
+        </div>
+        <div>
+          <strong>User:</strong> {storeState.user.isAuthenticated ? 'Authenticated' : 'Anonymous'}
+        </div>
+        <div>
+          <strong>App:</strong> {storeState.app.isOnline ? 'Online' : 'Offline'}
+        </div>
+        <div>
+          <strong>Performance:</strong> {storeState.app.performanceMetrics.memoryUsage.toFixed(1)}MB
+        </div>
+        <div>
+          <strong>Errors:</strong> {storeState.app.errors.filter(e => !e.resolved).length}
+        </div>
+      </div>
+      
+      <div className="mt-4 pt-2 border-t border-gray-600">
+        <button
+          onClick={() => console.log('Store State:', storeState)}
+          className="text-blue-400 hover:text-blue-300 text-xs"
+        >
+          Log Full State
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ===== PERFORMANCE MONITOR =====
+
+const PerformanceMonitor: React.FC = () => {
+  // Safe store access with error handling
+  let performanceMode, performanceMetrics, updatePerformanceMetrics
+
+  try {
+    performanceMode = useStore((state) => state.ui?.performanceMode)
+    performanceMetrics = useStore((state) => state.app?.performanceMetrics)
+    updatePerformanceMetrics = useStore((state) => state.updatePerformanceMetrics)
+  } catch (error) {
+    console.warn('PerformanceMonitor: Store not ready')
+    return null
+  }
+
+  // Return early if store data is not available
+  if (!performanceMode || !performanceMetrics || !updatePerformanceMetrics) {
+    return null
+  }
+
+  useEffect(() => {
+    if (!performanceMode) return
+
+    // Monitor render performance
+    const observer = new PerformanceObserver((list) => {
+      const entries = list.getEntries()
+      
+      entries.forEach((entry) => {
+        if (entry.entryType === 'measure') {
+          console.log(`📊 ${entry.name}: ${entry.duration.toFixed(2)}ms`)
+        }
+      })
+    })
+
+    observer.observe({ entryTypes: ['measure'] })
+
+    // Monitor long tasks
+    const longTaskObserver = new PerformanceObserver((list) => {
+      const entries = list.getEntries()
+      
+      entries.forEach((entry) => {
+        if (entry.duration > 50) {
+          console.warn(`⚠️ Long task detected: ${entry.duration.toFixed(2)}ms`)
+        }
+      })
+    })
+
+    try {
+      longTaskObserver.observe({ entryTypes: ['longtask'] })
+    } catch (error) {
+      // longtask not supported in all browsers
+    }
+
+    return () => {
+      observer.disconnect()
+      longTaskObserver.disconnect()
+    }
+  }, [performanceMode])
+
+  // Monitor FPS
+  useEffect(() => {
+    if (!performanceMode) return
+
+    let frameCount = 0
+    let lastTime = performance.now()
+    
+    const measureFPS = () => {
+      frameCount++
+      const currentTime = performance.now()
+      
+      if (currentTime - lastTime >= 1000) {
+        const fps = Math.round((frameCount * 1000) / (currentTime - lastTime))
+        
+        if (fps < 30) {
+          console.warn(`⚠️ Low FPS detected: ${fps}fps`)
+        }
+        
+        frameCount = 0
+        lastTime = currentTime
+      }
+      
+      requestAnimationFrame(measureFPS)
+    }
+
+    const animationId = requestAnimationFrame(measureFPS)
+    
+    return () => {
+      cancelAnimationFrame(animationId)
+    }
+  }, [performanceMode])
+
+  return null
+}
+
+// ===== ERROR BOUNDARY =====
+
+interface ErrorBoundaryState {
+  hasError: boolean
+  error?: Error
+}
+
+class StoreErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  ErrorBoundaryState
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props)
+    this.state = { hasError: false }
+  }
+
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, error }
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('Store Error Boundary caught an error:', error, errorInfo)
+    
+    // Report error to store if available
+    try {
+      const store = useStore.getState()
+      if (store && store.addError && store.app && store.app.errors) {
+        store.addError({
+          message: error.message,
+          stack: error.stack,
+          severity: 'critical',
+          context: {
+            componentStack: errorInfo.componentStack,
+            errorBoundary: 'StoreErrorBoundary',
+          },
+        })
+      }
+    } catch (storeError) {
+      console.error('Failed to report error to store:', storeError)
+    }
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-red-50">
+          <div className="text-center p-8">
+            <h1 className="text-2xl font-bold text-red-800 mb-4">
+              Something went wrong
+            </h1>
+            <p className="text-red-600 mb-6">
+              The application encountered an unexpected error.
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+            >
+              Reload Application
+            </button>
+          </div>
+        </div>
+      )
+    }
+
+    return this.props.children
+  }
+}
+
+// ===== MAIN STORE PROVIDER =====
+
+export const StoreProvider: React.FC<StoreProviderProps> = ({ children }) => {
+  return (
+    <StoreErrorBoundary>
+      <StoreInitializer />
+      <PerformanceMonitor />
+      <StoreDebugger />
+      {children}
+    </StoreErrorBoundary>
+  )
+}
+
+export default StoreProvider
