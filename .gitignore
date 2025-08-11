@@ -91,3 +91,4 @@ frontend/node_modules/@next/swc-linux-arm64-gnu/next-swc.linux-arm64-gnu.node
 frontend/node_modules/@next/swc-linux-arm64-musl/next-swc.linux-arm64-musl.node
 frontend/node_modules/@next/swc-darwin-arm64/next-swc.darwin-arm64.node
 .venv/lib/python3.11/site-packages/torch/lib/libtorch_cpu.dylib
+frontend/.next/cache/webpack/client-production/0.pack

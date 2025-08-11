@@ -199,11 +199,11 @@ class ChatService:
                 learning_context=learning_context,
                 user_profile=user
             ):
-                yield f"data: {json.dumps(chunk)}\n\n"
-            
+                yield json.dumps(chunk)
+
         except Exception as e:
             logger.error(f"Chat streaming error: {e}")
-            yield f"data: {json.dumps({'error': str(e)})}\n\n"
+            yield json.dumps({'error': str(e)})
     
     async def _get_personalization_context(self, user_id: str) -> Dict[str, Any]:
         """Get personalization context from personalization engine"""
