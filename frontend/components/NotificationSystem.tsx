@@ -3,7 +3,7 @@
 import React from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, CheckCircle, AlertCircle, AlertTriangle, Info } from 'lucide-react'
-import { useNotifications, useUIActions } from '../store'
+import { useNotifications, useUIActions, isStoreReady } from '../store'
 
 // ===== NOTIFICATION COMPONENT =====
 
@@ -139,8 +139,27 @@ const NotificationItem: React.FC<NotificationProps> = ({ notification, onRemove 
 // ===== NOTIFICATION SYSTEM COMPONENT =====
 
 export const NotificationSystem: React.FC = () => {
-  const notifications = useNotifications()
-  const { removeNotification } = useUIActions()
+  // Check if store is ready before attempting to access it
+  if (!isStoreReady()) {
+    return null
+  }
+
+  // Safe store access with error boundary
+  let notifications, removeNotification
+
+  try {
+    notifications = useNotifications()
+    const uiActions = useUIActions()
+    removeNotification = uiActions.removeNotification
+  } catch (error) {
+    console.warn('NotificationSystem: Store not ready, skipping render')
+    return null
+  }
+
+  // Additional safety check
+  if (!Array.isArray(notifications)) {
+    return null
+  }
 
   return (
     <div className="fixed top-4 right-4 z-50 space-y-2 max-w-sm w-full">
