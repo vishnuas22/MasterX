@@ -19,7 +19,7 @@ const nextConfig = {
   // Webpack optimizations
   webpack: (config, { dev, isServer }) => {
     // Import path aliases
-    config.resolve.alias['@'] = path.resolve(__dirname, 'src')
+    config.resolve.alias['@'] = path.resolve(__dirname, '.')
 
     // Bundle optimization for production
     if (!dev && !isServer) {
