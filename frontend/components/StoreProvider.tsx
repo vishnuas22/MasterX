@@ -29,18 +29,36 @@ const StoreInitializer: React.FC = () => {
         
         // Initialize store
         initializeStore()
-        
-        // Track initial page view
-        trackPageView()
-        
-        // Set initial online status
-        setOnlineStatus(navigator.onLine)
-        
-        // Measure and record initialization performance
-        const initTime = performance.now() - startTime
-        updatePerformanceMetrics({
-          loadTime: initTime,
-        })
+
+        // Wait a bit for store to be ready
+        await new Promise(resolve => setTimeout(resolve, 100))
+
+        // Verify store is ready before proceeding
+        const store = useStore.getState()
+        if (!store || !store.ui || !store.app || !store.chat || !store.user) {
+          console.warn('Store not fully initialized, skipping additional setup')
+          setIsInitialized(true)
+          return
+        }
+
+        // Now safely call store actions
+        try {
+          // Track initial page view
+          trackPageView()
+
+          // Set initial online status
+          setOnlineStatus(navigator.onLine)
+
+          // Measure and record initialization performance
+          const initTime = performance.now() - startTime
+          updatePerformanceMetrics({
+            loadTime: initTime,
+          })
+        } catch (actionError) {
+          console.warn('Store actions failed:', actionError)
+          const initTime = performance.now() - startTime
+          console.log(`⚠️ Store partially initialized in ${initTime.toFixed(2)}ms`)
+        }
         
         // Check app health
         try {
