@@ -406,18 +406,38 @@ export const useActiveModal = () => useStore((state) => ({
 }))
 
 export const useNotifications = () => {
-  try {
-    return useStore((state) => state.ui?.notifications || [])
-  } catch (error) {
-    console.warn('Notifications not ready, returning empty array')
-    return []
-  }
+  // Use a safer approach with conditional rendering
+  return useStore((state) => {
+    // Return empty array if store is not ready
+    if (!state || !state.ui || !Array.isArray(state.ui.notifications)) {
+      return []
+    }
+    return state.ui.notifications
+  }, (a, b) => {
+    // Custom equality function to prevent unnecessary re-renders
+    if (!Array.isArray(a) || !Array.isArray(b)) return a === b
+    return a.length === b.length && a.every((item, index) => item.id === b[index]?.id)
+  })
 }
 
-export const useTheme = () => useStore((state) => state.ui.theme)
+export const useTheme = () => {
+  return useStore((state) => {
+    if (!state || !state.ui) {
+      return 'auto'
+    }
+    return state.ui.theme || 'auto'
+  })
+}
 
 // User selectors
-export const useIsAuthenticated = () => useStore((state) => state.user.isAuthenticated)
+export const useIsAuthenticated = () => {
+  return useStore((state) => {
+    if (!state || !state.user) {
+      return false
+    }
+    return state.user.isAuthenticated || false
+  })
+}
 
 export const useUserPreferences = () => useStore((state) => state.user.preferences)
 
@@ -497,9 +517,37 @@ export const initializeStore = () => {
   try {
     const store = useStore.getState()
 
-    // Verify store structure
-    if (!store || !store.ui || !store.app || !store.chat || !store.user) {
-      console.error('❌ Store structure is invalid')
+    // Verify store structure with more detailed logging
+    if (!store) {
+      console.error('❌ Store is null or undefined')
+      return
+    }
+
+    // Check individual store slices
+    if (!store.ui) {
+      console.error('❌ Store.ui is missing')
+      return
+    }
+    if (!store.app) {
+      console.error('❌ Store.app is missing')
+      return
+    }
+    if (!store.chat) {
+      console.error('❌ Store.chat is missing')
+      return
+    }
+    if (!store.user) {
+      console.error('❌ Store.user is missing')
+      return
+    }
+
+    // Verify required methods exist
+    if (typeof store.setOnlineStatus !== 'function') {
+      console.error('❌ Store.setOnlineStatus method is missing')
+      return
+    }
+    if (typeof store.updateLastActivity !== 'function') {
+      console.error('❌ Store.updateLastActivity method is missing')
       return
     }
 
