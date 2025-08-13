@@ -60,8 +60,8 @@ export const createUserSlice: StateCreator<
   [],
   UserState & UserActions
 > = (set, get, api) => ({
-  // Initial state
-  ...initialUserState,
+  // Initial state - properly namespaced under 'user'
+  user: initialUserState,
 
   // ===== AUTHENTICATION ACTIONS =====
 
