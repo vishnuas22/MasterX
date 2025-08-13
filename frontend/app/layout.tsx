@@ -58,21 +58,11 @@ export default function RootLayout({
     <html lang="en" className={inter.variable}>
       <body className={`${inter.className} antialiased`}>
         <StoreProvider>
-          <AccessibilityProvider>
-            <ServiceWorkerProvider>
-              <QueryProvider>
-                <AnimationProvider>
-                  <div id="root">
-                    {children}
-                    <NotificationSystem />
-                    <BackupPanel />
-                    <UndoRedoToolbar />
-                    <HistoryViewer />
-                  </div>
-                </AnimationProvider>
-              </QueryProvider>
-            </ServiceWorkerProvider>
-          </AccessibilityProvider>
+          <QueryProvider>
+            <div id="root">
+              {children}
+            </div>
+          </QueryProvider>
         </StoreProvider>
       </body>
     </html>
