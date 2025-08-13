@@ -49,8 +49,8 @@ export const createUISlice: StateCreator<
   [],
   UIState & UIActions
 > = (set, get, api) => ({
-  // Initial state
-  ...initialUIState,
+  // Initial state - properly namespaced under 'ui'
+  ui: initialUIState,
 
   // ===== LAYOUT ACTIONS =====
 
