@@ -45,8 +45,8 @@ export const createChatSlice: StateCreator<
   [],
   ChatState & ChatActions
 > = (set, get, api) => ({
-  // Initial state
-  ...initialChatState,
+  // Initial state - properly namespaced under 'chat'
+  chat: initialChatState,
 
   // ===== SESSION MANAGEMENT =====
 
