@@ -67,22 +67,27 @@ interface ChatSession {
 }
 
 export default function ChatPage() {
-  // Zustand store state
+  // Zustand store state with safe defaults
   const chatState = useChatState()
   const chatActions = useChatActions()
   const uiState = useUIState()
   const uiActions = useUIActions()
   const userState = useUserState()
 
-  // Destructure commonly used state with safe defaults
-  const {
-    currentSessionId,
-    currentMessages,
-    sessions,
-    isLoading,
-    inputMessage,
-    sidebarOpen,
-  } = chatState || {
+  // Verify all store hooks returned valid objects
+  if (!chatState || !chatActions || !uiState || !uiActions || !userState) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Initializing MasterX...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Safe destructuring with multiple fallback levels
+  const safeDefaults = {
     currentSessionId: null,
     currentMessages: [],
     sessions: [],
@@ -91,12 +96,57 @@ export default function ChatPage() {
     sidebarOpen: false,
   }
 
+  // Ensure chatState is an object before destructuring
+  const safeChatState = chatState && typeof chatState === 'object' ? chatState : safeDefaults
+
+  const {
+    currentSessionId,
+    currentMessages,
+    sessions,
+    isLoading,
+    inputMessage,
+    sidebarOpen,
+  } = safeChatState
+
   // React Query hooks for data management (keeping for now, will migrate gradually)
-  const { data: sessionsData, isLoading: sessionsLoading } = useChatSessions()
-  const { messages, isLoading: messagesLoading, fetchNextPage, hasNextPage } = useFlattenedMessages(currentSessionId)
-  const sendMessageMutation = useSendMessage(currentSessionId)
-  const { warmCache } = useCacheWarming()
-  const { queueMessage, offlineQueue } = useOfflineMessageQueue()
+  let sessionsData, sessionsLoading, messages, messagesLoading, fetchNextPage, hasNextPage, sendMessageMutation, warmCache, queueMessage, offlineQueue
+
+  try {
+    const sessionsResult = useChatSessions() || { data: null, isLoading: false }
+    sessionsData = sessionsResult.data
+    sessionsLoading = sessionsResult.isLoading
+
+    const messagesResult = useFlattenedMessages(currentSessionId) || {
+      messages: [],
+      isLoading: false,
+      fetchNextPage: () => {},
+      hasNextPage: false
+    }
+    messages = messagesResult.messages
+    messagesLoading = messagesResult.isLoading
+    fetchNextPage = messagesResult.fetchNextPage
+    hasNextPage = messagesResult.hasNextPage
+
+    sendMessageMutation = useSendMessage(currentSessionId) || { mutate: () => {}, isLoading: false }
+    const cacheResult = useCacheWarming() || { warmCache: () => {} }
+    warmCache = cacheResult.warmCache
+    const queueResult = useOfflineMessageQueue() || { queueMessage: () => {}, offlineQueue: [] }
+    queueMessage = queueResult.queueMessage
+    offlineQueue = queueResult.offlineQueue
+  } catch (error) {
+    console.error('ChatPage: React Query hook error:', error)
+    // Provide fallbacks
+    sessionsData = null
+    sessionsLoading = false
+    messages = []
+    messagesLoading = false
+    fetchNextPage = () => {}
+    hasNextPage = false
+    sendMessageMutation = { mutate: () => {}, isLoading: false }
+    warmCache = () => {}
+    queueMessage = () => {}
+    offlineQueue = []
+  }
 
   // Local UI state
   const [showFileUpload, setShowFileUpload] = useState(false)
@@ -111,8 +161,23 @@ export default function ChatPage() {
   const [showAPIIntegration, setShowAPIIntegration] = useState(false)
   const [showEnterpriseCloud, setShowEnterpriseCloud] = useState(false)
 
-  // Collaboration features
-  const { startTyping, stopTyping, typingUsers } = useTypingIndicator(currentSessionId || undefined)
+  // Collaboration features - with safe error handling
+  let startTyping, stopTyping, typingUsers
+  try {
+    const typingResult = useTypingIndicator(currentSessionId || undefined)
+    if (typingResult && typeof typingResult === 'object') {
+      startTyping = typingResult.startTyping || (() => {})
+      stopTyping = typingResult.stopTyping || (() => {})
+      typingUsers = typingResult.typingUsers || []
+    } else {
+      throw new Error('useTypingIndicator returned invalid result')
+    }
+  } catch (error) {
+    console.warn('useTypingIndicator failed, using fallbacks:', error)
+    startTyping = () => {}
+    stopTyping = () => {}
+    typingUsers = []
+  }
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
