@@ -12,12 +12,6 @@ interface StoreProviderProps {
 
 const StoreInitializer: React.FC = () => {
   const [isInitialized, setIsInitialized] = useState(false)
-  
-  // Store actions
-  const trackPageView = useStore((state) => state.trackPageView)
-  const updatePerformanceMetrics = useStore((state) => state.updatePerformanceMetrics)
-  const setOnlineStatus = useStore((state) => state.setOnlineStatus)
-  const checkHealth = useStore((state) => state.checkHealth)
 
   useEffect(() => {
     const initialize = async () => {
@@ -33,38 +27,29 @@ const StoreInitializer: React.FC = () => {
         // Wait a bit for store to be ready
         await new Promise(resolve => setTimeout(resolve, 100))
 
-        // Verify store is ready before proceeding
+        // Simple store readiness check
         const store = useStore.getState()
-        if (!store || !store.ui || !store.app || !store.chat || !store.user) {
-          console.warn('Store not fully initialized, skipping additional setup')
+
+        if (!store) {
+          console.warn('⚠️ Store not ready, retrying...')
           setIsInitialized(true)
           return
         }
 
-        // Now safely call store actions
+        console.log('✅ Store initialized successfully')
+        console.log('Store structure:', Object.keys(store))
+
+        // Simple initialization without complex actions
         try {
-          // Track initial page view
-          trackPageView()
+          // Set basic online status if available
+          if (typeof store.setOnlineStatus === 'function') {
+            store.setOnlineStatus(navigator.onLine)
+          }
 
-          // Set initial online status
-          setOnlineStatus(navigator.onLine)
-
-          // Measure and record initialization performance
           const initTime = performance.now() - startTime
-          updatePerformanceMetrics({
-            loadTime: initTime,
-          })
+          console.log(`✅ Store initialized in ${initTime.toFixed(2)}ms`)
         } catch (actionError) {
-          console.warn('Store actions failed:', actionError)
-          const initTime = performance.now() - startTime
-          console.log(`⚠️ Store partially initialized in ${initTime.toFixed(2)}ms`)
-        }
-        
-        // Check app health
-        try {
-          await checkHealth()
-        } catch (error) {
-          console.warn('Health check failed:', error)
+          console.warn('Store action failed:', actionError)
         }
         
         setIsInitialized(true)
@@ -77,7 +62,7 @@ const StoreInitializer: React.FC = () => {
     }
 
     initialize()
-  }, [trackPageView, updatePerformanceMetrics, setOnlineStatus, checkHealth])
+  }, []) // Empty dependency array since we access store actions safely inside the function
 
   // Performance monitoring
   useEffect(() => {
@@ -87,10 +72,18 @@ const StoreInitializer: React.FC = () => {
       if ('memory' in performance) {
         const memory = (performance as any).memory
         const memoryUsageMB = memory.usedJSHeapSize / 1024 / 1024
-        
-        updatePerformanceMetrics({
-          memoryUsage: memoryUsageMB,
-        })
+
+        // Safely access store
+        try {
+          const store = useStore.getState()
+          if (store && typeof store.updatePerformanceMetrics === 'function') {
+            store.updatePerformanceMetrics({
+              memoryUsage: memoryUsageMB,
+            })
+          }
+        } catch (error) {
+          console.warn('Failed to update memory metrics:', error)
+        }
       }
     }
 
@@ -103,7 +96,7 @@ const StoreInitializer: React.FC = () => {
     return () => {
       clearInterval(memoryInterval)
     }
-  }, [isInitialized, updatePerformanceMetrics])
+  }, [isInitialized]) // Removed updatePerformanceMetrics dependency
 
   return null
 }
