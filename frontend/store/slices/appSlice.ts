@@ -52,8 +52,8 @@ export const createAppSlice: StateCreator<
   [],
   AppState & AppActions
 > = (set, get, api) => ({
-  // Initial state
-  ...initialAppState,
+  // Initial state - properly namespaced under 'app'
+  app: initialAppState,
 
   // ===== CONNECTION ACTIONS =====
 
