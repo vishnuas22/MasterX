@@ -519,41 +519,42 @@ export const initializeStore = () => {
 
     // Verify store structure with more detailed logging
     if (!store) {
-      console.error('❌ Store is null or undefined')
+      console.warn('⚠️ Store is null or undefined, will retry initialization')
       return
     }
 
-    // Check individual store slices
-    if (!store.ui) {
-      console.error('❌ Store.ui is missing')
-      return
-    }
-    if (!store.app) {
-      console.error('❌ Store.app is missing')
-      return
-    }
-    if (!store.chat) {
-      console.error('❌ Store.chat is missing')
-      return
-    }
-    if (!store.user) {
-      console.error('❌ Store.user is missing')
-      return
+    // Check individual store slices (warn instead of error)
+    const missingSlices = []
+    if (!store.ui) missingSlices.push('ui')
+    if (!store.app) missingSlices.push('app')
+    if (!store.chat) missingSlices.push('chat')
+    if (!store.user) missingSlices.push('user')
+
+    if (missingSlices.length > 0) {
+      console.warn(`⚠️ Store slices not ready: ${missingSlices.join(', ')}`)
+      // Don't return early, continue with partial initialization
     }
 
-    // Verify required methods exist
-    if (typeof store.setOnlineStatus !== 'function') {
-      console.error('❌ Store.setOnlineStatus method is missing')
-      return
-    }
-    if (typeof store.updateLastActivity !== 'function') {
-      console.error('❌ Store.updateLastActivity method is missing')
-      return
+    // Verify required methods exist (with safe fallbacks)
+    const missingMethods = []
+    if (typeof store.setOnlineStatus !== 'function') missingMethods.push('setOnlineStatus')
+    if (typeof store.updateLastActivity !== 'function') missingMethods.push('updateLastActivity')
+
+    if (missingMethods.length > 0) {
+      console.warn(`⚠️ Store methods not ready: ${missingMethods.join(', ')}`)
     }
 
-    // Initialize app state
-    store.setOnlineStatus(navigator.onLine)
-    store.updateLastActivity()
+    // Initialize app state (with safe checks)
+    try {
+      if (typeof store.setOnlineStatus === 'function') {
+        store.setOnlineStatus(navigator.onLine)
+      }
+      if (typeof store.updateLastActivity === 'function') {
+        store.updateLastActivity()
+      }
+    } catch (error) {
+      console.warn('⚠️ Failed to initialize app state:', error)
+    }
 
     // Set up online/offline listeners
     if (typeof window !== 'undefined') {
