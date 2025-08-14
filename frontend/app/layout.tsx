@@ -5,7 +5,8 @@ import { AnimationProvider } from '../lib/AnimationProvider'
 import QueryProvider from '../components/QueryProvider'
 import ServiceWorkerProvider from '../components/ServiceWorkerProvider'
 import AccessibilityProvider from '../components/AccessibilityProvider'
-import StoreProvider from '../components/StoreProvider'
+// Temporarily removed to fix runtime errors
+// import StoreProvider from '../components/StoreProvider'
 import NotificationSystem from '../components/NotificationSystem'
 import { BackupPanel, UndoRedoToolbar, HistoryViewer } from '../components/StateManagement'
 
@@ -57,13 +58,11 @@ export default function RootLayout({
   return (
     <html lang="en" className={inter.variable}>
       <body className={`${inter.className} antialiased`}>
-        <StoreProvider>
-          <QueryProvider>
-            <div id="root">
-              {children}
-            </div>
-          </QueryProvider>
-        </StoreProvider>
+        <QueryProvider>
+          <div id="root">
+            {children}
+          </div>
+        </QueryProvider>
       </body>
     </html>
   )
