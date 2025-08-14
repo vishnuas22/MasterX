@@ -112,6 +112,21 @@ export const useStore = create<Store>()(
 // Safe selector hooks with initialization check
 export const useChatState = () => {
   try {
+    const state = useStore.getState()
+    if (!state || !state.chat) {
+      console.warn('Chat state not ready, returning default state')
+      return {
+        currentSessionId: null,
+        sessions: [],
+        isLoading: false,
+        inputMessage: '',
+        sidebarOpen: false,
+        isStreaming: false,
+        streamingMessageId: null,
+        inputHistory: [],
+        inputHistoryIndex: -1,
+      }
+    }
     return useStore((state) => state.chat)
   } catch (error) {
     console.warn('Chat state not ready, returning default state')
@@ -132,6 +147,27 @@ export const useChatState = () => {
 
 export const useUIState = () => {
   try {
+    const state = useStore.getState()
+    if (!state || !state.ui) {
+      console.warn('UI state not ready, returning default state')
+      return {
+        sidebarOpen: false,
+        activeModal: null,
+        modalData: null,
+        globalLoading: false,
+        loadingStates: {},
+        notifications: [],
+        keyboardNavigation: false,
+        focusedElement: null,
+        performanceMode: false,
+        debugMode: false,
+        voiceListening: false,
+        voiceEnabled: true,
+        theme: 'auto' as const,
+        isMobile: false,
+        screenSize: 'lg' as const,
+      }
+    }
     return useStore((state) => state.ui)
   } catch (error) {
     console.warn('UI state not ready, returning default state')
@@ -531,8 +567,16 @@ export const initializeStore = () => {
     if (!store.user) missingSlices.push('user')
 
     if (missingSlices.length > 0) {
+      console.error('❌ Store structure is invalid')
       console.warn(`⚠️ Store slices not ready: ${missingSlices.join(', ')}`)
-      // Don't return early, continue with partial initialization
+      console.log('Store keys:', Object.keys(store))
+      // Return early to prevent further errors
+      return
+    }
+
+    // Verify app slice structure
+    if (store.app && !store.app.analytics) {
+      console.warn('⚠️ App analytics not initialized, skipping analytics setup')
     }
 
     // Verify required methods exist (with safe fallbacks)
