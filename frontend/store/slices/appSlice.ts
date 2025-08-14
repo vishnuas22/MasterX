@@ -233,20 +233,45 @@ export const createAppSlice: StateCreator<
   // ===== ANALYTICS ACTIONS =====
 
   trackPageView: () => {
-    set((state) => {
-      state.app.analytics.pageViews++
-    })
+    try {
+      set((state) => {
+        // Ensure analytics structure exists before accessing
+        if (!state || !state.app) {
+          console.warn('trackPageView: app state not initialized')
+          return
+        }
+        if (!state.app.analytics) {
+          console.warn('trackPageView: analytics state not initialized')
+          return
+        }
+        state.app.analytics.pageViews++
+      })
 
-    // Log page view in development
-    if (process.env.NODE_ENV === 'development') {
-      console.log('📄 Page view tracked')
+      // Log page view in development
+      if (process.env.NODE_ENV === 'development') {
+        console.log('📄 Page view tracked')
+      }
+    } catch (error) {
+      console.warn('trackPageView failed:', error)
+      // Silently fail to prevent app crashes
     }
   },
 
   trackInteraction: (type: string, data?: any) => {
-    set((state) => {
-      state.app.analytics.interactions++
-    })
+    try {
+      set((state) => {
+        // Ensure analytics structure exists before accessing
+        if (!state || !state.app || !state.app.analytics) {
+          console.warn('trackInteraction: analytics state not initialized')
+          return
+        }
+        state.app.analytics.interactions++
+      })
+    } catch (error) {
+      console.warn('trackInteraction failed:', error)
+      // Silently fail to prevent app crashes
+      return
+    }
 
     // Log interaction in development
     if (process.env.NODE_ENV === 'development') {
@@ -264,28 +289,47 @@ export const createAppSlice: StateCreator<
   },
 
   trackError: (error: Error) => {
-    const { addError } = get()
-    addError({
-      message: error.message,
-      stack: error.stack,
-      severity: 'medium',
-      context: {
-        userAgent: navigator.userAgent,
-        url: window.location.href,
-        timestamp: new Date().toISOString(),
-      },
-    })
+    try {
+      const { addError } = get()
+      if (typeof addError === 'function') {
+        addError({
+          message: error.message,
+          stack: error.stack,
+          severity: 'medium',
+          context: {
+            userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown',
+            url: typeof window !== 'undefined' ? window.location.href : 'unknown',
+            timestamp: new Date().toISOString(),
+          },
+        })
+      }
+    } catch (trackError) {
+      console.warn('trackError failed:', trackError)
+      // Silently fail to prevent app crashes
+    }
   },
 
   // ===== UTILITY METHODS =====
 
   getAppInfo: () => {
-    const state = get().app
+    const fullState = get()
+    if (!fullState.app) {
+      console.warn('getAppInfo: app state not initialized')
+      return {
+        version: '0.0.0',
+        buildTime: new Date(),
+        environment: 'development',
+        uptime: 0,
+        isOnline: true,
+        connectionQuality: 'good',
+      }
+    }
+    const state = fullState.app
     return {
       version: state.version,
       buildTime: state.buildTime,
       environment: state.environment,
-      uptime: Date.now() - state.analytics.sessionStart.getTime(),
+      uptime: state.analytics?.sessionStart ? Date.now() - state.analytics.sessionStart.getTime() : 0,
       isOnline: state.isOnline,
       connectionQuality: state.connectionQuality,
     }
