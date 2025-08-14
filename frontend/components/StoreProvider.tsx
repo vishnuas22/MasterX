@@ -51,9 +51,8 @@ const StoreInitializer: React.FC = () => {
         } catch (actionError) {
           console.warn('Store action failed:', actionError)
         }
-        
+
         setIsInitialized(true)
-        console.log(`✅ Store initialized in ${initTime.toFixed(2)}ms`)
         
       } catch (error) {
         console.error('❌ Store initialization failed:', error)
