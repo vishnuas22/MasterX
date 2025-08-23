@@ -173,6 +173,14 @@ async def startup_event():
             else:
                 logger.warning("⚠️ No AI provider API keys found - quantum features limited")
         
+        # Initialize performance monitoring
+        if PERFORMANCE_MONITORING_AVAILABLE:
+            try:
+                await initialize_performance_api(db)
+                logger.info("✅ Performance monitoring system initialized successfully")
+            except Exception as e:
+                logger.error(f"❌ Performance monitoring initialization failed: {e}")
+        
         logger.info("🌟 MasterX Quantum Intelligence Server started successfully")
         
     except Exception as e:
