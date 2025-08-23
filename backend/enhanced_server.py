@@ -190,6 +190,15 @@ async def startup_event():
 async def shutdown_event():
     """Cleanup on shutdown"""
     logger.info("🛑 Shutting down MasterX Quantum Intelligence Server...")
+    
+    # Shutdown performance monitoring
+    if PERFORMANCE_MONITORING_AVAILABLE:
+        try:
+            await shutdown_performance_api()
+            logger.info("✅ Performance monitoring system shutdown successfully")
+        except Exception as e:
+            logger.error(f"❌ Performance monitoring shutdown failed: {e}")
+    
     client.close()
 
 # ============================================================================
