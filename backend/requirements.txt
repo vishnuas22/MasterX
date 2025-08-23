@@ -18,6 +18,10 @@ pymongo>=4.10.1
 pydantic>=2.10.5
 email-validator>=2.2.0
 
+# System Monitoring and Performance (Phase 2 ✅)
+psutil>=6.1.0
+numpy>=1.24.0
+
 # Authentication & Security (Phase 1 ✅)
 bcrypt>=4.2.1
 python-jose[cryptography]>=3.3.0
