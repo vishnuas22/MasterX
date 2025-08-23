@@ -80,6 +80,19 @@ except ImportError as e:
     LEGACY_COMPONENTS_AVAILABLE = False
     logger.warning(f"⚠️ Legacy components not available: {e}")
 
+# Import performance monitoring
+try:
+    from quantum_intelligence.orchestration.performance_api import (
+        router as performance_router,
+        initialize_performance_api,
+        shutdown_performance_api
+    )
+    PERFORMANCE_MONITORING_AVAILABLE = True
+    logger.info("✅ Performance monitoring system loaded successfully")
+except ImportError as e:
+    PERFORMANCE_MONITORING_AVAILABLE = False
+    logger.warning(f"⚠️ Performance monitoring system not available: {e}")
+
 # Global quantum engine instance
 quantum_engine: Optional[IntegratedQuantumIntelligenceEngine] = None
 
