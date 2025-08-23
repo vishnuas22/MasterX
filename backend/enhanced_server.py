@@ -713,6 +713,11 @@ try:
 except ImportError:
     logger.warning("⚠️ Interactive API router not available")
 
+# Include performance monitoring router if available
+if PERFORMANCE_MONITORING_AVAILABLE:
+    app.include_router(performance_router)
+    logger.info("✅ Performance monitoring router included")
+
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
