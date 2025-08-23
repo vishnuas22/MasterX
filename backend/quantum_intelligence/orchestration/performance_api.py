@@ -428,24 +428,42 @@ async def get_performance_system_health():
     Returns health status of the performance monitoring system itself
     """
     try:
-        monitor = await get_performance_monitor()
-        
-        health_status = {
-            "status": "healthy",
-            "monitoring_active": monitor.monitoring_active,
-            "optimization_enabled": monitor.optimization_enabled,
-            "active_operations": len(monitor.active_operations),
-            "metrics_buffer_size": len(monitor.metrics_buffer),
-            "alerts_count": len(monitor.alerts),
-            "optimizations_count": len(monitor.optimization_results),
-            "cache_stats": monitor.cache_stats,
-            "system_info": {
-                "python_version": "3.11+",
-                "monitoring_version": "4.0",
-                "uptime_seconds": time.time() - (monitor.system_metrics.get('startup_time', time.time()))
-            },
-            "last_update": datetime.utcnow().isoformat()
-        }
+        # Try to get monitor, but handle gracefully if not initialized
+        try:
+            monitor = await get_performance_monitor()
+            
+            health_status = {
+                "status": "healthy",
+                "monitoring_active": monitor.monitoring_active,
+                "optimization_enabled": monitor.optimization_enabled,
+                "active_operations": len(monitor.active_operations),
+                "metrics_buffer_size": len(monitor.metrics_buffer),
+                "alerts_count": len(monitor.alerts),
+                "optimizations_count": len(monitor.optimization_results),
+                "cache_stats": monitor.cache_stats,
+                "system_info": {
+                    "python_version": "3.11+",
+                    "monitoring_version": "4.0",
+                    "uptime_seconds": time.time() - (monitor.system_metrics.get('startup_time', time.time()))
+                },
+                "last_update": datetime.utcnow().isoformat()
+            }
+            
+        except Exception as init_error:
+            # Monitor not initialized yet - return basic status
+            logger.warning(f"Performance monitor not fully initialized: {init_error}")
+            health_status = {
+                "status": "initializing",
+                "monitoring_active": False,
+                "optimization_enabled": False,
+                "system_info": {
+                    "python_version": "3.11+",
+                    "monitoring_version": "4.0",
+                    "initialization_status": "pending"
+                },
+                "message": "Performance monitoring system is initializing",
+                "last_update": datetime.utcnow().isoformat()
+            }
         
         return health_status
         
