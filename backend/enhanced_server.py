@@ -176,7 +176,7 @@ async def startup_event():
         # Initialize performance monitoring
         if PERFORMANCE_MONITORING_AVAILABLE:
             try:
-                await initialize_performance_api(db)
+                await initialize_performance_api()
                 logger.info("✅ Performance monitoring system initialized successfully")
             except Exception as e:
                 logger.error(f"❌ Performance monitoring initialization failed: {e}")
