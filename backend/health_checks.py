@@ -153,7 +153,7 @@ class HealthCheckService:
                     }, False
         
         # Execute all provider checks concurrently
-        if ai_manager.providers:
+        if ai_manager and hasattr(ai_manager, 'providers') and ai_manager.providers:
             tasks = [
                 check_single_provider(provider, i) 
                 for i, provider in enumerate(ai_manager.providers)
