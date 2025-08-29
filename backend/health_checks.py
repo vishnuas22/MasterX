@@ -1445,5 +1445,147 @@ class HealthCheckService:
             "performance_optimized": True
         }
 
-# Global health check service instance
+# ============================================================================
+# V5.0 GLOBAL SERVICE INSTANCES - QUANTUM INTELLIGENCE INTEGRATION
+# ============================================================================
+
+# V5.0 NEW: Revolutionary Quantum Health Check Service (Primary)
+quantum_health_service = RevolutionaryQuantumHealthCheckServiceV5()
+
+# Legacy health check service instance (Secondary/Compatibility)
 health_service = HealthCheckService()
+
+# V5.0 NEW: Enhanced service selection function
+def get_health_service(use_quantum: bool = True):
+    """
+    Get appropriate health service instance
+    
+    Args:
+        use_quantum: Whether to use quantum intelligence health service
+        
+    Returns:
+        Health service instance (quantum or legacy)
+    """
+    if use_quantum and QUANTUM_INTELLIGENCE_AVAILABLE:
+        return quantum_health_service
+    return health_service
+
+# V5.0 NEW: Async health check function for FastAPI integration
+async def perform_quantum_health_check(
+    components: List[str] = None,
+    performance_target_ms: float = 50.0,
+    enable_predictive_analysis: bool = True
+) -> Dict[str, Any]:
+    """
+    Perform quantum health check with V5.0 optimization
+    
+    Args:
+        components: List of component names to check
+        performance_target_ms: Target performance in milliseconds
+        enable_predictive_analysis: Enable ML-based predictive analysis
+        
+    Returns:
+        Comprehensive health report with quantum intelligence
+    """
+    try:
+        # Convert component names to ComponentType enums
+        component_types = []
+        if components:
+            component_mapping = {
+                'database': ComponentType.DATABASE,
+                'ai_providers': ComponentType.AI_PROVIDERS,
+                'quantum_engine': ComponentType.QUANTUM_ENGINE,
+                'system_resources': ComponentType.SYSTEM_RESOURCES,
+                'environment': ComponentType.ENVIRONMENT,
+                'cache_system': ComponentType.CACHE_SYSTEM
+            }
+            
+            for comp in components:
+                if comp in component_mapping:
+                    component_types.append(component_mapping[comp])
+        
+        # Use quantum health service if available
+        if QUANTUM_INTELLIGENCE_AVAILABLE:
+            return await quantum_health_service.quantum_health_assessment_v5(
+                components=component_types,
+                performance_target_ms=performance_target_ms,
+                enable_predictive_analysis=enable_predictive_analysis
+            )
+        else:
+            # Fallback to legacy health check
+            legacy_result = await health_service.comprehensive_health_check()
+            
+            # Convert to V5.0 format
+            return {
+                'health_assessment': {
+                    'overall_status': legacy_result.get('status', 'degraded'),
+                    'quantum_health_score': 0.6,  # Default score for legacy
+                    'component_results': [],
+                    'total_components_checked': len(legacy_result.get('checks', {})),
+                    'failed_components': 0
+                },
+                'performance_metrics': {
+                    'assessment_time_ms': legacy_result.get('check_duration_ms', 1000),
+                    'target_achieved': legacy_result.get('check_duration_ms', 1000) < performance_target_ms,
+                    'quantum_coherence_system': 0.0,
+                    'sub_50ms_success_rate': 0.0
+                },
+                'quantum_intelligence': {
+                    'predictive_insights': {},
+                    'anomaly_detections': 0,
+                    'auto_resolutions_attempted': 0,
+                    'system_optimization_score': 0.6
+                },
+                'alerts_and_recommendations': [],
+                'system_metadata': {
+                    'version': '5.0-legacy-mode',
+                    'timestamp': datetime.utcnow(),
+                    'quantum_intelligence_available': False,
+                    'ml_anomaly_detection_available': False,
+                    'legacy_mode': True
+                }
+            }
+            
+    except Exception as e:
+        logger.error(f"❌ Quantum health check failed: {e}")
+        return await quantum_health_service._generate_fallback_health_report_v5(str(e))
+
+# V5.0 NEW: Fast health check for high-frequency monitoring
+async def fast_health_check() -> Dict[str, Any]:
+    """
+    Fast health check optimized for sub-10ms performance
+    
+    Returns:
+        Basic health status for high-frequency monitoring
+    """
+    start_time = time.time()
+    
+    try:
+        # Basic checks only
+        basic_status = {
+            'status': 'healthy',
+            'timestamp': time.time(),
+            'response_time_ms': 0.0,
+            'version': '5.0-fast',
+            'quantum_available': QUANTUM_INTELLIGENCE_AVAILABLE
+        }
+        
+        # Quick system check
+        try:
+            memory = psutil.virtual_memory()
+            if memory.percent > 95:
+                basic_status['status'] = 'warning'
+        except:
+            pass
+        
+        basic_status['response_time_ms'] = round((time.time() - start_time) * 1000, 2)
+        return basic_status
+        
+    except Exception as e:
+        return {
+            'status': 'error',
+            'timestamp': time.time(),
+            'response_time_ms': round((time.time() - start_time) * 1000, 2),
+            'error': str(e),
+            'version': '5.0-fast'
+        }
