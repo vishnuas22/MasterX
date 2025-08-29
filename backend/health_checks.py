@@ -182,7 +182,7 @@ class HealthCheckService:
                 pass
         
         return {
-            "total_providers": len(ai_manager.providers),
+            "total_providers": len(ai_manager.providers) if ai_manager and hasattr(ai_manager, 'providers') else 0,
             "healthy_providers": healthy_providers,
             "providers": provider_status,
             "fallback_available": healthy_providers > 1,
