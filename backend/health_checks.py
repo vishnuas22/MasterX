@@ -126,10 +126,10 @@ class HealthMetrics:
 @dataclass
 class SystemAlert:
     """Advanced alerting system with V5.0 intelligence"""
-    alert_id: str = field(default_factory=lambda: hashlib.md5(str(datetime.utcnow()).encode()).hexdigest()[:8])
     severity: AlertSeverity
     component: ComponentType
     message: str
+    alert_id: str = field(default_factory=lambda: hashlib.md5(str(datetime.utcnow()).encode()).hexdigest()[:8])
     
     # Alert details
     trigger_condition: str = ""
