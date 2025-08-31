@@ -14,7 +14,7 @@ except ImportError:
     WEBSOCKETS_AVAILABLE = False
 
 class MasterXAPITester:
-    def __init__(self, base_url="https://masterx-brain-1.preview.emergentagent.com"):
+    def __init__(self, base_url="https://agileai-platform.preview.emergentagent.com"):
         self.base_url = base_url
         self.tests_run = 0
         self.tests_passed = 0
