@@ -134,6 +134,11 @@ class IntelligenceAmplificationError(QuantumEngineError):
     pass
 
 
+class GeneticOptimizationError(QuantumEngineError):
+    """Raised when genetic optimization operations fail"""
+    pass
+
+
 # Error code constants
 class ErrorCodes:
     # Configuration errors
@@ -212,6 +217,7 @@ def create_error(
         "timeout": TimeoutError,
         "resource": ResourceExhaustionError,
         "intelligence": IntelligenceAmplificationError,
+        "genetic": GeneticOptimizationError,
     }
     
     error_class = error_classes.get(error_type, QuantumEngineError)
