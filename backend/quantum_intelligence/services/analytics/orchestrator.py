@@ -46,12 +46,12 @@ from ...core.exceptions import QuantumEngineError
 from ...utils.caching import CacheService
 
 # Import analytics engines
-from .learning_patterns import LearningPatternAnalyzer
-from .cognitive_load import CognitiveLoadMeasurementSystem
+from .learning_patterns import RevolutionaryLearningPatternAnalysisEngineV6 as LearningPatternAnalyzer
+from .cognitive_load import CognitiveLoadAssessmentEngine as CognitiveLoadMeasurementSystem
 from .attention_optimization import AttentionOptimizationEngine
-from .performance_prediction import PerformanceAnalyticsPlatform
+from .performance_prediction import PerformancePredictionEngine as PerformanceAnalyticsPlatform
 from .behavioral_intelligence import BehavioralIntelligenceSystem
-from .research_analytics import ResearchDataPipeline
+from .research_analytics import ResearchAnalyticsEngine as ResearchDataPipeline
 
 
 class AnalyticsMode(Enum):
