@@ -1153,17 +1153,17 @@ class UltraEnterpriseLiveTutoringEngine:
                 # In production, this would fetch real user data from quantum learning profiles
                 profile = {
                     'participant_id': participant_id,
-                    'learning_velocity': np.random().uniform(0.4, 1.0),
-                    'preferred_difficulty': max(0.1, min(0.9, difficulty_level + np.random().uniform(-0.2, 0.2))),
-                    'collaboration_style': np.random().choice(['active', 'observant', 'supportive', 'leader', 'facilitator']),
-                    'attention_span': np.random().randint(25, 90),
-                    'technical_capability': np.random().uniform(0.5, 1.0),
-                    'emotional_intelligence': np.random().uniform(0.6, 1.0),
-                    'cognitive_load_capacity': np.random().uniform(0.5, 1.0),
-                    'motivation_level': np.random().uniform(0.7, 1.0),
-                    'subject_expertise': np.random().uniform(0.3, 0.8),
-                    'learning_style_preference': np.random().choice(['visual', 'auditory', 'kinesthetic', 'mixed']),
-                    'quantum_coherence_potential': np.random().uniform(0.5, 1.0)
+                    'learning_velocity': np.random.uniform(0.4, 1.0),
+                    'preferred_difficulty': max(0.1, min(0.9, difficulty_level + np.random.uniform(-0.2, 0.2))),
+                    'collaboration_style': np.random.choice(['active', 'observant', 'supportive', 'leader', 'facilitator']),
+                    'attention_span': np.random.randint(25, 90),
+                    'technical_capability': np.random.uniform(0.5, 1.0),
+                    'emotional_intelligence': np.random.uniform(0.6, 1.0),
+                    'cognitive_load_capacity': np.random.uniform(0.5, 1.0),
+                    'motivation_level': np.random.uniform(0.7, 1.0),
+                    'subject_expertise': np.random.uniform(0.3, 0.8),
+                    'learning_style_preference': np.random.choice(['visual', 'auditory', 'kinesthetic', 'mixed']),
+                    'quantum_coherence_potential': np.random.uniform(0.5, 1.0)
                 }
                 
                 participant_profiles.append(profile)
@@ -1437,8 +1437,8 @@ class UltraEnterpriseLiveTutoringEngine:
             'bandwidth_allocation': optimal_config['bandwidth_allocation'],
             
             # V6.0 Ultra-Enterprise enhancements
-            'quantum_coherence_level': optimal_config['quantum_coherence'],
-            'adaptive_learning_potential': optimal_config['adaptive_learning_potential'],
+            'quantum_coherence_level': optimal_config.get('quantum_coherence', 0.8),
+            'adaptive_learning_potential': optimal_config.get('adaptive_learning_potential', 0.85),
             'session_complexity_score': optimal_config.get('session_complexity_score', 0.5),
             'success_probability': optimal_config.get('success_probability', 0.8),
             
