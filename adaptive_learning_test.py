@@ -11,7 +11,7 @@ import sys
 from datetime import datetime
 
 class AdaptiveLearningTester:
-    def __init__(self, base_url="https://agileai-platform.preview.emergentagent.com"):
+    def __init__(self, base_url="https://adaptive-ai-2.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api/ai/test"
         self.tests_run = 0

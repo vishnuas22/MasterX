@@ -37,7 +37,7 @@
 - **Response Format:** Valid JSON with UUIDs and timestamps ✅
 
 ### ✅ External Connectivity
-- **Public API Access:** https://agileai-platform.preview.emergentagent.com/api/ ✅
+- **Public API Access:** https://adaptive-ai-2.preview.emergentagent.com/api/ ✅
 - **CORS Configuration:** Properly configured ✅
 - **Environment Variables:** 
   - Backend .env: MONGO_URL, DB_NAME, CORS_ORIGINS ✅
