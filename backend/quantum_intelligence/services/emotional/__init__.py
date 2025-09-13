@@ -8,14 +8,12 @@ intelligence and mental wellbeing integration with advanced emotion detection an
 from .emotion_detection import (
     UltraEnterpriseEmotionDetectionEngine,
     UltraEnterpriseEmotionResult,
-    QuantumEnhancedEmotionNetwork,
     EmotionCategory,
     InterventionLevel,
     LearningReadinessState,
     EmotionDetectionConstants,
-    EmotionAnalysisMetrics,
-    UltraEnterpriseEmotionCache,
-    UltraEnterpriseEmotionCircuitBreaker
+    EnhancedEmotionAnalysisMetrics,
+    get_ultra_enterprise_emotion_engine
 )
 from .stress_monitoring import (
     StressMonitoringSystem,
@@ -36,14 +34,12 @@ from .wellbeing import (
 __all__ = [
     "UltraEnterpriseEmotionDetectionEngine",
     "UltraEnterpriseEmotionResult",
-    "QuantumEnhancedEmotionNetwork",
     "EmotionCategory",
     "InterventionLevel",
     "LearningReadinessState",
     "EmotionDetectionConstants",
-    "EmotionAnalysisMetrics",
-    "UltraEnterpriseEmotionCache",
-    "UltraEnterpriseEmotionCircuitBreaker",
+    "EnhancedEmotionAnalysisMetrics",
+    "get_ultra_enterprise_emotion_engine",
     "StressMonitoringSystem",
     "StressLevelData", 
     "BurnoutPreventionEngine",
