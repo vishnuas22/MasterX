@@ -12,8 +12,9 @@ from .emotion_detection import (
     InterventionLevel,
     LearningReadinessState,
     EmotionDetectionConstants,
-    EnhancedEmotionAnalysisMetrics,
-    get_ultra_enterprise_emotion_engine
+    EmotionAnalysisMetrics,
+    UltraEnterpriseEmotionCache,
+    UltraEnterpriseEmotionCircuitBreaker
 )
 from .stress_monitoring import (
     StressMonitoringSystem,
@@ -38,8 +39,9 @@ __all__ = [
     "InterventionLevel",
     "LearningReadinessState",
     "EmotionDetectionConstants",
-    "EnhancedEmotionAnalysisMetrics",
-    "get_ultra_enterprise_emotion_engine",
+    "EmotionAnalysisMetrics",
+    "UltraEnterpriseEmotionCache",
+    "UltraEnterpriseEmotionCircuitBreaker",
     "StressMonitoringSystem",
     "StressLevelData", 
     "BurnoutPreventionEngine",
