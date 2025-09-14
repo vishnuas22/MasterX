@@ -1524,7 +1524,7 @@ class UltraEnterpriseEmotionDetectionEngine:
         elif readiness_score >= 0.1:
             return LearningReadinessState.DISTRACTED
         else:
-            return LearningReadinessState.OVERWHELMED
+            return LearningReadinessState.CRITICAL_INTERVENTION_NEEDED
     
     def _calculate_cognitive_load(self, emotion_prediction: Dict[str, Any], context: Optional[Dict[str, Any]]) -> float:
         """Calculate cognitive load level"""
