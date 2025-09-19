@@ -1689,6 +1689,19 @@ async def get_ultra_quantum_engine(database: AsyncIOMotorDatabase) -> UltraEnter
     
     return _global_quantum_engine
 
+def get_integrated_quantum_engine(database: AsyncIOMotorDatabase) -> UltraEnterpriseQuantumEngine:
+    """Get integrated quantum engine instance (synchronous alias)"""
+    global _global_quantum_engine
+    
+    if _global_quantum_engine is None:
+        _global_quantum_engine = UltraEnterpriseQuantumEngine(database)
+        logger.info("🚀 Global Ultra-Enterprise Quantum Engine V6.0 created")
+    
+    return _global_quantum_engine
+
+# Export the main class for proper imports
+IntegratedQuantumIntelligenceEngine = UltraEnterpriseQuantumEngine
+
 async def shutdown_ultra_quantum_engine():
     """Shutdown global quantum engine"""
     global _global_quantum_engine
