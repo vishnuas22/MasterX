@@ -48,20 +48,23 @@ import gc
 
 # Production-grade imports
 from motor.motor_asyncio import AsyncIOMotorDatabase
-import structlog
 
-# Configure structured logging
-logger = logging.getLogger(__name__)
+# Configure structured logging with fallback
+try:
+    import structlog
+    logger = structlog.get_logger(__name__)
+except ImportError:
+    import logging
+    logger = logging.getLogger(__name__)
 
 # Ultra-Enterprise Components
-from .enhanced_context_manager import EnhancedContextManager, get_enhanced_context_manager
+from .enhanced_context_manager import UltraEnterpriseEnhancedContextManager
 from .breakthrough_ai_integration import (
-    BreakthroughAIManager, breakthrough_ai_manager, 
+    UltraEnterpriseBreakthroughAIManager, breakthrough_ai_manager, 
     TaskType, AIResponse
 )
 from .revolutionary_adaptive_engine import (
-    RevolutionaryAdaptiveLearningEngine, revolutionary_adaptive_engine,
-    LearningAnalytics, AdaptationRecommendation
+    RevolutionaryAdaptiveLearningEngine, revolutionary_adaptive_engine
 )
 from .enhanced_database_models import UltraEnterpriseCircuitBreaker, CircuitBreakerState, PerformanceConstants
 
@@ -356,7 +359,7 @@ class UltraEnterpriseQuantumEngine:
         self.engine_id = str(uuid.uuid4())
         
         # Initialize breakthrough components
-        self.context_manager = get_enhanced_context_manager(database)
+        self.context_manager = UltraEnterpriseEnhancedContextManager(self.db)
         self.ai_manager = breakthrough_ai_manager
         self.adaptive_engine = revolutionary_adaptive_engine
         
