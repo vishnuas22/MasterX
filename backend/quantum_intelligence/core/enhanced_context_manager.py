@@ -449,20 +449,29 @@ class UltraEnterpriseContextCache:
         self._cleanup_task: Optional[asyncio.Task] = None
         self._optimization_task: Optional[asyncio.Task] = None
         self._compression_task: Optional[asyncio.Task] = None
-        self._start_optimization_tasks()
+        self._tasks_started = False
         
         logger.info("🧠 Ultra-Enterprise Context Cache V6.0 initialized")
     
     def _start_optimization_tasks(self):
         """Start cache optimization tasks"""
-        if self._cleanup_task is None or self._cleanup_task.done():
-            self._cleanup_task = asyncio.create_task(self._periodic_cleanup())
-        
-        if self._optimization_task is None or self._optimization_task.done():
-            self._optimization_task = asyncio.create_task(self._optimization_loop())
-        
-        if self._compression_task is None or self._compression_task.done():
-            self._compression_task = asyncio.create_task(self._compression_loop())
+        if self._tasks_started:
+            return
+            
+        try:
+            if self._cleanup_task is None or self._cleanup_task.done():
+                self._cleanup_task = asyncio.create_task(self._periodic_cleanup())
+            
+            if self._optimization_task is None or self._optimization_task.done():
+                self._optimization_task = asyncio.create_task(self._optimization_loop())
+            
+            if self._compression_task is None or self._compression_task.done():
+                self._compression_task = asyncio.create_task(self._compression_loop())
+            
+            self._tasks_started = True
+        except RuntimeError:
+            # No event loop available, tasks will be started later
+            pass
     
     async def _periodic_cleanup(self):
         """Periodic cache cleanup with quantum intelligence"""
@@ -610,6 +619,10 @@ class UltraEnterpriseContextCache:
     async def get(self, context_id: str) -> Optional[EnhancedLearningContext]:
         """Get context from cache with ultra-enterprise optimization"""
         self.total_requests += 1
+        
+        # Start optimization tasks if not already started
+        if not self._tasks_started:
+            self._start_optimization_tasks()
         
         async with self._cache_lock:
             if context_id in self.cache:
@@ -1315,17 +1328,24 @@ class UltraEnterpriseEnhancedContextManager:
         }
 
 # ============================================================================
-# GLOBAL ULTRA-ENTERPRISE INSTANCE V6.0
+# GLOBAL ULTRA-ENTERPRISE INSTANCE V6.0 (Lazy initialization)
 # ============================================================================
 
-# Global enhanced context manager instance
-enhanced_context_manager = UltraEnterpriseEnhancedContextManager()
+# Global enhanced context manager instance - will be initialized when needed
+enhanced_context_manager = None
+
+def get_enhanced_context_manager(database=None):
+    """Get or create enhanced context manager instance"""
+    global enhanced_context_manager
+    if enhanced_context_manager is None:
+        enhanced_context_manager = UltraEnterpriseEnhancedContextManager(database)
+    return enhanced_context_manager
 
 # Export all components
 __all__ = [
     'UltraEnterpriseEnhancedContextManager',
     'UltraEnterpriseContextCache',
-    'enhanced_context_manager',
+    'get_enhanced_context_manager',
     'EnhancedLearningContext',
     'ContextMetrics',
     'LearningState',
