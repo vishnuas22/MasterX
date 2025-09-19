@@ -410,17 +410,26 @@ class UltraEnterpriseAICache:
         self._cache_lock = asyncio.Lock()
         self._cleanup_task: Optional[asyncio.Task] = None
         self._performance_optimizer_task: Optional[asyncio.Task] = None
-        self._start_optimization_tasks()
+        self._tasks_started = False
         
         logger.info("🎯 Ultra-Enterprise AI Cache V6.0 initialized")
     
     def _start_optimization_tasks(self):
         """Start cache optimization tasks"""
-        if self._cleanup_task is None or self._cleanup_task.done():
-            self._cleanup_task = asyncio.create_task(self._periodic_cleanup())
-        
-        if self._performance_optimizer_task is None or self._performance_optimizer_task.done():
-            self._performance_optimizer_task = asyncio.create_task(self._performance_optimization_loop())
+        if self._tasks_started:
+            return
+            
+        try:
+            if self._cleanup_task is None or self._cleanup_task.done():
+                self._cleanup_task = asyncio.create_task(self._periodic_cleanup())
+            
+            if self._performance_optimizer_task is None or self._performance_optimizer_task.done():
+                self._performance_optimizer_task = asyncio.create_task(self._performance_optimization_loop())
+                
+            self._tasks_started = True
+        except RuntimeError:
+            # No event loop available, tasks will be started later
+            pass
     
     async def _periodic_cleanup(self):
         """Periodic cache cleanup with quantum intelligence"""
