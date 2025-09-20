@@ -395,10 +395,15 @@ class UltraEnterpriseQuantumEngine:
         self._cleanup_task: Optional[asyncio.Task] = None
         
         # Structured logging setup
-        self.logger = structlog.get_logger(__name__).bind(
-            engine_id=self.engine_id,
-            component="quantum_engine_v6"
-        )
+        try:
+            import structlog
+            self.logger = structlog.get_logger(__name__).bind(
+                engine_id=self.engine_id,
+                component="quantum_engine_v6"
+            )
+        except ImportError:
+            import logging
+            self.logger = logging.getLogger(__name__)
         
         self.logger.info("🚀 Ultra-Enterprise Quantum Engine V6.0 initialized")
     
@@ -470,7 +475,7 @@ class UltraEnterpriseQuantumEngine:
                 api_keys
             )
         except Exception as e:
-            self.logger.error("AI provider initialization failed", error=str(e))
+            self.logger.error(f"AI provider initialization failed: {e}")
             return False
     
     async def _validate_database_connectivity(self):
@@ -493,10 +498,10 @@ class UltraEnterpriseQuantumEngine:
                     target_ms=QuantumEngineConstants.DATABASE_OPERATION_TARGET_MS
                 )
             
-            self.logger.info("✅ Database connectivity validated", response_time_ms=db_response_time)
+            self.logger.info(f"✅ Database connectivity validated, response time: {db_response_time:.2f}ms")
             
         except Exception as e:
-            self.logger.error("❌ Database connectivity validation failed", error=str(e))
+            self.logger.error(f"❌ Database connectivity validation failed: {e}")
             raise
     
     async def _setup_performance_infrastructure(self):
@@ -512,7 +517,7 @@ class UltraEnterpriseQuantumEngine:
             self.logger.info("✅ Performance infrastructure setup complete")
             
         except Exception as e:
-            self.logger.error("❌ Performance infrastructure setup failed", error=str(e))
+            self.logger.error(f"❌ Performance infrastructure setup failed: {e}")
             raise
     
     async def _start_background_tasks(self):
@@ -529,7 +534,7 @@ class UltraEnterpriseQuantumEngine:
             self.logger.info("✅ Background tasks started")
             
         except Exception as e:
-            self.logger.error("❌ Background task startup failed", error=str(e))
+            self.logger.error(f"❌ Background task startup failed: {e}")
             raise
     
     async def _configure_circuit_breakers(self):
@@ -548,7 +553,7 @@ class UltraEnterpriseQuantumEngine:
                 raise Exception("Circuit breaker test failed")
                 
         except Exception as e:
-            self.logger.error("❌ Circuit breaker configuration failed", error=str(e))
+            self.logger.error(f"❌ Circuit breaker configuration failed: {e}")
             raise
     
     # ========================================================================
@@ -750,7 +755,7 @@ class UltraEnterpriseQuantumEngine:
         
         if cached_context:
             metrics.cache_hit_rate += 0.5  # Partial cache hit
-            self.logger.debug("🎯 Context cache hit", cache_key=cache_key)
+            self.logger.debug(f"🎯 Context cache hit: {cache_key}")
             return cached_context
         
         # Setup conversation context
@@ -788,7 +793,7 @@ class UltraEnterpriseQuantumEngine:
         
         if cached_analysis:
             metrics.cache_hit_rate += 0.3
-            self.logger.debug("🎯 Adaptation cache hit", cache_key=cache_key)
+            self.logger.debug(f"🎯 Adaptation cache hit: {cache_key}")
             return cached_analysis
         
         # Perform adaptive analysis
@@ -1085,7 +1090,7 @@ class UltraEnterpriseQuantumEngine:
                 await self._optimize_system_caches()
                 
             except Exception as e:
-                self.logger.error("Performance monitoring error", error=str(e))
+                self.logger.error(f"Performance monitoring error: {e}")
     
     async def _periodic_cleanup_loop(self):
         """Periodic system cleanup and optimization"""
@@ -1107,7 +1112,7 @@ class UltraEnterpriseQuantumEngine:
                 self.logger.debug("🧹 Periodic cleanup completed")
                 
             except Exception as e:
-                self.logger.error("Periodic cleanup error", error=str(e))
+                self.logger.error(f"Periodic cleanup error: {e}")
     
     def _update_performance_metrics(self, metrics: QuantumProcessingMetrics):
         """Update engine performance metrics"""
@@ -1478,7 +1483,7 @@ class UltraEnterpriseQuantumEngine:
             return system_status
             
         except Exception as e:
-            self.logger.error("❌ Failed to get system status", error=str(e))
+            self.logger.error(f"❌ Failed to get system status: {e}")
             return {'error': str(e), 'status': 'error'}
     
     def _calculate_performance_grade_from_avg(self) -> str:
@@ -1670,7 +1675,7 @@ class UltraEnterpriseQuantumEngine:
             self.logger.info("✅ Ultra-Enterprise Quantum Engine shutdown complete")
             
         except Exception as e:
-            self.logger.error("❌ Quantum Engine shutdown error", error=str(e))
+            self.logger.error(f"❌ Quantum Engine shutdown error: {e}")
 
 # ============================================================================
 # GLOBAL INSTANCE MANAGEMENT

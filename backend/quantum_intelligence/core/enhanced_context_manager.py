@@ -717,7 +717,7 @@ class UltraEnterpriseEnhancedContextManager:
         self.user_profiles_collection: Optional[AsyncIOMotorCollection] = None
         self.performance_collection: Optional[AsyncIOMotorCollection] = None
         
-        if self.database:
+        if self.database is not None:
             self.contexts_collection = self.database.enhanced_learning_contexts
             self.user_profiles_collection = self.database.user_profiles
             self.performance_collection = self.database.context_performance
@@ -764,7 +764,7 @@ class UltraEnterpriseEnhancedContextManager:
             await self._start_background_tasks()
             
             # Test database connection if available
-            if self.database and self.contexts_collection:
+            if self.database is not None and self.contexts_collection is not None:
                 # Ensure indexes for performance
                 await self._ensure_database_indexes()
             
@@ -899,7 +899,7 @@ class UltraEnterpriseEnhancedContextManager:
         """Retrieve existing context or create new one with ultra-performance"""
         
         # Try to load from database first
-        if self.contexts_collection:
+        if self.contexts_collection is not None:
             existing_context = await self.contexts_collection.find_one({
                 "user_id": user_id,
                 "context_type": context_type.value
@@ -920,7 +920,7 @@ class UltraEnterpriseEnhancedContextManager:
     async def _enrich_with_history(self, context: EnhancedLearningContext, user_id: str):
         """Enrich context with conversation and performance history"""
         
-        if self.contexts_collection and len(context.conversation_history) < 20:
+        if self.contexts_collection is not None and len(context.conversation_history) < 20:
             # Load recent conversation history
             recent_conversations = await self.contexts_collection.find({
                 "user_id": user_id,
@@ -935,7 +935,7 @@ class UltraEnterpriseEnhancedContextManager:
             if len(context.conversation_history) > 30:
                 context.conversation_history = context.conversation_history[-30:]
         
-        if self.performance_collection and len(context.performance_history) < 50:
+        if self.performance_collection is not None and len(context.performance_history) < 50:
             # Load recent performance data
             recent_performance = await self.performance_collection.find({
                 "user_id": user_id
@@ -954,7 +954,7 @@ class UltraEnterpriseEnhancedContextManager:
     async def _enrich_with_preferences(self, context: EnhancedLearningContext, user_id: str):
         """Enrich context with user learning preferences"""
         
-        if self.user_profiles_collection:
+        if self.user_profiles_collection is not None:
             user_profile = await self.user_profiles_collection.find_one({"user_id": user_id})
             
             if user_profile:
@@ -1131,15 +1131,15 @@ class UltraEnterpriseEnhancedContextManager:
     async def _ensure_database_indexes(self):
         """Ensure MongoDB indexes for performance"""
         try:
-            if self.contexts_collection:
+            if self.contexts_collection is not None:
                 await self.contexts_collection.create_index([("user_id", 1), ("context_type", 1)])
                 await self.contexts_collection.create_index([("last_updated", -1)])
                 await self.contexts_collection.create_index([("quantum_coherence_level", -1)])
             
-            if self.user_profiles_collection:
+            if self.user_profiles_collection is not None:
                 await self.user_profiles_collection.create_index([("user_id", 1)])
             
-            if self.performance_collection:
+            if self.performance_collection is not None:
                 await self.performance_collection.create_index([("user_id", 1), ("timestamp", -1)])
             
             logger.info("✅ Database indexes ensured for context management")
