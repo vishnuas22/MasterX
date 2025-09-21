@@ -981,7 +981,7 @@ async def initialize_quantum_intelligence():
         
         # Import quantum components with enhanced error handling
         from quantum_intelligence.core.integrated_quantum_engine import (
-            get_integrated_quantum_engine, IntegratedQuantumIntelligenceEngine
+            get_ultra_quantum_engine, UltraEnterpriseQuantumEngine
         )
         from quantum_intelligence.core.breakthrough_ai_integration import TaskType
         
@@ -989,7 +989,7 @@ async def initialize_quantum_intelligence():
         db = await connection_manager.get_database()
         
         # Initialize quantum engine with ultra-enterprise optimization
-        quantum_engine = get_integrated_quantum_engine(db)
+        quantum_engine = await get_ultra_quantum_engine(db)
         
         # Prepare API keys with enhanced validation
         api_keys = {
