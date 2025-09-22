@@ -1623,6 +1623,12 @@ async def prometheus_metrics():
             detail="Metrics generation failed"
         )
 
+# Add root endpoint for frontend integration
+@api_router.get("/", summary="Frontend Integration Endpoint")
+async def root_endpoint():
+    """Simple root endpoint for frontend integration"""
+    return {"message": "MasterX Ultra-Enterprise V6.0 API is running", "status": "healthy", "version": "6.0"}
+
 # Include ultra-enterprise API router
 app.include_router(api_router)
 
