@@ -1184,7 +1184,7 @@ class UltraEnterpriseQuantumRequest(BaseModel):
     
     # Ultra-enterprise performance optimizations
     enable_caching: bool = Field(default=True, description="Enable response caching")
-    max_response_time_ms: int = Field(default=15, ge=5, le=5000,
+    max_response_time_ms: int = Field(default=2000, ge=500, le=5000,
                                     description="Maximum response time in milliseconds")
     enable_streaming: bool = Field(default=False, description="Enable streaming response")
     
@@ -1328,10 +1328,10 @@ async def process_ultra_enterprise_quantum_message(request: UltraEnterpriseQuant
             elapsed_time = time.time() - processing_start
             available_time = max(0.005, base_timeout - elapsed_time)  # Minimum 5ms
             
-            # Adjust timeout based on priority
-            priority_multipliers = {"speed": 0.7, "balanced": 1.0, "quality": 1.3}
+            # Adjust timeout based on priority - more aggressive for speed
+            priority_multipliers = {"speed": 2.0, "balanced": 1.0, "quality": 1.5}
             timeout_multiplier = priority_multipliers.get(request.priority, 1.0)
-            final_timeout = available_time * timeout_multiplier
+            final_timeout = min(available_time * timeout_multiplier, base_timeout * 0.95)
             
             # Process with enhanced error handling
             result = await asyncio.wait_for(
