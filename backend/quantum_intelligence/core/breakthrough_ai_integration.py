@@ -1174,9 +1174,10 @@ class UltraEnterpriseEmergentProvider:
                     'quality_analysis': (time.time() - start_time) * 100,  # Post-processing
                     'quantum_enhancement': (time.time() - start_time) * 50
                 },
-                ultra_features={
+                # Ultra-enterprise features in metadata
+                enterprise_compliance={
                     'provider_specialization': self.specializations.get(task_type, 0.85),
-                    'model_capability': self.model,
+                    'model_capability': True,
                     'emergent_optimization': True,
                     'universal_access': True
                 }
@@ -1211,7 +1212,7 @@ class UltraEnterpriseEmergentProvider:
                 optimization_applied=["error_fallback"],
                 performance_tier="degraded",
                 processing_stages={'error_handling': error_response_time * 1000},
-                ultra_features={'error_state': True, 'fallback_active': True}
+                enterprise_compliance={'error_state': True, 'fallback_active': True}
             )
     
     def _generate_cache_key(
