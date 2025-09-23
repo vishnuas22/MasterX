@@ -1411,13 +1411,17 @@ async def process_ultra_enterprise_quantum_message(request: UltraEnterpriseQuant
         result["performance"]["performance_tier"] = performance_tier
         
         # Create ultra-enterprise response
-        ultra_response = UltraEnterpriseQuantumResponse(
-            **result,
-            server_version="6.0",
-            processing_optimizations=optimizations_applied,
-            cache_utilized=cache_utilized,
-            performance_tier=performance_tier
-        )
+        # Add additional metadata to result if not already present
+        if "processing_optimizations" not in result:
+            result["processing_optimizations"] = optimizations_applied
+        if "cache_utilized" not in result:
+            result["cache_utilized"] = cache_utilized
+        if "performance_tier" not in result:
+            result["performance_tier"] = performance_tier
+        if "server_version" not in result:
+            result["server_version"] = "6.0"
+        
+        ultra_response = UltraEnterpriseQuantumResponse(**result)
         
         # Enhanced cache storage for future optimization
         if request.enable_caching and not cache_utilized and performance_tier in ["ultra", "standard"]:
