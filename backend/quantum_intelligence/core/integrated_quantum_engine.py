@@ -731,12 +731,15 @@ class UltraEnterpriseQuantumEngine:
         # Initialize quantum coherence tracking
         metrics.quantum_coherence_score = 0.5  # Base score
         
+        # Handle task_type safely - could be string or enum
+        task_type_str = task_type.value if hasattr(task_type, 'value') else str(task_type)
+        
         self.logger.debug(
             "✅ Phase 1 Complete: Initialization",
             request_id=metrics.request_id,
             user_id=user_id,
             message_length=len(user_message),
-            task_type=task_type.value
+            task_type=task_type_str
         )
     
     async def _phase_2_context_setup(
