@@ -90,6 +90,7 @@ class QuantumEngineConstants:
     # Performance Targets V6.0
     TARGET_RESPONSE_TIME_MS = 15.0  # Primary target: sub-15ms
     OPTIMAL_RESPONSE_TIME_MS = 10.0  # Optimal target: sub-10ms
+    ULTRA_TARGET_MS = 8.0  # Ultra-performance target: sub-8ms
     CRITICAL_RESPONSE_TIME_MS = 25.0  # Critical threshold
     
     # Processing Phase Targets
