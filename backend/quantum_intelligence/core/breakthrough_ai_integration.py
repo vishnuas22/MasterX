@@ -799,7 +799,7 @@ class UltraEnterpriseGroqProvider:
         key_components = [
             str(messages[-1]['content']) if messages else "",
             context_injection[:200],  # First 200 chars
-            task_type.value,
+            task_type.value if hasattr(task_type, 'value') else str(task_type),
             self.model
         ]
         
@@ -1225,7 +1225,7 @@ class UltraEnterpriseEmergentProvider:
         key_components = [
             str(messages[-1]['content']) if messages else "",
             context_injection[:200],  # First 200 chars
-            task_type.value,
+            task_type.value if hasattr(task_type, 'value') else str(task_type),
             f"{self.provider_name}_{self.model}"
         ]
         
