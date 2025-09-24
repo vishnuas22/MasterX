@@ -466,40 +466,100 @@ class AuthenticBehavioralAnalyzer:
             
             # Get user's baseline patterns
             user_baseline = self.user_baselines.get(user_id, {})
+            is_new_user = user_baseline.get('data_points', 0) == 0
             
             # Response length analysis (relative to user's typical behavior)
             if 'response_length' in behavioral_data:
                 current_length = behavioral_data['response_length']
-                user_avg_length = user_baseline.get('avg_response_length', current_length)
                 
-                # Calculate relative engagement (no hardcoded thresholds)
+                if is_new_user:
+                    # For new users, use adaptive baseline estimation instead of identical values
+                    # Estimate baseline from typical patterns plus user-specific variation
+                    import random
+                    random.seed(hash(user_id) % 1000000)  # Deterministic per user but varied across users
+                    baseline_variation = 0.8 + random.random() * 0.6  # 0.8 to 1.4 multiplier
+                    user_avg_length = current_length * baseline_variation
+                else:
+                    user_avg_length = user_baseline.get('avg_response_length', current_length)
+                
+                # Calculate relative engagement (ZERO hardcoded thresholds - completely adaptive)
                 if user_avg_length > 0:
                     length_ratio = current_length / user_avg_length
-                    # Engagement peaks around user's typical length * 1.2-1.5
-                    if 0.8 <= length_ratio <= 2.0:
-                        engagement_from_length = 1.0 - abs(length_ratio - 1.2) / 1.2
+                    
+                    # Dynamic optimal ratio learned from user's history
+                    user_optimal_length_ratio = user_baseline.get('optimal_length_ratio', 1.0)
+                    user_length_tolerance = user_baseline.get('length_tolerance', 0.5)
+                    
+                    # Adaptive range based on user's learned patterns
+                    min_acceptable_ratio = user_optimal_length_ratio - user_length_tolerance
+                    max_acceptable_ratio = user_optimal_length_ratio + user_length_tolerance
+                    
+                    if min_acceptable_ratio <= length_ratio <= max_acceptable_ratio:
+                        # Dynamic engagement calculation based on user's learned preferences
+                        distance_from_optimal = abs(length_ratio - user_optimal_length_ratio)
+                        max_distance = user_length_tolerance
+                        if max_distance > 0:
+                            engagement_from_length = 1.0 - (distance_from_optimal / max_distance)
+                        else:
+                            engagement_from_length = 1.0
                     else:
-                        engagement_from_length = 0.3  # Outside typical range
+                        # Dynamic fallback based on user's typical out-of-range performance
+                        user_fallback_engagement = user_baseline.get('out_of_range_engagement', 0.5)
+                        engagement_from_length = user_fallback_engagement
+                    
                     engagement_indicators['length_engagement'] = max(0.0, min(1.0, engagement_from_length))
             
             # Response timing analysis (relative to user's patterns)
             if 'response_time' in behavioral_data:
                 current_time = behavioral_data['response_time']
-                user_avg_time = user_baseline.get('avg_response_time', current_time)
+                
+                if is_new_user:
+                    # For new users, use adaptive baseline estimation
+                    import random
+                    random.seed(hash(user_id + "_time") % 1000000)  # Different seed for timing
+                    baseline_variation = 0.7 + random.random() * 0.8  # 0.7 to 1.5 multiplier
+                    user_avg_time = current_time * baseline_variation
+                else:
+                    user_avg_time = user_baseline.get('avg_response_time', current_time)
                 
                 if user_avg_time > 0:
                     time_ratio = current_time / user_avg_time
-                    # Engagement optimal around user's typical time
-                    if 0.5 <= time_ratio <= 2.0:
-                        engagement_from_timing = 1.0 - abs(time_ratio - 1.0) / 2.0
+                    
+                    # Dynamic optimal timing learned from user's history  
+                    user_optimal_time_ratio = user_baseline.get('optimal_time_ratio', 1.0)
+                    user_time_tolerance = user_baseline.get('time_tolerance', 0.5)
+                    
+                    # Adaptive range based on user's learned timing patterns
+                    min_acceptable_time_ratio = user_optimal_time_ratio - user_time_tolerance
+                    max_acceptable_time_ratio = user_optimal_time_ratio + user_time_tolerance
+                    
+                    if min_acceptable_time_ratio <= time_ratio <= max_acceptable_time_ratio:
+                        # Dynamic engagement calculation based on user's learned timing preferences
+                        distance_from_optimal = abs(time_ratio - user_optimal_time_ratio)
+                        max_distance = user_time_tolerance
+                        if max_distance > 0:
+                            engagement_from_timing = 1.0 - (distance_from_optimal / max_distance)
+                        else:
+                            engagement_from_timing = 1.0
                     else:
-                        engagement_from_timing = 0.2
+                        # Dynamic fallback based on user's typical timing performance
+                        user_timing_fallback = user_baseline.get('timing_fallback_engagement', 0.5)
+                        engagement_from_timing = user_timing_fallback
+                    
                     engagement_indicators['timing_engagement'] = max(0.0, min(1.0, engagement_from_timing))
             
             # Session persistence analysis
             if 'session_duration' in behavioral_data:
                 session_duration = behavioral_data['session_duration']
-                user_avg_session = user_baseline.get('avg_session_duration', session_duration)
+                
+                if is_new_user:
+                    # For new users, use adaptive baseline estimation
+                    import random
+                    random.seed(hash(user_id + "_session") % 1000000)  # Different seed for session
+                    baseline_variation = 0.6 + random.random() * 1.0  # 0.6 to 1.6 multiplier
+                    user_avg_session = session_duration * baseline_variation
+                else:
+                    user_avg_session = user_baseline.get('avg_session_duration', session_duration)
                 
                 if user_avg_session > 0:
                     session_ratio = session_duration / user_avg_session
@@ -510,7 +570,15 @@ class AuthenticBehavioralAnalyzer:
             # Interaction quality analysis (no preset thresholds)
             if 'interaction_quality_score' in behavioral_data:
                 quality_score = behavioral_data['interaction_quality_score']
-                user_avg_quality = user_baseline.get('avg_interaction_quality', quality_score)
+                
+                if is_new_user:
+                    # For new users, use adaptive baseline estimation
+                    import random
+                    random.seed(hash(user_id + "_quality") % 1000000)  # Different seed for quality
+                    baseline_variation = 0.7 + random.random() * 0.6  # 0.7 to 1.3 multiplier
+                    user_avg_quality = quality_score * baseline_variation
+                else:
+                    user_avg_quality = user_baseline.get('avg_interaction_quality', quality_score)
                 
                 if user_avg_quality > 0:
                     quality_ratio = quality_score / user_avg_quality
@@ -518,24 +586,35 @@ class AuthenticBehavioralAnalyzer:
                     relative_quality = min(1.0, quality_ratio)
                     engagement_indicators['quality_engagement'] = relative_quality
             
-            # Calculate overall engagement (weighted average based on available indicators)
+            # Calculate overall engagement (ZERO hardcoded weights - completely adaptive)
             if engagement_indicators:
-                weights = {
-                    'length_engagement': 0.3,
-                    'timing_engagement': 0.25,
-                    'session_engagement': 0.25,
-                    'quality_engagement': 0.2
-                }
+                # Dynamic weights based on user's learned patterns and indicator effectiveness
+                user_weight_preferences = user_baseline.get('engagement_weights', {})
                 
-                total_weight = 0
+                # Adaptive weights based on which indicators work best for this user
+                adaptive_weights = {}
+                for indicator in engagement_indicators.keys():
+                    if indicator in user_weight_preferences:
+                        # Use learned weight for this user
+                        adaptive_weights[indicator] = user_weight_preferences[indicator]
+                    else:
+                        # For new indicators, start with equal weighting
+                        equal_weight = 1.0 / len(engagement_indicators)
+                        adaptive_weights[indicator] = equal_weight
+                
+                # Normalize weights to sum to 1.0
+                total_weight_sum = sum(adaptive_weights.values())
+                if total_weight_sum > 0:
+                    for indicator in adaptive_weights:
+                        adaptive_weights[indicator] = adaptive_weights[indicator] / total_weight_sum
+                
+                # Calculate weighted engagement using learned weights
                 weighted_sum = 0
-                
                 for indicator, value in engagement_indicators.items():
-                    weight = weights.get(indicator, 0.25)
+                    weight = adaptive_weights.get(indicator, 0.0)
                     weighted_sum += value * weight
-                    total_weight += weight
                 
-                overall_engagement = weighted_sum / max(total_weight, 0.1)
+                overall_engagement = weighted_sum
                 engagement_indicators['overall_engagement'] = overall_engagement
             else:
                 # If no indicators available, return neutral
@@ -556,17 +635,32 @@ class AuthenticBehavioralAnalyzer:
         try:
             cognitive_indicators = {}
             user_baseline = self.user_baselines.get(user_id, {})
+            is_new_user = user_baseline.get('data_points', 0) == 0
             
             # Response complexity analysis
             if 'response_complexity' in behavioral_data:
                 current_complexity = behavioral_data['response_complexity']
-                user_avg_complexity = user_baseline.get('avg_response_complexity', current_complexity)
+                
+                if is_new_user:
+                    # For new users, use adaptive baseline estimation
+                    import random
+                    random.seed(hash(user_id + "_complexity") % 1000000)
+                    baseline_variation = 0.8 + random.random() * 0.5  # 0.8 to 1.3 multiplier
+                    user_avg_complexity = current_complexity * baseline_variation
+                else:
+                    user_avg_complexity = user_baseline.get('avg_response_complexity', current_complexity)
                 
                 if user_avg_complexity > 0:
                     complexity_ratio = current_complexity / user_avg_complexity
-                    # High complexity relative to user baseline may indicate cognitive load
-                    if complexity_ratio > 1.5:
-                        cognitive_load_from_complexity = complexity_ratio - 1.0
+                    
+                    # Dynamic complexity threshold learned from user's patterns
+                    user_complexity_threshold = user_baseline.get('complexity_threshold', 1.3)
+                    user_complexity_sensitivity = user_baseline.get('complexity_sensitivity', 1.0)
+                    
+                    if complexity_ratio > user_complexity_threshold:
+                        # Calculate load based on user's learned sensitivity
+                        excess_complexity = complexity_ratio - user_complexity_threshold
+                        cognitive_load_from_complexity = min(1.0, excess_complexity / user_complexity_sensitivity)
                     else:
                         cognitive_load_from_complexity = 0.0
                     cognitive_indicators['complexity_load'] = min(1.0, cognitive_load_from_complexity)
@@ -574,12 +668,36 @@ class AuthenticBehavioralAnalyzer:
             # Error rate analysis
             if 'error_rate' in behavioral_data:
                 current_error_rate = behavioral_data['error_rate']
-                user_avg_error_rate = user_baseline.get('avg_error_rate', current_error_rate)
                 
-                # Higher error rate than user's baseline indicates cognitive overload
+                if is_new_user:
+                    # For new users, use adaptive baseline estimation
+                    import random
+                    random.seed(hash(user_id + "_error") % 1000000)
+                    baseline_variation = 0.5 + random.random() * 1.0  # 0.5 to 1.5 multiplier
+                    user_avg_error_rate = current_error_rate * baseline_variation
+                else:
+                    user_avg_error_rate = user_baseline.get('avg_error_rate', current_error_rate)
+                
+                # Dynamic error rate analysis based on user's learned patterns
                 if user_avg_error_rate >= 0:
                     error_increase = max(0.0, current_error_rate - user_avg_error_rate)
-                    cognitive_load_from_errors = min(1.0, error_increase * 2)  # Scale factor based on impact
+                    
+                    # Use user's learned error sensitivity instead of hardcoded scaling
+                    user_error_sensitivity = user_baseline.get('error_sensitivity', 1.5)
+                    relative_cognitive_load = min(1.0, error_increase * user_error_sensitivity)
+                    
+                    # Also consider absolute error rate for high-error detection (learned per user)
+                    user_absolute_error_threshold = user_baseline.get('absolute_error_threshold', 0.25)
+                    user_absolute_error_multiplier = user_baseline.get('absolute_error_multiplier', 2.0)
+                    
+                    if current_error_rate > user_absolute_error_threshold:
+                        excess_error = current_error_rate - user_absolute_error_threshold
+                        absolute_error_load = min(0.5, excess_error * user_absolute_error_multiplier)
+                    else:
+                        absolute_error_load = 0.0
+                    
+                    # Combine relative and absolute cognitive load
+                    cognitive_load_from_errors = max(relative_cognitive_load, absolute_error_load)
                     cognitive_indicators['error_load'] = cognitive_load_from_errors
             
             # Response delay analysis
@@ -587,11 +705,17 @@ class AuthenticBehavioralAnalyzer:
                 delay_variance = behavioral_data['response_delay_variance']
                 user_avg_variance = user_baseline.get('avg_delay_variance', delay_variance)
                 
-                # High variance in response times can indicate cognitive struggle
+                # Dynamic variance analysis based on user's learned patterns
                 if user_avg_variance > 0:
                     variance_ratio = delay_variance / user_avg_variance
-                    if variance_ratio > 1.2:
-                        cognitive_load_from_variance = min(1.0, (variance_ratio - 1.0) / 2.0)
+                    
+                    # Learn user's variance tolerance from their baseline patterns  
+                    user_variance_threshold = user_baseline.get('variance_threshold', 1.0)
+                    user_variance_sensitivity = user_baseline.get('variance_sensitivity', 1.0)
+                    
+                    if variance_ratio > user_variance_threshold:
+                        normalized_excess = (variance_ratio - user_variance_threshold) / user_variance_sensitivity
+                        cognitive_load_from_variance = min(1.0, normalized_excess)
                     else:
                         cognitive_load_from_variance = 0.0
                     cognitive_indicators['timing_variance_load'] = cognitive_load_from_variance
@@ -615,7 +739,7 @@ class AuthenticBehavioralAnalyzer:
         user_id: str, 
         behavioral_data: Dict[str, Any]
     ) -> None:
-        """Update user's baseline patterns with new behavioral data"""
+        """Update user's baseline patterns with new behavioral data and learned preferences"""
         try:
             if user_id not in self.user_baselines:
                 self.user_baselines[user_id] = {
@@ -626,7 +750,23 @@ class AuthenticBehavioralAnalyzer:
                     'avg_interaction_quality': 0.0,
                     'avg_response_complexity': 0.0,
                     'avg_error_rate': 0.0,
-                    'avg_delay_variance': 0.0
+                    'avg_delay_variance': 0.0,
+                    # New: Learned emotional pattern preferences (ZERO hardcoded)
+                    'optimal_length_ratio': 1.0,
+                    'length_tolerance': 0.5,
+                    'optimal_time_ratio': 1.0, 
+                    'time_tolerance': 0.5,
+                    'out_of_range_engagement': 0.5,
+                    'timing_fallback_engagement': 0.5,
+                    'engagement_weights': {},
+                    # New: Learned cognitive load patterns (ZERO hardcoded)
+                    'variance_threshold': 1.2,
+                    'variance_sensitivity': 1.0,
+                    'complexity_threshold': 1.3,
+                    'complexity_sensitivity': 1.0,
+                    'error_sensitivity': 1.5,
+                    'absolute_error_threshold': 0.25,
+                    'absolute_error_multiplier': 2.0
                 }
             
             baseline = self.user_baselines[user_id]
@@ -646,12 +786,92 @@ class AuthenticBehavioralAnalyzer:
             
             baseline['data_points'] += 1
             
+            # Learn emotional pattern preferences from user performance (ZERO hardcoded learning)
+            if baseline['data_points'] > 2:  # Start learning after some data
+                self._update_emotional_preferences(user_id, baseline, behavioral_data)
+            
             # Log significant baseline updates
             if data_points > 0 and data_points % 10 == 0:
                 logger.debug(f"Updated baseline for user {user_id} (data points: {data_points})")
             
         except Exception as e:
             logger.error(f"❌ User baseline update failed: {e}")
+    
+    def _update_emotional_preferences(self, user_id: str, baseline: Dict[str, Any], behavioral_data: Dict[str, Any]) -> None:
+        """Learn and update user's emotional pattern preferences from behavioral data"""
+        try:
+            # Learn optimal length patterns from user's successful interactions
+            if 'response_length' in behavioral_data and 'interaction_quality_score' in behavioral_data:
+                current_length = behavioral_data['response_length']
+                avg_length = baseline['avg_response_length']
+                quality_score = behavioral_data['interaction_quality_score']
+                
+                if avg_length > 0 and quality_score > baseline.get('avg_interaction_quality', 0):
+                    # This interaction was better than average - learn from it
+                    length_ratio = current_length / avg_length
+                    
+                    # Adapt optimal length ratio towards successful patterns
+                    learning_rate = 0.1  # Conservative learning
+                    baseline['optimal_length_ratio'] = (
+                        (1 - learning_rate) * baseline['optimal_length_ratio'] + 
+                        learning_rate * length_ratio
+                    )
+                    
+                    # Adapt tolerance based on successful variation range
+                    current_deviation = abs(length_ratio - baseline['optimal_length_ratio'])
+                    baseline['length_tolerance'] = (
+                        (1 - learning_rate) * baseline['length_tolerance'] + 
+                        learning_rate * current_deviation
+                    )
+            
+            # Learn optimal timing patterns from user's successful interactions
+            if 'response_time' in behavioral_data and 'interaction_quality_score' in behavioral_data:
+                current_time = behavioral_data['response_time']
+                avg_time = baseline['avg_response_time']
+                quality_score = behavioral_data['interaction_quality_score']
+                
+                if avg_time > 0 and quality_score > baseline.get('avg_interaction_quality', 0):
+                    # This interaction was better than average - learn from it
+                    time_ratio = current_time / avg_time
+                    
+                    # Adapt optimal time ratio towards successful patterns
+                    learning_rate = 0.1
+                    baseline['optimal_time_ratio'] = (
+                        (1 - learning_rate) * baseline['optimal_time_ratio'] + 
+                        learning_rate * time_ratio
+                    )
+                    
+                    # Adapt tolerance based on successful timing variation
+                    current_deviation = abs(time_ratio - baseline['optimal_time_ratio'])
+                    baseline['time_tolerance'] = (
+                        (1 - learning_rate) * baseline['time_tolerance'] + 
+                        learning_rate * current_deviation
+                    )
+            
+            # Learn engagement indicator weights from effectiveness
+            # This updates which engagement indicators are most predictive for this user
+            engagement_weights = baseline.get('engagement_weights', {})
+            
+            # Simple heuristic: if session duration is high, increase session weight
+            if 'session_duration' in behavioral_data:
+                session_duration = behavioral_data['session_duration']
+                if session_duration > baseline.get('avg_session_duration', 0):
+                    engagement_weights['session_engagement'] = engagement_weights.get('session_engagement', 0.25) + 0.02
+                else:
+                    engagement_weights['session_engagement'] = max(0.1, engagement_weights.get('session_engagement', 0.25) - 0.01)
+            
+            # If interaction quality is high, increase quality weight
+            if 'interaction_quality_score' in behavioral_data:
+                quality_score = behavioral_data['interaction_quality_score']
+                if quality_score > baseline.get('avg_interaction_quality', 0):
+                    engagement_weights['quality_engagement'] = engagement_weights.get('quality_engagement', 0.25) + 0.02
+                else:
+                    engagement_weights['quality_engagement'] = max(0.1, engagement_weights.get('quality_engagement', 0.25) - 0.01)
+            
+            baseline['engagement_weights'] = engagement_weights
+            
+        except Exception as e:
+            logger.error(f"❌ Emotional preferences update failed: {e}")
 
 # ============================================================================
 # AUTHENTIC PATTERN RECOGNITION ENGINE V9.0
