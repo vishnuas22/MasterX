@@ -145,13 +145,16 @@ async def validate_zero_hardcoded_values():
         
         extreme_results = []
         
-        for test_case in extreme_test_cases:
+        for i, test_case in enumerate(extreme_test_cases):
+            # Use different user IDs for each extreme case to avoid baseline contamination
+            test_user_id = f"extreme_test_user_{i}"
+            
             engagement_analysis = await behavioral_analyzer.analyze_engagement_patterns(
-                "extreme_test_user", test_case["behavioral_data"]
+                test_user_id, test_case["behavioral_data"]
             )
             
             cognitive_analysis = await behavioral_analyzer.analyze_cognitive_load_indicators(
-                "extreme_test_user", test_case["behavioral_data"]
+                test_user_id, test_case["behavioral_data"]
             )
             
             extreme_results.append({
