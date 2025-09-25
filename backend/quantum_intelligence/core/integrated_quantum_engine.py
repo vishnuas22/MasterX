@@ -581,7 +581,7 @@ class UltraEnterpriseQuantumEngine:
                 raise Exception("Circuit breaker test failed")
                 
         except Exception as e:
-            self.logger.error(f"❌ Circuit breaker configuration failed: {e}")
+            self.logger.error("❌ Circuit breaker configuration failed", error=str(e))
             raise
     
     # ========================================================================
@@ -2106,11 +2106,11 @@ class UltraEnterpriseQuantumEngine:
                 }
             }
             
-            self.logger.info(f"📊 User profile retrieved", user_id=user_id)
+            self.logger.info("📊 User profile retrieved", user_id=user_id)
             return profile
             
         except Exception as e:
-            self.logger.error(f"❌ Failed to retrieve user profile", user_id=user_id, error=str(e))
+            self.logger.error("❌ Failed to retrieve user profile", user_id=user_id, error=str(e))
             return None
 
 # ============================================================================
