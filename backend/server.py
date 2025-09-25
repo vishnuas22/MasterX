@@ -1031,7 +1031,7 @@ async def initialize_quantum_intelligence():
             return False
             
     except Exception as e:
-        logger.error(f"❌ Quantum Intelligence initialization failed: {e}")
+        logger.error("❌ Quantum Intelligence initialization failed", error=str(e))
         quantum_intelligence_available = False
         return False
 
