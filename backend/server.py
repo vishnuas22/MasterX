@@ -1031,7 +1031,7 @@ async def initialize_quantum_intelligence():
             return False
             
     except Exception as e:
-        logger.error("❌ Quantum Intelligence initialization failed", error=str(e))
+        logger.error(f"❌ Quantum Intelligence initialization failed: {str(e)}")
         quantum_intelligence_available = False
         return False
 
@@ -1653,36 +1653,7 @@ logger = logging.getLogger(__name__)
 # ULTRA-ENTERPRISE STARTUP MESSAGE V6.0
 # ============================================================================
 
-@app.on_event("startup")
-async def startup_message():
-    """Ultra-enterprise startup message with comprehensive information"""
-    logger.info("🚀" + "="*100)
-    logger.info("🚀 MASTERX ULTRA-ENTERPRISE SERVER V6.0 - AGI-LEVEL PERFORMANCE")
-    logger.info("🚀" + "="*100)
-    logger.info("🎯 ULTRA-ENTERPRISE PERFORMANCE TARGETS:")
-    logger.info(f"🎯   • Response Time: < {enterprise_config.TARGET_RESPONSE_TIME_MS}ms (World-class)")
-    logger.info(f"🎯   • Ultra-Fast Target: < {enterprise_config.ULTRA_FAST_TARGET_MS}ms (Breakthrough)")
-    logger.info(f"🎯   • Concurrent Users: {enterprise_config.MAX_CONCURRENT_CONNECTIONS:,}+ (Hyperscale)")
-    logger.info("🎯   • Uptime Target: 99.99% (Mission-critical SLA)")
-    logger.info("🎯   • Quantum Intelligence: Ultra-Enterprise Optimized")
-    logger.info("🚀" + "="*100)
-    logger.info("🌟 REVOLUTIONARY FEATURES ACTIVE:")
-    logger.info("🌟   ✅ Quantum Intelligence Engine V6.0 (Ultra-Enterprise)")
-    logger.info("🌟   ✅ AI-Powered Quantum Cache System")
-    logger.info("🌟   ✅ Ultra-Enterprise Connection Management") 
-    logger.info("🌟   ✅ Quantum Circuit Breaker Protection")
-    logger.info("🌟   ✅ AI-Powered Performance Monitoring")
-    logger.info("🌟   ✅ Predictive Analytics & ML-Driven Optimization")
-    logger.info("🌟   ✅ Enterprise Security Hardening")
-    logger.info("🌟   ✅ Ultra-Fast Distributed Caching")
-    logger.info("🌟   ✅ Intelligent Auto-Scaling Triggers")
-    logger.info("🚀" + "="*100)
-    logger.info("📈 SYSTEM OPTIMIZATIONS:")
-    logger.info(f"📈   • Connection Pool: {enterprise_config.CONNECTION_POOL_SIZE} connections")
-    logger.info(f"📈   • Thread Pool: {enterprise_config.THREAD_POOL_SIZE} workers")
-    logger.info(f"📈   • Cache TTL: {enterprise_config.CACHE_TTL_SECONDS}s")
-    logger.info(f"📈   • Circuit Breaker: {enterprise_config.CIRCUIT_BREAKER_THRESHOLD} failure threshold")
-    logger.info("🚀" + "="*100)
+
 
 if __name__ == "__main__":
     import uvicorn
