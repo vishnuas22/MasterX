@@ -718,8 +718,8 @@ class UltraEnterpriseQuantumEngine:
         """Execute the complete 6-phase quantum processing pipeline with ultra-performance optimization"""
         
         try:
-            # 🚀 ULTRA-PERFORMANCE OPTIMIZATION: Check if response optimizer is available
-            if self.response_optimizer:
+            # 🎯 MAXIMUM PERSONALIZATION: Skip optimization to force real AI calls
+            if False:  # Disabled for maximum personalization with real AI
                 # Prepare request data for optimization
                 request_data = {
                     "user_id": user_id,
@@ -1034,68 +1034,13 @@ class UltraEnterpriseQuantumEngine:
                 await self.cache_optimizer.start_optimization()
                 self.logger.info("✅ Cache optimizer started")
             
-            if self.response_optimizer:
+            # 🎯 MAXIMUM PERSONALIZATION: Skip optimization to force real AI calls for emotion detection
+            if False:  # Disabled for maximum personalization with real AI
                 await self.response_optimizer.start_optimizer()
                 self.logger.info("✅ Response optimizer started")
                 
         except Exception as e:
             self.logger.error(f"❌ Failed to start optimization services: {e}")
-            # STANDARD PIPELINE (fallback or when optimization not available)
-            # PHASE 1: Request Initialization & Validation
-            phase_start = time.time()
-            await self._phase_1_initialization(metrics, user_id, user_message, task_type)
-            metrics.context_generation_ms += (time.time() - phase_start) * 1000
-            
-            # PHASE 2: Context Setup & Memory Management
-            phase_start = time.time()
-            conversation_memory = await self._phase_2_context_setup(
-                metrics, user_id, user_message, session_id, initial_context
-            )
-            metrics.database_operations_ms += (time.time() - phase_start) * 1000
-            
-            # PHASE 3: Adaptive Analysis & Learning Intelligence
-            phase_start = time.time()
-            adaptation_analysis = await self._phase_3_adaptive_analysis(
-                metrics, user_id, conversation_memory.conversation_id, user_message
-            )
-            metrics.adaptation_analysis_ms += (time.time() - phase_start) * 1000
-            
-            # PHASE 4: Context Injection & Quantum Optimization
-            phase_start = time.time()
-            context_injection = await self._phase_4_context_injection(
-                metrics, conversation_memory, user_message, task_type, adaptation_analysis
-            )
-            metrics.context_generation_ms += (time.time() - phase_start) * 1000
-            
-            # PHASE 5: AI Coordination & Response Generation
-            phase_start = time.time()
-            ai_response = await self._phase_5_ai_coordination(
-                metrics, user_message, context_injection, task_type, adaptation_analysis, priority
-            )
-            metrics.ai_coordination_ms += (time.time() - phase_start) * 1000
-            
-            # PHASE 6: Response Analysis & System Optimization
-            phase_start = time.time()
-            response_analysis = await self._phase_6_response_analysis(
-                metrics, conversation_memory, user_message, ai_response, adaptation_analysis
-            )
-            metrics.response_generation_ms += (time.time() - phase_start) * 1000
-            
-            # Calculate total processing time
-            metrics.total_processing_ms = (time.time() - metrics.start_time) * 1000
-            
-            # Generate comprehensive quantum response
-            return await self._generate_quantum_response(
-                metrics, ai_response, conversation_memory, adaptation_analysis, response_analysis
-            )
-            
-        except Exception as e:
-            self.logger.error(
-                "❌ Quantum pipeline execution failed",
-                request_id=metrics.request_id,
-                error=str(e)
-            )
-            raise
     
     # ========================================================================
     # QUANTUM PROCESSING PHASES V6.0
