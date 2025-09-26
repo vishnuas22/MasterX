@@ -117,15 +117,16 @@ load_dotenv(ROOT_DIR / '.env')
 
 @dataclass
 class UltraEnterpriseConfig:
-    """Ultra-enterprise configuration for sub-15ms targets"""
+    """Ultra-enterprise configuration optimized for real AI performance"""
     
-    # Performance targets - World-class performance
-    TARGET_RESPONSE_TIME_MS: int = 15
-    ULTRA_FAST_TARGET_MS: int = 5
+    # Performance targets - Realistic for AI processing
+    TARGET_RESPONSE_TIME_MS: int = 3000  # 3 seconds - good for AI
+    ULTRA_FAST_TARGET_MS: int = 1500     # 1.5 seconds - excellent for AI
+    CACHE_TARGET_MS: int = 100           # Cache responses under 100ms
     MAX_CONCURRENT_CONNECTIONS: int = 100000
     CONNECTION_POOL_SIZE: int = 200
     CACHE_TTL_SECONDS: int = 300
-    CIRCUIT_BREAKER_THRESHOLD: int = 3
+    CIRCUIT_BREAKER_THRESHOLD: int = 5   # More forgiving threshold
     
     # Optimization settings
     ENABLE_COMPRESSION: bool = True
@@ -1277,6 +1278,7 @@ async def process_ultra_enterprise_quantum_message(request: UltraEnterpriseQuant
             )
         
         # Enhanced cache optimization with AI prediction
+        cache_key = None
         if request.enable_caching:
             cache_key = cache_manager._generate_cache_key(
                 request.user_id, request.message, request.task_type, request.priority
@@ -1288,14 +1290,17 @@ async def process_ultra_enterprise_quantum_message(request: UltraEnterpriseQuant
                 cache_utilized = True
                 optimizations_applied.append("ai_cache_hit")
                 performance_tier = "ultra"
+                cache_response_time_ms = (time.time() - processing_start) * 1000
                 
                 # Enhance cached response with current metadata
                 cached_response["performance"]["cached_response"] = True
-                cached_response["performance"]["cache_response_time_ms"] = (time.time() - processing_start) * 1000
+                cached_response["performance"]["cache_response_time_ms"] = cache_response_time_ms
                 cached_response["performance"]["performance_tier"] = performance_tier
                 cached_response["server_version"] = "6.0"
                 cached_response["cache_utilized"] = True
                 cached_response["processing_optimizations"] = optimizations_applied
+                
+                logger.info(f"✅ Cache hit: {cache_response_time_ms:.2f}ms vs estimated {request.max_response_time_ms}ms")
                 
                 return UltraEnterpriseQuantumResponse(**cached_response)
         
@@ -1391,17 +1396,22 @@ async def process_ultra_enterprise_quantum_message(request: UltraEnterpriseQuant
         # Ultra-enterprise performance metadata enhancement
         total_processing_time = (time.time() - processing_start) * 1000
         
-        # Enhanced performance analysis
-        if total_processing_time < enterprise_config.ULTRA_FAST_TARGET_MS:
-            optimizations_applied.append("world_class_performance")
+        # Enhanced performance analysis with realistic AI thresholds
+        if total_processing_time < enterprise_config.CACHE_TARGET_MS:
+            optimizations_applied.append("cache_performance_achieved") 
+            performance_tier = "ultra"
+        elif total_processing_time < enterprise_config.ULTRA_FAST_TARGET_MS:
+            optimizations_applied.append("ultra_fast_ai_performance")
             performance_tier = "ultra"
         elif total_processing_time < enterprise_config.TARGET_RESPONSE_TIME_MS:
-            optimizations_applied.append("enterprise_performance")
-            if performance_tier == "standard":
-                pass  # Keep standard tier
+            optimizations_applied.append("excellent_ai_performance")
+            performance_tier = "standard"
+        elif total_processing_time < 8000:  # Under 8 seconds is still good for AI
+            optimizations_applied.append("good_ai_performance")
+            performance_tier = "standard"
         else:
             performance_tier = "degraded"
-            optimizations_applied.append("performance_degraded")
+            optimizations_applied.append("performance_needs_optimization")
         
         # Enhance result with ultra-enterprise metadata
         result["performance"]["total_processing_time_ms"] = total_processing_time
