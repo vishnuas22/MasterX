@@ -1,0 +1,312 @@
+{
+  "validation_summary": {
+    "total_tests": 9,
+    "test_timestamp": "2025-09-26T05:44:09.437082",
+    "validation_version": "1.0"
+  },
+  "test_results": [
+    {
+      "test": "direct_provider_calls",
+      "message": "I'm feeling frustrated with learning math concepts",
+      "groq_result": {
+        "error": "Groq not available",
+        "success": false
+      },
+      "emergent_result": {
+        "success": true,
+        "content": "I apologize, but I'm experiencing technical difficulties with the Emergent provider. Please try again in a moment.",
+        "provider": "emergent_fallback",
+        "model": "fallback",
+        "response_time": 2.288818359375e-05,
+        "confidence": 0.0,
+        "empathy_score": 0.8,
+        "is_real_ai": false
+      },
+      "system_result": {
+        "success": true,
+        "content": "System test placeholder",
+        "note": "Full system integration test needed"
+      },
+      "timestamp": "2025-09-26T05:43:52.403339"
+    },
+    {
+      "test": "direct_provider_calls",
+      "message": "Can you explain quantum mechanics in simple terms?",
+      "groq_result": {
+        "error": "Groq not available",
+        "success": false
+      },
+      "emergent_result": {
+        "success": true,
+        "content": "I apologize, but I'm experiencing technical difficulties with the Emergent provider. Please try again in a moment.",
+        "provider": "emergent_fallback",
+        "model": "fallback",
+        "response_time": 2.9802322387695312e-05,
+        "confidence": 0.0,
+        "empathy_score": 0.8,
+        "is_real_ai": false
+      },
+      "system_result": {
+        "success": true,
+        "content": "System test placeholder",
+        "note": "Full system integration test needed"
+      },
+      "timestamp": "2025-09-26T05:43:53.404891"
+    },
+    {
+      "test": "direct_provider_calls",
+      "message": "I'm excited about this new programming challenge!",
+      "groq_result": {
+        "error": "Groq not available",
+        "success": false
+      },
+      "emergent_result": {
+        "success": true,
+        "content": "I apologize, but I'm experiencing technical difficulties with the Emergent provider. Please try again in a moment.",
+        "provider": "emergent_fallback",
+        "model": "fallback",
+        "response_time": 2.956390380859375e-05,
+        "confidence": 0.0,
+        "empathy_score": 0.8,
+        "is_real_ai": false
+      },
+      "system_result": {
+        "success": true,
+        "content": "System test placeholder",
+        "note": "Full system integration test needed"
+      },
+      "timestamp": "2025-09-26T05:43:54.406317"
+    },
+    {
+      "test": "direct_provider_calls",
+      "message": "I'm confused and need help understanding this topic",
+      "groq_result": {
+        "error": "Groq not available",
+        "success": false
+      },
+      "emergent_result": {
+        "success": true,
+        "content": "I apologize, but I'm experiencing technical difficulties with the Emergent provider. Please try again in a moment.",
+        "provider": "emergent_fallback",
+        "model": "fallback",
+        "response_time": 3.123283386230469e-05,
+        "confidence": 0.0,
+        "empathy_score": 0.8,
+        "is_real_ai": false
+      },
+      "system_result": {
+        "success": true,
+        "content": "System test placeholder",
+        "note": "Full system integration test needed"
+      },
+      "timestamp": "2025-09-26T05:43:55.407898"
+    },
+    {
+      "test": "emotion_enhancement",
+      "case": {
+        "message": "I'm really struggling and feeling overwhelmed with this subject",
+        "expected_emotion": "frustration",
+        "expected_enhancement": "empathetic_support"
+      },
+      "emotion_result": {
+        "error": "No module named 'torch'",
+        "success": false
+      },
+      "enhanced_result": {
+        "placeholder": true,
+        "message": "Implementation needed"
+      },
+      "baseline_result": {
+        "placeholder": true,
+        "message": "Implementation needed"
+      },
+      "enhancement_detected": {
+        "enhanced": false,
+        "analysis": "Analysis implementation needed"
+      },
+      "timestamp": "2025-09-26T05:43:56.419942"
+    },
+    {
+      "test": "emotion_enhancement",
+      "case": {
+        "message": "This is amazing! I finally understand this concept completely!",
+        "expected_emotion": "excitement",
+        "expected_enhancement": "positive_reinforcement"
+      },
+      "emotion_result": {
+        "error": "No module named 'torch'",
+        "success": false
+      },
+      "enhanced_result": {
+        "placeholder": true,
+        "message": "Implementation needed"
+      },
+      "baseline_result": {
+        "placeholder": true,
+        "message": "Implementation needed"
+      },
+      "enhancement_detected": {
+        "enhanced": false,
+        "analysis": "Analysis implementation needed"
+      },
+      "timestamp": "2025-09-26T05:43:56.420370"
+    },
+    {
+      "test": "emotion_enhancement",
+      "case": {
+        "message": "I'm confused about this topic and don't know where to start",
+        "expected_emotion": "confusion",
+        "expected_enhancement": "simplified_explanation"
+      },
+      "emotion_result": {
+        "error": "No module named 'torch'",
+        "success": false
+      },
+      "enhanced_result": {
+        "placeholder": true,
+        "message": "Implementation needed"
+      },
+      "baseline_result": {
+        "placeholder": true,
+        "message": "Implementation needed"
+      },
+      "enhancement_detected": {
+        "enhanced": false,
+        "analysis": "Analysis implementation needed"
+      },
+      "timestamp": "2025-09-26T05:43:56.420706"
+    },
+    {
+      "test": "response_variation",
+      "message": "Can you help me understand machine learning?",
+      "responses": [
+        {
+          "iteration": 1,
+          "groq": {
+            "error": "Groq not available",
+            "success": false
+          },
+          "emergent": {
+            "success": true,
+            "content": "I apologize, but I'm experiencing technical difficulties with the Emergent provider. Please try again in a moment.",
+            "provider": "emergent_fallback",
+            "model": "fallback",
+            "response_time": 2.6702880859375e-05,
+            "confidence": 0.0,
+            "empathy_score": 0.8,
+            "is_real_ai": false
+          },
+          "timestamp": "2025-09-26T05:43:56.420981"
+        },
+        {
+          "iteration": 2,
+          "groq": {
+            "error": "Groq not available",
+            "success": false
+          },
+          "emergent": {
+            "success": true,
+            "content": "I apologize, but I'm experiencing technical difficulties with the Emergent provider. Please try again in a moment.",
+            "provider": "emergent_fallback",
+            "model": "fallback",
+            "response_time": 2.7179718017578125e-05,
+            "confidence": 0.0,
+            "empathy_score": 0.8,
+            "is_real_ai": false
+          },
+          "timestamp": "2025-09-26T05:43:58.423497"
+        },
+        {
+          "iteration": 3,
+          "groq": {
+            "error": "Groq not available",
+            "success": false
+          },
+          "emergent": {
+            "success": true,
+            "content": "I apologize, but I'm experiencing technical difficulties with the Emergent provider. Please try again in a moment.",
+            "provider": "emergent_fallback",
+            "model": "fallback",
+            "response_time": 2.956390380859375e-05,
+            "confidence": 0.0,
+            "empathy_score": 0.8,
+            "is_real_ai": false
+          },
+          "timestamp": "2025-09-26T05:44:00.426692"
+        },
+        {
+          "iteration": 4,
+          "groq": {
+            "error": "Groq not available",
+            "success": false
+          },
+          "emergent": {
+            "success": true,
+            "content": "I apologize, but I'm experiencing technical difficulties with the Emergent provider. Please try again in a moment.",
+            "provider": "emergent_fallback",
+            "model": "fallback",
+            "response_time": 3.1948089599609375e-05,
+            "confidence": 0.0,
+            "empathy_score": 0.8,
+            "is_real_ai": false
+          },
+          "timestamp": "2025-09-26T05:44:02.429235"
+        },
+        {
+          "iteration": 5,
+          "groq": {
+            "error": "Groq not available",
+            "success": false
+          },
+          "emergent": {
+            "success": true,
+            "content": "I apologize, but I'm experiencing technical difficulties with the Emergent provider. Please try again in a moment.",
+            "provider": "emergent_fallback",
+            "model": "fallback",
+            "response_time": 2.6941299438476562e-05,
+            "confidence": 0.0,
+            "empathy_score": 0.8,
+            "is_real_ai": false
+          },
+          "timestamp": "2025-09-26T05:44:04.431366"
+        }
+      ],
+      "variation_analysis": {
+        "groq_responses": 0,
+        "groq_unique": 0,
+        "groq_variation_rate": 0.0,
+        "emergent_responses": 5,
+        "emergent_unique": 1,
+        "emergent_variation_rate": 0.2,
+        "likely_cached": false,
+        "analysis": "High variation suggests real AI, low variation suggests caching"
+      }
+    },
+    {
+      "test": "cache_vs_real_ai",
+      "message": "What is the capital of France?",
+      "cache_analysis": {
+        "response_times": [
+          0.0001327991485595703,
+          0.0001456737518310547,
+          0.00016021728515625
+        ],
+        "avg_response_time": 0.00014623006184895834,
+        "time_variation": 2.7418136596679688e-05,
+        "contents_identical": false,
+        "likely_cached": false,
+        "analysis": "Very consistent timing + identical content suggests caching"
+      }
+    }
+  ],
+  "conclusions": {
+    "ai_providers_working": false,
+    "emotion_detection_working": false,
+    "emotion_enhances_responses": false,
+    "caching_concerns": false,
+    "recommendations": [
+      "Fix AI provider integrations - providers not responding correctly",
+      "Fix emotion detection system - not analyzing emotions properly"
+    ]
+  }
+}
