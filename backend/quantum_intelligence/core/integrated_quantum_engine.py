@@ -426,11 +426,49 @@ class UltraEnterpriseQuantumEngine:
                 engine_id=self.engine_id,
                 component="quantum_engine_v6"
             )
+            self.use_structlog = True
         except ImportError:
             import logging
             self.logger = logging.getLogger(__name__)
+            self.use_structlog = False
         
         self.logger.info("🚀 Ultra-Enterprise Quantum Engine V6.0 initialized")
+    
+    def _log_error(self, message: str, **kwargs):
+        """Helper method for structured logging compatibility"""
+        if self.use_structlog:
+            self.logger.error(message, **kwargs)
+        else:
+            # Format as traditional log message
+            extra_info = ', '.join([f"{k}={v}" for k, v in kwargs.items()])
+            self.logger.error(f"{message} | {extra_info}")
+    
+    def _log_info(self, message: str, **kwargs):
+        """Helper method for structured logging compatibility"""
+        if self.use_structlog:
+            self.logger.info(message, **kwargs)
+        else:
+            # Format as traditional log message
+            extra_info = ', '.join([f"{k}={v}" for k, v in kwargs.items()])
+            self.logger.info(f"{message} | {extra_info}")
+    
+    def _log_warning(self, message: str, **kwargs):
+        """Helper method for structured logging compatibility"""
+        if self.use_structlog:
+            self.logger.warning(message, **kwargs)
+        else:
+            # Format as traditional log message
+            extra_info = ', '.join([f"{k}={v}" for k, v in kwargs.items()])
+            self.logger.warning(f"{message} | {extra_info}")
+    
+    def _log_debug(self, message: str, **kwargs):
+        """Helper method for structured logging compatibility"""
+        if self.use_structlog:
+            self.logger.debug(message, **kwargs)
+        else:
+            # Format as traditional log message
+            extra_info = ', '.join([f"{k}={v}" for k, v in kwargs.items()])
+            self.logger.debug(f"{message} | {extra_info}")
     
     # ========================================================================
     # INITIALIZATION & LIFECYCLE MANAGEMENT
@@ -487,7 +525,7 @@ class UltraEnterpriseQuantumEngine:
             
         except Exception as e:
             initialization_time = (time.time() - initialization_start) * 1000
-            self.logger.error(
+            self._log_error(
                 "❌ Quantum Engine initialization failed",
                 error=str(e),
                 initialization_time_ms=initialization_time,
@@ -2106,7 +2144,7 @@ class UltraEnterpriseQuantumEngine:
                 }
             }
             
-            self.logger.info("📊 User profile retrieved", user_id=user_id)
+            self._log_info("📊 User profile retrieved", user_id=user_id)
             return profile
             
         except Exception as e:
