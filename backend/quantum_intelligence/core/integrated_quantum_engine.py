@@ -516,9 +516,9 @@ class UltraEnterpriseQuantumEngine:
             initialization_time = (time.time() - initialization_start) * 1000
             
             self.logger.info(
-                "✅ Ultra-Enterprise Quantum Engine V6.0 initialized successfully",
-                initialization_time_ms=initialization_time,
-                target_performance_ms=QuantumEngineConstants.TARGET_RESPONSE_TIME_MS
+                f"✅ Ultra-Enterprise Quantum Engine V6.0 initialized successfully - "
+                f"Initialization Time: {initialization_time:.2f}ms, "
+                f"Target Performance: {QuantumEngineConstants.TARGET_RESPONSE_TIME_MS}ms"
             )
             
             return True
@@ -692,11 +692,8 @@ class UltraEnterpriseQuantumEngine:
                 
             except Exception as e:
                 self.logger.error(
-                    "❌ Quantum processing pipeline failed",
-                    request_id=request_id,
-                    user_id=user_id,
-                    error=str(e),
-                    traceback=traceback.format_exc()
+                    f"❌ Quantum processing pipeline failed - Request ID: {request_id}, "
+                    f"User: {user_id}, Error: {str(e)}"
                 )
                 
                 return self._generate_fallback_response(e, request_id, task_type)
@@ -898,9 +895,7 @@ class UltraEnterpriseQuantumEngine:
             
         except Exception as e:
             self.logger.error(
-                "❌ Quantum pipeline execution failed",
-                request_id=metrics.request_id,
-                error=str(e)
+                f"❌ Quantum pipeline execution failed - Request ID: {metrics.request_id}, Error: {str(e)}"
             )
             raise
     
@@ -1069,11 +1064,8 @@ class UltraEnterpriseQuantumEngine:
         task_type_str = task_type.value if hasattr(task_type, 'value') else str(task_type)
         
         self.logger.debug(
-            "✅ Phase 1 Complete: Initialization",
-            request_id=metrics.request_id,
-            user_id=user_id,
-            message_length=len(user_message),
-            task_type=task_type_str
+            f"✅ Phase 1 Complete: Initialization - Request ID: {metrics.request_id}, "
+            f"User: {user_id}, Message Length: {len(user_message)}, Task Type: {task_type_str}"
         )
     
     async def _phase_2_context_setup(
@@ -1110,10 +1102,8 @@ class UltraEnterpriseQuantumEngine:
         await self.context_cache.set(cache_key, conversation, ttl=1800)
         
         self.logger.debug(
-            "✅ Phase 2 Complete: Context Setup",
-            request_id=metrics.request_id,
-            conversation_id=conversation.conversation_id,
-            cache_status="miss"
+            f"✅ Phase 2 Complete: Context Setup - Request ID: {metrics.request_id}, "
+            f"Conversation ID: {conversation.conversation_id}, Cache Status: miss"
         )
         
         return conversation
@@ -1157,10 +1147,9 @@ class UltraEnterpriseQuantumEngine:
             metrics.quantum_coherence_score = analytics.get('quantum_adaptation_score', 0.5)
         
         self.logger.debug(
-            "✅ Phase 3 Complete: Adaptive Analysis",
-            request_id=metrics.request_id,
-            adaptations_count=len(analysis_result.get('adaptations', [])),
-            quantum_score=metrics.quantum_coherence_score
+            f"✅ Phase 3 Complete: Adaptive Analysis - Request ID: {metrics.request_id}, "
+            f"Adaptations: {len(analysis_result.get('adaptations', []))}, "
+            f"Quantum Score: {metrics.quantum_coherence_score}"
         )
         
         return analysis_result
@@ -1189,10 +1178,9 @@ class UltraEnterpriseQuantumEngine:
             metrics.quantum_coherence_score += 0.1
         
         self.logger.debug(
-            "✅ Phase 4 Complete: Context Injection",
-            request_id=metrics.request_id,
-            context_length=len(context_injection),
-            quantum_optimized=len(adaptation_analysis.get('adaptations', [])) > 0
+            f"✅ Phase 4 Complete: Context Injection - Request ID: {metrics.request_id}, "
+            f"Context Length: {len(context_injection)}, "
+            f"Quantum Optimized: {len(adaptation_analysis.get('adaptations', [])) > 0}"
         )
         
         return context_injection
@@ -1228,12 +1216,9 @@ class UltraEnterpriseQuantumEngine:
         ) / 3
         
         self.logger.debug(
-            "✅ Phase 5 Complete: AI Coordination",
-            request_id=metrics.request_id,
-            provider=ai_response.provider,
-            model=ai_response.model,
-            confidence=ai_response.confidence,
-            response_time_ms=ai_response.response_time * 1000
+            f"✅ Phase 5 Complete: AI Coordination - Request ID: {metrics.request_id}, "
+            f"Provider: {ai_response.provider}, Model: {ai_response.model}, "
+            f"Confidence: {ai_response.confidence}, Response Time: {ai_response.response_time * 1000:.1f}ms"
         )
         
         return ai_response
@@ -1278,11 +1263,10 @@ class UltraEnterpriseQuantumEngine:
         )
         
         self.logger.debug(
-            "✅ Phase 6 Complete: Response Analysis",
-            request_id=metrics.request_id,
-            context_effectiveness=response_analysis['context_effectiveness'],
-            personalization_score=response_analysis['personalization_score'],
-            final_quantum_score=metrics.quantum_coherence_score
+            f"✅ Phase 6 Complete: Response Analysis - Request ID: {metrics.request_id}, "
+            f"Context Effectiveness: {response_analysis['context_effectiveness']}, "
+            f"Personalization Score: {response_analysis['personalization_score']}, "
+            f"Final Quantum Score: {metrics.quantum_coherence_score}"
         )
         
         return response_analysis
@@ -1304,10 +1288,9 @@ class UltraEnterpriseQuantumEngine:
         # Performance validation
         if metrics.total_processing_ms > QuantumEngineConstants.TARGET_RESPONSE_TIME_MS:
             self.logger.warning(
-                "⚠️ Response time above target",
-                actual_ms=metrics.total_processing_ms,
-                target_ms=QuantumEngineConstants.TARGET_RESPONSE_TIME_MS,
-                request_id=metrics.request_id
+                f"⚠️ Response time above target - Actual: {metrics.total_processing_ms}ms, "
+                f"Target: {QuantumEngineConstants.TARGET_RESPONSE_TIME_MS}ms, "
+                f"Request ID: {metrics.request_id}"
             )
         
         # Construct comprehensive response
@@ -1365,11 +1348,10 @@ class UltraEnterpriseQuantumEngine:
         }
         
         self.logger.info(
-            "✅ Quantum processing complete",
-            request_id=metrics.request_id,
-            total_time_ms=metrics.total_processing_ms,
-            performance_grade=quantum_response['performance']['performance_grade'],
-            quantum_coherence=metrics.quantum_coherence_score
+            f"✅ Quantum processing complete - Request ID: {metrics.request_id}, "
+            f"Total Time: {metrics.total_processing_ms:.1f}ms, "
+            f"Performance Grade: {quantum_response['performance']['performance_grade']}, "
+            f"Quantum Coherence: {metrics.quantum_coherence_score:.2f}"
         )
         
         return quantum_response
