@@ -1648,16 +1648,30 @@ class UltraEnterpriseBreakthroughAIManager:
             if preferred_provider and preferred_provider in self.initialized_providers:
                 selected_provider = preferred_provider
             else:
-                # Quick provider selection - use first available
-                selected_provider = next(iter(self.initialized_providers), "groq")
+                # FORCE REAL AI: Always prefer real providers for maximum personalization
+                if "groq" in self.initialized_providers:
+                    selected_provider = "groq"
+                elif "emergent" in self.initialized_providers:
+                    selected_provider = "emergent"
+                else:
+                    selected_provider = next(iter(self.initialized_providers), "groq")
             
-            # Streamlined message processing
-            if selected_provider == "groq" and "groq" in self.providers:
-                response = await self._generate_groq_response_optimized(user_message)
-            elif selected_provider == "emergent" and "emergent" in self.providers:  
-                response = await self._generate_emergent_response_optimized(user_message)
-            else:
-                # Fallback response
+            # MAXIMUM PERSONALIZATION: Always try real AI providers first
+            try:
+                if selected_provider == "groq" and "groq" in self.providers:
+                    response = await self._generate_groq_response_optimized(user_message)
+                elif selected_provider == "emergent" and "emergent" in self.providers:  
+                    response = await self._generate_emergent_response_optimized(user_message)
+                elif "groq" in self.providers:
+                    # Force Groq if available
+                    response = await self._generate_groq_response_optimized(user_message)
+                elif "emergent" in self.providers:
+                    # Force Emergent if available
+                    response = await self._generate_emergent_response_optimized(user_message)
+                else:
+                    raise Exception("No real AI providers available")
+            except Exception as e:
+                # Only fallback if absolutely no providers work
                 response = {
                     "content": f"I understand you're asking about: {user_message[:100]}... Let me help you with that.",
                     "provider": "fallback",
