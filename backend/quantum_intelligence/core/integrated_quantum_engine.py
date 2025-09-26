@@ -573,15 +573,15 @@ class UltraEnterpriseQuantumEngine:
             
             if test_result:
                 self.logger.info(
-                    "✅ Circuit breaker configured",
-                    failure_threshold=QuantumEngineConstants.FAILURE_THRESHOLD,
-                    recovery_timeout=QuantumEngineConstants.RECOVERY_TIMEOUT
+                    f"✅ Circuit breaker configured - "
+                    f"failure_threshold: {QuantumEngineConstants.FAILURE_THRESHOLD}, "
+                    f"recovery_timeout: {QuantumEngineConstants.RECOVERY_TIMEOUT}"
                 )
             else:
                 raise Exception("Circuit breaker test failed")
                 
         except Exception as e:
-            self.logger.error("❌ Circuit breaker configuration failed", error=str(e))
+            self.logger.error(f"❌ Circuit breaker configuration failed: {str(e)}")
             raise
     
     # ========================================================================
@@ -2110,7 +2110,7 @@ class UltraEnterpriseQuantumEngine:
             return profile
             
         except Exception as e:
-            self.logger.error("❌ Failed to retrieve user profile", user_id=user_id, error=str(e))
+            self.logger.error(f"❌ Failed to retrieve user profile for user_id: {user_id}: {str(e)}")
             return None
 
 # ============================================================================
