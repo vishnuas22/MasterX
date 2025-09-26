@@ -51,6 +51,14 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import threading
 import contextvars
 
+# Load environment variables
+try:
+    from dotenv import load_dotenv
+    import os
+    load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '../../.env'))
+except ImportError:
+    pass
+
 # Ultra-Enterprise imports with graceful fallbacks
 try:
     import structlog
@@ -1689,57 +1697,47 @@ class UltraEnterpriseBreakthroughAIManager:
     
     async def _generate_groq_response_optimized(self, user_message: str) -> Dict[str, Any]:
         """Ultra-optimized Groq response generation"""
-        try:
-            if "groq" in self.providers:
-                # Create simple message structure
-                messages = [{"role": "user", "content": user_message}]
-                
-                # Generate response with minimal context
-                response = await self.providers["groq"].generate_response(
-                    messages=messages,
-                    context_injection="",
-                    task_type=TaskType.GENERAL
-                )
-                
-                return {
-                    "content": response.content,
-                    "provider": "groq",
-                    "model": response.model_name or "llama-3.3-70b-versatile",
-                    "confidence": response.confidence or 0.95
-                }
-            else:
-                raise Exception("Groq provider not available")
-                
-        except Exception as e:
-            logger.error(f"❌ Groq optimized generation failed: {e}")
-            raise
+        if "groq" not in self.providers:
+            raise Exception("Groq provider not available")
+        
+        # Create simple message structure
+        messages = [{"role": "user", "content": user_message}]
+        
+        # Generate response with minimal context
+        response = await self.providers["groq"].generate_response(
+            messages=messages,
+            context_injection="",
+            task_type=TaskType.GENERAL
+        )
+        
+        return {
+            "content": response.content,
+            "provider": "groq",
+            "model": response.model or "llama-3.3-70b-versatile",
+            "confidence": response.confidence or 0.95
+        }
     
     async def _generate_emergent_response_optimized(self, user_message: str) -> Dict[str, Any]:
         """Ultra-optimized Emergent response generation"""
-        try:
-            if "emergent" in self.providers:
-                # Create simple message structure
-                messages = [{"role": "user", "content": user_message}]
-                
-                # Generate response with minimal context
-                response = await self.providers["emergent"].generate_response(
-                    messages=messages,
-                    context_injection="",
-                    task_type=TaskType.GENERAL
-                )
-                
-                return {
-                    "content": response.content,
-                    "provider": "emergent_openai",
-                    "model": response.model_name or "gpt-4o",
-                    "confidence": response.confidence or 0.96
-                }
-            else:
-                raise Exception("Emergent provider not available")
-                
-        except Exception as e:
-            logger.error(f"❌ Emergent optimized generation failed: {e}")
-            raise
+        if "emergent" not in self.providers:
+            raise Exception("Emergent provider not available")
+        
+        # Create simple message structure
+        messages = [{"role": "user", "content": user_message}]
+        
+        # Generate response with minimal context
+        response = await self.providers["emergent"].generate_response(
+            messages=messages,
+            context_injection="",
+            task_type=TaskType.GENERAL
+        )
+        
+        return {
+            "content": response.content,
+            "provider": "emergent_openai",
+            "model": response.model or "gpt-4o",
+            "confidence": response.confidence or 0.96
+        }
     async def _select_optimal_provider_v6(
         self,
         task_type: TaskType,
