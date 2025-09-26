@@ -179,10 +179,8 @@ class RevolutionaryAuthenticEmotionEngineV9:
             initialization_time = (time.time() - initialization_start) * 1000
             
             logger.info(
-                "✅ Revolutionary Authentic Emotion Engine V9.0 initialized successfully",
-                initialization_time_ms=initialization_time,
-                target_performance_ms=AuthenticEmotionV9Constants.TARGET_ANALYSIS_TIME_MS,
-                components_initialized=7
+                f"✅ Revolutionary Authentic Emotion Engine V9.0 initialized successfully "
+                f"(time: {initialization_time:.1f}ms, target: {AuthenticEmotionV9Constants.TARGET_ANALYSIS_TIME_MS}ms, components: 7)"
             )
             
             return True
@@ -190,9 +188,8 @@ class RevolutionaryAuthenticEmotionEngineV9:
         except Exception as e:
             initialization_time = (time.time() - initialization_start) * 1000
             logger.error(
-                "❌ Revolutionary Emotion Engine initialization failed",
-                error=str(e),
-                initialization_time_ms=initialization_time
+                f"❌ Revolutionary Emotion Engine initialization failed: {str(e)} "
+                f"(time: {initialization_time:.1f}ms)"
             )
             return False
     
@@ -1446,15 +1443,11 @@ class RevolutionaryAuthenticEmotionEngineV9:
             await self._update_user_learning_patterns(user_id, result, fused_analysis)
             
             logger.info(
-                f"✅ Authentic emotion result generated",
-                component="authentic_emotion_engine_v9",
-                analysis_id=metrics.analysis_id,
-                user_id=user_id,
-                primary_emotion=primary_emotion.value,
-                confidence=f"{emotion_confidence:.3f}",
-                learning_readiness=learning_readiness.value,
-                intervention_level=intervention_level.value,
-                total_time_ms=f"{metrics.total_analysis_ms:.1f}"
+                f"✅ Authentic emotion result generated - "
+                f"ID: {metrics.analysis_id}, User: {user_id}, "
+                f"Emotion: {primary_emotion.value}, Confidence: {emotion_confidence:.3f}, "
+                f"Readiness: {learning_readiness.value}, Intervention: {intervention_level.value}, "
+                f"Time: {metrics.total_analysis_ms:.1f}ms"
             )
             
             return result
