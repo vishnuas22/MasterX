@@ -1158,11 +1158,12 @@ class RevolutionaryAuthenticEmotionEngineV9:
             emotion_history = user_patterns.get('emotion_trajectory_history', [])
             
             # Calculate trajectory direction based on recent patterns
+            valence_scores = []  # Initialize valence_scores for all cases
+            
             if len(emotion_history) >= 3:
                 recent_emotions = emotion_history[-3:]
                 
                 # Analyze trend in emotional valence (positive/negative direction)
-                valence_scores = []
                 for emotion in recent_emotions:
                     if isinstance(emotion, str):
                         emotion_value = emotion

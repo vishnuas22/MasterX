@@ -169,6 +169,8 @@ class TaskType(Enum):
     PERSONALIZED_LEARNING = "personalized_learning"
     CREATIVE_CONTENT = "creative_content"
     ANALYTICAL_REASONING = "analytical_reasoning"
+    RESEARCH_ASSISTANCE = "research_assistance"
+    PROBLEM_SOLVING = "problem_solving"
     GENERAL = "general"
     # V6.0 Ultra-Enterprise task types
     MULTI_MODAL_INTERACTION = "multi_modal_interaction"

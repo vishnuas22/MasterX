@@ -171,9 +171,13 @@ class AuthenticLearningReadinessV9(Enum):
 
 class AuthenticEmotionalTrajectoryV9(Enum):
     """V9.0 Authentic emotional trajectory - Predictive, not preset"""
-    IMPROVING = "improving"
+    IMPROVING_RAPIDLY = "improving_rapidly"
+    IMPROVING_STEADILY = "improving_steadily"
+    IMPROVING_SLOWLY = "improving_slowly"
     STABLE = "stable"
-    DECLINING = "declining"
+    DECLINING_SLOWLY = "declining_slowly"
+    DECLINING_STEADILY = "declining_steadily"
+    DECLINING_RAPIDLY = "declining_rapidly"
     FLUCTUATING = "fluctuating"
     BREAKTHROUGH_IMMINENT = "breakthrough_imminent"
     INTERVENTION_NEEDED = "intervention_needed"
