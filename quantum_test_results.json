@@ -1,0 +1,98 @@
+{
+  "test_summary": {
+    "total_tests": 8,
+    "passed_tests": 3,
+    "failed_tests": 5,
+    "success_rate": 37.5,
+    "test_timestamp": "2025-09-27T01:21:19.375195"
+  },
+  "detailed_results": [
+    {
+      "test_name": "Emotion Learning: Frustrated Math Student",
+      "success": false,
+      "response_time_ms": 4.214286804199219,
+      "timestamp": "2025-09-27T01:20:36.974556",
+      "details": {
+        "error": "API returned 422: {\"detail\":[{\"type\":\"less_than_equal\",\"loc\":[\"body\",\"max_response_time_ms\"],\"msg\":\"Input should be less than or equal to 5000\",\"input\":8000,\"ctx\":{\"le\":5000},\"url\":\"https://errors.pydantic.dev/2.11/v/less_than_equal\"}]}",
+        "scenario_type": "frustrated_student"
+      }
+    },
+    {
+      "test_name": "Emotion Learning: Confused Programming Beginner",
+      "success": false,
+      "response_time_ms": 3.033161163330078,
+      "timestamp": "2025-09-27T01:20:37.978241",
+      "details": {
+        "error": "API returned 422: {\"detail\":[{\"type\":\"less_than_equal\",\"loc\":[\"body\",\"max_response_time_ms\"],\"msg\":\"Input should be less than or equal to 5000\",\"input\":8000,\"ctx\":{\"le\":5000},\"url\":\"https://errors.pydantic.dev/2.11/v/less_than_equal\"}]}",
+        "scenario_type": "confused_beginner"
+      }
+    },
+    {
+      "test_name": "Emotion Learning: Excited Advanced Learner",
+      "success": false,
+      "response_time_ms": 2.7878284454345703,
+      "timestamp": "2025-09-27T01:20:38.981904",
+      "details": {
+        "error": "API returned 422: {\"detail\":[{\"type\":\"less_than_equal\",\"loc\":[\"body\",\"max_response_time_ms\"],\"msg\":\"Input should be less than or equal to 5000\",\"input\":8000,\"ctx\":{\"le\":5000},\"url\":\"https://errors.pydantic.dev/2.11/v/less_than_equal\"}]}",
+        "scenario_type": "excited_learner"
+      }
+    },
+    {
+      "test_name": "Emotion Learning: Anxious Test Preparation",
+      "success": false,
+      "response_time_ms": 2.7899742126464844,
+      "timestamp": "2025-09-27T01:20:39.985905",
+      "details": {
+        "error": "API returned 422: {\"detail\":[{\"type\":\"less_than_equal\",\"loc\":[\"body\",\"max_response_time_ms\"],\"msg\":\"Input should be less than or equal to 5000\",\"input\":8000,\"ctx\":{\"le\":5000},\"url\":\"https://errors.pydantic.dev/2.11/v/less_than_equal\"}]}",
+        "scenario_type": "anxious_student"
+      }
+    },
+    {
+      "test_name": "Emotion Learning: Analytical Problem Solver",
+      "success": false,
+      "response_time_ms": 2.679109573364258,
+      "timestamp": "2025-09-27T01:20:40.989792",
+      "details": {
+        "error": "API returned 422: {\"detail\":[{\"type\":\"less_than_equal\",\"loc\":[\"body\",\"max_response_time_ms\"],\"msg\":\"Input should be less than or equal to 5000\",\"input\":8000,\"ctx\":{\"le\":5000},\"url\":\"https://errors.pydantic.dev/2.11/v/less_than_equal\"}]}",
+        "scenario_type": "advanced_learner"
+      }
+    },
+    {
+      "test_name": "Caching Performance",
+      "success": true,
+      "response_time_ms": 2.9349327087402344,
+      "timestamp": "2025-09-27T01:20:51.584014",
+      "details": {
+        "first_request_time": 9590.043783187866,
+        "second_request_time": 2.9349327087402344,
+        "cache_speedup": "100.0%",
+        "cache_hit_likely": true
+      }
+    },
+    {
+      "test_name": "Context Memory",
+      "success": true,
+      "response_time_ms": 11764.861106872559,
+      "timestamp": "2025-09-27T01:21:03.349109",
+      "details": {
+        "context_maintained": true,
+        "conversation_messages": 2,
+        "session_id": "context_test_session"
+      }
+    },
+    {
+      "test_name": "Adaptive Difficulty",
+      "success": true,
+      "response_time_ms": 16025.380849838257,
+      "timestamp": "2025-09-27T01:21:19.374841",
+      "details": {
+        "adapted": true,
+        "beginner_indicators": true,
+        "advanced_indicators": true,
+        "length_difference": 1750,
+        "beginner_length": 1967,
+        "advanced_length": 3717
+      }
+    }
+  ]
+}
