@@ -897,11 +897,8 @@ async def lifespan(app: FastAPI):
         # Initialize quantum intelligence
         await initialize_quantum_intelligence()
         
-        # Start performance monitoring with CPU optimization
-        if os.getenv("ENABLE_PERFORMANCE_MONITORING", "true").lower() == "true":
-            await performance_monitor.start_monitoring()
-        else:
-            logger.info("⚡ Performance monitoring disabled for CPU optimization")
+        # Start performance monitoring
+        await performance_monitor.start_monitoring()
         
         # Initialize security features
         await initialize_security_features()
@@ -1021,18 +1018,11 @@ async def initialize_quantum_intelligence():
                     valid_api_keys[key_name] = key_value
         
         if valid_api_keys:
-            # Initialize with CPU optimization
-            cpu_optimization = os.getenv("CPU_OPTIMIZATION_MODE", "false").lower() == "true"
-            
-            if cpu_optimization:
-                logger.info("⚡ Initializing Quantum Intelligence with CPU optimization")
-                # Disable resource-intensive background tasks during initialization
-                os.environ["ENABLE_BACKGROUND_TASKS"] = "false"
-            
+            # Initialize with ultra-enterprise optimization
             success = await quantum_engine.initialize(valid_api_keys)
             if success:
                 quantum_intelligence_available = True
-                logger.info(f"✅ Quantum Intelligence V6.0 initialized with {len(valid_api_keys)} providers (CPU optimized: {cpu_optimization})")
+                logger.info(f"✅ Quantum Intelligence V6.0 initialized with {len(valid_api_keys)} providers")
                 return True
             else:
                 logger.error("❌ Quantum Intelligence initialization failed")
