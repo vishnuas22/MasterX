@@ -263,6 +263,11 @@ class AICoordinationConstants:
     MAX_CONCURRENT_AI_REQUESTS = 100000
     FAILURE_THRESHOLD = 3
     RECOVERY_TIMEOUT = 20.0
+    
+    # Legacy compatibility constants
+    TARGET_AI_COORDINATION_MS = 5000.0  # 5 seconds for AI coordination
+    OPTIMAL_AI_COORDINATION_MS = 1500.0  # 1.5 seconds optimal
+    ULTRA_AI_COORDINATION_MS = 800.0     # 800ms ultra performance
 
 # ============================================================================
 # V7.0 ADVANCED NEURAL NETWORK ARCHITECTURES
@@ -2403,6 +2408,49 @@ class UltraEnterpriseBreakthroughAIManager:
             "model": response.model or "gpt-4o",
             "confidence": response.confidence or 0.96
         }
+
+    async def _select_optimal_provider_v6(
+        self,
+        task_type: TaskType,
+        user_preferences: Dict[str, Any] = None,
+        priority: str = "balanced"
+    ) -> str:
+        """
+        V6.0 Optimal Provider Selection with Real AI Integration
+        
+        Smart provider selection based on task type and availability
+        """
+        if not self.initialized_providers:
+            raise Exception("No AI providers initialized")
+        
+        # Priority-based provider selection
+        provider_preferences = {
+            TaskType.COMPLEX_EXPLANATION: ["groq", "emergent", "gemini"],
+            TaskType.EMOTIONAL_SUPPORT: ["emergent", "groq", "gemini"],  
+            TaskType.ANALYTICAL_REASONING: ["groq", "emergent", "gemini"],
+            TaskType.BEGINNER_CONCEPTS: ["emergent", "groq", "gemini"],
+            TaskType.CREATIVE_CONTENT: ["emergent", "groq", "gemini"],
+            TaskType.PROBLEM_SOLVING: ["groq", "emergent", "gemini"],
+            TaskType.RESEARCH_ASSISTANCE: ["groq", "emergent", "gemini"],
+            TaskType.QUICK_RESPONSE: ["groq", "emergent", "gemini"],
+            TaskType.CODE_EXAMPLES: ["groq", "emergent", "gemini"],
+            TaskType.GENERAL: ["groq", "emergent", "gemini"]
+        }
+        
+        # Get preferred providers for this task type
+        preferred_providers = provider_preferences.get(task_type, ["groq", "emergent", "gemini"])
+        
+        # Select first available provider from preferences
+        for provider in preferred_providers:
+            if provider in self.initialized_providers:
+                logger.info(f"🎯 Selected provider: {provider} for task: {task_type.value}")
+                return provider
+        
+        # Fallback to any available provider
+        available_provider = next(iter(self.initialized_providers), "groq")
+        logger.info(f"🔄 Fallback provider: {available_provider}")
+        return available_provider
+
     async def _select_optimal_provider_v7_emotional_intelligence(
         self,
         task_type: TaskType,
