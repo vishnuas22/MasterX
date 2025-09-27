@@ -1718,8 +1718,7 @@ class UltraEnterpriseQuantumEngine:
             await self.response_cache._optimize_cache()
             
             self.logger.info(
-                "🔄 Cache optimization triggered",
-                previous_hit_rate=self.engine_state.cache_hit_rate
+                f"🔄 Cache optimization triggered - Previous hit rate: {self.engine_state.cache_hit_rate:.2f}"
             )
     
     def _cleanup_old_metrics(self):
