@@ -321,7 +321,7 @@ class RevolutionaryAuthenticEmotionEngineV9:
             # PHASE 8: Trajectory Prediction with Pattern-Based Learning
             phase_start = time.time()
             trajectory_analysis = await self._predict_authentic_trajectory(
-                user_id, fused_analysis, learning_analysis
+                fused_analysis, learning_analysis, user_id
             )
             metrics.authentic_trajectory_ms = (time.time() - phase_start) * 1000
             
@@ -1421,7 +1421,7 @@ class RevolutionaryAuthenticEmotionEngineV9:
                 emotional_trajectory=emotional_trajectory,
                 cognitive_load_level=cognitive_load_level,
                 mental_fatigue_level=mental_fatigue_level,
-                engagement_level=engagement_level,
+                engagement_score=engagement_level,
                 analysis_metrics=metrics
             )
             
