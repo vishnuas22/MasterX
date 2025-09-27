@@ -133,3 +133,12 @@ watchfiles==1.1.0
 websockets==15.0.1
 yarl==1.20.1
 zipp==3.23.0
+
+# V9.0 Enhanced Performance & Monitoring Dependencies
+prometheus_client==0.23.1
+psutil==7.1.0
+
+# V9.0 Emotion Detection & Transformer Dependencies  
+torch>=2.0.0
+torchvision>=0.15.0
+torchaudio>=2.0.0
