@@ -48,6 +48,7 @@ import gc
 import weakref
 import json
 import ssl
+import os
 from pathlib import Path
 from typing import Dict, List, Optional, Any, Tuple, Set, Union, Callable
 from dataclasses import dataclass, field
@@ -1069,22 +1070,40 @@ class UltraEnterpriseAICache:
             pass
     
     async def _periodic_cleanup(self):
-        """Periodic cache cleanup with quantum intelligence"""
+        """Periodic cache cleanup with quantum intelligence - CPU optimized"""
         while True:
             try:
-                await asyncio.sleep(60)  # Every minute
-                await self._optimize_cache_quantum()
+                await asyncio.sleep(300)  # Reduced frequency: Every 5 minutes
+                
+                # Only cleanup if cache has significant data
+                if len(self.cache) > 100:
+                    await self._optimize_cache_quantum()
+                else:
+                    await asyncio.sleep(300)  # Additional sleep if no cleanup needed
+                    
+            except asyncio.CancelledError:
+                logger.info("Cache cleanup task cancelled")
+                break
             except Exception as e:
                 logger.error(f"Cache cleanup error: {e}")
+                await asyncio.sleep(600)  # Back off on error
     
     async def _performance_optimization_loop(self):
-        """Continuous performance optimization"""
+        """Continuous performance optimization - CPU optimized"""
         while True:
             try:
-                await asyncio.sleep(300)  # Every 5 minutes
-                await self._analyze_cache_performance()
+                await asyncio.sleep(900)  # Reduced frequency: Every 15 minutes
+                
+                # Only analyze if there's meaningful performance data
+                if hasattr(self, 'performance_history') and len(self.performance_history) > 50:
+                    await self._analyze_cache_performance()
+                    
+            except asyncio.CancelledError:
+                logger.info("Performance optimization task cancelled")
+                break
             except Exception as e:
                 logger.error(f"Performance optimization error: {e}")
+                await asyncio.sleep(600)  # Back off on error
     
     async def _optimize_cache_quantum(self):
         """Optimize cache using quantum intelligence algorithms"""
@@ -2135,8 +2154,11 @@ class UltraEnterpriseBreakthroughAIManager:
                 # Placeholder for Gemini provider implementation
                 logger.info("🔄 Gemini provider available but not yet implemented in V6.0")
             
-            # Start background tasks
-            await self._start_background_tasks()
+            # Start background tasks only if enabled
+            if os.getenv("ENABLE_BACKGROUND_TASKS", "true").lower() == "true":
+                await self._start_background_tasks()
+            else:
+                logger.info("⚡ Background tasks disabled for CPU optimization")
             
             initialization_time = (time.time() - initialization_start) * 1000
             
@@ -3471,46 +3493,103 @@ class UltraEnterpriseBreakthroughAIManager:
             )
     
     async def _start_background_tasks(self):
-        """Start V6.0 ultra-enterprise background tasks"""
+        """Start V6.0 ultra-enterprise background tasks - CPU optimized"""
         
-        # Start monitoring task
+        # Only start tasks if monitoring is enabled and not already running
+        if not self.ultra_enterprise_monitoring_enabled:
+            logger.info("Background tasks disabled for CPU optimization")
+            return
+            
+        # Start monitoring task with proper error handling
         if self._monitoring_task is None or self._monitoring_task.done():
-            self._monitoring_task = asyncio.create_task(self._performance_monitoring_loop())
+            self._monitoring_task = asyncio.create_task(
+                self._performance_monitoring_loop(),
+                name="ai_performance_monitoring"
+            )
         
-        # Start optimization task  
+        # Start optimization task with reduced frequency
         if self._optimization_task is None or self._optimization_task.done():
-            self._optimization_task = asyncio.create_task(self._optimization_loop())
+            self._optimization_task = asyncio.create_task(
+                self._optimization_loop(),
+                name="ai_optimization"
+            )
         
-        # Start health check task
+        # Start health check task with backoff
         if self._health_check_task is None or self._health_check_task.done():
-            self._health_check_task = asyncio.create_task(self._health_check_loop())
+            self._health_check_task = asyncio.create_task(
+                self._health_check_loop(),
+                name="ai_health_check"
+            )
+            
+        logger.info("✅ Background tasks started with CPU optimization")
+    
+    async def _stop_background_tasks(self):
+        """Stop all background tasks for cleanup"""
+        
+        tasks = [
+            self._monitoring_task,
+            self._optimization_task, 
+            self._health_check_task
+        ]
+        
+        for task in tasks:
+            if task and not task.done():
+                task.cancel()
+                try:
+                    await task
+                except asyncio.CancelledError:
+                    pass
+                    
+        logger.info("✅ Background tasks stopped")
     
     async def _performance_monitoring_loop(self):
-        """V6.0 Ultra-enterprise performance monitoring"""
-        while True:
+        """V6.0 Ultra-enterprise performance monitoring - CPU optimized"""
+        while self.ultra_enterprise_monitoring_enabled:
             try:
-                await asyncio.sleep(AICoordinationConstants.METRICS_COLLECTION_INTERVAL)
-                await self._collect_performance_metrics()
+                interval = AICoordinationConstants.get_metrics_collection_interval()
+                await asyncio.sleep(max(interval, 30))  # Minimum 30s to reduce CPU usage
+                
+                # Only collect if there's actual activity
+                if hasattr(self, 'coordination_metrics') and self.coordination_metrics:
+                    await self._collect_performance_metrics()
+            except asyncio.CancelledError:
+                logger.info("Performance monitoring task cancelled")
+                break
             except Exception as e:
                 logger.error(f"Performance monitoring error: {e}")
+                await asyncio.sleep(60)  # Back off on error
     
     async def _optimization_loop(self):
-        """V6.0 Ultra-enterprise optimization loop"""
-        while True:
+        """V6.0 Ultra-enterprise optimization loop - CPU optimized"""
+        while self.ultra_enterprise_monitoring_enabled:
             try:
-                await asyncio.sleep(300)  # Every 5 minutes
-                await self._optimize_provider_performance()
+                await asyncio.sleep(600)  # Increased to 10 minutes to reduce CPU usage
+                
+                # Only optimize if there's been significant activity
+                if hasattr(self, 'coordination_metrics') and len(self.coordination_metrics) > 10:
+                    await self._optimize_provider_performance()
+            except asyncio.CancelledError:
+                logger.info("Optimization task cancelled")
+                break
             except Exception as e:
                 logger.error(f"Optimization error: {e}")
+                await asyncio.sleep(300)  # Back off on error
     
     async def _health_check_loop(self):
-        """V6.0 Ultra-enterprise health check loop"""
-        while True:
+        """V6.0 Ultra-enterprise health check loop - CPU optimized"""
+        while self.ultra_enterprise_monitoring_enabled:
             try:
-                await asyncio.sleep(60)  # Every minute
-                await self._perform_health_checks()
+                await asyncio.sleep(120)  # Increased to 2 minutes to reduce CPU usage
+                
+                # Only perform health checks if monitoring is active
+                if self.ultra_enterprise_monitoring_enabled:
+                    await self._perform_health_checks()
+            except asyncio.CancelledError:
+                logger.info("Health check task cancelled")
+                break
             except Exception as e:
                 logger.error(f"Health check error: {e}")
+                await asyncio.sleep(180)  # Back off on error
     
     async def _collect_performance_metrics(self):
         """Collect comprehensive performance metrics"""
