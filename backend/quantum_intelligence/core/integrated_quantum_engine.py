@@ -70,7 +70,7 @@ except ImportError:
     logger = logging.getLogger(__name__)
 
 # Ultra-Enterprise Components
-from .enhanced_context_manager import UltraEnterpriseEnhancedContextManager
+from .enhanced_context_manager_v7 import UltraEnterpriseEnhancedContextManager
 from .breakthrough_ai_integration import (
     UltraEnterpriseBreakthroughAIManager, breakthrough_ai_manager, 
     TaskType, AIResponse
