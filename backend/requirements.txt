@@ -138,6 +138,9 @@ zipp==3.23.0
 prometheus_client==0.23.1
 psutil==7.1.0
 
+# V7.0 Advanced ML/AI Dependencies for Emotional Intelligence
+scikit-learn>=1.7.0
+
 # V9.0 Emotion Detection & Transformer Dependencies  
 torch>=2.0.0
 torchvision>=0.15.0
