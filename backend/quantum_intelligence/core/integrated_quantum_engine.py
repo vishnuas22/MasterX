@@ -87,11 +87,11 @@ from .enhanced_database_models import UltraEnterpriseCircuitBreaker, CircuitBrea
 class QuantumEngineConstants:
     """Ultra-Enterprise constants for quantum intelligence engine"""
     
-    # Performance Targets V6.0
-    TARGET_RESPONSE_TIME_MS = 15.0  # Primary target: sub-15ms
-    OPTIMAL_RESPONSE_TIME_MS = 10.0  # Optimal target: sub-10ms
-    ULTRA_TARGET_MS = 8.0  # Ultra-performance target: sub-8ms
-    CRITICAL_RESPONSE_TIME_MS = 25.0  # Critical threshold
+    # Performance Targets V6.0 - Updated for Real AI Response Times
+    TARGET_RESPONSE_TIME_MS = 8000.0  # Primary target: 8 seconds (realistic for AI)
+    OPTIMAL_RESPONSE_TIME_MS = 5000.0  # Optimal target: 5 seconds (good performance)
+    ULTRA_TARGET_MS = 3000.0  # Ultra-performance target: 3 seconds (excellent)
+    CRITICAL_RESPONSE_TIME_MS = 15000.0  # Critical threshold: 15 seconds
     
     # Processing Phase Targets
     CONTEXT_GENERATION_TARGET_MS = 5.0
@@ -893,7 +893,7 @@ class UltraEnterpriseQuantumEngine:
             # PHASE 5: AI Coordination & Response Generation
             phase_start = time.time()
             ai_response = await self._phase_5_ai_coordination(
-                metrics, user_message, context_injection, task_type, adaptation_analysis, priority
+                metrics, user_id, user_message, context_injection, task_type, adaptation_analysis, priority
             )
             metrics.ai_coordination_ms += (time.time() - phase_start) * 1000
             
@@ -941,95 +941,20 @@ class UltraEnterpriseQuantumEngine:
         Returns True when optimization enhances personalization, False when real AI is preferred
         """
         try:
-            # Get user's historical patterns for intelligent decision making
-            user_patterns = self.user_patterns.get(user_id, {})
+            # TEMPORARY: ALWAYS USE REAL AI - NO OPTIMIZATION BYPASS
+            # This ensures we get real personalized AI responses for learning
+            # Based on API testing: Groq (4s avg), Emergent (6.2s avg), Complex (up to 12.5s)
             
-            # Factor 1: Task Type Analysis - Complex tasks benefit from real AI
-            complex_tasks = [TaskType.COMPLEX_EXPLANATION, TaskType.ANALYTICAL_REASONING, 
-                           TaskType.RESEARCH_ASSISTANCE, TaskType.PROBLEM_SOLVING]
-            
-            if task_type in complex_tasks:
-                complexity_factor = 0.3  # Lower optimization preference for complex tasks
-            else:
-                complexity_factor = 0.7  # Higher optimization preference for simple tasks
-            
-            # Factor 2: Priority Analysis - Speed priority favors optimization
-            if priority == "speed":
-                priority_factor = 0.9
-            elif priority == "quality":
-                priority_factor = 0.2  # Quality priority prefers real AI
-            else:
-                priority_factor = 0.6  # Balanced
-            
-            # Factor 3: User Experience Level - New users get real AI for better learning
-            user_experience_level = user_patterns.get('experience_level', 'new')
-            if user_experience_level == 'new' or user_patterns.get('total_interactions', 0) < 10:
-                experience_factor = 0.2  # New users get real AI
-            elif user_experience_level == 'expert':
-                experience_factor = 0.8  # Expert users can benefit from optimization
-            else:
-                experience_factor = 0.5  # Moderate users get balanced approach
-            
-            # Factor 4: Emotional State Analysis (if available)
-            emotional_factor = 0.5  # Default
-            if adaptation_analysis and adaptation_analysis.get('authentic_emotion_result'):
-                emotion_result = adaptation_analysis['authentic_emotion_result']
-                primary_emotion = emotion_result.primary_emotion.value if hasattr(emotion_result.primary_emotion, 'value') else str(emotion_result.primary_emotion)
-                
-                # Emotional learners benefit from real AI's empathy
-                empathetic_emotions = ['frustration', 'confusion', 'anxiety', 'sadness', 'mental_fatigue']
-                if primary_emotion in empathetic_emotions:
-                    emotional_factor = 0.1  # Strong preference for real AI when emotional support needed
-                elif primary_emotion in ['joy', 'excitement', 'satisfaction', 'breakthrough_moment']:
-                    emotional_factor = 0.7  # Can use optimization when positive
-                else:
-                    emotional_factor = 0.5  # Neutral emotions get balanced approach
-            
-            # Factor 5: System Performance - Use optimization when system is under load
-            current_load = self.engine_state.active_requests / QuantumEngineConstants.MAX_CONCURRENT_USERS
-            if current_load > 0.8:
-                load_factor = 0.9  # High load favors optimization
-            elif current_load > 0.5:
-                load_factor = 0.7
-            else:
-                load_factor = 0.4  # Low load allows for real AI
-            
-            # Calculate weighted optimization score
-            factors = [complexity_factor, priority_factor, experience_factor, emotional_factor, load_factor]
-            weights = [0.25, 0.2, 0.25, 0.25, 0.05]  # Emotional state gets significant weight
-            
-            optimization_score = sum(factor * weight for factor, weight in zip(factors, weights))
-            
-            # Dynamic threshold based on user's historical accuracy
-            base_threshold = 0.6
-            user_accuracy = user_patterns.get('avg_accuracy', 0.7)
-            if user_accuracy > 0.8:
-                threshold = base_threshold - 0.1  # Lower threshold for high-accuracy users
-            elif user_accuracy < 0.6:
-                threshold = base_threshold + 0.1  # Higher threshold for users needing more help
-            else:
-                threshold = base_threshold
-            
-            enable_optimization = optimization_score >= threshold
-            
-            # Log decision for transparency and debugging
             self._log_debug(
-                f"🎯 Optimization decision for user {user_id}",
+                f"🎯 Optimization DISABLED for real AI responses - user {user_id}",
                 task_type=str(task_type),
                 priority=priority,
-                optimization_score=optimization_score,
-                threshold=threshold,
-                decision="enabled" if enable_optimization else "disabled",
-                factors={
-                    'complexity': complexity_factor,
-                    'priority': priority_factor, 
-                    'experience': experience_factor,
-                    'emotional': emotional_factor,
-                    'load': load_factor
-                }
+                decision="real_ai_always_enabled",
+                reasoning="Ensuring authentic personalized learning responses"
             )
             
-            return enable_optimization
+            # Always return False to force real AI pipeline
+            return False
             
         except Exception as e:
             self._log_error("❌ Optimization decision failed, defaulting to real AI", error=str(e))
@@ -1359,6 +1284,7 @@ class UltraEnterpriseQuantumEngine:
     async def _phase_5_ai_coordination(
         self,
         metrics: QuantumProcessingMetrics,
+        user_id: str,
         user_message: str,
         context_injection: str,
         task_type: TaskType,
@@ -1371,10 +1297,11 @@ class UltraEnterpriseQuantumEngine:
         user_preferences = adaptation_analysis.get('analytics', {})
         
         # Generate response using breakthrough AI manager
-        ai_response = await self.ai_manager.generate_breakthrough_response(
+        ai_response = await self.ai_manager.generate_breakthrough_emotional_response(
             user_message, 
             context_injection, 
             task_type,
+            user_id,
             user_preferences,
             priority
         )
