@@ -893,7 +893,7 @@ class UltraEnterpriseQuantumEngine:
             # PHASE 5: AI Coordination & Response Generation
             phase_start = time.time()
             ai_response = await self._phase_5_ai_coordination(
-                metrics, user_message, context_injection, task_type, adaptation_analysis, priority, user_id
+                metrics, user_message, context_injection, task_type, adaptation_analysis, priority
             )
             metrics.ai_coordination_ms += (time.time() - phase_start) * 1000
             
@@ -1363,8 +1363,7 @@ class UltraEnterpriseQuantumEngine:
         context_injection: str,
         task_type: TaskType,
         adaptation_analysis: Dict[str, Any],
-        priority: str,
-        user_id: str = "default_user"
+        priority: str
     ) -> AIResponse:
         """Phase 5: AI Coordination & Response Generation"""
         
@@ -1373,12 +1372,11 @@ class UltraEnterpriseQuantumEngine:
         
         # Generate response using breakthrough AI manager
         ai_response = await self.ai_manager.generate_breakthrough_response(
-            user_message=user_message, 
-            context_injection=context_injection, 
-            task_type=task_type,
-            user_preferences=user_preferences,
-            priority=priority,
-            user_id=user_id
+            user_message, 
+            context_injection, 
+            task_type,
+            user_preferences,
+            priority
         )
         
         # Update performance metrics
