@@ -87,11 +87,12 @@ from .enhanced_database_models import UltraEnterpriseCircuitBreaker, CircuitBrea
 class QuantumEngineConstants:
     """Ultra-Enterprise constants for quantum intelligence engine"""
     
-    # Performance Targets V6.0 - Updated for Real AI Response Times
-    TARGET_RESPONSE_TIME_MS = 8000.0  # Primary target: 8 seconds (realistic for AI)
-    OPTIMAL_RESPONSE_TIME_MS = 5000.0  # Optimal target: 5 seconds (good performance)
-    ULTRA_TARGET_MS = 3000.0  # Ultra-performance target: 3 seconds (excellent)
-    CRITICAL_RESPONSE_TIME_MS = 15000.0  # Critical threshold: 15 seconds
+    # Performance Targets V6.0 - REAL AI RESPONSE OPTIMIZED
+    TARGET_RESPONSE_TIME_MS = 12000.0  # Primary target: 12 seconds (realistic for complex AI)
+    OPTIMAL_RESPONSE_TIME_MS = 8000.0  # Optimal target: 8 seconds (good performance)
+    ULTRA_TARGET_MS = 5000.0  # Ultra-performance target: 5 seconds (fast AI)
+    CRITICAL_RESPONSE_TIME_MS = 20000.0  # Critical threshold: 20 seconds (complex learning)
+    EMERGENCY_FALLBACK_MS = 30000.0  # Emergency fallback: 30 seconds
     
     # Processing Phase Targets
     CONTEXT_GENERATION_TARGET_MS = 5.0
@@ -941,19 +942,20 @@ class UltraEnterpriseQuantumEngine:
         Returns True when optimization enhances personalization, False when real AI is preferred
         """
         try:
-            # TEMPORARY: ALWAYS USE REAL AI - NO OPTIMIZATION BYPASS
-            # This ensures we get real personalized AI responses for learning
-            # Based on API testing: Groq (4s avg), Emergent (6.2s avg), Complex (up to 12.5s)
+            # REAL AI FIRST STRATEGY - NO BYPASS OPTIMIZATIONS
+            # Always use real AI for authentic personalized learning responses
+            # Based on testing: Groq (4s avg), Emergent (6.2s avg), Complex (up to 12.5s)
+            # This ensures maximum learning effectiveness and personalization
             
-            self._log_debug(
-                f"🎯 Optimization DISABLED for real AI responses - user {user_id}",
+            self._log_info(
+                f"🎯 REAL AI ENABLED for personalized learning - user {user_id}",
                 task_type=str(task_type),
                 priority=priority,
-                decision="real_ai_always_enabled",
-                reasoning="Ensuring authentic personalized learning responses"
+                decision="real_ai_always_preferred",
+                reasoning="Prioritizing authentic AI responses for optimal learning outcomes"
             )
             
-            # Always return False to force real AI pipeline
+            # Always return False to ensure real AI pipeline
             return False
             
         except Exception as e:
