@@ -3222,16 +3222,16 @@ Please adapt your response to match the user's {emotional_state.value} emotional
             
             # V6.1 Create emotional AI response
             ai_response = AIResponse(
-                content=result.get("content", ""),
+                content=result.content,
                 provider=provider,
-                model=result.get("model", "unknown"),
-                confidence=result.get("confidence", 0.8),
+                model=result.model,
+                confidence=result.confidence,
                 empathy_score=await self._calculate_empathy_score_v61(result, emotional_state),
                 complexity_appropriateness=await self._calculate_complexity_score_v61(result, task_type),
                 context_utilization=0.85,  # Will be calculated dynamically
                 task_type=task_type,
                 task_completion_score=0.90,  # Will be calculated dynamically
-                tokens_used=result.get("tokens_used", len(user_message.split()) * 2),
+                tokens_used=result.tokens_used,
                 response_time=response_time
             )
             
