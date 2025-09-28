@@ -3295,9 +3295,14 @@ class UltraEnterpriseBreakthroughAIManager:
                 predicted_score = self.ml_base_score_model.predict([features])[0]
                 return max(0.0, min(predicted_score, 1.0))  # Clamp to [0,1]
             else:
-                # Initialize ML model if not available
-                await self._initialize_ml_base_score_model()
-                return await self._calculate_ml_base_score(metrics, emotional_state)
+                # Fallback to simple weighted calculation when ML model unavailable
+                available_scores = [
+                    metrics.ml_calculated_success_rate,
+                    metrics.ml_derived_empathy_score,
+                    metrics.ml_assessed_complexity_handling,
+                    metrics.ml_evaluated_context_retention
+                ]
+                return sum(score for score in available_scores if score > 0) / max(len([s for s in available_scores if s > 0]), 1)
                 
         except Exception as e:
             logger.warning(f"⚠️ ML base score calculation failed: {e}")
@@ -3916,13 +3921,21 @@ Please adapt your response to match the user's {emotional_state.value} emotional
                 })
             
             # V6.1 Update global performance metrics
-            self.performance_history.append({
-                'timestamp': time.time(),
-                'total_time_ms': metrics.total_emotional_coordination_ms,
-                'emotional_state': metrics.detected_emotional_state.value,
-                'quality_score': metrics.dynamic_response_quality_score,
-                'provider': metrics.provider_name
-            })
+            if hasattr(self, 'performance_history') and isinstance(self.performance_history, dict):
+                self.performance_history['response_times'].append(metrics.total_emotional_coordination_ms)
+                self.performance_history['quantum_scores'].append(metrics.dynamic_response_quality_score)
+                self.performance_history['provider_selections'].append(metrics.provider_name)
+            else:
+                # Initialize if needed
+                if not hasattr(self, 'global_metrics'):
+                    self.global_metrics = deque(maxlen=1000)
+                self.global_metrics.append({
+                    'timestamp': time.time(),
+                    'total_time_ms': metrics.total_emotional_coordination_ms,
+                    'emotional_state': metrics.detected_emotional_state.value,
+                    'quality_score': metrics.dynamic_response_quality_score,
+                    'provider': metrics.provider_name
+                })
             
         except Exception as e:
             logger.warning(f"⚠️ Emotional metrics update failed: {e}")
