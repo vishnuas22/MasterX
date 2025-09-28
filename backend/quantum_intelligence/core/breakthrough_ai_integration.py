@@ -162,10 +162,11 @@ except ImportError:
 class EmotionalAICoordinationConstants:
     """V6.1 Revolutionary Emotional Intelligence Constants for AI Coordination"""
     
-    # Revolutionary Performance Targets V6.1 (Emotional Intelligence Enhanced)
-    TARGET_EMOTIONAL_AI_COORDINATION_MS = 5.0  # Primary target: sub-5ms with emotional intelligence
-    OPTIMAL_EMOTIONAL_AI_COORDINATION_MS = 3.0  # Optimal target: sub-3ms with emotional optimization
-    CRITICAL_EMOTIONAL_AI_COORDINATION_MS = 10.0  # Critical threshold with emotional fallback
+    # Revolutionary Performance Targets V6.1 (REAL AI OPTIMIZED)
+    TARGET_EMOTIONAL_AI_COORDINATION_MS = 8000.0  # Primary target: 8s for real AI with emotional intelligence
+    OPTIMAL_EMOTIONAL_AI_COORDINATION_MS = 5000.0  # Optimal target: 5s for real emotional optimization
+    CRITICAL_EMOTIONAL_AI_COORDINATION_MS = 15000.0  # Critical threshold: 15s with emotional fallback
+    COMPLEX_EMOTIONAL_AI_MS = 20000.0  # Complex emotional queries: 20s
     
     # Emotionally Intelligent Provider Selection Targets
     EMOTIONAL_PROVIDER_SELECTION_TARGET_MS = 1.0  # Revolutionary sub-1ms emotional routing
@@ -177,13 +178,13 @@ class EmotionalAICoordinationConstants:
     MAX_REQUESTS_PER_EMOTIONAL_PROVIDER = 25000
     EMOTIONAL_CONNECTION_POOL_SIZE = 1000
     
-    # Revolutionary Adaptive Circuit Breaker Settings (ML-Driven)
-    # These will be dynamically adjusted by ML models - no more hardcoded values!
-    INITIAL_FAILURE_THRESHOLD = 3  # Starting point for ML adaptation
-    INITIAL_RECOVERY_TIMEOUT = 20.0  # Starting point for emotional adaptation
-    INITIAL_SUCCESS_THRESHOLD = 2  # Starting point for dynamic learning
-    MIN_FAILURE_THRESHOLD = 1  # Minimum for emotional sensitivity
-    MAX_FAILURE_THRESHOLD = 10  # Maximum for emotional resilience
+    # Revolutionary Adaptive Circuit Breaker Settings (REAL AI FRIENDLY)
+    # Adjusted for real AI response times - no aggressive blocking!
+    INITIAL_FAILURE_THRESHOLD = 8  # Higher threshold for real AI (was 3)
+    INITIAL_RECOVERY_TIMEOUT = 60.0  # Longer recovery for real AI (was 20s)
+    INITIAL_SUCCESS_THRESHOLD = 3  # More forgiving success threshold
+    MIN_FAILURE_THRESHOLD = 5  # Higher minimum for real AI tolerance
+    MAX_FAILURE_THRESHOLD = 15  # Higher maximum for AI processing
     
     # Emotionally Intelligent Cache Configuration
     EMOTIONAL_CACHE_SIZE = 75000  # Larger emotional pattern cache
@@ -899,12 +900,16 @@ class UltraEnterpriseGroqProvider:
                 content, task_type, quality_metrics
             )
             
-            # Determine performance tier
+            # Determine performance tier - REAL AI OPTIMIZED
             if response_time < EmotionalAICoordinationConstants.OPTIMAL_EMOTIONAL_AI_COORDINATION_MS / 1000:
                 performance_tier = "ultra"
                 optimization_applied.append("ultra_performance_achieved")
             elif response_time < EmotionalAICoordinationConstants.TARGET_EMOTIONAL_AI_COORDINATION_MS / 1000:
                 performance_tier = "standard"
+                optimization_applied.append("good_ai_performance")
+            elif response_time < EmotionalAICoordinationConstants.CRITICAL_EMOTIONAL_AI_COORDINATION_MS / 1000:
+                performance_tier = "standard"  # Still acceptable for real AI
+                optimization_applied.append("acceptable_ai_performance")
             else:
                 performance_tier = "degraded"
             
@@ -1312,12 +1317,16 @@ class UltraEnterpriseEmergentProvider:
                 content, task_type, quality_metrics
             )
             
-            # Determine performance tier
+            # Determine performance tier - REAL AI OPTIMIZED
             if response_time < EmotionalAICoordinationConstants.OPTIMAL_EMOTIONAL_AI_COORDINATION_MS / 1000:
                 performance_tier = "ultra"
                 optimization_applied.append("ultra_performance_achieved")
             elif response_time < EmotionalAICoordinationConstants.TARGET_EMOTIONAL_AI_COORDINATION_MS / 1000:
                 performance_tier = "standard"
+                optimization_applied.append("good_ai_performance")
+            elif response_time < EmotionalAICoordinationConstants.CRITICAL_EMOTIONAL_AI_COORDINATION_MS / 1000:
+                performance_tier = "standard"  # Still acceptable for real AI
+                optimization_applied.append("acceptable_ai_performance")
             else:
                 performance_tier = "degraded"
             
@@ -1551,6 +1560,273 @@ class UltraEnterpriseEmergentProvider:
                 self.optimization_profile['strategy'] = OptimizationStrategy.ENTERPRISE_BALANCED
             else:
                 self.optimization_profile['strategy'] = OptimizationStrategy.ADAPTIVE
+
+# ============================================================================
+# ULTRA-ENTERPRISE GEMINI 2.5 PROVIDER V6.0
+# ============================================================================
+
+class UltraEnterpriseGeminiProvider:
+    """
+    Ultra-Enterprise Gemini 2.5 provider optimized for analytical reasoning and complex explanations
+    Gemini 2.5: Excellent for complex reasoning, analytical tasks, and comprehensive explanations
+    """
+    
+    def __init__(self, api_key: str, model: str = "gemini-2.5-flash"):
+        self.api_key = api_key
+        self.model = model
+        
+        # Initialize Gemini client
+        if GEMINI_AVAILABLE:
+            try:
+                import google.generativeai as genai
+                genai.configure(api_key=api_key)
+                self.client = genai.GenerativeModel(model)
+                self.available = True
+            except Exception as e:
+                logger.error(f"❌ Gemini client initialization failed: {e}")
+                self.available = False
+        else:
+            self.available = False
+        
+        # V6.0 Ultra-Enterprise specializations for Gemini 2.5
+        self.specializations = {
+            TaskType.COMPLEX_EXPLANATION: 0.98,         # Excellent for complex topics
+            TaskType.ANALYTICAL_REASONING: 0.97,        # Superior analytical capabilities
+            TaskType.RESEARCH_ASSISTANCE: 0.96,         # Great for research
+            TaskType.ADVANCED_CONCEPTS: 0.95,           # Advanced topic handling
+            TaskType.PROBLEM_SOLVING: 0.94,             # Strong problem solving
+            TaskType.GENERAL: 0.92,                     # Good general capability
+            TaskType.BEGINNER_CONCEPTS: 0.90,           # Good for beginners too
+            TaskType.EMOTIONAL_SUPPORT: 0.85,           # Moderate empathy
+            TaskType.QUICK_RESPONSE: 0.83,              # Slower but thorough
+            TaskType.QUANTUM_LEARNING: 0.88,            # Good quantum concepts
+            TaskType.BREAKTHROUGH_DISCOVERY: 0.93       # Excellent for discovery
+        }
+        
+        # Performance tracking
+        self.performance_history = deque(maxlen=1000)
+        self.response_cache = UltraEnterpriseAICache(max_size=8000)
+        
+        logger.info(f"🚀 Ultra-Enterprise Gemini Provider V6.0 initialized: {model}")
+    
+    async def generate_response(
+        self, 
+        messages: List[Dict[str, str]], 
+        context_injection: str = "",
+        task_type: TaskType = TaskType.GENERAL,
+        optimization_hints: Optional[Dict[str, Any]] = None,
+        **kwargs
+    ) -> AIResponse:
+        """Generate response with Gemini 2.5 optimization"""
+        start_time = time.time()
+        optimization_applied = []
+        performance_tier = "standard"
+        
+        try:
+            if not self.available:
+                raise Exception("Gemini not available")
+            
+            # Cache check
+            cache_key = self._generate_cache_key(messages, context_injection, task_type)
+            cached_response = await self.response_cache.get(cache_key)
+            
+            if cached_response:
+                cache_response_time = (time.time() - start_time) * 1000
+                optimization_applied.append("gemini_cache_hit")
+                performance_tier = "ultra"
+                
+                cached_response.cache_hit_type = CacheHitType.ULTRA_HIT
+                cached_response.optimization_applied = optimization_applied
+                cached_response.performance_tier = performance_tier
+                
+                return cached_response
+            
+            # Prepare Gemini prompt
+            gemini_prompt = self._create_gemini_prompt(messages, context_injection, task_type)
+            
+            # Generate with Gemini 2.5
+            response = await asyncio.get_event_loop().run_in_executor(
+                None, 
+                lambda: self.client.generate_content(gemini_prompt)
+            )
+            
+            content = response.text if response and hasattr(response, 'text') else "No response generated"
+            response_time = time.time() - start_time
+            
+            # Calculate quality metrics
+            quality_metrics = await self._calculate_gemini_quality_metrics(
+                content, task_type, response_time
+            )
+            
+            # Determine performance tier
+            if response_time < 8.0:  # Under 8 seconds is good for Gemini
+                performance_tier = "ultra"
+                optimization_applied.append("gemini_ultra_performance")
+            elif response_time < 15.0:  # Under 15 seconds is acceptable
+                performance_tier = "standard"
+                optimization_applied.append("gemini_good_performance")
+            else:
+                performance_tier = "degraded"
+            
+            # Create AI response
+            ai_response = AIResponse(
+                content=content,
+                model=self.model,
+                provider="gemini",
+                tokens_used=len(content.split()) * 1.2,  # Estimation for Gemini
+                response_time=response_time,
+                confidence=0.94,  # High confidence for Gemini 2.5
+                empathy_score=quality_metrics.get('empathy_score', 0.85),
+                complexity_appropriateness=quality_metrics.get('complexity_score', 0.95),
+                context_utilization=quality_metrics.get('context_score', 0.90),
+                task_type=task_type,
+                task_completion_score=self.specializations.get(task_type, 0.90),
+                context_tokens=len(context_injection.split()) if context_injection else 0,
+                cache_hit_type=CacheHitType.MISS,
+                optimization_applied=optimization_applied,
+                performance_tier=performance_tier,
+                quantum_coherence_boost=quality_metrics.get('quantum_boost', 0.1),
+                optimization_score=quality_metrics.get('optimization_score', 0.88),
+                enterprise_compliance={'analytical_excellence': True, 'gemini_2_5': True}
+            )
+            
+            # Cache successful responses
+            if performance_tier in ["ultra", "standard"]:
+                await self.response_cache.set(cache_key, ai_response, ttl=1200)
+            
+            return ai_response
+            
+        except Exception as e:
+            logger.error(f"❌ Gemini provider error: {e}")
+            error_response_time = time.time() - start_time
+            
+            return AIResponse(
+                content=f"I apologize, but I'm experiencing technical difficulties with Gemini. Error: {str(e)}",
+                model="gemini_fallback",
+                provider="gemini_error",
+                tokens_used=0,
+                response_time=error_response_time,
+                confidence=0.0,
+                empathy_score=0.7,
+                task_completion_score=0.0,
+                cache_hit_type=CacheHitType.MISS,
+                optimization_applied=["gemini_error_fallback"],
+                performance_tier="degraded"
+            )
+    
+    def _generate_cache_key(
+        self, 
+        messages: List[Dict[str, str]], 
+        context_injection: str, 
+        task_type: TaskType
+    ) -> str:
+        """Generate cache key for Gemini responses"""
+        key_components = [
+            str(messages[-1]['content']) if messages else "",
+            context_injection[:200],
+            task_type.value if hasattr(task_type, 'value') else str(task_type),
+            self.model
+        ]
+        cache_string = "|".join(key_components)
+        return f"gemini_v6_{hashlib.md5(cache_string.encode()).hexdigest()}"
+    
+    def _create_gemini_prompt(
+        self, 
+        messages: List[Dict[str, str]], 
+        context_injection: str, 
+        task_type: TaskType
+    ) -> str:
+        """Create optimized prompt for Gemini 2.5"""
+        
+        # Start with system context
+        prompt_parts = []
+        
+        # Add system message optimized for Gemini 2.5
+        system_msg = "You are MasterX, an advanced AI learning assistant with exceptional analytical and explanatory capabilities."
+        
+        if context_injection:
+            system_msg += f" Context: {context_injection}"
+        
+        # Add task-specific optimization
+        task_guidance = self._get_gemini_task_guidance(task_type)
+        if task_guidance:
+            system_msg += f" {task_guidance}"
+        
+        prompt_parts.append(system_msg)
+        
+        # Add conversation history
+        for msg in messages:
+            if msg["role"] == "user":
+                prompt_parts.append(f"User: {msg['content']}")
+            elif msg["role"] == "assistant":
+                prompt_parts.append(f"Assistant: {msg['content']}")
+        
+        # Add final instruction
+        prompt_parts.append("Please provide a helpful, comprehensive, and well-structured response:")
+        
+        return "\n\n".join(prompt_parts)
+    
+    def _get_gemini_task_guidance(self, task_type: TaskType) -> str:
+        """Get Gemini-specific task guidance"""
+        guidance = {
+            TaskType.COMPLEX_EXPLANATION: "Provide detailed, step-by-step explanations with clear reasoning and examples.",
+            TaskType.ANALYTICAL_REASONING: "Apply systematic analytical thinking, break down problems methodically, and provide logical conclusions.",
+            TaskType.RESEARCH_ASSISTANCE: "Provide comprehensive, well-researched information with multiple perspectives and reliable insights.",
+            TaskType.ADVANCED_CONCEPTS: "Explain advanced topics with appropriate depth while maintaining clarity and structure.",
+            TaskType.PROBLEM_SOLVING: "Apply structured problem-solving approaches with clear methodology and practical solutions.",
+            TaskType.BREAKTHROUGH_DISCOVERY: "Think creatively and analytically to explore novel approaches and breakthrough insights."
+        }
+        return guidance.get(task_type, "Provide clear, helpful, and comprehensive responses.")
+    
+    async def _calculate_gemini_quality_metrics(
+        self, 
+        content: str, 
+        task_type: TaskType, 
+        response_time: float
+    ) -> Dict[str, Any]:
+        """Calculate Gemini-specific quality metrics"""
+        metrics = {}
+        
+        # Analytical quality indicators for Gemini
+        analytical_words = ['analyze', 'because', 'therefore', 'however', 'furthermore', 'consequently', 'reasoning', 'logic']
+        analytical_count = sum(1 for word in analytical_words if word in content.lower())
+        metrics['analytical_score'] = min(0.85 + (analytical_count * 0.02), 1.0)
+        
+        # Complexity handling
+        word_count = len(content.split())
+        if task_type in [TaskType.COMPLEX_EXPLANATION, TaskType.ANALYTICAL_REASONING]:
+            # Reward comprehensive responses for complex tasks
+            complexity_score = min(0.90 + (word_count / 1000 * 0.1), 1.0)
+        else:
+            complexity_score = 0.90
+        
+        metrics['complexity_score'] = complexity_score
+        
+        # Context utilization
+        context_indicators = ['based on', 'given', 'considering', 'according to', 'as mentioned']
+        context_count = sum(1 for indicator in context_indicators if indicator in content.lower())
+        metrics['context_score'] = min(0.85 + (context_count * 0.03), 1.0)
+        
+        # Empathy score (Gemini is good but not as empathetic as Groq)
+        empathy_words = ['understand', 'help', 'support', 'appreciate', 'feel']
+        empathy_count = sum(1 for word in empathy_words if word in content.lower())
+        metrics['empathy_score'] = min(0.80 + (empathy_count * 0.02), 0.95)
+        
+        # Optimization score
+        metrics['optimization_score'] = (
+            metrics['analytical_score'] * 0.3 +
+            complexity_score * 0.3 +
+            metrics['context_score'] * 0.2 +
+            metrics['empathy_score'] * 0.2
+        )
+        
+        # Quantum boost for analytical excellence
+        if task_type in [TaskType.ANALYTICAL_REASONING, TaskType.COMPLEX_EXPLANATION]:
+            metrics['quantum_boost'] = 0.15
+        else:
+            metrics['quantum_boost'] = 0.05
+        
+        return metrics
 
 # ============================================================================
 # ULTRA-ENTERPRISE BREAKTHROUGH AI MANAGER V6.0
@@ -2561,8 +2837,16 @@ class UltraEnterpriseBreakthroughAIManager:
             
             # Initialize Gemini provider (if available)
             if api_keys.get("GEMINI_API_KEY"):
-                # Placeholder for Gemini provider implementation
-                logger.info("🔄 Gemini provider available but not yet implemented in V6.0")
+                try:
+                    self.gemini_provider = UltraEnterpriseGeminiProvider(
+                        api_keys["GEMINI_API_KEY"],
+                        model="gemini-2.5-flash"  # Using Gemini 2.5 Flash for speed
+                    )
+                    self.providers["gemini"] = self.gemini_provider
+                    logger.info("✅ Ultra-Enterprise Gemini 2.5 Flash Provider V6.0 initialized")
+                except Exception as e:
+                    logger.error(f"❌ Gemini provider initialization failed: {e}")
+                    self.gemini_provider = None
             
             # Start background tasks
             await self._start_background_tasks()
@@ -3276,10 +3560,14 @@ Please adapt your response to match the user's {emotional_state.value} emotional
             logger.warning(f"⚠️ Emotional response enhancement failed: {e}")
             return response
     
-    async def _calculate_empathy_score_v61(self, result: Dict, emotional_state: EmotionalState) -> float:
+    async def _calculate_empathy_score_v61(self, result: Union[Dict, AIResponse], emotional_state: EmotionalState) -> float:
         """V6.1 Calculate Dynamic Empathy Score Based on Emotional State"""
         
-        content = result.get("content", "").lower()
+        # Handle both Dict and AIResponse objects
+        if isinstance(result, AIResponse):
+            content = result.content.lower() if result.content else ""
+        else:
+            content = result.get("content", "").lower()
         
         # V6.1 Emotional empathy indicators
         empathy_indicators = {
@@ -3299,10 +3587,14 @@ Please adapt your response to match the user's {emotional_state.value} emotional
         
         return min(base_score + empathy_bonus, 1.0)
     
-    async def _calculate_complexity_score_v61(self, result: Dict, task_type: TaskType) -> float:
+    async def _calculate_complexity_score_v61(self, result: Union[Dict, AIResponse], task_type: TaskType) -> float:
         """V6.1 Calculate Dynamic Complexity Appropriateness Score"""
         
-        content = result.get("content", "")
+        # Handle both Dict and AIResponse objects
+        if isinstance(result, AIResponse):
+            content = result.content if result.content else ""
+        else:
+            content = result.get("content", "")
         word_count = len(content.split())
         
         # V6.1 Task-appropriate complexity levels
