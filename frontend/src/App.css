@@ -1,34 +1,309 @@
-.App-logo {
-    height: 40vmin;
-    pointer-events: none;
+/* 🚀 MasterX V6.0 - Revolutionary AI Learning Platform Styles */
+
+/* Quantum Intelligence Color Palette */
+:root {
+  --quantum-primary: #00f5ff;      /* Electric Blue - AI Intelligence */
+  --quantum-secondary: #ff6b9d;    /* Pink - Emotion Detection */
+  --quantum-accent: #c77dff;       /* Purple - Learning DNA */
+  --quantum-success: #00ff88;      /* Green - Performance Success */
+  --quantum-warning: #ffbe0b;      /* Yellow - System Alerts */
+  --quantum-danger: #ff006e;       /* Red - Critical Issues */
+  --quantum-dark: #0d1117;         /* Dark Background */
+  --quantum-darker: #010409;       /* Darker Background */
+  --quantum-light: #f0f6fc;        /* Light Text */
+  --quantum-gray: #21262d;         /* Gray Elements */
+  --quantum-border: #30363d;       /* Border Color */
+  
+  /* Gradients */
+  --quantum-gradient-primary: linear-gradient(135deg, var(--quantum-primary), var(--quantum-accent));
+  --quantum-gradient-emotion: linear-gradient(135deg, var(--quantum-secondary), var(--quantum-accent));
+  --quantum-gradient-success: linear-gradient(135deg, var(--quantum-success), var(--quantum-primary));
+  
+  /* Shadows and Effects */
+  --quantum-glow: 0 0 20px;
+  --quantum-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  --quantum-border-radius: 12px;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-    .App-logo {
-        animation: App-logo-spin infinite 20s linear;
-    }
+/* Global Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-.App-header {
-    background-color: #0f0f10;
-    min-height: 100vh;
-    display: flex;
+body {
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--quantum-darker);
+  color: var(--quantum-light);
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+.masterx-app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: radial-gradient(ellipse at top, var(--quantum-dark) 0%, var(--quantum-darker) 100%);
+}
+
+/* Header Styles */
+.masterx-header {
+  background: rgba(13, 17, 23, 0.95);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--quantum-border);
+  padding: 1rem 2rem;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.logo-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.masterx-logo {
+  font-size: 2rem;
+  font-weight: 800;
+  background: var(--quantum-gradient-primary);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.version-badge {
+  background: var(--quantum-primary);
+  color: var(--quantum-dark);
+  padding: 0.2rem 0.6rem;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.tagline {
+  font-size: 0.9rem;
+  color: var(--quantum-accent);
+  margin-top: 0.2rem;
+}
+
+/* System Status */
+.system-status {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: var(--quantum-border-radius);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+.status-operational .status-dot {
+  background: var(--quantum-success);
+  box-shadow: var(--quantum-glow) rgba(0, 255, 136, 0.4);
+}
+
+.status-operational {
+  background: rgba(0, 255, 136, 0.1);
+  color: var(--quantum-success);
+  border: 1px solid var(--quantum-success);
+}
+
+.status-degraded .status-dot {
+  background: var(--quantum-warning);
+  box-shadow: var(--quantum-glow) rgba(255, 190, 11, 0.4);
+}
+
+.status-degraded {
+  background: rgba(255, 190, 11, 0.1);
+  color: var(--quantum-warning);
+  border: 1px solid var(--quantum-warning);
+}
+
+.status-error .status-dot {
+  background: var(--quantum-danger);
+  box-shadow: var(--quantum-glow) rgba(255, 0, 110, 0.4);
+}
+
+.status-error {
+  background: rgba(255, 0, 110, 0.1);
+  color: var(--quantum-danger);
+  border: 1px solid var(--quantum-danger);
+}
+
+/* Navigation */
+.main-navigation {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--quantum-border);
+}
+
+.nav-btn {
+  background: rgba(33, 38, 45, 0.8);
+  color: var(--quantum-light);
+  border: 1px solid var(--quantum-border);
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--quantum-border-radius);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.nav-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: var(--quantum-gradient-primary);
+  transition: left 0.3s ease;
+  z-index: -1;
+}
+
+.nav-btn:hover::before,
+.nav-btn.active::before {
+  left: 0;
+}
+
+.nav-btn:hover,
+.nav-btn.active {
+  color: var(--quantum-dark);
+  border-color: var(--quantum-primary);
+  transform: translateY(-2px);
+  box-shadow: var(--quantum-shadow);
+}
+
+/* Main Content */
+.main-content {
+  flex: 1;
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.view-container {
+  background: rgba(33, 38, 45, 0.4);
+  border-radius: var(--quantum-border-radius);
+  border: 1px solid var(--quantum-border);
+  min-height: calc(100vh - 200px);
+  padding: 2rem;
+  backdrop-filter: blur(10px);
+}
+
+/* Footer */
+.masterx-footer {
+  background: var(--quantum-darker);
+  border-top: 1px solid var(--quantum-border);
+  padding: 1rem 2rem;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--quantum-accent);
+}
+
+/* Animations */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes quantumGlow {
+  0%, 100% { box-shadow: var(--quantum-glow) rgba(0, 245, 255, 0.2); }
+  50% { box-shadow: var(--quantum-glow) rgba(0, 245, 255, 0.6); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+/* Quantum Elements */
+.quantum-glow {
+  animation: quantumGlow 3s infinite;
+}
+
+.quantum-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .header-content {
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    font-size: calc(10px + 2vmin);
-    color: white;
+    gap: 1rem;
+  }
+  
+  .main-navigation {
+    flex-wrap: wrap;
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+  }
+  
+  .main-content {
+    padding: 1rem;
+  }
 }
 
-.App-link {
-    color: #61dafb;
+@media (max-width: 768px) {
+  .masterx-header {
+    padding: 1rem;
+  }
+  
+  .masterx-logo {
+    font-size: 1.5rem;
+  }
+  
+  .nav-btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+  }
+  
+  .view-container {
+    padding: 1rem;
+  }
 }
 
-@keyframes App-logo-spin {
-    from {
-        transform: rotate(0deg);
-    }
-    to {
-        transform: rotate(360deg);
-    }
-}
+/* Utility Classes */
+.text-quantum-primary { color: var(--quantum-primary); }
+.text-quantum-secondary { color: var(--quantum-secondary); }
+.text-quantum-accent { color: var(--quantum-accent); }
+.text-quantum-success { color: var(--quantum-success); }
+.text-quantum-warning { color: var(--quantum-warning); }
+.text-quantum-danger { color: var(--quantum-danger); }
+
+.bg-quantum-dark { background: var(--quantum-dark); }
+.bg-quantum-gray { background: var(--quantum-gray); }
+
+.border-quantum { border: 1px solid var(--quantum-border); }
+.rounded-quantum { border-radius: var(--quantum-border-radius); }
