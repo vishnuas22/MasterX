@@ -38,6 +38,15 @@ try:
 except ImportError:
     NEW_TRANSFORMER_AVAILABLE = False
 
+try:
+    from .emotion_engine import (
+        EmotionEngine,
+        emotion_engine
+    )
+    NEW_ENGINE_AVAILABLE = True
+except ImportError:
+    NEW_ENGINE_AVAILABLE = False
+
 # Import V9.0 legacy components (backward compatibility)
 try:
     from .authentic_emotion_core_v9 import (
@@ -136,6 +145,12 @@ if NEW_TRANSFORMER_AVAILABLE:
         "EmotionTransformer",
         "EmotionClassifier",
         "AdaptiveThresholdManager"
+    ])
+
+if NEW_ENGINE_AVAILABLE:
+    __all__.extend([
+        "EmotionEngine",
+        "emotion_engine"
     ])
 
 # Add V9.0 legacy components for backward compatibility
