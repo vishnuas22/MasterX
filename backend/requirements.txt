@@ -75,9 +75,11 @@ pillow==11.3.0
 platformdirs==4.4.0
 pluggy==1.6.0
 pondpond==1.4.1
+prometheus_client==0.23.1
 propcache==0.3.2
 proto-plus==1.26.1
 protobuf==5.29.5
+psutil==7.1.0
 pyasn1==0.6.1
 pyasn1_modules==0.4.2
 pycodestyle==2.14.0
@@ -120,6 +122,8 @@ threadpoolctl==3.6.0
 tiktoken==0.11.0
 tokenizers==0.22.1
 torch==2.8.0
+torchaudio==2.8.0
+torchvision==0.23.0
 tqdm==4.67.1
 transformers==4.56.2
 typer==0.18.0
@@ -133,12 +137,3 @@ watchfiles==1.1.0
 websockets==15.0.1
 yarl==1.20.1
 zipp==3.23.0
-
-# V9.0 Enhanced Performance & Monitoring Dependencies
-prometheus_client==0.23.1
-psutil==7.1.0
-
-# V9.0 Emotion Detection & Transformer Dependencies  
-torch>=2.0.0
-torchvision>=0.15.0
-torchaudio>=2.0.0
