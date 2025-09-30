@@ -1,0 +1,70 @@
+{
+  "overall_accuracy": 0.6237288135593221,
+  "emotion_statistics": {
+    "confusion": {
+      "accuracy": 0.5,
+      "average_confidence": 0.6866666666666666,
+      "sample_count": 30
+    },
+    "frustration": {
+      "accuracy": 0.4,
+      "average_confidence": 0.6733333333333333,
+      "sample_count": 30
+    },
+    "anxiety": {
+      "accuracy": 0.64,
+      "average_confidence": 0.8320000000000001,
+      "sample_count": 25
+    },
+    "fear": {
+      "accuracy": 0.9333333333333333,
+      "average_confidence": 0.9433333333333334,
+      "sample_count": 15
+    },
+    "joy": {
+      "accuracy": 0.8,
+      "average_confidence": 0.8300000000000001,
+      "sample_count": 20
+    },
+    "excitement": {
+      "accuracy": 0.36,
+      "average_confidence": 0.7239999999999999,
+      "sample_count": 25
+    },
+    "satisfaction": {
+      "accuracy": 0.75,
+      "average_confidence": 0.86,
+      "sample_count": 20
+    },
+    "confidence": {
+      "accuracy": 0.68,
+      "average_confidence": 0.71,
+      "sample_count": 25
+    },
+    "breakthrough_moment": {
+      "accuracy": 0.68,
+      "average_confidence": 0.7819999999999999,
+      "sample_count": 25
+    },
+    "struggle": {
+      "accuracy": 0.45,
+      "average_confidence": 0.6849999999999999,
+      "sample_count": 20
+    },
+    "boredom": {
+      "accuracy": 0.6,
+      "average_confidence": 0.8933333333333333,
+      "sample_count": 15
+    },
+    "engagement": {
+      "accuracy": 0.68,
+      "average_confidence": 0.7519999999999999,
+      "sample_count": 25
+    },
+    "neutral": {
+      "accuracy": 0.9,
+      "average_confidence": 0.5999999999999999,
+      "sample_count": 20
+    }
+  }
+}
