@@ -1,40 +1,74 @@
 """
-Emotional AI and Wellbeing Services for Quantum Intelligence Engine V9.0
+Emotional AI and Wellbeing Services for Quantum Intelligence Engine.
 
-Revolutionary authentic emotion detection system with NO hardcoded values:
-- Advanced BERT/RoBERTa transformer-based emotion recognition
-- Adaptive behavioral pattern analysis with user-specific baselines
-- Real-time learning state prediction with dynamic thresholds
-- Enterprise-grade intervention systems with ML-driven recommendations
-- Authentic multimodal fusion with pattern recognition
+Enterprise-grade emotion detection system:
+- Transformer-based emotion recognition (BERT/RoBERTa)
+- Adaptive behavioral pattern analysis
+- Real-time learning state prediction
+- ML-driven intervention systems
+- Multimodal emotion fusion
 
-V9.0 Features:
-- 99.2% emotion recognition accuracy with transformer models
-- Sub-15ms real-time analysis with adaptive optimization
-- Dynamic threshold adaptation based on user behavior patterns
-- Authentic emotional intelligence with zero preset values
-- Production-ready scalability for 500,000+ concurrent analyses
+Author: MasterX AI Team
+Version: 1.0 (Enhanced from v9.0)
 """
 
-# Import V9.0 Revolutionary Authentic Components
-from .authentic_emotion_core_v9 import (
-    AuthenticEmotionV9Constants,
-    AuthenticEmotionCategoryV9,
-    AuthenticInterventionLevelV9,
-    AuthenticLearningReadinessV9,
-    AuthenticEmotionalTrajectoryV9,
-    AuthenticEmotionMetricsV9,
-    AuthenticEmotionResultV9,
-    AuthenticBehavioralAnalyzer,
-    AuthenticPatternRecognitionEngine
-)
+# Import new enhanced components (clean naming)
+try:
+    from .emotion_core import (
+        EmotionConstants,
+        EmotionCategory,
+        InterventionLevel,
+        LearningReadiness,
+        EmotionalTrajectory,
+        EmotionMetrics,
+        EmotionResult,
+        BehavioralPattern
+    )
+    NEW_CORE_AVAILABLE = True
+except ImportError:
+    NEW_CORE_AVAILABLE = False
 
-from .authentic_transformer_v9 import AuthenticEmotionTransformerV9
+try:
+    from .emotion_transformer import (
+        EmotionTransformer,
+        EmotionClassifier,
+        AdaptiveThresholdManager
+    )
+    NEW_TRANSFORMER_AVAILABLE = True
+except ImportError:
+    NEW_TRANSFORMER_AVAILABLE = False
 
-from .authentic_emotion_engine_v9 import (
-    RevolutionaryAuthenticEmotionEngineV9,
-    authentic_emotion_engine_v9
-)
+# Import V9.0 legacy components (backward compatibility)
+try:
+    from .authentic_emotion_core_v9 import (
+        AuthenticEmotionV9Constants,
+        AuthenticEmotionCategoryV9,
+        AuthenticInterventionLevelV9,
+        AuthenticLearningReadinessV9,
+        AuthenticEmotionalTrajectoryV9,
+        AuthenticEmotionMetricsV9,
+        AuthenticEmotionResultV9,
+        AuthenticBehavioralAnalyzer,
+        AuthenticPatternRecognitionEngine
+    )
+    LEGACY_V9_AVAILABLE = True
+except ImportError:
+    LEGACY_V9_AVAILABLE = False
+
+try:
+    from .authentic_transformer_v9 import AuthenticEmotionTransformerV9
+    LEGACY_TRANSFORMER_AVAILABLE = True
+except ImportError:
+    LEGACY_TRANSFORMER_AVAILABLE = False
+
+try:
+    from .authentic_emotion_engine_v9 import (
+        RevolutionaryAuthenticEmotionEngineV9,
+        authentic_emotion_engine_v9
+    )
+    LEGACY_ENGINE_AVAILABLE = True
+except ImportError:
+    LEGACY_ENGINE_AVAILABLE = False
 
 # Import V8.0 Legacy Components (for compatibility)
 try:
@@ -81,22 +115,51 @@ try:
 except ImportError:
     WELLBEING_AVAILABLE = False
 
-# Define primary V9.0 exports
-__all__ = [
-    # V9.0 Revolutionary Authentic Emotion Detection
-    "AuthenticEmotionV9Constants",
-    "AuthenticEmotionCategoryV9",
-    "AuthenticInterventionLevelV9",
-    "AuthenticLearningReadinessV9", 
-    "AuthenticEmotionalTrajectoryV9",
-    "AuthenticEmotionMetricsV9",
-    "AuthenticEmotionResultV9",
-    "AuthenticBehavioralAnalyzer",
-    "AuthenticPatternRecognitionEngine",
-    "AuthenticEmotionTransformerV9",
-    "RevolutionaryAuthenticEmotionEngineV9",
-    "authentic_emotion_engine_v9"
-]
+# Define exports
+__all__ = []
+
+# Add new enhanced components
+if NEW_CORE_AVAILABLE:
+    __all__.extend([
+        "EmotionConstants",
+        "EmotionCategory",
+        "InterventionLevel",
+        "LearningReadiness",
+        "EmotionalTrajectory",
+        "EmotionMetrics",
+        "EmotionResult",
+        "BehavioralPattern"
+    ])
+
+if NEW_TRANSFORMER_AVAILABLE:
+    __all__.extend([
+        "EmotionTransformer",
+        "EmotionClassifier",
+        "AdaptiveThresholdManager"
+    ])
+
+# Add V9.0 legacy components for backward compatibility
+if LEGACY_V9_AVAILABLE:
+    __all__.extend([
+        "AuthenticEmotionV9Constants",
+        "AuthenticEmotionCategoryV9",
+        "AuthenticInterventionLevelV9",
+        "AuthenticLearningReadinessV9", 
+        "AuthenticEmotionalTrajectoryV9",
+        "AuthenticEmotionMetricsV9",
+        "AuthenticEmotionResultV9",
+        "AuthenticBehavioralAnalyzer",
+        "AuthenticPatternRecognitionEngine"
+    ])
+
+if LEGACY_TRANSFORMER_AVAILABLE:
+    __all__.append("AuthenticEmotionTransformerV9")
+
+if LEGACY_ENGINE_AVAILABLE:
+    __all__.extend([
+        "RevolutionaryAuthenticEmotionEngineV9",
+        "authentic_emotion_engine_v9"
+    ])
 
 # Add V8.0 legacy components if available
 if LEGACY_V8_AVAILABLE:
