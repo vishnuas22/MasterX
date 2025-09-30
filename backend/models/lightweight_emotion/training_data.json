@@ -1,0 +1,1200 @@
+{
+  "data": [
+    [
+      "I don't understand what this means",
+      "confusion"
+    ],
+    [
+      "This concept is really confusing me",
+      "confusion"
+    ],
+    [
+      "I'm lost on this topic",
+      "confusion"
+    ],
+    [
+      "Can you explain this again?",
+      "confusion"
+    ],
+    [
+      "I'm not following this explanation",
+      "confusion"
+    ],
+    [
+      "What does this even mean?",
+      "confusion"
+    ],
+    [
+      "I'm confused about the relationship between these concepts",
+      "confusion"
+    ],
+    [
+      "This doesn't make sense to me",
+      "confusion"
+    ],
+    [
+      "I'm having trouble understanding the difference",
+      "confusion"
+    ],
+    [
+      "Could you clarify this part?",
+      "confusion"
+    ],
+    [
+      "I'm not sure I understand the connection",
+      "confusion"
+    ],
+    [
+      "This is unclear to me",
+      "confusion"
+    ],
+    [
+      "I need help understanding this",
+      "confusion"
+    ],
+    [
+      "The explanation isn't making sense",
+      "confusion"
+    ],
+    [
+      "I'm puzzled by this concept",
+      "confusion"
+    ],
+    [
+      "Can you break this down further?",
+      "confusion"
+    ],
+    [
+      "I'm not grasping this idea",
+      "confusion"
+    ],
+    [
+      "This is perplexing",
+      "confusion"
+    ],
+    [
+      "I'm uncertain about what this means",
+      "confusion"
+    ],
+    [
+      "Could you explain this differently?",
+      "confusion"
+    ],
+    [
+      "I'm having difficulty with this concept",
+      "confusion"
+    ],
+    [
+      "This is confusing me more and more",
+      "confusion"
+    ],
+    [
+      "I don't see how these relate",
+      "confusion"
+    ],
+    [
+      "The logic here escapes me",
+      "confusion"
+    ],
+    [
+      "I'm befuddled by this",
+      "confusion"
+    ],
+    [
+      "This explanation is muddy to me",
+      "confusion"
+    ],
+    [
+      "I can't wrap my head around this",
+      "confusion"
+    ],
+    [
+      "This is over my head",
+      "confusion"
+    ],
+    [
+      "I'm not connecting the dots",
+      "confusion"
+    ],
+    [
+      "This leaves me confused",
+      "confusion"
+    ],
+    [
+      "This is so frustrating, I've been stuck on this for hours",
+      "frustration"
+    ],
+    [
+      "I keep getting this wrong no matter what I try",
+      "frustration"
+    ],
+    [
+      "Why isn't this working?",
+      "frustration"
+    ],
+    [
+      "I've tried everything and nothing works",
+      "frustration"
+    ],
+    [
+      "This is impossible to understand",
+      "frustration"
+    ],
+    [
+      "I'm so frustrated with this problem",
+      "frustration"
+    ],
+    [
+      "No matter how many times I review this, I don't get it",
+      "frustration"
+    ],
+    [
+      "This is driving me crazy",
+      "frustration"
+    ],
+    [
+      "I can't figure this out at all",
+      "frustration"
+    ],
+    [
+      "Why is this so difficult?",
+      "frustration"
+    ],
+    [
+      "I'm getting nowhere with this",
+      "frustration"
+    ],
+    [
+      "This is really aggravating",
+      "frustration"
+    ],
+    [
+      "I'm fed up with this topic",
+      "frustration"
+    ],
+    [
+      "Nothing I do seems to help",
+      "frustration"
+    ],
+    [
+      "This is exasperating",
+      "frustration"
+    ],
+    [
+      "I'm at my wit's end",
+      "frustration"
+    ],
+    [
+      "This keeps not working",
+      "frustration"
+    ],
+    [
+      "I'm stuck in the same place",
+      "frustration"
+    ],
+    [
+      "This is infuriating",
+      "frustration"
+    ],
+    [
+      "Why can't I get this right?",
+      "frustration"
+    ],
+    [
+      "I've wasted so much time on this",
+      "frustration"
+    ],
+    [
+      "This shouldn't be this hard",
+      "frustration"
+    ],
+    [
+      "I'm irritated by how difficult this is",
+      "frustration"
+    ],
+    [
+      "This is more trouble than it's worth",
+      "frustration"
+    ],
+    [
+      "I'm annoyed I can't solve this",
+      "frustration"
+    ],
+    [
+      "This is maddening",
+      "frustration"
+    ],
+    [
+      "I feel like giving up",
+      "frustration"
+    ],
+    [
+      "This is utterly frustrating",
+      "frustration"
+    ],
+    [
+      "I'm losing patience with this",
+      "frustration"
+    ],
+    [
+      "This is testing my limits",
+      "frustration"
+    ],
+    [
+      "I'm worried I won't be able to learn this",
+      "anxiety"
+    ],
+    [
+      "What if I fail this test?",
+      "anxiety"
+    ],
+    [
+      "I'm nervous about the exam",
+      "anxiety"
+    ],
+    [
+      "I don't think I'm smart enough for this",
+      "anxiety"
+    ],
+    [
+      "Everyone else seems to get it but I don't",
+      "anxiety"
+    ],
+    [
+      "I'm scared I'm falling behind",
+      "anxiety"
+    ],
+    [
+      "This is making me really anxious",
+      "anxiety"
+    ],
+    [
+      "I'm not sure I can do this",
+      "anxiety"
+    ],
+    [
+      "What if I never understand this topic?",
+      "anxiety"
+    ],
+    [
+      "I'm afraid of making mistakes",
+      "anxiety"
+    ],
+    [
+      "I'm worried about my performance",
+      "anxiety"
+    ],
+    [
+      "This is stressing me out",
+      "anxiety"
+    ],
+    [
+      "I feel overwhelmed",
+      "anxiety"
+    ],
+    [
+      "I'm nervous I won't succeed",
+      "anxiety"
+    ],
+    [
+      "This is causing me anxiety",
+      "anxiety"
+    ],
+    [
+      "I'm concerned I'm not prepared",
+      "anxiety"
+    ],
+    [
+      "What if I let everyone down?",
+      "anxiety"
+    ],
+    [
+      "I'm feeling uneasy about this",
+      "anxiety"
+    ],
+    [
+      "This is making me tense",
+      "anxiety"
+    ],
+    [
+      "I'm apprehensive about continuing",
+      "anxiety"
+    ],
+    [
+      "I feel pressure to perform",
+      "anxiety"
+    ],
+    [
+      "I'm worried about the outcome",
+      "anxiety"
+    ],
+    [
+      "This gives me a lot of stress",
+      "anxiety"
+    ],
+    [
+      "I'm feeling insecure about my abilities",
+      "anxiety"
+    ],
+    [
+      "I'm anxious I won't meet expectations",
+      "anxiety"
+    ],
+    [
+      "I'm afraid I'll never understand this",
+      "fear"
+    ],
+    [
+      "This terrifies me",
+      "fear"
+    ],
+    [
+      "I'm scared of this subject",
+      "fear"
+    ],
+    [
+      "I have a fear of failing",
+      "fear"
+    ],
+    [
+      "This frightens me",
+      "fear"
+    ],
+    [
+      "I'm terrified of the complexity",
+      "fear"
+    ],
+    [
+      "I fear I'm not capable",
+      "fear"
+    ],
+    [
+      "This topic scares me",
+      "fear"
+    ],
+    [
+      "I'm afraid to try",
+      "fear"
+    ],
+    [
+      "I feel paralyzed by fear",
+      "fear"
+    ],
+    [
+      "This is intimidating",
+      "fear"
+    ],
+    [
+      "I'm scared to move forward",
+      "fear"
+    ],
+    [
+      "I fear the consequences of failure",
+      "fear"
+    ],
+    [
+      "This makes me feel threatened",
+      "fear"
+    ],
+    [
+      "I'm fearful of the challenge",
+      "fear"
+    ],
+    [
+      "I love learning this!",
+      "joy"
+    ],
+    [
+      "This is so much fun!",
+      "joy"
+    ],
+    [
+      "I'm really enjoying this topic",
+      "joy"
+    ],
+    [
+      "This makes me happy",
+      "joy"
+    ],
+    [
+      "I'm having a great time learning this",
+      "joy"
+    ],
+    [
+      "This brings me joy",
+      "joy"
+    ],
+    [
+      "I'm delighted by this subject",
+      "joy"
+    ],
+    [
+      "This is wonderful",
+      "joy"
+    ],
+    [
+      "I'm pleased with this material",
+      "joy"
+    ],
+    [
+      "This is enjoyable",
+      "joy"
+    ],
+    [
+      "I'm finding happiness in learning",
+      "joy"
+    ],
+    [
+      "This is a joyful experience",
+      "joy"
+    ],
+    [
+      "I'm cheerful about this",
+      "joy"
+    ],
+    [
+      "This brings a smile to my face",
+      "joy"
+    ],
+    [
+      "I'm glad to be learning this",
+      "joy"
+    ],
+    [
+      "This makes me feel good",
+      "joy"
+    ],
+    [
+      "I'm content with this topic",
+      "joy"
+    ],
+    [
+      "This is pleasurable",
+      "joy"
+    ],
+    [
+      "I feel joyful when studying this",
+      "joy"
+    ],
+    [
+      "This is a happy experience",
+      "joy"
+    ],
+    [
+      "This is amazing! I can't wait to learn more!",
+      "excitement"
+    ],
+    [
+      "I'm so excited about this concept!",
+      "excitement"
+    ],
+    [
+      "Wow! This is incredible!",
+      "excitement"
+    ],
+    [
+      "I'm thrilled to be learning this!",
+      "excitement"
+    ],
+    [
+      "This is absolutely fascinating!",
+      "excitement"
+    ],
+    [
+      "I can't believe how cool this is!",
+      "excitement"
+    ],
+    [
+      "This is electrifying!",
+      "excitement"
+    ],
+    [
+      "I'm pumped about this topic!",
+      "excitement"
+    ],
+    [
+      "This is exhilarating!",
+      "excitement"
+    ],
+    [
+      "I'm enthusiastic about learning more!",
+      "excitement"
+    ],
+    [
+      "This is so interesting!",
+      "excitement"
+    ],
+    [
+      "I'm energized by this!",
+      "excitement"
+    ],
+    [
+      "This is captivating!",
+      "excitement"
+    ],
+    [
+      "I'm eager to continue!",
+      "excitement"
+    ],
+    [
+      "This is stimulating!",
+      "excitement"
+    ],
+    [
+      "I'm animated by this concept!",
+      "excitement"
+    ],
+    [
+      "This is thrilling!",
+      "excitement"
+    ],
+    [
+      "I'm fired up about this!",
+      "excitement"
+    ],
+    [
+      "This is invigorating!",
+      "excitement"
+    ],
+    [
+      "I'm passionate about this topic!",
+      "excitement"
+    ],
+    [
+      "This is riveting!",
+      "excitement"
+    ],
+    [
+      "I'm stoked to learn more!",
+      "excitement"
+    ],
+    [
+      "This is inspiring!",
+      "excitement"
+    ],
+    [
+      "I'm dynamized by this!",
+      "excitement"
+    ],
+    [
+      "This is breathtaking!",
+      "excitement"
+    ],
+    [
+      "I'm proud of myself for figuring this out",
+      "satisfaction"
+    ],
+    [
+      "That felt really good to complete",
+      "satisfaction"
+    ],
+    [
+      "I'm satisfied with my progress",
+      "satisfaction"
+    ],
+    [
+      "This is rewarding",
+      "satisfaction"
+    ],
+    [
+      "I feel accomplished",
+      "satisfaction"
+    ],
+    [
+      "I'm happy with what I've learned",
+      "satisfaction"
+    ],
+    [
+      "This gives me a sense of fulfillment",
+      "satisfaction"
+    ],
+    [
+      "I'm content with my understanding",
+      "satisfaction"
+    ],
+    [
+      "I feel gratified",
+      "satisfaction"
+    ],
+    [
+      "This is gratifying work",
+      "satisfaction"
+    ],
+    [
+      "I'm pleased with my results",
+      "satisfaction"
+    ],
+    [
+      "I feel a sense of achievement",
+      "satisfaction"
+    ],
+    [
+      "This is fulfilling",
+      "satisfaction"
+    ],
+    [
+      "I'm satisfied I mastered this",
+      "satisfaction"
+    ],
+    [
+      "I feel rewarded by my effort",
+      "satisfaction"
+    ],
+    [
+      "This brings satisfaction",
+      "satisfaction"
+    ],
+    [
+      "I'm glad I persevered",
+      "satisfaction"
+    ],
+    [
+      "I feel good about my accomplishment",
+      "satisfaction"
+    ],
+    [
+      "This is a satisfying outcome",
+      "satisfaction"
+    ],
+    [
+      "I'm content with this result",
+      "satisfaction"
+    ],
+    [
+      "I think I'm getting the hang of this",
+      "confidence"
+    ],
+    [
+      "I feel more confident now",
+      "confidence"
+    ],
+    [
+      "I believe I can do this",
+      "confidence"
+    ],
+    [
+      "I'm starting to understand this better",
+      "confidence"
+    ],
+    [
+      "I feel good about my understanding",
+      "confidence"
+    ],
+    [
+      "I'm confident I can solve this",
+      "confidence"
+    ],
+    [
+      "I know I can figure this out",
+      "confidence"
+    ],
+    [
+      "I trust my abilities",
+      "confidence"
+    ],
+    [
+      "I'm assured I understand",
+      "confidence"
+    ],
+    [
+      "I feel capable",
+      "confidence"
+    ],
+    [
+      "I'm certain I can handle this",
+      "confidence"
+    ],
+    [
+      "I have faith in my skills",
+      "confidence"
+    ],
+    [
+      "I'm self-assured",
+      "confidence"
+    ],
+    [
+      "I believe in myself",
+      "confidence"
+    ],
+    [
+      "I'm positive I can succeed",
+      "confidence"
+    ],
+    [
+      "I feel empowered",
+      "confidence"
+    ],
+    [
+      "I'm convinced I understand",
+      "confidence"
+    ],
+    [
+      "I trust I'm on the right track",
+      "confidence"
+    ],
+    [
+      "I'm secure in my knowledge",
+      "confidence"
+    ],
+    [
+      "I feel strong in this area",
+      "confidence"
+    ],
+    [
+      "I'm definite about this",
+      "confidence"
+    ],
+    [
+      "I have confidence in my grasp",
+      "confidence"
+    ],
+    [
+      "I'm sure of myself",
+      "confidence"
+    ],
+    [
+      "I feel competent",
+      "confidence"
+    ],
+    [
+      "I'm assured of success",
+      "confidence"
+    ],
+    [
+      "Oh! I finally get it!",
+      "breakthrough_moment"
+    ],
+    [
+      "Everything just clicked!",
+      "breakthrough_moment"
+    ],
+    [
+      "Aha! Now I understand!",
+      "breakthrough_moment"
+    ],
+    [
+      "It all makes sense now!",
+      "breakthrough_moment"
+    ],
+    [
+      "I finally figured it out!",
+      "breakthrough_moment"
+    ],
+    [
+      "Now I see how it all connects!",
+      "breakthrough_moment"
+    ],
+    [
+      "This just came together for me!",
+      "breakthrough_moment"
+    ],
+    [
+      "Wow, I finally understand this concept!",
+      "breakthrough_moment"
+    ],
+    [
+      "The pieces fell into place!",
+      "breakthrough_moment"
+    ],
+    [
+      "I had an epiphany!",
+      "breakthrough_moment"
+    ],
+    [
+      "It suddenly became clear!",
+      "breakthrough_moment"
+    ],
+    [
+      "I just had a light bulb moment!",
+      "breakthrough_moment"
+    ],
+    [
+      "Everything makes sense now!",
+      "breakthrough_moment"
+    ],
+    [
+      "I see the pattern now!",
+      "breakthrough_moment"
+    ],
+    [
+      "This is a revelation!",
+      "breakthrough_moment"
+    ],
+    [
+      "I just connected the dots!",
+      "breakthrough_moment"
+    ],
+    [
+      "Now I understand the whole picture!",
+      "breakthrough_moment"
+    ],
+    [
+      "This is my aha moment!",
+      "breakthrough_moment"
+    ],
+    [
+      "I finally cracked it!",
+      "breakthrough_moment"
+    ],
+    [
+      "The fog has lifted!",
+      "breakthrough_moment"
+    ],
+    [
+      "I get it now!",
+      "breakthrough_moment"
+    ],
+    [
+      "This all came together!",
+      "breakthrough_moment"
+    ],
+    [
+      "I had a moment of clarity!",
+      "breakthrough_moment"
+    ],
+    [
+      "Everything crystallized!",
+      "breakthrough_moment"
+    ],
+    [
+      "I finally broke through!",
+      "breakthrough_moment"
+    ],
+    [
+      "I'm struggling with this material",
+      "struggle"
+    ],
+    [
+      "This is really challenging for me",
+      "struggle"
+    ],
+    [
+      "I'm having a hard time with this",
+      "struggle"
+    ],
+    [
+      "I'm not doing well with this topic",
+      "struggle"
+    ],
+    [
+      "I keep making mistakes",
+      "struggle"
+    ],
+    [
+      "This is difficult for me",
+      "struggle"
+    ],
+    [
+      "I'm finding this tough",
+      "struggle"
+    ],
+    [
+      "I'm having trouble",
+      "struggle"
+    ],
+    [
+      "This is a challenge",
+      "struggle"
+    ],
+    [
+      "I'm battling with this",
+      "struggle"
+    ],
+    [
+      "I'm grappling with this concept",
+      "struggle"
+    ],
+    [
+      "This is hard work",
+      "struggle"
+    ],
+    [
+      "I'm laboring over this",
+      "struggle"
+    ],
+    [
+      "I'm wrestling with this idea",
+      "struggle"
+    ],
+    [
+      "This is demanding",
+      "struggle"
+    ],
+    [
+      "I'm finding this arduous",
+      "struggle"
+    ],
+    [
+      "I'm having difficulty",
+      "struggle"
+    ],
+    [
+      "This is taxing",
+      "struggle"
+    ],
+    [
+      "I'm striving to understand",
+      "struggle"
+    ],
+    [
+      "This requires effort",
+      "struggle"
+    ],
+    [
+      "This is boring",
+      "boredom"
+    ],
+    [
+      "I'm not interested in this",
+      "boredom"
+    ],
+    [
+      "This isn't engaging at all",
+      "boredom"
+    ],
+    [
+      "I'm losing interest",
+      "boredom"
+    ],
+    [
+      "This is tedious",
+      "boredom"
+    ],
+    [
+      "This is dull",
+      "boredom"
+    ],
+    [
+      "I'm uninterested",
+      "boredom"
+    ],
+    [
+      "This is monotonous",
+      "boredom"
+    ],
+    [
+      "I find this tiresome",
+      "boredom"
+    ],
+    [
+      "This is unstimulating",
+      "boredom"
+    ],
+    [
+      "I'm disengaged",
+      "boredom"
+    ],
+    [
+      "This is lackluster",
+      "boredom"
+    ],
+    [
+      "I'm apathetic about this",
+      "boredom"
+    ],
+    [
+      "This is unexciting",
+      "boredom"
+    ],
+    [
+      "I'm indifferent to this",
+      "boredom"
+    ],
+    [
+      "This is interesting",
+      "engagement"
+    ],
+    [
+      "I'm curious about this",
+      "engagement"
+    ],
+    [
+      "Tell me more about this",
+      "engagement"
+    ],
+    [
+      "I want to learn more",
+      "engagement"
+    ],
+    [
+      "This caught my attention",
+      "engagement"
+    ],
+    [
+      "I'm engaged in this topic",
+      "engagement"
+    ],
+    [
+      "This is fascinating",
+      "engagement"
+    ],
+    [
+      "I'm paying close attention",
+      "engagement"
+    ],
+    [
+      "This holds my interest",
+      "engagement"
+    ],
+    [
+      "I'm absorbed in this",
+      "engagement"
+    ],
+    [
+      "This captures my focus",
+      "engagement"
+    ],
+    [
+      "I'm attentive to this",
+      "engagement"
+    ],
+    [
+      "This draws me in",
+      "engagement"
+    ],
+    [
+      "I'm involved in this",
+      "engagement"
+    ],
+    [
+      "This keeps my attention",
+      "engagement"
+    ],
+    [
+      "I'm invested in learning this",
+      "engagement"
+    ],
+    [
+      "This is captivating",
+      "engagement"
+    ],
+    [
+      "I'm hooked on this topic",
+      "engagement"
+    ],
+    [
+      "This intrigues me",
+      "engagement"
+    ],
+    [
+      "I'm immersed in this",
+      "engagement"
+    ],
+    [
+      "This resonates with me",
+      "engagement"
+    ],
+    [
+      "I'm focused on this",
+      "engagement"
+    ],
+    [
+      "This appeals to me",
+      "engagement"
+    ],
+    [
+      "I'm concentrating on this",
+      "engagement"
+    ],
+    [
+      "This interests me greatly",
+      "engagement"
+    ],
+    [
+      "Let's continue",
+      "neutral"
+    ],
+    [
+      "Okay, I'm following",
+      "neutral"
+    ],
+    [
+      "I see",
+      "neutral"
+    ],
+    [
+      "Alright",
+      "neutral"
+    ],
+    [
+      "Next topic please",
+      "neutral"
+    ],
+    [
+      "Moving on",
+      "neutral"
+    ],
+    [
+      "Got it",
+      "neutral"
+    ],
+    [
+      "Understood",
+      "neutral"
+    ],
+    [
+      "Proceed",
+      "neutral"
+    ],
+    [
+      "Continue",
+      "neutral"
+    ],
+    [
+      "Next",
+      "neutral"
+    ],
+    [
+      "Okay",
+      "neutral"
+    ],
+    [
+      "Acknowledged",
+      "neutral"
+    ],
+    [
+      "I'm here",
+      "neutral"
+    ],
+    [
+      "Go ahead",
+      "neutral"
+    ],
+    [
+      "I'm listening",
+      "neutral"
+    ],
+    [
+      "Noted",
+      "neutral"
+    ],
+    [
+      "Right",
+      "neutral"
+    ],
+    [
+      "Fine",
+      "neutral"
+    ],
+    [
+      "Sure",
+      "neutral"
+    ]
+  ],
+  "emotions": [
+    "confusion",
+    "frustration",
+    "anxiety",
+    "fear",
+    "joy",
+    "excitement",
+    "satisfaction",
+    "confidence",
+    "breakthrough_moment",
+    "struggle",
+    "boredom",
+    "engagement",
+    "neutral"
+  ],
+  "size": 295
+}
