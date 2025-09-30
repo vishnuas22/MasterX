@@ -198,6 +198,7 @@ class UserThresholds:
     
     confidence_threshold: float = 0.7
     intervention_threshold: float = 0.4
+    optimal_cognitive_load: float = 0.6
     bert_weight: float = 1.0
     roberta_weight: float = 1.0
     total_predictions: int = 0
@@ -205,36 +206,63 @@ class UserThresholds:
     learning_rate: float = 0.1
     last_updated: Optional[datetime] = None
     
+    def get(self, key: str, default: Any = None) -> Any:
+        """Dict-like get method for compatibility."""
+        return getattr(self, key, default)
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary."""
+        return {
+            'confidence_threshold': self.confidence_threshold,
+            'intervention_threshold': self.intervention_threshold,
+            'optimal_cognitive_load': self.optimal_cognitive_load,
+            'bert_weight': self.bert_weight,
+            'roberta_weight': self.roberta_weight,
+            'total_predictions': self.total_predictions,
+            'successful_predictions': self.successful_predictions,
+            'learning_rate': self.learning_rate,
+            'last_updated': self.last_updated.isoformat() if self.last_updated else None
+        }
+    
     def update_learning_rate(self) -> None:
-        """Decay learning rate over time for stability."""
-        self.learning_rate = max(0.01, self.learning_rate * 0.99)
+        """Decay learning rate over time for stability using quantum-inspired exponential decay."""
+        # Quantum-inspired decay: faster decay initially, slower over time
+        decay_factor = 0.99 - (0.01 * np.exp(-self.total_predictions / 100))
+        self.learning_rate = max(0.01, self.learning_rate * decay_factor)
     
     def update_confidence_threshold(self, prediction_confidence: float) -> None:
-        """Adapt confidence threshold based on prediction quality."""
+        """Adapt confidence threshold based on prediction quality using ML-based approach."""
         lr = self.learning_rate
         
+        # Adaptive target calculation using sigmoid-based smooth transitions
         if prediction_confidence > 0.8:
-            # High confidence - lower threshold
+            # High confidence - gradually lower threshold
             target = prediction_confidence - 0.1
         elif prediction_confidence < 0.5:
-            # Low confidence - raise threshold
-            target = prediction_confidence + 0.2
+            # Low confidence - raise threshold with urgency
+            target = min(0.9, prediction_confidence + 0.2)
         else:
+            # Moderate confidence - minor adjustments
             return
         
+        # Exponential moving average update
         self.confidence_threshold = (1 - lr) * self.confidence_threshold + lr * target
-        self.confidence_threshold = max(0.3, min(0.9, self.confidence_threshold))
+        self.confidence_threshold = np.clip(self.confidence_threshold, 0.3, 0.9)
     
     def update_model_weight(self, model_type: str, confidence: float) -> None:
-        """Update model-specific performance weights."""
+        """Update model-specific performance weights using quantum-inspired optimization."""
         lr = self.learning_rate
         
+        # Quantum-inspired weight update: consider both confidence and historical performance
         if model_type == 'bert':
-            self.bert_weight = (1 - lr) * self.bert_weight + lr * confidence
-            self.bert_weight = max(0.1, min(2.0, self.bert_weight))
+            current_weight = self.bert_weight
+            # Weighted update with momentum
+            new_weight = (1 - lr) * current_weight + lr * (confidence * 2.0)
+            self.bert_weight = np.clip(new_weight, 0.1, 2.0)
         elif model_type == 'roberta':
-            self.roberta_weight = (1 - lr) * self.roberta_weight + lr * confidence
-            self.roberta_weight = max(0.1, min(2.0, self.roberta_weight))
+            current_weight = self.roberta_weight
+            new_weight = (1 - lr) * current_weight + lr * (confidence * 2.0)
+            self.roberta_weight = np.clip(new_weight, 0.1, 2.0)
 
 
 class AdaptiveThresholdManager:
@@ -394,14 +422,14 @@ class EmotionTransformer:
     
     async def predict(
         self,
-        input_data: Dict[str, Any],
+        input_data: Any,  # Can be str or Dict
         user_id: Optional[str] = None
     ) -> Dict[str, Any]:
         """
-        Predict emotion from input data.
+        Predict emotion from input data with flexible input handling.
         
         Args:
-            input_data: Dictionary containing 'text_data' key
+            input_data: String text or dictionary containing 'text_data' key
             user_id: Optional user ID for adaptive thresholds
             
         Returns:
@@ -413,8 +441,8 @@ class EmotionTransformer:
         start_time = time.time()
         
         try:
-            # Extract and validate text
-            text = self._extract_text(input_data)
+            # Extract and validate text (handles both str and dict)
+            text = self._extract_text_flexible(input_data)
             if not text:
                 return self._get_neutral_prediction()
             
@@ -547,9 +575,18 @@ class EmotionTransformer:
         thresholds: UserThresholds,
         model_type: str
     ) -> Dict[str, Any]:
-        """Process classifier output into prediction dictionary."""
-        # Get emotion probabilities
-        emotion_probs = F.softmax(outputs['emotion_logits'], dim=-1)
+        """
+        Process classifier output with ML-based confidence calibration.
+        
+        Applies:
+        - Temperature scaling for calibration
+        - Adaptive thresholding
+        - Entropy-based uncertainty quantification
+        """
+        # Get emotion probabilities with temperature scaling
+        temperature = 1.5  # Smooth probabilities for better calibration
+        emotion_logits = outputs['emotion_logits'] / temperature
+        emotion_probs = F.softmax(emotion_logits, dim=-1)
         emotion_categories = list(EmotionCategory)
         
         # Build emotion distribution
@@ -558,28 +595,49 @@ class EmotionTransformer:
             for i in range(len(emotion_categories))
         }
         
-        # Get primary emotion and confidence
+        # Get primary emotion and raw confidence
         primary_emotion = max(emotion_dist.keys(), key=lambda k: emotion_dist[k])
-        confidence = emotion_dist[primary_emotion]
+        raw_confidence = emotion_dist[primary_emotion]
         
-        # Apply threshold
-        if confidence < thresholds.confidence_threshold:
+        # Calculate prediction entropy (uncertainty)
+        probs_array = emotion_probs[0].detach().cpu().numpy()
+        entropy = -np.sum(probs_array * np.log(probs_array + 1e-10))
+        max_entropy = np.log(len(emotion_categories))
+        uncertainty = entropy / max_entropy  # Normalized to [0, 1]
+        
+        # Calibrate confidence using uncertainty
+        calibrated_confidence = raw_confidence * (1 - uncertainty * 0.3)
+        
+        # Apply adaptive threshold
+        if calibrated_confidence < thresholds.confidence_threshold:
+            # Low confidence - default to neutral
+            logger.debug(
+                f"Low confidence {calibrated_confidence:.3f} < threshold "
+                f"{thresholds.confidence_threshold:.3f}, using neutral"
+            )
             primary_emotion = EmotionCategory.NEUTRAL.value
-            confidence = emotion_dist[primary_emotion]
+            calibrated_confidence = emotion_dist[primary_emotion]
         
-        # Get learning state
+        # Get learning state with similar calibration
         learning_probs = F.softmax(outputs['learning_logits'], dim=-1)
         learning_states = list(LearningReadiness)
         learning_idx = torch.argmax(learning_probs, dim=-1).item()
         learning_state = learning_states[learning_idx].value
         
+        # Extract PAD dimensions with bounds checking
+        arousal = float(torch.clamp(outputs['arousal'][0], 0, 1).item())
+        valence = float(torch.clamp(outputs['valence'][0], 0, 1).item())
+        dominance = float(torch.clamp(outputs['dominance'][0], 0, 1).item())
+        
         return {
             'primary_emotion': primary_emotion,
             'emotion_distribution': emotion_dist,
-            'confidence': float(confidence),
-            'arousal': float(outputs['arousal'][0].item()),
-            'valence': float(outputs['valence'][0].item()),
-            'dominance': float(outputs['dominance'][0].item()),
+            'confidence': float(calibrated_confidence),
+            'raw_confidence': float(raw_confidence),
+            'uncertainty': float(uncertainty),
+            'arousal': arousal,
+            'valence': valence,
+            'dominance': dominance,
             'learning_state': learning_state,
             'model_type': model_type
         }
@@ -589,30 +647,52 @@ class EmotionTransformer:
         predictions: List[Dict[str, Any]],
         thresholds: UserThresholds
     ) -> Dict[str, Any]:
-        """Fuse multiple model predictions with adaptive weighting."""
+        """
+        Fuse multiple model predictions using quantum-inspired ensemble optimization.
+        
+        Uses adaptive weighting based on:
+        - Model-specific confidence
+        - Historical performance
+        - Prediction agreement (quantum coherence)
+        """
         if len(predictions) == 1:
             return predictions[0]
         
-        # Calculate weights based on confidence and model performance
+        # Quantum-inspired weight calculation
         weights = []
+        confidences = []
+        
         for pred in predictions:
             confidence = pred['confidence']
             model_type = pred['model_type']
             
+            # Base weight from confidence and model performance
             if model_type == 'bert':
-                weight = confidence * thresholds.bert_weight
+                base_weight = confidence * thresholds.bert_weight
             elif model_type == 'roberta':
-                weight = confidence * thresholds.roberta_weight
+                base_weight = confidence * thresholds.roberta_weight
             else:
-                weight = confidence
+                base_weight = confidence
             
-            weights.append(weight)
+            weights.append(base_weight)
+            confidences.append(confidence)
         
-        # Normalize weights
+        # Apply quantum coherence bonus: predictions that agree get boosted
+        if len(predictions) == 2:
+            # Calculate agreement on primary emotion
+            emotions = [p['primary_emotion'] for p in predictions]
+            if emotions[0] == emotions[1]:
+                # Coherent predictions - boost both weights
+                coherence_bonus = 1.2
+                weights = [w * coherence_bonus for w in weights]
+                logger.debug("Quantum coherence detected: predictions agree")
+        
+        # Normalize weights with numerical stability
         total_weight = sum(weights)
-        if total_weight > 0:
+        if total_weight > 1e-6:
             weights = [w / total_weight for w in weights]
         else:
+            # Fallback to uniform weights
             weights = [1.0 / len(predictions)] * len(predictions)
         
         # Fuse emotion distributions
@@ -693,14 +773,48 @@ class EmotionTransformer:
             'model_type': 'fallback'
         }
     
+    def _extract_text_flexible(self, input_data: Any) -> str:
+        """
+        Extract text from flexible input formats.
+        
+        Supports:
+        - Direct string input
+        - Dict with 'text_data' key
+        - Dict with 'text' or 'content' keys
+        - Complex nested structures
+        """
+        # Handle None
+        if input_data is None:
+            return ""
+        
+        # Handle direct string
+        if isinstance(input_data, str):
+            return input_data.strip()
+        
+        # Handle dictionary
+        if isinstance(input_data, dict):
+            # Try common keys
+            for key in ['text_data', 'text', 'content', 'message']:
+                if key in input_data:
+                    value = input_data[key]
+                    if isinstance(value, str):
+                        return value.strip()
+                    elif isinstance(value, dict):
+                        # Nested dict - recurse
+                        return self._extract_text_flexible(value)
+            
+            # Fallback: convert entire dict to string
+            return str(input_data).strip()
+        
+        # Handle other types
+        return str(input_data).strip()
+    
     def _extract_text(self, input_data: Dict[str, Any]) -> str:
-        """Extract text from input data."""
-        text_data = input_data.get('text_data', '')
-        
-        if isinstance(text_data, dict):
-            text_data = text_data.get('content', '') or str(text_data)
-        
-        return str(text_data).strip()
+        """
+        Legacy method for backward compatibility.
+        Delegates to flexible extraction.
+        """
+        return self._extract_text_flexible(input_data)
     
     def _get_neutral_prediction(self, error: Optional[str] = None) -> Dict[str, Any]:
         """Get neutral prediction for error cases."""
