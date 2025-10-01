@@ -295,15 +295,23 @@ class UniversalProvider:
 class ProviderManager:
     """
     Main interface for AI provider management
-    Phase 1: Simple routing (use first available provider)
-    Phase 2: Add benchmarking and smart routing
+    
+    Features:
+    - Auto-discovery of providers from .env
+    - External benchmarking integration (Artificial Analysis API)
+    - Smart routing based on real-world rankings
+    - Automatic fallback on provider failure
     """
     
     def __init__(self):
         self.registry = ProviderRegistry()
         self.universal = UniversalProvider(self.registry)
+        self.external_benchmarks = None  # Initialized in server startup
         self._default_provider = None
         self._set_default_provider()
+        
+        # Add universal provider reference for minimal manual tests
+        self.universal_provider = self.universal
     
     def _set_default_provider(self):
         """Set default provider (first available)"""
@@ -379,3 +387,155 @@ class ProviderManager:
     def get_available_providers(self) -> List[str]:
         """Get list of available provider names"""
         return list(self.registry.get_all_providers().keys())
+    
+    async def initialize_external_benchmarks(self, db):
+        """
+        Initialize external benchmarking system
+        Called during server startup
+        
+        Args:
+            db: MongoDB database instance
+        """
+        from core.external_benchmarks import get_external_benchmarks
+        
+        try:
+            api_key = os.getenv("ARTIFICIAL_ANALYSIS_API_KEY")
+            
+            self.external_benchmarks = get_external_benchmarks(db, api_key)
+            
+            # Fetch initial rankings for all categories
+            logger.info("Fetching initial rankings from external APIs...")
+            for category in ["coding", "math", "reasoning", "research", "empathy", "general"]:
+                await self.external_benchmarks.get_rankings(category)
+            
+            # Start background update task
+            import asyncio
+            asyncio.create_task(
+                self.external_benchmarks.schedule_periodic_updates(interval_hours=12)
+            )
+            
+            logger.info("✅ External benchmarking initialized with periodic updates")
+            
+        except Exception as e:
+            logger.error(f"⚠️ External benchmarking initialization failed: {e}")
+            logger.info("Will continue with simple routing")
+    
+    async def select_best_provider_for_category(
+        self,
+        category: str,
+        emotion_state: Optional[EmotionState] = None
+    ) -> str:
+        """
+        Select best provider for a category using external benchmarks
+        
+        Priority:
+        1. Use external benchmarks (Artificial Analysis, LLM-Stats)
+        2. Fall back to default provider if benchmarks unavailable
+        
+        Args:
+            category: Task category (coding, math, reasoning, etc.)
+            emotion_state: User's emotion state (for empathy routing)
+        
+        Returns:
+            Provider name
+        """
+        
+        # If external benchmarks available, use them
+        if self.external_benchmarks:
+            try:
+                # Get rankings for category
+                rankings = await self.external_benchmarks.get_rankings(category)
+                
+                if rankings:
+                    # Get available providers
+                    available = set(self.get_available_providers())
+                    
+                    # Find best available provider
+                    for ranking in rankings:
+                        if ranking.provider in available:
+                            logger.info(
+                                f"🎯 Selected {ranking.provider} for {category} "
+                                f"(rank #{ranking.rank}, score: {ranking.score:.1f}, "
+                                f"source: {ranking.source})"
+                            )
+                            return ranking.provider
+                    
+                    logger.warning(
+                        f"No top-ranked providers available for {category}, "
+                        f"using default"
+                    )
+            
+            except Exception as e:
+                logger.error(f"Error selecting provider from benchmarks: {e}")
+        
+        # Fallback to default provider
+        return self._default_provider or self.get_available_providers()[0]
+    
+    def detect_category_from_message(self, message: str, emotion_state: Optional[EmotionState] = None) -> str:
+        """
+        Detect task category from message content
+        
+        Categories:
+        - coding: Programming, algorithms, debugging
+        - math: Mathematics, calculations
+        - reasoning: Logic, analysis
+        - research: Knowledge, facts, explanations
+        - empathy: Emotional support (based on emotion state)
+        - general: Default category
+        
+        Args:
+            message: User's message
+            emotion_state: User's emotion state
+        
+        Returns:
+            Category name
+        """
+        
+        message_lower = message.lower()
+        
+        # Coding indicators
+        coding_keywords = [
+            'code', 'program', 'function', 'algorithm', 'debug',
+            'python', 'javascript', 'java', 'c++', 'recursion',
+            'loop', 'variable', 'class', 'api', 'database', 'sql'
+        ]
+        if any(kw in message_lower for kw in coding_keywords):
+            return "coding"
+        
+        # Math indicators
+        math_keywords = [
+            'calculate', 'solve', 'equation', 'formula', 'theorem',
+            'integral', 'derivative', 'matrix', 'probability',
+            'geometry', 'algebra', 'calculus', 'trigonometry'
+        ]
+        if any(kw in message_lower for kw in math_keywords):
+            return "math"
+        
+        # Reasoning indicators
+        reasoning_keywords = [
+            'analyze', 'evaluate', 'compare', 'conclude', 'infer',
+            'logic', 'argument', 'reasoning', 'critical thinking',
+            'deduce', 'reasoning'
+        ]
+        if any(kw in message_lower for kw in reasoning_keywords):
+            return "reasoning"
+        
+        # Research indicators
+        research_keywords = [
+            'what is', 'explain', 'describe', 'how does', 'why is',
+            'history of', 'definition', 'meaning', 'overview', 'tell me about'
+        ]
+        if any(kw in message_lower for kw in research_keywords):
+            return "research"
+        
+        # Empathy indicators (based on emotion)
+        if emotion_state and hasattr(emotion_state, 'primary_emotion'):
+            negative_emotions = [
+                'frustration', 'anxiety', 'overwhelmed', 
+                'sadness', 'confusion', 'stress'
+            ]
+            if emotion_state.primary_emotion in negative_emotions:
+                return "empathy"
+        
+        # Default
+        return "general"
