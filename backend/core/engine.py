@@ -31,7 +31,7 @@ class MasterXEngine:
     def __init__(self):
         self.provider_manager = ProviderManager()
         self.emotion_engine = EmotionEngine()
-        logger.info("✅ MasterXEngine initialized")
+        logger.info("✅ MasterXEngine initialized (with external benchmarking support)")
     
     async def process_request(
         self,
@@ -74,15 +74,29 @@ class MasterXEngine:
                 learning_readiness=LearningReadiness(emotion_result.metrics.learning_readiness)
             )
             
-            # Phase 2: Generate AI response
+            # Phase 2: Generate AI response with smart provider selection
             logger.info(f"🤖 Generating AI response...")
             ai_start = time.time()
             
-            # Enhance prompt with emotion context (Phase 1: simple approach)
+            # Detect category from message
+            category = self.provider_manager.detect_category_from_message(
+                message, 
+                emotion_state
+            )
+            logger.info(f"📂 Detected category: {category}")
+            
+            # Select best provider for this category
+            selected_provider = await self.provider_manager.select_best_provider_for_category(
+                category,
+                emotion_state
+            )
+            
+            # Enhance prompt with emotion context
             enhanced_prompt = self._enhance_prompt_with_emotion(message, emotion_result)
             
             response = await self.provider_manager.generate(
                 prompt=enhanced_prompt,
+                provider_name=selected_provider,
                 max_tokens=1000
             )
             
