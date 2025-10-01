@@ -116,8 +116,13 @@ class UniversalProvider:
                 client = AsyncGroq(api_key=provider['api_key'])
             
             elif provider_name == 'emergent':
-                from emergentintegrations import EmergentLLM
-                client = EmergentLLM(api_key=provider['api_key'])
+                from emergentintegrations.llm.chat import LlmChat
+                # Emergent uses the universal key
+                client = LlmChat(
+                    api_key=provider['api_key'],
+                    session_id="masterx",
+                    system_message="You are a helpful AI learning assistant."
+                )
             
             elif provider_name == 'gemini':
                 import google.generativeai as genai
@@ -224,18 +229,18 @@ class UniversalProvider:
         )
     
     async def _emergent_generate(self, client, model_name, prompt, max_tokens) -> AIResponse:
-        """Generate using Emergent LLM"""
-        response = await client.chat.completions.create(
-            model=model_name,
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=max_tokens
-        )
+        """Generate using Emergent LLM (LiteLLM-based)"""
+        from emergentintegrations.llm.chat import UserMessage
+        
+        # Send message using Emergent's LlmChat
+        user_msg = UserMessage(text=prompt)
+        response_text = await client.send_message(user_msg)
         
         return AIResponse(
-            content=response.choices[0].message.content,
+            content=response_text,
             provider="emergent",
             model_name=model_name,
-            tokens_used=response.usage.total_tokens,
+            tokens_used=len(response_text.split()),  # Approximate
             cost=0.0,
             response_time_ms=0.0
         )
