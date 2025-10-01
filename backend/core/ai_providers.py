@@ -295,8 +295,8 @@ class UniversalProvider:
 class ProviderManager:
     """
     Main interface for AI provider management
-    Phase 1: Simple routing (use first available provider) ✅
-    Phase 2: Benchmarking and smart routing ✅
+    Phase 1: Simple routing (use first available provider)
+    Phase 2: Add benchmarking and smart routing
     """
     
     def __init__(self):
@@ -304,13 +304,6 @@ class ProviderManager:
         self.universal = UniversalProvider(self.registry)
         self._default_provider = None
         self._set_default_provider()
-        
-        # Phase 2: Smart routing components (initialized lazily)
-        self.benchmark_engine = None
-        self.smart_router = None
-        self.session_manager = None
-        self.circuit_breaker = None
-        self._smart_routing_enabled = False
     
     def _set_default_provider(self):
         """Set default provider (first available)"""
@@ -386,132 +379,3 @@ class ProviderManager:
     def get_available_providers(self) -> List[str]:
         """Get list of available provider names"""
         return list(self.registry.get_all_providers().keys())
-    
-    async def initialize_smart_routing(self):
-        """
-        Initialize Phase 2 smart routing components
-        Call this after server startup to enable benchmarking and smart routing
-        """
-        try:
-            from core.benchmarking import BenchmarkEngine
-            from core.smart_router import SmartRouter
-            from core.session_manager import SessionManager
-            from core.circuit_breaker import CircuitBreaker
-            
-            # Initialize components
-            self.benchmark_engine = BenchmarkEngine(self.registry, self.universal)
-            self.session_manager = SessionManager()
-            self.circuit_breaker = CircuitBreaker()
-            self.smart_router = SmartRouter(self.benchmark_engine, self.session_manager)
-            
-            # Initialize databases
-            await self.benchmark_engine.initialize_db()
-            await self.session_manager.initialize_db()
-            await self.circuit_breaker.initialize_db()
-            
-            self._smart_routing_enabled = True
-            
-            logger.info("✅ Smart routing enabled with benchmarking system")
-        
-        except Exception as e:
-            logger.error(f"❌ Failed to initialize smart routing: {e}", exc_info=True)
-            self._smart_routing_enabled = False
-    
-    async def generate_with_smart_routing(
-        self,
-        message: str,
-        emotion_state: Optional[EmotionState],
-        session_id: str,
-        max_tokens: int = 1000
-    ) -> AIResponse:
-        """
-        Generate response using smart routing (Phase 2)
-        
-        Uses benchmarking and intelligent provider selection
-        
-        Args:
-            message: User message
-            emotion_state: Detected emotion state
-            session_id: Current session ID
-            max_tokens: Max tokens for response
-        
-        Returns:
-            AIResponse from best provider
-        """
-        
-        if not self._smart_routing_enabled:
-            # Fall back to simple routing
-            logger.warning("Smart routing not enabled, using simple routing")
-            return await self.generate(message, max_tokens=max_tokens)
-        
-        provider_name = None
-        category = None
-        
-        try:
-            # 1. Smart provider selection
-            provider_name, category = await self.smart_router.select_provider(
-                message=message,
-                emotion_state=emotion_state,
-                session_id=session_id,
-                circuit_breaker=self.circuit_breaker
-            )
-            
-            # 2. Check circuit breaker
-            if not self.circuit_breaker.is_available(provider_name):
-                logger.warning(f"⚠️ Provider {provider_name} unavailable (circuit breaker)")
-                # Try to get fallback from benchmarks
-                benchmarks = await self.benchmark_engine.get_latest_benchmarks(category)
-                for benchmark in benchmarks:
-                    if self.circuit_breaker.is_available(benchmark.provider):
-                        provider_name = benchmark.provider
-                        logger.info(f"🔄 Using fallback provider: {provider_name}")
-                        break
-            
-            # 3. Generate response
-            logger.info(f"🤖 Generating with {provider_name} for category: {category}")
-            response = await self.universal.generate(
-                provider_name=provider_name,
-                prompt=message,
-                max_tokens=max_tokens
-            )
-            
-            # 4. Update session
-            await self.session_manager.update_session(
-                session_id=session_id,
-                provider=provider_name,
-                topic=category
-            )
-            
-            # 5. Record success/failure for circuit breaker
-            if response.content:
-                await self.circuit_breaker.record_success(provider_name)
-            else:
-                await self.circuit_breaker.record_failure(provider_name)
-            
-            return response
-        
-        except Exception as e:
-            logger.error(f"❌ Smart routing failed: {e}", exc_info=True)
-            
-            # Record failure
-            if self.circuit_breaker and provider_name:
-                await self.circuit_breaker.record_failure(provider_name)
-            
-            # Fall back to simple routing
-            return await self.generate(message, max_tokens=max_tokens)
-    
-    async def start_benchmark_scheduler(self, interval_hours: int = 1):
-        """
-        Start background benchmark scheduler
-        
-        Args:
-            interval_hours: How often to run benchmarks (default: 1 hour)
-        """
-        if not self._smart_routing_enabled:
-            logger.error("Cannot start benchmark scheduler: Smart routing not initialized")
-            return
-        
-        import asyncio
-        asyncio.create_task(
-            self.benchmark_engine.schedule_benchmarks(interval_hours=interval_hours)
-        )
