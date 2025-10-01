@@ -47,8 +47,8 @@ class ExternalBenchmarkIntegration:
     - Falls back to cache and minimal manual tests
     """
     
-    # API Configuration
-    ARTIFICIAL_ANALYSIS_API_URL = "https://artificialanalysis.ai/api/v1"
+    # API Configuration (v2 as per official documentation)
+    ARTIFICIAL_ANALYSIS_API_URL = "https://artificialanalysis.ai/api/v2"
     LLM_STATS_API_URL = "https://llm-stats.com/api/v1"
     
     # Category mapping: our categories -> external benchmark keys
@@ -238,8 +238,9 @@ class ExternalBenchmarkIntegration:
         
         try:
             async with aiohttp.ClientSession() as session:
+                # Correct endpoint as per API documentation (v2)
                 async with session.get(
-                    f"{self.ARTIFICIAL_ANALYSIS_API_URL}/models",
+                    f"{self.ARTIFICIAL_ANALYSIS_API_URL}/data/llms/models",
                     headers=headers,
                     timeout=timeout
                 ) as response:
@@ -265,55 +266,64 @@ class ExternalBenchmarkIntegration:
     
     def _parse_aa_rankings(self, data: dict, category: str) -> List[ModelRanking]:
         """
-        Parse Artificial Analysis API response
+        Parse Artificial Analysis API v2 response
         
-        Expected structure:
+        API v2 structure:
         {
-            "models": [
+            "status": 200,
+            "data": [
                 {
-                    "model_name": "claude-sonnet-4",
-                    "provider": "anthropic",
-                    "benchmark_scores": {
-                        "code": 96.8,
-                        "math": 94.2,
+                    "id": "uuid",
+                    "name": "GPT-4o",
+                    "slug": "gpt-4o",
+                    "model_creator": {"name": "OpenAI", "slug": "openai"},
+                    "evaluations": {
+                        "artificial_analysis_intelligence_index": 62.1,
+                        "artificial_analysis_coding_index": 55.8,
+                        "artificial_analysis_math_index": 87.2,
                         ...
                     },
-                    "speed_tokens_per_sec": 45.2,
-                    "latency_ms": 850,
-                    ...
+                    "median_output_tokens_per_second": 153.831,
+                    "pricing": {...}
                 }
             ]
         }
         """
         
         rankings = []
-        category_keys = self.CATEGORY_MAPPING.get(category, {}).get("aa_keys", [])
         
-        for model_data in data.get("models", []):
-            model_name = model_data.get("model_name", "").lower()
+        # Map our categories to AA evaluation keys
+        eval_key_mapping = {
+            "coding": "artificial_analysis_coding_index",
+            "math": "artificial_analysis_math_index",
+            "reasoning": "artificial_analysis_intelligence_index",
+            "research": "artificial_analysis_intelligence_index",
+            "empathy": "artificial_analysis_intelligence_index",
+            "general": "artificial_analysis_intelligence_index"
+        }
+        
+        eval_key = eval_key_mapping.get(category, "artificial_analysis_intelligence_index")
+        
+        for model_data in data.get("data", []):
+            model_name = model_data.get("name", "").lower()
+            model_slug = model_data.get("slug", "")
+            
+            # Get creator info
+            creator = model_data.get("model_creator", {})
+            creator_name = creator.get("name", "")
             
             # Normalize model name to get provider
-            provider = self._normalize_model_name(model_name)
+            provider = self._normalize_model_name(f"{creator_name} {model_name}")
             if not provider:
-                continue
+                provider = creator.get("slug", "unknown")
             
-            # Extract scores for this category
-            scores = model_data.get("benchmark_scores", {})
+            # Extract score for this category
+            evaluations = model_data.get("evaluations", {})
+            score = evaluations.get(eval_key)
             
-            # Find best matching score for category
-            score = None
-            for key in category_keys:
-                if key in scores:
-                    score = scores[key]
-                    break
-            
-            if score is None:
-                # Try general/overall score
-                score = scores.get("overall", scores.get("intelligence", 0))
-            
-            if score > 0:
+            if score is not None and score > 0:
                 rankings.append(ModelRanking(
-                    model_name=model_name,
+                    model_name=model_slug or model_name,
                     provider=provider,
                     score=float(score),
                     rank=0,  # Will be assigned after sorting
@@ -424,10 +434,14 @@ class ExternalBenchmarkIntegration:
                     max_tokens=300
                 )
                 
-                # Simple quality score
+                # Simple quality score based on response quality
                 score = 50.0
-                if response.success and response.content:
-                    score = min(100.0, 30 + len(response.content) / 10)
+                if response.content and len(response.content) > 20:
+                    # Score based on response length and time
+                    score = min(100.0, 40 + len(response.content) / 10)
+                    # Penalize slow responses
+                    if response.response_time_ms > 5000:
+                        score *= 0.8
                 
                 rankings.append(ModelRanking(
                     model_name=provider_manager.registry.providers[provider].model_name,
