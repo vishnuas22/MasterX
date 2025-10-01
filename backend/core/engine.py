@@ -74,17 +74,26 @@ class MasterXEngine:
                 learning_readiness=LearningReadiness(emotion_result.metrics.learning_readiness)
             )
             
-            # Phase 2: Generate AI response
+            # Phase 2: Generate AI response with smart routing
             logger.info(f"🤖 Generating AI response...")
             ai_start = time.time()
             
-            # Enhance prompt with emotion context (Phase 1: simple approach)
+            # Enhance prompt with emotion context
             enhanced_prompt = self._enhance_prompt_with_emotion(message, emotion_result)
             
-            response = await self.provider_manager.generate(
-                prompt=enhanced_prompt,
-                max_tokens=1000
-            )
+            # Try smart routing first (Phase 2), fall back to simple if not available
+            if hasattr(self.provider_manager, '_smart_routing_enabled') and self.provider_manager._smart_routing_enabled:
+                response = await self.provider_manager.generate_with_smart_routing(
+                    message=enhanced_prompt,
+                    emotion_state=emotion_state,
+                    session_id=session_id,
+                    max_tokens=1000
+                )
+            else:
+                response = await self.provider_manager.generate(
+                    prompt=enhanced_prompt,
+                    max_tokens=1000
+                )
             
             ai_time_ms = (time.time() - ai_start) * 1000
             logger.info(f"✅ AI response generated ({ai_time_ms:.0f}ms)")
