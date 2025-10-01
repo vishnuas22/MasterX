@@ -12,7 +12,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 import logging
-from typing import Optional, List
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -53,18 +52,6 @@ async def lifespan(app: FastAPI):
         
         # Initialize engine
         app.state.engine = MasterXEngine()
-        
-        # Initialize Phase 2: Smart routing with benchmarking
-        try:
-            await app.state.engine.provider_manager.initialize_smart_routing()
-            logger.info("✅ Phase 2: Smart routing initialized")
-            
-            # Start benchmark scheduler (runs every 6 hours)
-            await app.state.engine.provider_manager.start_benchmark_scheduler(interval_hours=6)
-            logger.info("✅ Benchmark scheduler started (interval: 6 hours)")
-        except Exception as e:
-            logger.warning(f"⚠️ Smart routing initialization failed: {e}")
-            logger.info("📌 Falling back to Phase 1 simple routing")
         
         logger.info("✅ MasterX server started successfully")
         logger.info(f"📊 Available AI providers: {app.state.engine.get_available_providers()}")
@@ -320,186 +307,20 @@ async def get_providers():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# Phase 2: Benchmarking endpoints
-@app.get("/api/v1/benchmarks")
-async def get_benchmarks(category: Optional[str] = None):
-    """
-    Get latest benchmark results
-    
-    Query params:
-        category: Optional category filter (coding, math, research, language, empathy, general)
-    """
-    
-    try:
-        provider_manager = app.state.engine.provider_manager
-        
-        if not hasattr(provider_manager, 'benchmark_engine') or not provider_manager.benchmark_engine:
-            raise HTTPException(
-                status_code=503, 
-                detail="Benchmarking system not initialized"
-            )
-        
-        if category:
-            results = await provider_manager.benchmark_engine.get_latest_benchmarks(category)
-            return {
-                "category": category,
-                "results": [
-                    {
-                        "provider": r.provider,
-                        "model_name": r.model_name,
-                        "quality_score": r.quality_score,
-                        "speed_score": r.speed_score,
-                        "cost_score": r.cost_score,
-                        "final_score": r.final_score,
-                        "avg_response_time_ms": r.avg_response_time_ms,
-                        "avg_cost": r.avg_cost,
-                        "tests_passed": r.tests_passed,
-                        "tests_total": r.tests_total,
-                        "timestamp": r.timestamp.isoformat()
-                    }
-                    for r in results
-                ]
-            }
-        else:
-            # Get all categories
-            from core.benchmarking import BENCHMARK_CATEGORIES
-            all_results = {}
-            
-            for cat in BENCHMARK_CATEGORIES.keys():
-                results = await provider_manager.benchmark_engine.get_latest_benchmarks(cat)
-                all_results[cat] = [
-                    {
-                        "provider": r.provider,
-                        "model_name": r.model_name,
-                        "final_score": r.final_score,
-                        "timestamp": r.timestamp.isoformat()
-                    }
-                    for r in results[:3]  # Top 3 per category
-                ]
-            
-            return {"benchmarks": all_results}
-    
-    except Exception as e:
-        logger.error(f"Error fetching benchmarks: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.post("/api/v1/admin/run-benchmarks")
-async def trigger_benchmarks(
-    categories: Optional[List[str]] = None,
-    providers: Optional[List[str]] = None
-):
-    """
-    Manually trigger benchmark run (admin endpoint)
-    
-    Body params:
-        categories: Optional list of categories to test
-        providers: Optional list of providers to test
-    """
-    
-    try:
-        provider_manager = app.state.engine.provider_manager
-        
-        if not hasattr(provider_manager, 'benchmark_engine') or not provider_manager.benchmark_engine:
-            raise HTTPException(
-                status_code=503,
-                detail="Benchmarking system not initialized"
-            )
-        
-        logger.info(f"🚀 Manual benchmark triggered (categories={categories}, providers={providers})")
-        
-        # Run benchmarks asynchronously
-        import asyncio
-        asyncio.create_task(
-            provider_manager.benchmark_engine.run_benchmarks(
-                categories=categories,
-                providers=providers
-            )
-        )
-        
-        return {
-            "status": "started",
-            "message": "Benchmark run started in background",
-            "categories": categories or "all",
-            "providers": providers or "all"
-        }
-    
-    except Exception as e:
-        logger.error(f"Error triggering benchmarks: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.get("/api/v1/provider-health")
-async def get_provider_health():
-    """Get provider health status and circuit breaker states"""
-    
-    try:
-        provider_manager = app.state.engine.provider_manager
-        
-        if not hasattr(provider_manager, 'circuit_breaker') or not provider_manager.circuit_breaker:
-            raise HTTPException(
-                status_code=503,
-                detail="Circuit breaker not initialized"
-            )
-        
-        health_status = await provider_manager.circuit_breaker.get_health_status()
-        
-        return {
-            "providers": health_status,
-            "timestamp": datetime.utcnow().isoformat()
-        }
-    
-    except Exception as e:
-        logger.error(f"Error fetching provider health: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.get("/api/v1/session/{session_id}/stats")
-async def get_session_stats(session_id: str):
-    """Get statistics for a specific session"""
-    
-    try:
-        provider_manager = app.state.engine.provider_manager
-        
-        if not hasattr(provider_manager, 'session_manager') or not provider_manager.session_manager:
-            raise HTTPException(
-                status_code=503,
-                detail="Session manager not initialized"
-            )
-        
-        stats = await provider_manager.session_manager.get_session_stats(session_id)
-        
-        if not stats:
-            raise HTTPException(status_code=404, detail="Session not found")
-        
-        return stats
-    
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error fetching session stats: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
-
-
 # Root endpoint
 @app.get("/")
 async def root():
     """Root endpoint"""
     return {
         "name": "MasterX API",
-        "version": "2.0.0",
-        "description": "AI-Powered Adaptive Learning Platform with Emotion Detection & Smart Routing",
+        "version": "1.0.0",
+        "description": "AI-Powered Adaptive Learning Platform with Emotion Detection",
         "status": "operational",
-        "phase": "Phase 2 - Smart Routing Active",
         "endpoints": {
             "health": "/api/health",
             "chat": "/api/v1/chat",
             "providers": "/api/v1/providers",
-            "costs": "/api/v1/admin/costs",
-            "benchmarks": "/api/v1/benchmarks",
-            "run_benchmarks": "/api/v1/admin/run-benchmarks",
-            "provider_health": "/api/v1/provider-health",
-            "session_stats": "/api/v1/session/{session_id}/stats"
+            "costs": "/api/v1/admin/costs"
         }
     }
 
