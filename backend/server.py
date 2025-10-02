@@ -65,6 +65,15 @@ async def lifespan(app: FastAPI):
         
         logger.info("✅ Phase 3 intelligence layer initialized (context + adaptive)")
         
+        # Phase 4: Initialize optimization layer
+        from optimization.caching import init_cache_manager
+        from optimization.performance import init_performance_tracker
+        
+        app.state.cache_manager = init_cache_manager(db)
+        app.state.performance_tracker = init_performance_tracker()
+        
+        logger.info("✅ Phase 4 optimization layer initialized (caching + performance)")
+        
         logger.info("✅ MasterX server started successfully")
         logger.info(f"📊 Available AI providers: {app.state.engine.get_available_providers()}")
         
@@ -319,6 +328,42 @@ async def get_providers():
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# Phase 4: Performance monitoring endpoint
+@app.get("/api/v1/admin/performance")
+async def get_performance_dashboard():
+    """Admin endpoint for performance monitoring"""
+    
+    try:
+        from optimization.performance import get_performance_tracker
+        
+        tracker = get_performance_tracker()
+        if not tracker:
+            return {"error": "Performance tracker not initialized"}
+        
+        return tracker.get_dashboard_data()
+    except Exception as e:
+        logger.error(f"Error fetching performance dashboard: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# Phase 4: Cache statistics endpoint
+@app.get("/api/v1/admin/cache")
+async def get_cache_stats():
+    """Admin endpoint for cache statistics"""
+    
+    try:
+        from optimization.caching import get_cache_manager
+        
+        cache_manager = get_cache_manager()
+        if not cache_manager:
+            return {"error": "Cache manager not initialized"}
+        
+        return await cache_manager.get_stats()
+    except Exception as e:
+        logger.error(f"Error fetching cache stats: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # Root endpoint
 @app.get("/")
 async def root():
@@ -326,13 +371,18 @@ async def root():
     return {
         "name": "MasterX API",
         "version": "1.0.0",
-        "description": "AI-Powered Adaptive Learning Platform with Emotion Detection",
+        "description": "AI-Powered Adaptive Learning Platform with Emotion Detection - Phase 4 Complete",
         "status": "operational",
+        "phase": "4 - Optimization & Scale",
         "endpoints": {
             "health": "/api/health",
             "chat": "/api/v1/chat",
             "providers": "/api/v1/providers",
-            "costs": "/api/v1/admin/costs"
+            "admin": {
+                "costs": "/api/v1/admin/costs",
+                "performance": "/api/v1/admin/performance",
+                "cache": "/api/v1/admin/cache"
+            }
         }
     }
 
