@@ -69,7 +69,15 @@ async def initialize_database():
         "benchmark_results",
         "provider_health",
         "user_performance",
-        "cost_tracking"
+        "cost_tracking",
+        # Phase 5: Gamification collections
+        "gamification_stats",
+        "gamification_achievements",
+        "gamification_leaderboard",
+        # Phase 5: Spaced repetition collections
+        "spaced_repetition_cards",
+        "spaced_repetition_history",
+        "forgetting_curves"
     ]
     
     # Get existing collections
