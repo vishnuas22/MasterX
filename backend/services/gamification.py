@@ -690,6 +690,7 @@ class Leaderboard:
             },
             {
                 "$project": {
+                    "_id": 0,  # Exclude MongoDB ObjectId
                     "user_id": 1,
                     "username": 1,
                     "avatar": 1,
@@ -800,8 +801,13 @@ class GamificationEngine:
                 "total_questions": 0,
                 "total_time_minutes": 0,
                 "achievements_unlocked": [],
-                "last_activity": datetime.utcnow()
+                "last_activity": datetime.utcnow(),
+                "last_session_id": None,
+                "session_ids": []
             }
+        
+        # Check if this is a new session
+        is_new_session = stats_doc.get("last_session_id") != session_id
         
         # Update streak
         new_streak, streak_broken = await self.streak_tracker.update_streak(
@@ -839,24 +845,51 @@ class GamificationEngine:
         level_up = new_level > stats_doc["level"]
         
         # Update document
-        await self.db.user_gamification.update_one(
-            {"user_id": user_id},
-            {
+        if not stats_doc.get("_id"):
+            # First time - insert with all fields
+            await self.db.user_gamification.insert_one({
+                "user_id": user_id,
+                "level": new_level,
+                "xp": new_xp,
+                "elo_rating": new_elo,
+                "current_streak": new_streak,
+                "longest_streak": new_streak,
+                "total_sessions": 1,
+                "total_questions": 1,
+                "total_time_minutes": time_spent_seconds / 60,
+                "achievements_unlocked": [],
+                "last_activity": datetime.utcnow(),
+                "last_session_id": session_id,
+                "session_ids": [session_id]
+            })
+        else:
+            # Prepare update operations
+            update_ops = {
                 "$set": {
                     "level": new_level,
                     "xp": new_xp,
                     "elo_rating": new_elo,
                     "current_streak": new_streak,
                     "longest_streak": max(new_streak, stats_doc["longest_streak"]),
-                    "last_activity": datetime.utcnow()
+                    "last_activity": datetime.utcnow(),
+                    "last_session_id": session_id
                 },
                 "$inc": {
                     "total_questions": 1,
                     "total_time_minutes": time_spent_seconds / 60
                 }
-            },
-            upsert=True
-        )
+            }
+            
+            # Increment sessions if new session
+            if is_new_session:
+                update_ops["$inc"]["total_sessions"] = 1
+                update_ops["$addToSet"] = {"session_ids": session_id}
+            
+            # Update existing
+            await self.db.user_gamification.update_one(
+                {"user_id": user_id},
+                update_ops
+            )
         
         # Get updated stats
         updated_doc = await self.db.user_gamification.find_one({"user_id": user_id})
@@ -870,10 +903,10 @@ class GamificationEngine:
             elo_rating=updated_doc["elo_rating"],
             current_streak=updated_doc["current_streak"],
             longest_streak=updated_doc["longest_streak"],
-            total_sessions=updated_doc["total_sessions"],
-            total_questions=updated_doc["total_questions"],
-            total_time_minutes=updated_doc["total_time_minutes"],
-            achievements_unlocked=updated_doc["achievements_unlocked"],
+            total_sessions=updated_doc.get("total_sessions", 1),
+            total_questions=updated_doc.get("total_questions", 1),
+            total_time_minutes=updated_doc.get("total_time_minutes", 0),
+            achievements_unlocked=updated_doc.get("achievements_unlocked", []),
             badges=updated_doc.get("badges", [])
         )
         
