@@ -19,7 +19,7 @@ from datetime import datetime
 
 from core.models import (
     AIResponse, EmotionState, LearningReadiness, 
-    Message, MessageRole
+    Message, MessageRole, ContextInfo, AbilityInfo
 )
 from core.ai_providers import ProviderManager
 from core.context_manager import ContextManager
@@ -296,7 +296,7 @@ class MasterXEngine:
             )
             
             # ====================================================================
-            # FINALIZE RESPONSE
+            # FINALIZE RESPONSE WITH COMPREHENSIVE METADATA
             # ====================================================================
             response.emotion_state = emotion_state
             response.response_time_ms = (time.time() - start_time) * 1000
@@ -312,6 +312,38 @@ class MasterXEngine:
                     category=category
                 )
                 response.cost = cost
+            
+            # Add Phase 2 metadata
+            response.category = category
+            
+            # Add Phase 3 metadata - Context Info
+            response.context_info = ContextInfo(
+                recent_messages_count=len(recent_messages),
+                relevant_messages_count=len(relevant_messages),
+                has_context=len(recent_messages) > 0 or len(relevant_messages) > 0,
+                retrieval_time_ms=context_time_ms
+            )
+            
+            # Add Phase 3 metadata - Ability Info
+            response.ability_info = AbilityInfo(
+                ability_level=ability,
+                recommended_difficulty=difficulty_level.value,
+                cognitive_load=emotion_result.metrics.arousal,  # Using arousal as proxy
+                flow_state_score=None  # Could be calculated from emotion trajectory
+            )
+            
+            # Mark that ability was updated
+            response.ability_updated = True
+            
+            # Add Phase 4 metadata - Processing breakdown
+            response.processing_breakdown = {
+                "context_retrieval_ms": context_time_ms,
+                "emotion_detection_ms": emotion_time_ms,
+                "difficulty_calculation_ms": difficulty_time_ms,
+                "ai_generation_ms": ai_time_ms,
+                "storage_ms": storage_time_ms,
+                "total_ms": (time.time() - start_time) * 1000
+            }
             
             total_time_ms = (time.time() - start_time) * 1000
             logger.info(
