@@ -53,10 +53,17 @@ async def lifespan(app: FastAPI):
         # Initialize engine
         app.state.engine = MasterXEngine()
         
-        # Initialize external benchmarking system
+        # Get database
         from utils.database import get_database
         db = get_database()
+        
+        # Initialize external benchmarking system (Phase 2)
         await app.state.engine.provider_manager.initialize_external_benchmarks(db)
+        
+        # Initialize intelligence layer (Phase 3: context + adaptive learning)
+        app.state.engine.initialize_intelligence_layer(db)
+        
+        logger.info("✅ Phase 3 intelligence layer initialized (context + adaptive)")
         
         logger.info("✅ MasterX server started successfully")
         logger.info(f"📊 Available AI providers: {app.state.engine.get_available_providers()}")
