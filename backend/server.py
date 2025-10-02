@@ -12,6 +12,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 import logging
+from typing import Dict, Any
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -21,6 +22,8 @@ import uuid
 
 from core.models import ChatRequest, ChatResponse, EmotionState, ContextInfo, AbilityInfo
 from core.engine import MasterXEngine
+from services.gamification import GamificationEngine
+from services.spaced_repetition import SpacedRepetitionEngine, ReviewQuality
 from utils.database import (
     connect_to_mongodb,
     close_mongodb_connection,
@@ -56,6 +59,14 @@ async def lifespan(app: FastAPI):
         # Get database
         from utils.database import get_database
         db = get_database()
+        
+        # Initialize gamification engine (Phase 5)
+        app.state.gamification = GamificationEngine(db)
+        logger.info("✅ Gamification engine initialized")
+        
+        # Initialize spaced repetition engine (Phase 5)
+        app.state.spaced_repetition = SpacedRepetitionEngine(db)
+        logger.info("✅ Spaced repetition engine initialized")
         
         # Initialize external benchmarking system (Phase 2)
         await app.state.engine.provider_manager.initialize_external_benchmarks(db)
@@ -375,6 +386,204 @@ async def get_cache_stats():
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# Phase 5: Gamification endpoints
+@app.get("/api/v1/gamification/stats/{user_id}")
+async def get_gamification_stats(user_id: str):
+    """Get user gamification statistics"""
+    try:
+        stats = await app.state.gamification.get_user_stats(user_id)
+        if not stats:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        return {
+            "user_id": stats.user_id,
+            "level": stats.level,
+            "xp": stats.xp,
+            "xp_to_next_level": stats.xp_to_next_level,
+            "elo_rating": stats.elo_rating,
+            "current_streak": stats.current_streak,
+            "longest_streak": stats.longest_streak,
+            "total_sessions": stats.total_sessions,
+            "total_questions": stats.total_questions,
+            "total_time_minutes": stats.total_time_minutes,
+            "achievements_unlocked": stats.achievements_unlocked,
+            "badges": stats.badges,
+            "rank": stats.rank
+        }
+    except Exception as e:
+        logger.error(f"Error fetching gamification stats: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/gamification/leaderboard")
+async def get_leaderboard(
+    limit: int = 100,
+    metric: str = "elo_rating"
+):
+    """Get global leaderboard"""
+    try:
+        from utils.database import get_database
+        db = get_database()
+        
+        leaderboard = await app.state.gamification.leaderboard.get_global_leaderboard(
+            db=db,
+            limit=limit,
+            metric=metric
+        )
+        
+        return {
+            "leaderboard": leaderboard,
+            "metric": metric,
+            "count": len(leaderboard)
+        }
+    except Exception as e:
+        logger.error(f"Error fetching leaderboard: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/gamification/achievements")
+async def get_achievements():
+    """Get all available achievements"""
+    try:
+        achievements = app.state.gamification.achievement_engine.achievements
+        
+        return {
+            "achievements": [
+                {
+                    "id": a.id,
+                    "name": a.name,
+                    "description": a.description,
+                    "type": a.type,
+                    "rarity": a.rarity,
+                    "xp_reward": a.xp_reward,
+                    "icon": a.icon,
+                    "criteria": a.criteria
+                }
+                for a in achievements
+            ],
+            "count": len(achievements)
+        }
+    except Exception as e:
+        logger.error(f"Error fetching achievements: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/v1/gamification/record-activity")
+async def record_gamification_activity(
+    user_id: str,
+    session_id: str,
+    question_difficulty: float,
+    success: bool,
+    time_spent_seconds: int
+):
+    """Record user activity for gamification"""
+    try:
+        result = await app.state.gamification.record_activity(
+            user_id=user_id,
+            session_id=session_id,
+            question_difficulty=question_difficulty,
+            success=success,
+            time_spent_seconds=time_spent_seconds
+        )
+        
+        return result
+    except Exception as e:
+        logger.error(f"Error recording activity: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# Phase 5: Spaced Repetition endpoints
+@app.get("/api/v1/spaced-repetition/due-cards/{user_id}")
+async def get_due_cards(user_id: str, limit: int = 50):
+    """Get cards due for review"""
+    try:
+        cards = await app.state.spaced_repetition.get_daily_review_session(
+            user_id=user_id,
+            limit=limit
+        )
+        
+        return {
+            "user_id": user_id,
+            "cards": cards,
+            "count": len(cards)
+        }
+    except Exception as e:
+        logger.error(f"Error fetching due cards: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/v1/spaced-repetition/create-card")
+async def create_spaced_repetition_card(
+    user_id: str,
+    topic: str,
+    content: Dict[str, Any]
+):
+    """Create a new spaced repetition card"""
+    try:
+        card_id = await app.state.spaced_repetition.create_card(
+            user_id=user_id,
+            topic=topic,
+            content=content
+        )
+        
+        return {
+            "card_id": card_id,
+            "user_id": user_id,
+            "topic": topic,
+            "status": "created"
+        }
+    except Exception as e:
+        logger.error(f"Error creating card: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/v1/spaced-repetition/review-card")
+async def review_spaced_repetition_card(
+    card_id: str,
+    quality: int,
+    time_spent_seconds: int = 60
+):
+    """Review a card and update scheduling"""
+    try:
+        # Validate quality (0-5)
+        if quality < 0 or quality > 5:
+            raise HTTPException(
+                status_code=400,
+                detail="Quality must be between 0 and 5"
+            )
+        
+        result = await app.state.spaced_repetition.review_card(
+            card_id=card_id,
+            quality=ReviewQuality(quality),
+            time_spent_seconds=time_spent_seconds
+        )
+        
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error reviewing card: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/spaced-repetition/stats/{user_id}")
+async def get_spaced_repetition_stats(user_id: str):
+    """Get user's spaced repetition statistics"""
+    try:
+        from utils.database import get_database
+        db = get_database()
+        
+        stats = await app.state.spaced_repetition.scheduler.get_review_stats(
+            user_id=user_id,
+            db=db
+        )
+        
+        return stats
+    except Exception as e:
+        logger.error(f"Error fetching spaced repetition stats: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # Root endpoint
 @app.get("/")
 async def root():
@@ -382,9 +591,9 @@ async def root():
     return {
         "name": "MasterX API",
         "version": "1.0.0",
-        "description": "AI-Powered Adaptive Learning Platform with Emotion Detection - Phase 4 Complete",
+        "description": "AI-Powered Adaptive Learning Platform with Emotion Detection - Phase 5 In Progress",
         "status": "operational",
-        "phase": "4 - Optimization & Scale",
+        "phase": "5 - Enhanced Features (Gamification + Spaced Repetition)",
         "endpoints": {
             "health": "/api/health",
             "chat": "/api/v1/chat",
@@ -393,6 +602,18 @@ async def root():
                 "costs": "/api/v1/admin/costs",
                 "performance": "/api/v1/admin/performance",
                 "cache": "/api/v1/admin/cache"
+            },
+            "gamification": {
+                "stats": "/api/v1/gamification/stats/{user_id}",
+                "leaderboard": "/api/v1/gamification/leaderboard",
+                "achievements": "/api/v1/gamification/achievements",
+                "record_activity": "/api/v1/gamification/record-activity"
+            },
+            "spaced_repetition": {
+                "due_cards": "/api/v1/spaced-repetition/due-cards/{user_id}",
+                "create_card": "/api/v1/spaced-repetition/create-card",
+                "review_card": "/api/v1/spaced-repetition/review-card",
+                "stats": "/api/v1/spaced-repetition/stats/{user_id}"
             }
         }
     }
