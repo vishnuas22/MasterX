@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 import logging
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -21,7 +21,34 @@ from datetime import datetime
 import uuid
 
 from core.models import ChatRequest, ChatResponse, EmotionState, ContextInfo, AbilityInfo
+from pydantic import BaseModel
 from core.engine import MasterXEngine
+
+
+# Spaced Repetition Request Models
+class CreateCardRequest(BaseModel):
+    """Request model for creating a spaced repetition card"""
+    user_id: str
+    topic: str
+    content: Dict[str, Any]
+    difficulty: Optional[str] = None
+
+
+class ReviewCardRequest(BaseModel):
+    """Request model for reviewing a card"""
+    card_id: str
+    quality: int  # 0-5
+    duration_seconds: int = 0
+
+
+# Gamification Request Models
+class RecordActivityRequest(BaseModel):
+    """Request model for recording gamification activity"""
+    user_id: str
+    session_id: str
+    question_difficulty: float
+    success: bool
+    time_spent_seconds: int
 from services.gamification import GamificationEngine
 from services.spaced_repetition import SpacedRepetitionEngine, ReviewQuality
 from utils.database import (
@@ -494,12 +521,13 @@ async def record_gamification_activity(
 
 # Phase 5: Spaced Repetition endpoints
 @app.get("/api/v1/spaced-repetition/due-cards/{user_id}")
-async def get_due_cards(user_id: str, limit: int = 50):
+async def get_due_cards(user_id: str, limit: int = 20, include_new: bool = True):
     """Get cards due for review"""
     try:
-        cards = await app.state.spaced_repetition.get_daily_review_session(
+        cards = await app.state.spaced_repetition.get_due_cards(
             user_id=user_id,
-            limit=limit
+            limit=limit,
+            include_new=include_new
         )
         
         return {
@@ -513,23 +541,26 @@ async def get_due_cards(user_id: str, limit: int = 50):
 
 
 @app.post("/api/v1/spaced-repetition/create-card")
-async def create_spaced_repetition_card(
-    user_id: str,
-    topic: str,
-    content: Dict[str, Any]
-):
+async def create_spaced_repetition_card(request: CreateCardRequest):
     """Create a new spaced repetition card"""
     try:
+        from services.spaced_repetition import CardDifficulty
+        
+        difficulty = None
+        if request.difficulty:
+            difficulty = CardDifficulty(request.difficulty)
+        
         card_id = await app.state.spaced_repetition.create_card(
-            user_id=user_id,
-            topic=topic,
-            content=content
+            user_id=request.user_id,
+            topic=request.topic,
+            content=request.content,
+            difficulty=difficulty
         )
         
         return {
             "card_id": card_id,
-            "user_id": user_id,
-            "topic": topic,
+            "user_id": request.user_id,
+            "topic": request.topic,
             "status": "created"
         }
     except Exception as e:
@@ -538,24 +569,20 @@ async def create_spaced_repetition_card(
 
 
 @app.post("/api/v1/spaced-repetition/review-card")
-async def review_spaced_repetition_card(
-    card_id: str,
-    quality: int,
-    time_spent_seconds: int = 60
-):
+async def review_spaced_repetition_card(request: ReviewCardRequest):
     """Review a card and update scheduling"""
     try:
         # Validate quality (0-5)
-        if quality < 0 or quality > 5:
+        if request.quality < 0 or request.quality > 5:
             raise HTTPException(
                 status_code=400,
                 detail="Quality must be between 0 and 5"
             )
         
         result = await app.state.spaced_repetition.review_card(
-            card_id=card_id,
-            quality=ReviewQuality(quality),
-            time_spent_seconds=time_spent_seconds
+            card_id=request.card_id,
+            quality=ReviewQuality(request.quality),
+            duration_seconds=request.duration_seconds
         )
         
         return result
@@ -570,14 +597,7 @@ async def review_spaced_repetition_card(
 async def get_spaced_repetition_stats(user_id: str):
     """Get user's spaced repetition statistics"""
     try:
-        from utils.database import get_database
-        db = get_database()
-        
-        stats = await app.state.spaced_repetition.scheduler.get_review_stats(
-            user_id=user_id,
-            db=db
-        )
-        
+        stats = await app.state.spaced_repetition.get_user_statistics(user_id=user_id)
         return stats
     except Exception as e:
         logger.error(f"Error fetching spaced repetition stats: {e}", exc_info=True)
