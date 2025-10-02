@@ -42,10 +42,11 @@ class MessageRole(str, Enum):
 
 
 class LearningReadiness(str, Enum):
+    OPTIMAL_READINESS = "optimal_readiness"
     HIGH_READINESS = "high_readiness"
     MODERATE_READINESS = "moderate_readiness"
     LOW_READINESS = "low_readiness"
-    NEEDS_BREAK = "needs_break"
+    NOT_READY = "not_ready"
 
 
 class ProviderStatus(str, Enum):
@@ -268,8 +269,25 @@ class CostTracking(BaseModel):
 # AI RESPONSE MODELS
 # ============================================================================
 
+# Define supporting models first
+class ContextInfo(BaseModel):
+    """Context retrieval information"""
+    recent_messages_count: int = 0
+    relevant_messages_count: int = 0
+    has_context: bool = False
+    retrieval_time_ms: Optional[float] = None
+
+
+class AbilityInfo(BaseModel):
+    """Adaptive learning ability information"""
+    ability_level: float
+    recommended_difficulty: float
+    cognitive_load: float
+    flow_state_score: Optional[float] = None
+
+
 class AIResponse(BaseModel):
-    """AI provider response"""
+    """AI provider response with comprehensive metadata"""
     content: str
     provider: str
     model_name: str
@@ -278,6 +296,13 @@ class AIResponse(BaseModel):
     response_time_ms: float
     emotion_state: Optional[EmotionState] = None
     timestamp: datetime = Field(default_factory=datetime.utcnow)
+    
+    # Additional metadata
+    category: Optional[str] = None
+    context_info: Optional[ContextInfo] = None
+    ability_info: Optional[AbilityInfo] = None
+    ability_updated: bool = False
+    processing_breakdown: Optional[Dict[str, float]] = None
 
 
 # ============================================================================
@@ -293,13 +318,27 @@ class ChatRequest(BaseModel):
 
 
 class ChatResponse(BaseModel):
-    """Chat API response"""
+    """Chat API response with comprehensive metadata"""
     session_id: str
     message: str
     emotion_state: Optional[EmotionState] = None
     provider_used: str
     response_time_ms: float
     timestamp: datetime = Field(default_factory=datetime.utcnow)
+    
+    # Enhanced metadata (Phase 2-4)
+    category_detected: Optional[str] = None
+    tokens_used: Optional[int] = None
+    cost: Optional[float] = None
+    
+    # Phase 3 metadata
+    context_retrieved: Optional[ContextInfo] = None
+    ability_info: Optional[AbilityInfo] = None
+    ability_updated: bool = False
+    
+    # Phase 4 metadata
+    cached: bool = False
+    processing_breakdown: Optional[Dict[str, float]] = None
 
 
 # ============================================================================
