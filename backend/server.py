@@ -19,7 +19,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime
 import uuid
 
-from core.models import ChatRequest, ChatResponse, EmotionState
+from core.models import ChatRequest, ChatResponse, EmotionState, ContextInfo, AbilityInfo
 from core.engine import MasterXEngine
 from utils.database import (
     connect_to_mongodb,
@@ -275,14 +275,25 @@ async def chat(request: ChatRequest):
             }
         )
         
-        # Build response
+        # Build response with comprehensive metadata
         response = ChatResponse(
             session_id=session_id,
             message=ai_response.content,
             emotion_state=ai_response.emotion_state,
             provider_used=ai_response.provider,
             response_time_ms=ai_response.response_time_ms,
-            timestamp=datetime.utcnow()
+            timestamp=datetime.utcnow(),
+            # Phase 2 metadata
+            category_detected=ai_response.category,
+            tokens_used=ai_response.tokens_used,
+            cost=ai_response.cost,
+            # Phase 3 metadata
+            context_retrieved=ai_response.context_info,
+            ability_info=ai_response.ability_info,
+            ability_updated=ai_response.ability_updated,
+            # Phase 4 metadata
+            cached=False,  # Will be set by caching layer
+            processing_breakdown=ai_response.processing_breakdown
         )
         
         logger.info(f"✅ Chat response generated successfully (session: {session_id})")
