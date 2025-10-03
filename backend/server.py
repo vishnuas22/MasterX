@@ -51,6 +51,9 @@ class RecordActivityRequest(BaseModel):
     time_spent_seconds: int
 from services.gamification import GamificationEngine
 from services.spaced_repetition import SpacedRepetitionEngine, ReviewQuality
+from services.analytics import AnalyticsEngine
+from services.personalization import PersonalizationEngine
+from services.content_delivery import ContentDeliveryEngine
 from utils.database import (
     connect_to_mongodb,
     close_mongodb_connection,
@@ -94,6 +97,18 @@ async def lifespan(app: FastAPI):
         # Initialize spaced repetition engine (Phase 5)
         app.state.spaced_repetition = SpacedRepetitionEngine(db)
         logger.info("✅ Spaced repetition engine initialized")
+        
+        # Initialize analytics engine (Phase 5)
+        app.state.analytics = AnalyticsEngine(db)
+        logger.info("✅ Analytics engine initialized")
+        
+        # Initialize personalization engine (Phase 5)
+        app.state.personalization = PersonalizationEngine(db)
+        logger.info("✅ Personalization engine initialized")
+        
+        # Initialize content delivery engine (Phase 5)
+        app.state.content_delivery = ContentDeliveryEngine(db)
+        logger.info("✅ Content delivery engine initialized")
         
         # Initialize external benchmarking system (Phase 2)
         await app.state.engine.provider_manager.initialize_external_benchmarks(db)
@@ -496,21 +511,15 @@ async def get_achievements():
 
 
 @app.post("/api/v1/gamification/record-activity")
-async def record_gamification_activity(
-    user_id: str,
-    session_id: str,
-    question_difficulty: float,
-    success: bool,
-    time_spent_seconds: int
-):
+async def record_gamification_activity(request: RecordActivityRequest):
     """Record user activity for gamification"""
     try:
         result = await app.state.gamification.record_activity(
-            user_id=user_id,
-            session_id=session_id,
-            question_difficulty=question_difficulty,
-            success=success,
-            time_spent_seconds=time_spent_seconds
+            user_id=request.user_id,
+            session_id=request.session_id,
+            question_difficulty=request.question_difficulty,
+            success=request.success,
+            time_spent_seconds=request.time_spent_seconds
         )
         
         return result
@@ -604,6 +613,151 @@ async def get_spaced_repetition_stats(user_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# Phase 5: Analytics endpoints
+@app.get("/api/v1/analytics/dashboard/{user_id}")
+async def get_analytics_dashboard(user_id: str):
+    """Get real-time analytics dashboard for user"""
+    try:
+        dashboard_data = await app.state.analytics.get_dashboard_metrics(user_id)
+        return dashboard_data
+    except Exception as e:
+        logger.error(f"Error fetching analytics dashboard: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/analytics/performance/{user_id}")
+async def get_performance_analysis(user_id: str, days_back: int = 30):
+    """Get comprehensive performance analysis for user"""
+    try:
+        analysis = await app.state.analytics.analyze_user_performance(
+            user_id=user_id,
+            days_back=days_back
+        )
+        return analysis
+    except Exception as e:
+        logger.error(f"Error fetching performance analysis: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# Phase 5: Personalization endpoints
+@app.get("/api/v1/personalization/profile/{user_id}")
+async def get_user_profile(user_id: str):
+    """Get comprehensive user personalization profile"""
+    try:
+        profile = await app.state.personalization.build_user_profile(user_id)
+        return {
+            "user_id": profile.user_id,
+            "learning_style": profile.learning_style.value,
+            "learning_style_confidence": profile.learning_style_confidence,
+            "optimal_study_hours": profile.optimal_study_hours,
+            "peak_performance_hour": profile.peak_performance_hour,
+            "content_preferences": profile.content_preferences,
+            "difficulty_preference": profile.difficulty_preference.value,
+            "interests": profile.interests,
+            "avg_session_duration_minutes": profile.avg_session_duration_minutes,
+            "preferred_pace": profile.preferred_pace,
+            "attention_span_minutes": profile.attention_span_minutes,
+            "last_updated": profile.last_updated
+        }
+    except Exception as e:
+        logger.error(f"Error fetching user profile: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/personalization/recommendations/{user_id}")
+async def get_personalized_recommendations(user_id: str):
+    """Get personalized learning recommendations"""
+    try:
+        recommendations = await app.state.personalization.get_personalized_recommendations(
+            user_id=user_id
+        )
+        return recommendations
+    except Exception as e:
+        logger.error(f"Error fetching recommendations: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/personalization/learning-path/{user_id}/{topic_area}")
+async def get_learning_path(user_id: str, topic_area: str):
+    """Get optimized learning path for topic area"""
+    try:
+        path = await app.state.personalization.get_learning_path(
+            user_id=user_id,
+            topic_area=topic_area
+        )
+        return {
+            "user_id": user_id,
+            "topic_area": topic_area,
+            "learning_path": path
+        }
+    except Exception as e:
+        logger.error(f"Error fetching learning path: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# Phase 5: Content Delivery endpoints
+@app.get("/api/v1/content/next/{user_id}")
+async def get_next_content(
+    user_id: str,
+    recent_accuracy: Optional[float] = None,
+    emotion: Optional[str] = None
+):
+    """Get next content recommendation for user"""
+    try:
+        context = {}
+        if recent_accuracy is not None:
+            context["recent_accuracy"] = recent_accuracy
+        if emotion is not None:
+            context["emotion"] = emotion
+        
+        next_content = await app.state.content_delivery.get_next_content(
+            user_id=user_id,
+            context=context if context else None
+        )
+        return next_content
+    except Exception as e:
+        logger.error(f"Error fetching next content: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/content/sequence/{user_id}/{topic}")
+async def get_content_sequence(user_id: str, topic: str, n_items: int = 10):
+    """Get personalized content sequence for topic"""
+    try:
+        sequence = await app.state.content_delivery.get_personalized_content_sequence(
+            user_id=user_id,
+            topic=topic,
+            n_items=n_items
+        )
+        return {
+            "user_id": user_id,
+            "topic": topic,
+            "sequence": sequence,
+            "count": len(sequence)
+        }
+    except Exception as e:
+        logger.error(f"Error fetching content sequence: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/content/search")
+async def search_content(query: str, n_results: int = 5):
+    """Search content using semantic matching"""
+    try:
+        results = await app.state.content_delivery.match_content_to_query(
+            query=query,
+            n_results=n_results
+        )
+        return {
+            "query": query,
+            "results": results,
+            "count": len(results)
+        }
+    except Exception as e:
+        logger.error(f"Error searching content: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # Root endpoint
 @app.get("/")
 async def root():
@@ -611,9 +765,9 @@ async def root():
     return {
         "name": "MasterX API",
         "version": "1.0.0",
-        "description": "AI-Powered Adaptive Learning Platform with Emotion Detection - Phase 5 In Progress",
+        "description": "AI-Powered Adaptive Learning Platform with Emotion Detection - Phase 5 Complete",
         "status": "operational",
-        "phase": "5 - Enhanced Features (Gamification + Spaced Repetition)",
+        "phase": "5 - Enhanced Features Complete (Gamification + Analytics + Personalization + Content Delivery)",
         "endpoints": {
             "health": "/api/health",
             "chat": "/api/v1/chat",
@@ -634,6 +788,20 @@ async def root():
                 "create_card": "/api/v1/spaced-repetition/create-card",
                 "review_card": "/api/v1/spaced-repetition/review-card",
                 "stats": "/api/v1/spaced-repetition/stats/{user_id}"
+            },
+            "analytics": {
+                "dashboard": "/api/v1/analytics/dashboard/{user_id}",
+                "performance": "/api/v1/analytics/performance/{user_id}"
+            },
+            "personalization": {
+                "profile": "/api/v1/personalization/profile/{user_id}",
+                "recommendations": "/api/v1/personalization/recommendations/{user_id}",
+                "learning_path": "/api/v1/personalization/learning-path/{user_id}/{topic_area}"
+            },
+            "content_delivery": {
+                "next": "/api/v1/content/next/{user_id}",
+                "sequence": "/api/v1/content/sequence/{user_id}/{topic}",
+                "search": "/api/v1/content/search?query=<query>"
             }
         }
     }
