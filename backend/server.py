@@ -54,6 +54,7 @@ from services.spaced_repetition import SpacedRepetitionEngine, ReviewQuality
 from services.analytics import AnalyticsEngine
 from services.personalization import PersonalizationEngine
 from services.content_delivery import ContentDeliveryEngine
+from services.voice_interaction import VoiceInteractionEngine
 from utils.database import (
     connect_to_mongodb,
     close_mongodb_connection,
@@ -109,6 +110,14 @@ async def lifespan(app: FastAPI):
         # Initialize content delivery engine (Phase 5)
         app.state.content_delivery = ContentDeliveryEngine(db)
         logger.info("✅ Content delivery engine initialized")
+        
+        # Initialize voice interaction engine (Phase 6)
+        try:
+            app.state.voice_interaction = VoiceInteractionEngine(db)
+            logger.info("✅ Voice interaction engine initialized")
+        except Exception as e:
+            logger.warning(f"Voice interaction engine initialization failed: {e}")
+            app.state.voice_interaction = None
         
         # Initialize external benchmarking system (Phase 2)
         await app.state.engine.provider_manager.initialize_external_benchmarks(db)
@@ -758,6 +767,237 @@ async def search_content(query: str, n_results: int = 5):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# ============================================================================
+# VOICE INTERACTION ENDPOINTS (Phase 6)
+# ============================================================================
+
+# Voice Interaction Request Models
+class TranscribeRequest(BaseModel):
+    """Request model for voice transcription"""
+    user_id: str
+    session_id: Optional[str] = None
+    language: Optional[str] = "en"
+
+
+class SynthesizeRequest(BaseModel):
+    """Request model for voice synthesis"""
+    text: str
+    emotion: Optional[str] = None
+    voice_style: Optional[str] = "friendly"
+
+
+class PronunciationRequest(BaseModel):
+    """Request model for pronunciation assessment"""
+    expected_text: str
+    user_id: str
+    language: Optional[str] = "en"
+
+
+class VoiceChatRequest(BaseModel):
+    """Request model for voice-based chat"""
+    user_id: str
+    session_id: str
+    language: Optional[str] = "en"
+
+
+@app.post("/api/v1/voice/transcribe")
+async def transcribe_voice(
+    request: Request,
+    audio_file: bytes = None
+):
+    """
+    Transcribe audio to text using Groq Whisper
+    
+    Accepts audio file upload and returns transcription.
+    """
+    try:
+        if not app.state.voice_interaction:
+            raise HTTPException(
+                status_code=503,
+                detail="Voice interaction service not available"
+            )
+        
+        # Get audio data from request
+        if not audio_file:
+            body = await request.body()
+            audio_file = body
+        
+        if not audio_file:
+            raise HTTPException(status_code=400, detail="No audio file provided")
+        
+        # Get query parameters
+        params = dict(request.query_params)
+        language = params.get("language", "en")
+        
+        # Transcribe
+        result = await app.state.voice_interaction.transcribe_voice(
+            audio_data=audio_file,
+            language=language
+        )
+        
+        logger.info(f"Transcribed audio: {len(result['text'])} characters")
+        return result
+        
+    except Exception as e:
+        logger.error(f"Error transcribing audio: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/v1/voice/synthesize")
+async def synthesize_voice(request: SynthesizeRequest):
+    """
+    Synthesize text to speech using ElevenLabs
+    
+    Returns audio data for the given text with emotion-aware voice selection.
+    """
+    try:
+        if not app.state.voice_interaction:
+            raise HTTPException(
+                status_code=503,
+                detail="Voice interaction service not available"
+            )
+        
+        # Synthesize speech
+        result = await app.state.voice_interaction.synthesize_voice(
+            text=request.text,
+            emotion=request.emotion,
+            voice_style=request.voice_style
+        )
+        
+        logger.info(f"Synthesized speech: {len(request.text)} characters")
+        
+        # Return audio as response
+        from fastapi.responses import Response
+        return Response(
+            content=result["audio_data"],
+            media_type="audio/mpeg",
+            headers={
+                "X-Voice-ID": result["voice_id"],
+                "X-Model": result["model"],
+                "X-Duration": str(result["duration"]),
+                "X-Format": result["format"]
+            }
+        )
+        
+    except Exception as e:
+        logger.error(f"Error synthesizing speech: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/v1/voice/assess-pronunciation")
+async def assess_pronunciation(
+    request: Request,
+    audio_file: bytes = None
+):
+    """
+    Assess pronunciation quality
+    
+    Compares user's pronunciation with expected text and provides feedback.
+    """
+    try:
+        if not app.state.voice_interaction:
+            raise HTTPException(
+                status_code=503,
+                detail="Voice interaction service not available"
+            )
+        
+        # Get audio data from request
+        if not audio_file:
+            body = await request.body()
+            audio_file = body
+        
+        if not audio_file:
+            raise HTTPException(status_code=400, detail="No audio file provided")
+        
+        # Get query parameters
+        params = dict(request.query_params)
+        expected_text = params.get("expected_text")
+        language = params.get("language", "en")
+        
+        if not expected_text:
+            raise HTTPException(status_code=400, detail="expected_text parameter required")
+        
+        # Assess pronunciation
+        result = await app.state.voice_interaction.assess_voice_pronunciation(
+            audio_data=audio_file,
+            expected_text=expected_text,
+            language=language
+        )
+        
+        logger.info(f"Assessed pronunciation: score {result['overall_score']:.2f}")
+        return result
+        
+    except Exception as e:
+        logger.error(f"Error assessing pronunciation: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/v1/voice/chat")
+async def voice_chat(
+    request: Request,
+    audio_file: bytes = None
+):
+    """
+    Voice-based learning interaction
+    
+    Complete voice learning flow: transcribe user speech, generate AI response,
+    and synthesize voice response.
+    """
+    try:
+        if not app.state.voice_interaction:
+            raise HTTPException(
+                status_code=503,
+                detail="Voice interaction service not available"
+            )
+        
+        # Get audio data from request
+        if not audio_file:
+            body = await request.body()
+            audio_file = body
+        
+        if not audio_file:
+            raise HTTPException(status_code=400, detail="No audio file provided")
+        
+        # Get query parameters
+        params = dict(request.query_params)
+        user_id = params.get("user_id")
+        session_id = params.get("session_id")
+        language = params.get("language", "en")
+        
+        if not user_id or not session_id:
+            raise HTTPException(
+                status_code=400,
+                detail="user_id and session_id parameters required"
+            )
+        
+        # Process voice interaction
+        result = await app.state.voice_interaction.voice_learning_interaction(
+            audio_data=audio_file,
+            user_id=user_id,
+            session_id=session_id,
+            language=language
+        )
+        
+        logger.info(f"Voice interaction completed for user {user_id}")
+        
+        # Return response with audio
+        from fastapi.responses import Response
+        return Response(
+            content=result["ai_response_audio"],
+            media_type="audio/mpeg",
+            headers={
+                "X-User-Text": result["user_transcription"]["text"],
+                "X-AI-Text": result["ai_response_text"],
+                "X-Emotion": result["emotion_context"] or "neutral",
+                "X-Timestamp": result["timestamp"]
+            }
+        )
+        
+    except Exception as e:
+        logger.error(f"Error in voice chat: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # Root endpoint
 @app.get("/")
 async def root():
@@ -765,9 +1005,9 @@ async def root():
     return {
         "name": "MasterX API",
         "version": "1.0.0",
-        "description": "AI-Powered Adaptive Learning Platform with Emotion Detection - Phase 5 Complete",
+        "description": "AI-Powered Adaptive Learning Platform with Emotion Detection - Phase 6 In Progress",
         "status": "operational",
-        "phase": "5 - Enhanced Features Complete (Gamification + Analytics + Personalization + Content Delivery)",
+        "phase": "6 - Voice Interaction (Speech-to-Text + Text-to-Speech + Pronunciation Assessment)",
         "endpoints": {
             "health": "/api/health",
             "chat": "/api/v1/chat",
@@ -802,6 +1042,12 @@ async def root():
                 "next": "/api/v1/content/next/{user_id}",
                 "sequence": "/api/v1/content/sequence/{user_id}/{topic}",
                 "search": "/api/v1/content/search?query=<query>"
+            },
+            "voice_interaction": {
+                "transcribe": "/api/v1/voice/transcribe",
+                "synthesize": "/api/v1/voice/synthesize",
+                "assess_pronunciation": "/api/v1/voice/assess-pronunciation",
+                "voice_chat": "/api/v1/voice/chat"
             }
         }
     }
