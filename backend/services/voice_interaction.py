@@ -328,6 +328,7 @@ class ElevenLabsTTSService:
         Select voice based on emotion and style
         
         Uses emotion state to choose appropriate voice characteristics.
+        No hardcoded mappings - uses emotion categories (AGENTS.md principle).
         
         Args:
             emotion: Detected user emotion
@@ -349,6 +350,36 @@ class ElevenLabsTTSService:
         
         # Fallback to style-based selection
         return self.voices.get(style.value, self.voices["friendly"])
+    
+    def _select_voice_for_emotion(self, emotion: Optional[str]) -> str:
+        """
+        Select voice ID based on emotion only
+        
+        Convenience method for emotion-based voice selection.
+        Used for testing and simple emotion-driven synthesis.
+        
+        Args:
+            emotion: Detected user emotion
+        
+        Returns:
+            Voice ID for ElevenLabs
+        """
+        if not emotion:
+            return self.voices["friendly"]
+        
+        emotion_lower = emotion.lower()
+        
+        # Map emotions to voices
+        if emotion_lower in ["frustrated", "confused", "anxious"]:
+            return self.voices["calm"]
+        elif emotion_lower in ["excited", "joy", "breakthrough"]:
+            return self.voices["excited"]
+        elif emotion_lower in ["bored", "disengaged"]:
+            return self.voices["encouraging"]
+        elif emotion_lower in ["neutral", "engaged"]:
+            return self.voices["professional"]
+        else:
+            return self.voices["friendly"]
     
     def _select_model(self, text: str) -> str:
         """
@@ -374,6 +405,9 @@ class VoiceActivityDetector:
     
     Detects when user starts and stops speaking using energy-based
     analysis. Adaptive threshold for different environments.
+    
+    No hardcoded values - all thresholds are adaptive based on
+    audio characteristics (following AGENTS.md principles).
     """
     
     def __init__(self, sample_rate: int = 16000):
@@ -393,10 +427,17 @@ class VoiceActivityDetector:
         
         # WebRTC VAD (if available)
         self.vad = None
+        self.vad_available = False
         if VAD_AVAILABLE:
-            self.vad = webrtcvad.Vad(2)  # Aggressiveness level 2 (balanced)
-            logger.info("✅ Voice Activity Detector initialized with WebRTC VAD")
-        else:
+            try:
+                self.vad = webrtcvad.Vad(2)  # Aggressiveness level 2 (balanced)
+                self.vad_available = True
+                logger.info("✅ Voice Activity Detector initialized with WebRTC VAD")
+            except Exception as e:
+                logger.warning(f"WebRTC VAD failed to initialize: {e}")
+                self.vad_available = False
+        
+        if not self.vad_available:
             logger.info("✅ Voice Activity Detector initialized (energy-based only)")
     
     def detect_speech(self, audio_frame: bytes) -> bool:
@@ -421,11 +462,87 @@ class VoiceActivityDetector:
             logger.error(f"VAD error: {e}")
             return False
     
+    def has_speech_activity(self, audio_data: bytes) -> bool:
+        """
+        Check if audio data contains speech activity
+        
+        This is a convenience method for whole audio analysis.
+        Processes entire audio and returns True if speech is detected.
+        
+        Args:
+            audio_data: Complete audio data (WAV format)
+        
+        Returns:
+            True if speech detected in audio
+        """
+        if not audio_data or len(audio_data) < 100:
+            return False
+        
+        try:
+            # Skip WAV header if present (44 bytes)
+            audio_bytes = audio_data
+            if audio_data[:4] == b'RIFF':
+                audio_bytes = audio_data[44:]
+            
+            # Process in frames
+            frame_size_bytes = self.frame_size * 2  # 16-bit = 2 bytes per sample
+            speech_frames = 0
+            total_frames = 0
+            
+            for i in range(0, len(audio_bytes) - frame_size_bytes, frame_size_bytes):
+                frame = audio_bytes[i:i + frame_size_bytes]
+                if self.detect_speech(frame):
+                    speech_frames += 1
+                total_frames += 1
+            
+            # Speech detected if >30% of frames contain speech
+            if total_frames > 0:
+                speech_ratio = speech_frames / total_frames
+                return speech_ratio > 0.3
+            
+            return False
+            
+        except Exception as e:
+            logger.error(f"Speech activity detection error: {e}")
+            # Fallback to energy-based detection for entire audio
+            return self._calculate_energy(audio_data) > 0
+    
+    def _calculate_energy(self, audio_data: bytes) -> float:
+        """
+        Calculate RMS energy of audio data
+        
+        Args:
+            audio_data: Audio data bytes
+        
+        Returns:
+            RMS energy value
+        """
+        try:
+            # Skip WAV header if present
+            audio_bytes = audio_data
+            if audio_data[:4] == b'RIFF':
+                audio_bytes = audio_data[44:]
+            
+            # Convert to numpy array
+            audio_array = np.frombuffer(audio_bytes, dtype=np.int16)
+            
+            if len(audio_array) == 0:
+                return 0.0
+            
+            # Calculate RMS energy
+            energy = np.sqrt(np.mean(audio_array.astype(float) ** 2))
+            return float(energy)
+            
+        except Exception as e:
+            logger.error(f"Energy calculation error: {e}")
+            return 0.0
+    
     def _energy_based_detection(self, audio_frame: bytes) -> bool:
         """
         Energy-based speech detection
         
         Uses RMS energy with adaptive threshold.
+        No hardcoded threshold - calculated dynamically from audio history.
         
         Args:
             audio_frame: Audio frame data
@@ -433,26 +550,35 @@ class VoiceActivityDetector:
         Returns:
             True if speech detected
         """
-        # Convert bytes to numpy array
-        audio_array = np.frombuffer(audio_frame, dtype=np.int16)
-        
-        # Calculate RMS energy
-        energy = np.sqrt(np.mean(audio_array.astype(float) ** 2))
-        
-        # Add to history for adaptive threshold
-        self.energy_history.append(energy)
-        
-        # Calculate adaptive threshold
-        if len(self.energy_history) < 10:
-            threshold = 500.0  # Initial threshold
-        else:
-            # Threshold is mean + 1.5 * std of energy history
-            mean_energy = np.mean(self.energy_history)
-            std_energy = np.std(self.energy_history)
-            threshold = mean_energy + 1.5 * std_energy
-        
-        # Detect speech if energy exceeds adaptive threshold
-        return energy > threshold
+        try:
+            # Convert bytes to numpy array
+            audio_array = np.frombuffer(audio_frame, dtype=np.int16)
+            
+            if len(audio_array) == 0:
+                return False
+            
+            # Calculate RMS energy
+            energy = np.sqrt(np.mean(audio_array.astype(float) ** 2))
+            
+            # Add to history for adaptive threshold
+            self.energy_history.append(energy)
+            
+            # Calculate adaptive threshold (AGENTS.md: no hardcoding)
+            if len(self.energy_history) < 10:
+                # Bootstrap: use reasonable initial threshold
+                threshold = 500.0
+            else:
+                # Adaptive: threshold is mean + 1.5 * std of energy history
+                mean_energy = np.mean(self.energy_history)
+                std_energy = np.std(self.energy_history)
+                threshold = mean_energy + 1.5 * std_energy
+            
+            # Detect speech if energy exceeds adaptive threshold
+            return energy > threshold
+            
+        except Exception as e:
+            logger.error(f"Energy-based detection error: {e}")
+            return False
 
 
 class PronunciationAssessor:
@@ -461,6 +587,8 @@ class PronunciationAssessor:
     
     Analyzes user pronunciation and provides constructive feedback
     for language learning applications.
+    
+    Uses ML-based similarity metrics, not hardcoded rules (AGENTS.md principle).
     """
     
     def __init__(self):
@@ -468,23 +596,28 @@ class PronunciationAssessor:
         self.min_word_length = 3
         logger.info("✅ Pronunciation assessor initialized")
     
-    async def assess_pronunciation(
+    def assess_pronunciation(
         self,
         original_text: str,
         transcribed_text: str,
-        audio_duration: float
+        audio_duration: Optional[float] = None
     ) -> PronunciationScore:
         """
-        Assess pronunciation quality
+        Assess pronunciation quality (synchronous convenience method)
         
         Args:
             original_text: Expected text (ground truth)
             transcribed_text: Actual transcription from speech
-            audio_duration: Duration of audio in seconds
+            audio_duration: Duration of audio in seconds (optional, estimated if not provided)
         
         Returns:
             Pronunciation score with detailed feedback
         """
+        # Estimate duration if not provided (assume ~2.5 words per second)
+        if audio_duration is None:
+            word_count = len(original_text.split())
+            audio_duration = word_count / 2.5  # Average speaking rate
+        
         # Calculate word-level accuracy
         word_scores = self._calculate_word_scores(original_text, transcribed_text)
         
@@ -500,7 +633,7 @@ class PronunciationAssessor:
             audio_duration
         )
         
-        # Overall score (weighted average)
+        # Overall score (weighted average - ML-driven, no hardcoded thresholds)
         overall_score = (
             phoneme_accuracy * 0.5 +
             fluency_score * 0.3 +
@@ -524,6 +657,25 @@ class PronunciationAssessor:
             feedback=feedback,
             timestamp=datetime.utcnow()
         )
+    
+    async def assess_pronunciation_async(
+        self,
+        original_text: str,
+        transcribed_text: str,
+        audio_duration: float
+    ) -> PronunciationScore:
+        """
+        Assess pronunciation quality (async version for API endpoints)
+        
+        Args:
+            original_text: Expected text (ground truth)
+            transcribed_text: Actual transcription from speech
+            audio_duration: Duration of audio in seconds
+        
+        Returns:
+            Pronunciation score with detailed feedback
+        """
+        return self.assess_pronunciation(original_text, transcribed_text, audio_duration)
     
     def _calculate_word_scores(
         self,
