@@ -55,6 +55,13 @@ from services.analytics import AnalyticsEngine
 from services.personalization import PersonalizationEngine
 from services.content_delivery import ContentDeliveryEngine
 from services.voice_interaction import VoiceInteractionEngine
+from services.collaboration import (
+    CollaborationEngine,
+    MatchRequest,
+    CollaborationMessage,
+    MessageType,
+    initialize_collaboration_service
+)
 from utils.database import (
     connect_to_mongodb,
     close_mongodb_connection,
@@ -118,6 +125,15 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             logger.warning(f"Voice interaction engine initialization failed: {e}")
             app.state.voice_interaction = None
+        
+        # Initialize collaboration engine (Phase 7)
+        try:
+            app.state.collaboration = CollaborationEngine(db)
+            await initialize_collaboration_service(db)
+            logger.info("✅ Collaboration engine initialized")
+        except Exception as e:
+            logger.warning(f"Collaboration engine initialization failed: {e}")
+            app.state.collaboration = None
         
         # Initialize external benchmarking system (Phase 2)
         await app.state.engine.provider_manager.initialize_external_benchmarks(db)
@@ -998,6 +1014,338 @@ async def voice_chat(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# ============================================================================
+# COLLABORATION ENDPOINTS (Phase 7)
+# ============================================================================
+
+# Collaboration Request Models
+class CreateCollaborationSessionRequest(BaseModel):
+    """Request model for creating collaboration session"""
+    user_id: str
+    topic: str
+    subject: str
+    difficulty_level: float = 0.5
+    max_participants: int = 4
+
+
+class JoinSessionRequest(BaseModel):
+    """Request model for joining session"""
+    session_id: str
+    user_id: str
+
+
+class SendMessageRequest(BaseModel):
+    """Request model for sending message"""
+    session_id: str
+    user_id: str
+    user_name: str
+    message_type: str = "chat"
+    content: str
+    reply_to: Optional[str] = None
+
+
+@app.post("/api/v1/collaboration/find-peers")
+async def find_peer_matches(request: MatchRequest):
+    """
+    Find peer matches for collaboration
+    
+    Uses ML-based similarity matching to find optimal study partners
+    """
+    try:
+        if not app.state.collaboration:
+            raise HTTPException(
+                status_code=503,
+                detail="Collaboration service not available"
+            )
+        
+        # Find matches
+        matches = await app.state.collaboration.matching_engine.find_matches(request)
+        
+        return {
+            "user_id": request.user_id,
+            "subject": request.subject,
+            "topic": request.topic,
+            "matches": [
+                {
+                    "user_id": m.user_id,
+                    "learning_style": m.learning_style,
+                    "avg_engagement": m.avg_engagement,
+                    "collaboration_score": m.collaboration_score,
+                    "preferred_topics": m.preferred_topics
+                }
+                for m in matches
+            ],
+            "count": len(matches)
+        }
+        
+    except Exception as e:
+        logger.error(f"Error finding peer matches: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/v1/collaboration/create-session")
+async def create_collaboration_session(request: CreateCollaborationSessionRequest):
+    """Create new collaboration session"""
+    try:
+        if not app.state.collaboration:
+            raise HTTPException(
+                status_code=503,
+                detail="Collaboration service not available"
+            )
+        
+        session = await app.state.collaboration.session_manager.create_session(
+            leader_id=request.user_id,
+            topic=request.topic,
+            subject=request.subject,
+            difficulty_level=request.difficulty_level,
+            max_participants=request.max_participants
+        )
+        
+        return {
+            "session_id": session.session_id,
+            "topic": session.topic,
+            "subject": session.subject,
+            "status": session.status,
+            "created_at": session.created_at,
+            "leader_id": session.leader_id
+        }
+        
+    except Exception as e:
+        logger.error(f"Error creating collaboration session: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/v1/collaboration/match-and-create")
+async def match_and_create_session(request: MatchRequest):
+    """
+    Find peers and create collaboration session in one step
+    
+    Combines peer matching with session creation
+    """
+    try:
+        if not app.state.collaboration:
+            raise HTTPException(
+                status_code=503,
+                detail="Collaboration service not available"
+            )
+        
+        session = await app.state.collaboration.find_and_create_session(request)
+        
+        if not session:
+            return {
+                "success": False,
+                "message": "No matches found and auto_start is False"
+            }
+        
+        return {
+            "success": True,
+            "session_id": session.session_id,
+            "topic": session.topic,
+            "subject": session.subject,
+            "status": session.status,
+            "created_at": session.created_at
+        }
+        
+    except Exception as e:
+        logger.error(f"Error matching and creating session: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/v1/collaboration/join")
+async def join_collaboration_session(request: JoinSessionRequest):
+    """Join an existing collaboration session"""
+    try:
+        if not app.state.collaboration:
+            raise HTTPException(
+                status_code=503,
+                detail="Collaboration service not available"
+            )
+        
+        success = await app.state.collaboration.session_manager.join_session(
+            session_id=request.session_id,
+            user_id=request.user_id
+        )
+        
+        if not success:
+            raise HTTPException(
+                status_code=400,
+                detail="Could not join session (full or not found)"
+            )
+        
+        return {
+            "success": True,
+            "session_id": request.session_id,
+            "user_id": request.user_id
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error joining session: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/v1/collaboration/leave")
+async def leave_collaboration_session(request: JoinSessionRequest):
+    """Leave a collaboration session"""
+    try:
+        if not app.state.collaboration:
+            raise HTTPException(
+                status_code=503,
+                detail="Collaboration service not available"
+            )
+        
+        success = await app.state.collaboration.session_manager.leave_session(
+            session_id=request.session_id,
+            user_id=request.user_id
+        )
+        
+        return {
+            "success": success,
+            "session_id": request.session_id,
+            "user_id": request.user_id
+        }
+        
+    except Exception as e:
+        logger.error(f"Error leaving session: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/v1/collaboration/send-message")
+async def send_collaboration_message(request: SendMessageRequest):
+    """Send message in collaboration session"""
+    try:
+        if not app.state.collaboration:
+            raise HTTPException(
+                status_code=503,
+                detail="Collaboration service not available"
+            )
+        
+        import uuid
+        
+        # Create message
+        message = CollaborationMessage(
+            message_id=str(uuid.uuid4()),
+            session_id=request.session_id,
+            user_id=request.user_id,
+            user_name=request.user_name,
+            message_type=MessageType(request.message_type),
+            content=request.content,
+            timestamp=datetime.utcnow(),
+            reply_to=request.reply_to
+        )
+        
+        # Send message
+        await app.state.collaboration.session_manager.send_message(message)
+        
+        return {
+            "success": True,
+            "message_id": message.message_id,
+            "timestamp": message.timestamp
+        }
+        
+    except Exception as e:
+        logger.error(f"Error sending message: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/collaboration/sessions")
+async def get_active_collaboration_sessions(
+    subject: Optional[str] = None,
+    min_participants: int = 1
+):
+    """Get list of active collaboration sessions"""
+    try:
+        if not app.state.collaboration:
+            raise HTTPException(
+                status_code=503,
+                detail="Collaboration service not available"
+            )
+        
+        sessions = await app.state.collaboration.get_active_sessions(
+            subject=subject,
+            min_participants=min_participants
+        )
+        
+        return {
+            "sessions": [
+                {
+                    "session_id": s.session_id,
+                    "topic": s.topic,
+                    "subject": s.subject,
+                    "status": s.status,
+                    "current_participants": s.current_participants,
+                    "max_participants": s.max_participants,
+                    "difficulty_level": s.difficulty_level,
+                    "created_at": s.created_at
+                }
+                for s in sessions
+            ],
+            "count": len(sessions)
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting sessions: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/collaboration/session/{session_id}/analytics")
+async def get_collaboration_analytics(session_id: str):
+    """Get comprehensive analytics for a collaboration session"""
+    try:
+        if not app.state.collaboration:
+            raise HTTPException(
+                status_code=503,
+                detail="Collaboration service not available"
+            )
+        
+        analytics = await app.state.collaboration.session_manager.get_session_analytics(
+            session_id
+        )
+        
+        if not analytics:
+            raise HTTPException(status_code=404, detail="Session not found")
+        
+        return analytics
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting analytics: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/collaboration/session/{session_id}/dynamics")
+async def get_session_dynamics(session_id: str, time_window_minutes: int = 30):
+    """Get group dynamics analysis for session"""
+    try:
+        if not app.state.collaboration:
+            raise HTTPException(
+                status_code=503,
+                detail="Collaboration service not available"
+            )
+        
+        dynamics = await app.state.collaboration.dynamics_analyzer.analyze_session(
+            session_id,
+            time_window_minutes
+        )
+        
+        return {
+            "session_id": dynamics.session_id,
+            "participation_balance": dynamics.participation_balance,
+            "interaction_density": dynamics.interaction_density,
+            "help_giving_ratio": dynamics.help_giving_ratio,
+            "engagement_trend": dynamics.engagement_trend,
+            "dominant_users": dynamics.dominant_users,
+            "quiet_users": dynamics.quiet_users,
+            "collaboration_health": dynamics.collaboration_health
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting dynamics: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # Root endpoint
 @app.get("/")
 async def root():
@@ -1005,9 +1353,9 @@ async def root():
     return {
         "name": "MasterX API",
         "version": "1.0.0",
-        "description": "AI-Powered Adaptive Learning Platform with Emotion Detection - Phase 6 In Progress",
+        "description": "AI-Powered Adaptive Learning Platform with Emotion Detection - Phase 7 In Progress",
         "status": "operational",
-        "phase": "6 - Voice Interaction (Speech-to-Text + Text-to-Speech + Pronunciation Assessment)",
+        "phase": "7 - Collaboration Features (Real-time Study Groups + Peer Matching)",
         "endpoints": {
             "health": "/api/health",
             "chat": "/api/v1/chat",
@@ -1048,6 +1396,17 @@ async def root():
                 "synthesize": "/api/v1/voice/synthesize",
                 "assess_pronunciation": "/api/v1/voice/assess-pronunciation",
                 "voice_chat": "/api/v1/voice/chat"
+            },
+            "collaboration": {
+                "find_peers": "/api/v1/collaboration/find-peers",
+                "create_session": "/api/v1/collaboration/create-session",
+                "match_and_create": "/api/v1/collaboration/match-and-create",
+                "join": "/api/v1/collaboration/join",
+                "leave": "/api/v1/collaboration/leave",
+                "send_message": "/api/v1/collaboration/send-message",
+                "sessions": "/api/v1/collaboration/sessions",
+                "analytics": "/api/v1/collaboration/session/{session_id}/analytics",
+                "dynamics": "/api/v1/collaboration/session/{session_id}/dynamics"
             }
         }
     }
