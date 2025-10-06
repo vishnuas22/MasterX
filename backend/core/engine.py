@@ -507,10 +507,12 @@ Provide a response that:
         """
         Infer interaction success from emotional state
         
+        Uses multiple signals:
+        1. Primary emotion (positive vs negative)
+        2. Valence (positive vs negative affect)
+        3. Learning readiness (indicator of engagement)
+        
         In full system, this would be based on correctness checks.
-        For now, use emotion as proxy:
-        - Positive emotions (joy, achievement, flow) = success
-        - Negative emotions (frustration, confusion) = struggle
         
         Args:
             emotion_state: Current emotional state
@@ -520,10 +522,40 @@ Provide a response that:
         """
         positive_emotions = [
             'joy', 'achievement', 'flow_state', 'engagement',
-            'curiosity', 'confidence', 'satisfaction'
+            'curiosity', 'confidence', 'satisfaction', 'excitement'
         ]
         
-        return emotion_state.primary_emotion in positive_emotions
+        negative_emotions = [
+            'frustration', 'confusion', 'anxiety', 'boredom',
+            'overwhelmed', 'disappointment'
+        ]
+        
+        # Multi-signal approach
+        emotion_positive = emotion_state.primary_emotion in positive_emotions
+        emotion_negative = emotion_state.primary_emotion in negative_emotions
+        
+        # Valence: > 0.55 = positive, < 0.45 = negative
+        valence_positive = emotion_state.valence > 0.55
+        valence_negative = emotion_state.valence < 0.45
+        
+        # Readiness: high/moderate = engaged, low = struggling
+        readiness_engaged = emotion_state.learning_readiness in [
+            LearningReadiness.HIGH_READINESS,
+            LearningReadiness.MODERATE_READINESS
+        ]
+        
+        # Weighted decision (prioritize valence and readiness over emotion label)
+        # This helps when emotion detection is inaccurate
+        if emotion_negative or valence_negative:
+            return False  # Clearly struggling
+        elif emotion_positive and valence_positive and readiness_engaged:
+            return True  # Clearly succeeding
+        elif valence_positive or readiness_engaged:
+            return True  # Probably succeeding (valence/readiness are more reliable)
+        else:
+            # Default: neutral/uncertain
+            # Use valence as tiebreaker (0.5 = neutral)
+            return emotion_state.valence >= 0.5
     
     def _get_emotion_guidance(self, emotion_result) -> str:
         """Get guidance for AI based on detected emotion"""
