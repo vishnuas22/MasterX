@@ -314,12 +314,18 @@ async def chat(request: ChatRequest):
             "timestamp": datetime.utcnow()
         })
         
+        # Extract subject from context or default to general
+        subject = "general"
+        if request.context:
+            subject = request.context.get("subject", "general")
+        
         # Process request with engine
         ai_response = await app.state.engine.process_request(
             user_id=request.user_id,
             message=request.message,
             session_id=session_id,
-            context=request.context
+            context=request.context,
+            subject=subject
         )
         
         # Save AI message
