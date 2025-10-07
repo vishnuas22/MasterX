@@ -266,6 +266,384 @@ async def detailed_health():
     }
 
 
+# ============================================================================
+# AUTHENTICATION ENDPOINTS
+# ============================================================================
+
+from fastapi import Depends, status as http_status
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from utils.security import auth_manager, verify_token
+from core.models import RegisterRequest, LoginRequest, TokenResponse, RefreshRequest, UserResponse, UserDocument
+from utils.validators import validate_email, validate_message
+import hashlib
+
+security_scheme = HTTPBearer()
+
+
+async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security_scheme)) -> str:
+    """
+    Dependency to get current authenticated user
+    
+    Returns:
+        user_id: Authenticated user ID
+    """
+    try:
+        token_data = verify_token(credentials.credentials)
+        return token_data.user_id
+    except Exception as e:
+        logger.warning(f"Authentication failed: {e}")
+        raise HTTPException(
+            status_code=http_status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+
+@app.post("/api/auth/register", response_model=TokenResponse, status_code=http_status.HTTP_201_CREATED)
+async def register(request: RegisterRequest):
+    """
+    Register new user
+    
+    Creates user account with email and password.
+    Returns JWT tokens for immediate login.
+    """
+    logger.info(f"📝 Registration attempt: {request.email}")
+    
+    try:
+        # Validate email
+        email_validation = validate_email(request.email)
+        if not email_validation.is_valid:
+            raise HTTPException(
+                status_code=http_status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid email: {', '.join(email_validation.errors)}"
+            )
+        
+        # Get database
+        from utils.database import get_database
+        db = get_database()
+        users_collection = db["users"]
+        
+        # Check if user already exists
+        existing_user = await users_collection.find_one({"email": request.email.lower()})
+        if existing_user:
+            raise HTTPException(
+                status_code=http_status.HTTP_400_BAD_REQUEST,
+                detail="Email already registered"
+            )
+        
+        # Hash password
+        password_hash = auth_manager.register_user(request.email, request.password, request.name)
+        
+        # Create user document
+        user_id = str(uuid.uuid4())
+        user_doc = UserDocument(
+            id=user_id,
+            email=request.email.lower(),
+            name=request.name,
+            password_hash=password_hash,
+            created_at=datetime.utcnow(),
+            last_login=datetime.utcnow(),
+            is_active=True,
+            is_verified=False
+        )
+        
+        # Insert into database
+        await users_collection.insert_one(user_doc.model_dump(by_alias=True))
+        
+        # Create tokens
+        tokens = auth_manager.create_session(user_id, request.email.lower())
+        
+        # Log successful registration
+        login_attempts = db["login_attempts"]
+        await login_attempts.insert_one({
+            "_id": str(uuid.uuid4()),
+            "user_id": user_id,
+            "email": request.email.lower(),
+            "ip_address": "unknown",
+            "success": True,
+            "timestamp": datetime.utcnow()
+        })
+        
+        logger.info(f"✅ User registered: {request.email}")
+        
+        return TokenResponse(
+            access_token=tokens.access_token,
+            refresh_token=tokens.refresh_token,
+            token_type=tokens.token_type,
+            expires_in=tokens.expires_in,
+            user={
+                "id": user_id,
+                "email": request.email.lower(),
+                "name": request.name
+            }
+        )
+        
+    except HTTPException:
+        raise
+    except ValueError as e:
+        # Password validation error
+        raise HTTPException(
+            status_code=http_status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except Exception as e:
+        logger.error(f"❌ Registration failed: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Registration failed"
+        )
+
+
+@app.post("/api/auth/login", response_model=TokenResponse)
+async def login(request: LoginRequest):
+    """
+    User login
+    
+    Authenticates user with email and password.
+    Returns JWT tokens on success.
+    """
+    logger.info(f"🔐 Login attempt: {request.email}")
+    
+    try:
+        # Get database
+        from utils.database import get_database
+        db = get_database()
+        users_collection = db["users"]
+        login_attempts_collection = db["login_attempts"]
+        
+        # Find user
+        user = await users_collection.find_one({"email": request.email.lower()})
+        
+        if not user:
+            # Log failed attempt
+            await login_attempts_collection.insert_one({
+                "_id": str(uuid.uuid4()),
+                "user_id": None,
+                "email": request.email.lower(),
+                "ip_address": "unknown",
+                "success": False,
+                "timestamp": datetime.utcnow(),
+                "failure_reason": "User not found"
+            })
+            raise HTTPException(
+                status_code=http_status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid email or password"
+            )
+        
+        # Check if account is locked
+        if user.get("locked_until") and datetime.utcnow() < user["locked_until"]:
+            raise HTTPException(
+                status_code=http_status.HTTP_423_LOCKED,
+                detail="Account temporarily locked. Please try again later."
+            )
+        
+        # Verify password
+        is_valid = auth_manager.authenticate_user(
+            request.email,
+            request.password,
+            user["password_hash"]
+        )
+        
+        if not is_valid:
+            # Update failed attempts
+            failed_attempts = user.get("failed_login_attempts", 0) + 1
+            update_data = {"failed_login_attempts": failed_attempts}
+            
+            # Lock account after 5 failed attempts
+            if failed_attempts >= 5:
+                from datetime import timedelta
+                update_data["locked_until"] = datetime.utcnow() + timedelta(minutes=15)
+            
+            await users_collection.update_one(
+                {"_id": user["_id"]},
+                {"$set": update_data}
+            )
+            
+            # Log failed attempt
+            await login_attempts_collection.insert_one({
+                "_id": str(uuid.uuid4()),
+                "user_id": user["_id"],
+                "email": request.email.lower(),
+                "ip_address": "unknown",
+                "success": False,
+                "timestamp": datetime.utcnow(),
+                "failure_reason": "Invalid password"
+            })
+            
+            raise HTTPException(
+                status_code=http_status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid email or password"
+            )
+        
+        # Reset failed attempts and update last login
+        await users_collection.update_one(
+            {"_id": user["_id"]},
+            {
+                "$set": {
+                    "last_login": datetime.utcnow(),
+                    "last_active": datetime.utcnow(),
+                    "failed_login_attempts": 0,
+                    "locked_until": None
+                }
+            }
+        )
+        
+        # Create tokens
+        tokens = auth_manager.create_session(user["_id"], user["email"])
+        
+        # Log successful login
+        await login_attempts_collection.insert_one({
+            "_id": str(uuid.uuid4()),
+            "user_id": user["_id"],
+            "email": user["email"],
+            "ip_address": "unknown",
+            "success": True,
+            "timestamp": datetime.utcnow()
+        })
+        
+        logger.info(f"✅ Login successful: {request.email}")
+        
+        return TokenResponse(
+            access_token=tokens.access_token,
+            refresh_token=tokens.refresh_token,
+            token_type=tokens.token_type,
+            expires_in=tokens.expires_in,
+            user={
+                "id": user["_id"],
+                "email": user["email"],
+                "name": user["name"]
+            }
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Login failed: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Login failed"
+        )
+
+
+@app.post("/api/auth/refresh", response_model=TokenResponse)
+async def refresh(request: RefreshRequest):
+    """
+    Refresh access token
+    
+    Uses refresh token to get new access token.
+    """
+    logger.info("🔄 Token refresh request")
+    
+    try:
+        # Refresh session
+        tokens = auth_manager.refresh_session(request.refresh_token)
+        
+        # Get user info from token
+        token_data = verify_token(tokens.access_token)
+        
+        # Get user from database
+        from utils.database import get_database
+        db = get_database()
+        user = await db["users"].find_one({"_id": token_data.user_id})
+        
+        if not user:
+            raise HTTPException(
+                status_code=http_status.HTTP_401_UNAUTHORIZED,
+                detail="User not found"
+            )
+        
+        logger.info(f"✅ Token refreshed for user: {user['email']}")
+        
+        return TokenResponse(
+            access_token=tokens.access_token,
+            refresh_token=tokens.refresh_token,
+            token_type=tokens.token_type,
+            expires_in=tokens.expires_in,
+            user={
+                "id": user["_id"],
+                "email": user["email"],
+                "name": user["name"]
+            }
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Token refresh failed: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=http_status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid refresh token"
+        )
+
+
+@app.post("/api/auth/logout")
+async def logout(credentials: HTTPAuthorizationCredentials = Depends(security_scheme)):
+    """
+    User logout
+    
+    Invalidates current access token.
+    """
+    logger.info("👋 Logout request")
+    
+    try:
+        # Blacklist token
+        auth_manager.end_session(credentials.credentials)
+        
+        logger.info("✅ Logout successful")
+        
+        return {"message": "Logged out successfully"}
+        
+    except Exception as e:
+        logger.error(f"❌ Logout failed: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Logout failed"
+        )
+
+
+@app.get("/api/auth/me", response_model=UserResponse)
+async def get_current_user_info(user_id: str = Depends(get_current_user)):
+    """
+    Get current user info
+    
+    Returns profile information for authenticated user.
+    """
+    try:
+        from utils.database import get_database
+        db = get_database()
+        
+        user = await db["users"].find_one({"_id": user_id})
+        
+        if not user:
+            raise HTTPException(
+                status_code=http_status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
+        
+        return UserResponse(
+            id=user["_id"],
+            email=user["email"],
+            name=user["name"],
+            subscription_tier=user.get("subscription_tier", "free"),
+            total_sessions=user.get("total_sessions", 0),
+            created_at=user["created_at"],
+            last_active=user.get("last_active", user["created_at"])
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Get user info failed: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve user information"
+        )
+
+
+# ============================================================================
+# LEARNING ENDPOINTS (Protected with Authentication)
+# ============================================================================
+
 # Main chat endpoint
 @app.post("/api/v1/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
