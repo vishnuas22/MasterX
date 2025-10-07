@@ -141,3 +141,6 @@ yarl==1.20.1
 zipp==3.23.0
 elevenlabs==2.16.0
 webrtcvad==2.0.10
+bcrypt==4.0.1
+passlib==1.7.4
+python-jose==3.3.0
