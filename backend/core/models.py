@@ -103,6 +103,67 @@ class UserProfile(BaseModel):
         }
 
 
+class UserDocument(BaseModel):
+    """
+    User document with authentication - MongoDB users collection
+    Extends UserProfile with authentication fields
+    """
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()), alias="_id")
+    email: EmailStr
+    name: str
+    password_hash: str  # bcrypt hash from security.py
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    last_login: Optional[datetime] = None
+    is_active: bool = True
+    is_verified: bool = False
+    verification_token: Optional[str] = None
+    reset_token: Optional[str] = None
+    reset_token_expires: Optional[datetime] = None
+    
+    # Profile fields
+    learning_preferences: LearningPreferences = Field(default_factory=LearningPreferences)
+    emotional_profile: EmotionalProfile = Field(default_factory=EmotionalProfile)
+    subscription_tier: SubscriptionTier = SubscriptionTier.FREE
+    total_sessions: int = 0
+    last_active: datetime = Field(default_factory=datetime.utcnow)
+    
+    # Security fields
+    failed_login_attempts: int = 0
+    locked_until: Optional[datetime] = None
+    
+    class Config:
+        populate_by_name = True
+
+
+class LoginAttempt(BaseModel):
+    """Login attempt tracking - MongoDB login_attempts collection"""
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()), alias="_id")
+    user_id: Optional[str] = None
+    email: EmailStr
+    ip_address: str
+    user_agent: Optional[str] = None
+    success: bool
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    failure_reason: Optional[str] = None
+    
+    class Config:
+        populate_by_name = True
+
+
+class RefreshToken(BaseModel):
+    """Refresh token tracking - MongoDB refresh_tokens collection"""
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()), alias="_id")
+    user_id: str
+    token_hash: str  # SHA256 hash of the token
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    expires_at: datetime
+    revoked: bool = False
+    revoked_at: Optional[datetime] = None
+    
+    class Config:
+        populate_by_name = True
+
+
 # ============================================================================
 # SESSION MODELS
 # ============================================================================
@@ -342,13 +403,66 @@ class ChatResponse(BaseModel):
 
 
 # ============================================================================
+# AUTHENTICATION API MODELS
+# ============================================================================
+
+class RegisterRequest(BaseModel):
+    """User registration request"""
+    email: EmailStr
+    password: str = Field(..., min_length=8, max_length=128)
+    name: str = Field(..., min_length=1, max_length=100)
+
+
+class LoginRequest(BaseModel):
+    """User login request"""
+    email: EmailStr
+    password: str
+
+
+class TokenResponse(BaseModel):
+    """JWT token response"""
+    access_token: str
+    refresh_token: str
+    token_type: str = "Bearer"
+    expires_in: int  # seconds
+    user: Dict[str, Any]  # User info (id, email, name)
+
+
+class RefreshRequest(BaseModel):
+    """Refresh token request"""
+    refresh_token: str
+
+
+class UserResponse(BaseModel):
+    """User profile response"""
+    id: str
+    email: EmailStr
+    name: str
+    subscription_tier: str
+    total_sessions: int
+    created_at: datetime
+    last_active: datetime
+
+
+# ============================================================================
 # DATABASE INDEXES CONFIGURATION
 # ============================================================================
 
 INDEXES = {
     "users": [
         {"keys": [("email", 1)], "unique": True},
-        {"keys": [("last_active", -1)]}
+        {"keys": [("last_active", -1)]},
+        {"keys": [("is_active", 1)]}
+    ],
+    "login_attempts": [
+        {"keys": [("email", 1), ("timestamp", -1)]},
+        {"keys": [("ip_address", 1), ("timestamp", -1)]},
+        {"keys": [("timestamp", -1)]}
+    ],
+    "refresh_tokens": [
+        {"keys": [("user_id", 1), ("created_at", -1)]},
+        {"keys": [("expires_at", 1)]},
+        {"keys": [("revoked", 1)]}
     ],
     "sessions": [
         {"keys": [("user_id", 1), ("started_at", -1)]},
