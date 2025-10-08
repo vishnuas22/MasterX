@@ -12,6 +12,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 import logging
+import asyncio
 from typing import Dict, Any, Optional
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -138,6 +139,34 @@ async def lifespan(app: FastAPI):
         # Initialize external benchmarking system (Phase 2)
         await app.state.engine.provider_manager.initialize_external_benchmarks(db)
         
+        # Initialize dynamic pricing engine (Phase 8 - Dynamic Model System)
+        from core.dynamic_pricing import get_pricing_engine
+        app.state.pricing_engine = get_pricing_engine(db)
+        logger.info("✅ Dynamic pricing engine initialized")
+        
+        # Connect pricing engine to cost tracker
+        from utils.cost_tracker import cost_tracker
+        cost_tracker.set_pricing_engine(app.state.pricing_engine)
+        logger.info("✅ Cost tracker connected to dynamic pricing")
+        
+        # Connect dynamic systems to provider manager
+        app.state.engine.provider_manager.set_dependencies(
+            app.state.engine.provider_manager.external_benchmarks,
+            app.state.pricing_engine
+        )
+        logger.info("✅ Provider manager connected to dynamic systems")
+        
+        # Start background tasks for periodic updates
+        asyncio.create_task(
+            app.state.engine.provider_manager.external_benchmarks.schedule_periodic_updates(interval_hours=12)
+        )
+        logger.info("✅ Background benchmark updates scheduled (12h)")
+        
+        asyncio.create_task(
+            app.state.pricing_engine.schedule_periodic_updates(interval_hours=12)
+        )
+        logger.info("✅ Background pricing updates scheduled (12h)")
+        
         # Initialize intelligence layer (Phase 3: context + adaptive learning)
         app.state.engine.initialize_intelligence_layer(db)
         
@@ -152,8 +181,9 @@ async def lifespan(app: FastAPI):
         
         logger.info("✅ Phase 4 optimization layer initialized (caching + performance)")
         
-        logger.info("✅ MasterX server started successfully")
+        logger.info("✅ MasterX server started successfully with DYNAMIC MODEL SYSTEM")
         logger.info(f"📊 Available AI providers: {app.state.engine.get_available_providers()}")
+        logger.info(f"⚡ Model selection: Fully dynamic (quality + cost + speed + availability)")
         
     except Exception as e:
         logger.error(f"❌ Failed to start server: {e}", exc_info=True)
@@ -264,6 +294,91 @@ async def detailed_health():
         "checks": checks,
         "timestamp": datetime.utcnow().isoformat()
     }
+
+
+
+@app.get("/api/v1/system/model-status")
+async def get_model_status():
+    """
+    Get current model availability and selection status
+    
+    Returns:
+        - Available providers and models
+        - Current benchmark rankings
+        - Pricing information
+        - Selection weights
+    """
+    
+    try:
+        # Get provider info
+        provider_manager = app.state.engine.provider_manager
+        providers = provider_manager.registry.get_all_providers()
+        
+        provider_info = {}
+        for name, config in providers.items():
+            model_name = config.get('model_name', 'default')
+            
+            # Get pricing
+            pricing_info = None
+            if app.state.pricing_engine:
+                try:
+                    pricing = await app.state.pricing_engine.get_pricing(name, model_name)
+                    pricing_info = {
+                        'input_cost_per_million': pricing.input_cost_per_million,
+                        'output_cost_per_million': pricing.output_cost_per_million,
+                        'source': pricing.source,
+                        'confidence': pricing.confidence
+                    }
+                except:
+                    pass
+            
+            provider_info[name] = {
+                'model_name': model_name,
+                'enabled': config.get('enabled', True),
+                'pricing': pricing_info
+            }
+        
+        # Get benchmark rankings for key categories
+        rankings = {}
+        if provider_manager.external_benchmarks:
+            for category in ['coding', 'math', 'reasoning']:
+                try:
+                    category_rankings = await provider_manager.external_benchmarks.get_rankings(category)
+                    rankings[category] = [
+                        {
+                            'provider': r.provider,
+                            'model': r.model_name,
+                            'score': r.score,
+                            'rank': r.rank
+                        }
+                        for r in category_rankings[:5]  # Top 5
+                    ]
+                except:
+                    rankings[category] = []
+        
+        # Get selector weights
+        selection_weights = provider_manager.selection_weights
+        
+        return {
+            "status": "ok",
+            "system": "fully_dynamic",
+            "providers": provider_info,
+            "provider_count": len(provider_info),
+            "benchmark_rankings": rankings,
+            "selection_weights": selection_weights,
+            "last_benchmark_update": provider_manager.external_benchmarks.last_update.isoformat() if provider_manager.external_benchmarks and provider_manager.external_benchmarks.last_update else None,
+            "pricing_cache_hours": app.state.pricing_engine.cache_hours if app.state.pricing_engine else None,
+            "features": {
+                "dynamic_pricing": app.state.pricing_engine is not None,
+                "intelligent_selection": True,
+                "benchmark_integration": provider_manager.external_benchmarks is not None,
+                "zero_hardcoded_models": True
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting model status: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # ============================================================================
