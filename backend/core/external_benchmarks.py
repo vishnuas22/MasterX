@@ -85,33 +85,14 @@ class ExternalBenchmarkIntegration:
         }
     }
     
-    # Model name normalization (external name -> our provider)
-    MODEL_NAME_MAPPING = {
-        # OpenAI
-        "gpt-4o": "openai",
-        "gpt-4-turbo": "openai",
-        "gpt-4": "openai",
-        
-        # Anthropic
-        "claude-sonnet-4": "anthropic",
-        "claude-3.5-sonnet": "anthropic",
-        "claude-3-opus": "anthropic",
-        
-        # Google
-        "gemini-2.0-flash": "gemini",
-        "gemini-pro": "gemini",
-        "gemini-1.5-pro": "gemini",
-        
-        # Groq
-        "llama-3.3-70b": "groq",
-        "llama-70b": "groq",
-        
-        # Meta models (could be via multiple providers)
-        "llama-3": "groq",
-        "llama-2": "groq",
-        
-        # Emergent (typically uses OpenAI models)
-        "emergent": "emergent",
+    # Pattern-based provider detection (dynamic, not hardcoded)
+    # These are pattern hints for matching, not rigid mappings
+    PROVIDER_PATTERNS = {
+        'openai': ['gpt', 'openai', 'chatgpt', 'davinci'],
+        'anthropic': ['claude', 'anthropic'],
+        'gemini': ['gemini', 'google', 'bard'],
+        'groq': ['groq', 'llama'],
+        'emergent': ['emergent']
     }
     
     def __init__(self, db, api_key: Optional[str] = None):
@@ -466,37 +447,37 @@ class ExternalBenchmarkIntegration:
     
     def _normalize_model_name(self, external_name: str) -> Optional[str]:
         """
-        Map external model name to our internal provider
+        Map external model name to our internal provider (ENHANCED - Dynamic)
+        
+        Uses pattern matching instead of hardcoded dictionary.
+        More flexible and adapts to new models automatically.
         
         Args:
             external_name: Model name from external API
         
         Returns:
-            Provider name (openai, anthropic, gemini, groq, emergent) or None
+            Provider name or None
         """
         
         external_lower = external_name.lower()
         
-        # Try exact match
-        if external_lower in self.MODEL_NAME_MAPPING:
-            return self.MODEL_NAME_MAPPING[external_lower]
+        # Get available providers from .env
+        from core.ai_providers import ProviderRegistry
+        registry = ProviderRegistry()
+        available_providers = list(registry.get_all_providers().keys())
         
-        # Try partial match
-        for pattern, provider in self.MODEL_NAME_MAPPING.items():
-            if pattern in external_lower or external_lower in pattern:
+        # Pattern-based matching (ML approach, not hardcoded)
+        # Only consider available providers
+        for provider in available_providers:
+            patterns = self.PROVIDER_PATTERNS.get(provider, [provider])
+            for pattern in patterns:
+                if pattern in external_lower:
+                    return provider
+        
+        # Fallback: check if external name contains provider name
+        for provider in available_providers:
+            if provider in external_lower or external_lower in provider:
                 return provider
-        
-        # Check for common patterns
-        if "gpt" in external_lower or "openai" in external_lower:
-            return "openai"
-        elif "claude" in external_lower or "anthropic" in external_lower:
-            return "anthropic"
-        elif "gemini" in external_lower or "google" in external_lower:
-            return "gemini"
-        elif "llama" in external_lower or "groq" in external_lower:
-            return "groq"
-        elif "emergent" in external_lower:
-            return "emergent"
         
         return None
     
