@@ -1,8 +1,16 @@
 """
-Cost Monitoring System
-Following specifications from 2.CRITICAL_INITIAL_SETUP.md Section 2
+Cost Monitoring System (ENHANCED - Fully Dynamic)
+Integrates with DynamicPricingEngine for zero hardcoded prices
+
+PRINCIPLES (AGENTS.md):
+- No hardcoded pricing
+- Dynamic pricing from external APIs
+- All existing functionality preserved
+
+Date: October 8, 2025 (Enhanced)
 """
 
+import os
 import logging
 from datetime import datetime, timedelta
 from typing import Dict, Optional
@@ -13,30 +21,21 @@ logger = logging.getLogger(__name__)
 
 
 class CostTracker:
-    """Monitor and alert on API costs"""
+    """Monitor and alert on API costs (ENHANCED - Dynamic Pricing)"""
     
-    # Provider pricing (per 1M tokens) - Updated regularly
-    PRICING = {
-        'openai': {
-            'gpt-4o': {'input': 2.50 / 1_000_000, 'output': 10.00 / 1_000_000}
-        },
-        'anthropic': {
-            'claude-sonnet-4': {'input': 3.00 / 1_000_000, 'output': 15.00 / 1_000_000}
-        },
-        'gemini': {
-            'gemini-2.0-flash-exp': {'input': 0.075 / 1_000_000, 'output': 0.30 / 1_000_000}
-        },
-        'groq': {
-            'llama-3.3-70b-versatile': {'input': 0.05 / 1_000_000, 'output': 0.08 / 1_000_000}
-        },
-        'emergent': {
-            'gpt-4o': {'input': 2.50 / 1_000_000, 'output': 10.00 / 1_000_000}
-        }
-    }
+    # Cost thresholds for alerts (from environment)
+    DAILY_THRESHOLD = float(os.getenv("DAILY_COST_THRESHOLD", "100.0"))
+    HOURLY_THRESHOLD = float(os.getenv("HOURLY_COST_THRESHOLD", "10.0"))
     
-    # Cost thresholds for alerts
-    DAILY_THRESHOLD = 100.00  # Alert if > $100/day
-    HOURLY_THRESHOLD = 10.00  # Alert if > $10/hour
+    def __init__(self):
+        """Initialize cost tracker"""
+        self.pricing_engine = None  # Will be set by server.py on startup
+        logger.info("✅ CostTracker initialized (dynamic pricing)")
+    
+    def set_pricing_engine(self, pricing_engine):
+        """Set pricing engine (called by server.py on startup)"""
+        self.pricing_engine = pricing_engine
+        logger.info("✅ CostTracker connected to DynamicPricingEngine")
     
     async def calculate_cost(
         self,
@@ -45,19 +44,47 @@ class CostTracker:
         input_tokens: int,
         output_tokens: int
     ) -> float:
-        """Calculate cost of single request"""
+        """
+        Calculate cost of single request using dynamic pricing
         
-        pricing = self.PRICING.get(provider, {}).get(model, {
-            'input': 0.00001,  # Default fallback
-            'output': 0.00003
-        })
+        Args:
+            provider: Provider name
+            model: Model name
+            input_tokens: Number of input tokens
+            output_tokens: Number of output tokens
         
-        cost = (
-            input_tokens * pricing['input'] +
-            output_tokens * pricing['output']
-        )
+        Returns:
+            Cost in USD
+        """
         
-        return cost
+        if not self.pricing_engine:
+            logger.warning("Pricing engine not initialized, using fallback")
+            # Fallback: very rough estimate
+            return (input_tokens + output_tokens) * 0.000001
+        
+        try:
+            # Get dynamic pricing
+            pricing = await self.pricing_engine.get_pricing(provider, model)
+            
+            # Calculate cost
+            cost = (
+                input_tokens * pricing.input_cost_per_million / 1_000_000 +
+                output_tokens * pricing.output_cost_per_million / 1_000_000
+            )
+            
+            # Log if estimated (lower confidence)
+            if pricing.confidence < 1.0:
+                logger.debug(
+                    f"Cost calculated with estimate "
+                    f"(confidence: {pricing.confidence:.2f})"
+                )
+            
+            return cost
+            
+        except Exception as e:
+            logger.error(f"Error calculating cost: {e}")
+            # Fallback to safe estimate
+            return (input_tokens + output_tokens) * 0.000001
     
     async def track_request(
         self,
