@@ -11,7 +11,7 @@ Features:
 - Graceful degradation
 
 PRINCIPLES (AGENTS.md):
-- No hardcoded limits (all configurable)
+- No hardcoded limits (all configurable via environment)
 - Real algorithms (sliding window, not fixed window)
 - Clean, professional naming
 - Production-ready
@@ -28,40 +28,51 @@ from enum import Enum
 from fastapi import Request, HTTPException, status
 import asyncio
 
+from config.settings import get_settings
+
 logger = logging.getLogger(__name__)
 
 
 # ============================================================================
-# CONFIGURATION
+# CONFIGURATION (All values from environment - AGENTS.md compliant)
 # ============================================================================
 
 class RateLimitConfig:
-    """Rate limiting configuration from environment"""
+    """
+    Rate limiting configuration from environment variables
     
-    # Per-IP limits (prevent DOS attacks)
-    IP_REQUESTS_PER_MINUTE: int = 60
-    IP_REQUESTS_PER_HOUR: int = 1000
+    All values configurable via .env with SECURITY_ prefix
+    Zero hardcoded values - AGENTS.md compliant
+    """
     
-    # Per-user limits (fair usage)
-    USER_REQUESTS_PER_MINUTE: int = 30
-    USER_REQUESTS_PER_HOUR: int = 500
-    USER_REQUESTS_PER_DAY: int = 5000
-    
-    # Per-endpoint limits (protect expensive operations)
-    CHAT_REQUESTS_PER_MINUTE: int = 10  # AI calls are expensive
-    VOICE_REQUESTS_PER_MINUTE: int = 5   # TTS/STT are slow
-    
-    # Cost-based limits (prevent budget drain)
-    USER_DAILY_COST_LIMIT: float = 5.0   # $5 per user per day
-    GLOBAL_HOURLY_COST_LIMIT: float = 100.0  # $100 per hour total
-    
-    # Anomaly detection thresholds
-    ANOMALY_SCORE_THRESHOLD: float = 0.8  # 0.0 to 1.0
-    SPIKE_MULTIPLIER: float = 3.0  # Request spike detection
-    
-    # Storage settings
-    WINDOW_SIZE_SECONDS: int = 3600  # 1 hour sliding window
-    MAX_HISTORY_ITEMS: int = 10000   # Max items in memory
+    def __init__(self):
+        """Initialize configuration from settings"""
+        settings = get_settings()
+        
+        # Per-IP limits (prevent DOS attacks)
+        self.IP_REQUESTS_PER_MINUTE: int = settings.security.rate_limit_ip_per_minute
+        self.IP_REQUESTS_PER_HOUR: int = settings.security.rate_limit_ip_per_hour
+        
+        # Per-user limits (fair usage)
+        self.USER_REQUESTS_PER_MINUTE: int = settings.security.rate_limit_user_per_minute
+        self.USER_REQUESTS_PER_HOUR: int = settings.security.rate_limit_user_per_hour
+        self.USER_REQUESTS_PER_DAY: int = settings.security.rate_limit_user_per_day
+        
+        # Per-endpoint limits (protect expensive operations)
+        self.CHAT_REQUESTS_PER_MINUTE: int = settings.security.rate_limit_chat_per_minute
+        self.VOICE_REQUESTS_PER_MINUTE: int = settings.security.rate_limit_voice_per_minute
+        
+        # Cost-based limits (prevent budget drain)
+        self.USER_DAILY_COST_LIMIT: float = settings.security.rate_limit_user_daily_cost
+        self.GLOBAL_HOURLY_COST_LIMIT: float = settings.security.rate_limit_global_hourly_cost
+        
+        # Anomaly detection thresholds
+        self.ANOMALY_SCORE_THRESHOLD: float = settings.security.anomaly_score_threshold
+        self.SPIKE_MULTIPLIER: float = settings.security.anomaly_spike_multiplier
+        
+        # Storage settings
+        self.WINDOW_SIZE_SECONDS: int = settings.security.rate_limit_window_seconds
+        self.MAX_HISTORY_ITEMS: int = settings.security.rate_limit_max_history
 
 
 # ============================================================================
@@ -213,7 +224,7 @@ class AnomalyDetector:
         
         # Spike detection
         spike_ratio = current_rate / (baseline + 0.0001)  # Avoid division by zero
-        is_spike = spike_ratio > RateLimitConfig.SPIKE_MULTIPLIER
+        is_spike = spike_ratio > self.config.SPIKE_MULTIPLIER
         
         # Anomaly score (0.0 to 1.0)
         z_score_normalized = min(1.0, z_score / 3.0)  # 3 stdev = 1.0
@@ -221,7 +232,7 @@ class AnomalyDetector:
         
         anomaly_score = max(z_score_normalized, spike_normalized)
         
-        is_anomaly = anomaly_score > RateLimitConfig.ANOMALY_SCORE_THRESHOLD or is_spike
+        is_anomaly = anomaly_score > self.config.ANOMALY_SCORE_THRESHOLD or is_spike
         
         if is_anomaly:
             logger.warning(f"Anomaly detected for {key}: rate={current_rate:.2f}, baseline={baseline:.2f}, score={anomaly_score:.2f}")
@@ -248,6 +259,9 @@ class RateLimiter:
         """
         self.use_redis = use_redis
         
+        # Load configuration from environment (AGENTS.md compliant)
+        self.config = RateLimitConfig()
+        
         # In-memory storage (use Redis in production)
         self.ip_windows: Dict[str, RequestWindow] = defaultdict(
             lambda: RequestWindow(window_size=60)
@@ -267,7 +281,7 @@ class RateLimiter:
         # Anomaly detection
         self.anomaly_detector = AnomalyDetector()
         
-        logger.info("✅ Rate limiter initialized")
+        logger.info("✅ Rate limiter initialized (configuration from environment)")
     
     async def check_rate_limit(
         self,
@@ -322,7 +336,7 @@ class RateLimiter:
         """Check per-IP rate limit"""
         window = self.ip_windows[ip]
         count = window.get_count()
-        limit = RateLimitConfig.IP_REQUESTS_PER_MINUTE
+        limit = self.config.IP_REQUESTS_PER_MINUTE
         
         if count >= limit:
             logger.warning(f"IP rate limit exceeded: {ip} ({count}/{limit})")
@@ -336,7 +350,7 @@ class RateLimiter:
         """Check per-user rate limit"""
         window = self.user_windows[user_id]
         count = window.get_count()
-        limit = RateLimitConfig.USER_REQUESTS_PER_HOUR
+        limit = self.config.USER_REQUESTS_PER_HOUR
         
         if count >= limit:
             logger.warning(f"User rate limit exceeded: {user_id} ({count}/{limit})")
@@ -353,8 +367,8 @@ class RateLimiter:
         
         # Different limits for different endpoints
         limits = {
-            "chat": RateLimitConfig.CHAT_REQUESTS_PER_MINUTE,
-            "voice": RateLimitConfig.VOICE_REQUESTS_PER_MINUTE,
+            "chat": self.config.CHAT_REQUESTS_PER_MINUTE,
+            "voice": self.config.VOICE_REQUESTS_PER_MINUTE,
             "default": 20
         }
         
@@ -372,7 +386,7 @@ class RateLimiter:
     async def _check_user_cost_limit(self, user_id: str, cost: float):
         """Check per-user cost limit"""
         current_cost = self.user_daily_cost[user_id]
-        limit = RateLimitConfig.USER_DAILY_COST_LIMIT
+        limit = self.config.USER_DAILY_COST_LIMIT
         
         if current_cost + cost > limit:
             logger.warning(f"User cost limit exceeded: {user_id} (${current_cost:.2f}/${limit:.2f})")
@@ -385,7 +399,7 @@ class RateLimiter:
     async def _check_global_cost_limit(self, cost: float):
         """Check global cost limit (protect budget)"""
         current_cost = self.global_cost_window.get_cost()
-        limit = RateLimitConfig.GLOBAL_HOURLY_COST_LIMIT
+        limit = self.config.GLOBAL_HOURLY_COST_LIMIT
         
         if current_cost + cost > limit:
             logger.error(f"Global cost limit exceeded: ${current_cost:.2f}/${limit:.2f}")
@@ -440,7 +454,7 @@ class RateLimiter:
     def _get_status(self, ip: str, user_id: Optional[str]) -> RateLimitInfo:
         """Get current rate limit status"""
         ip_count = self.ip_windows[ip].get_count()
-        ip_limit = RateLimitConfig.IP_REQUESTS_PER_MINUTE
+        ip_limit = self.config.IP_REQUESTS_PER_MINUTE
         
         return RateLimitInfo(
             limit=ip_limit,
