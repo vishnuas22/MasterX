@@ -172,6 +172,9 @@ class AnomalyDetector:
     """
     
     def __init__(self):
+        # Load configuration from environment (AGENTS.md compliant)
+        self.config = RateLimitConfig()
+        
         self.baseline_rates: Dict[str, float] = {}
         self.history_length = 100
         self.histories: Dict[str, deque] = defaultdict(lambda: deque(maxlen=self.history_length))
