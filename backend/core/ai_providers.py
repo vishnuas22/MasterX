@@ -15,7 +15,7 @@ Phase 2 (Week 2): Add benchmarking system
 import os
 import logging
 import time
-from typing import Dict, Optional, List
+from typing import Dict, Optional, List, Tuple
 from core.models import AIResponse, EmotionState
 from utils.errors import ProviderError
 
@@ -312,51 +312,209 @@ class ProviderManager:
         self.registry = ProviderRegistry()
         self.universal = UniversalProvider(self.registry)
         self.external_benchmarks = None  # Initialized in server startup
+        self.pricing_engine = None  # Initialized in server startup
         self._default_provider = None
-        self._set_default_provider()
         
         # Add universal provider reference for minimal manual tests
         self.universal_provider = self.universal
+        
+        # Selection weights (ML-optimized, configurable via env)
+        self.selection_weights = {
+            'quality': float(os.getenv("SELECTION_WEIGHT_QUALITY", "0.4")),
+            'cost': float(os.getenv("SELECTION_WEIGHT_COST", "0.2")),
+            'speed': float(os.getenv("SELECTION_WEIGHT_SPEED", "0.2")),
+            'availability': float(os.getenv("SELECTION_WEIGHT_AVAILABILITY", "0.2"))
+        }
+        
+        # Normalize weights
+        total = sum(self.selection_weights.values())
+        self.selection_weights = {k: v/total for k, v in self.selection_weights.items()}
+        
+        logger.info("✅ ProviderManager initialized (dynamic mode)")
     
-    def _set_default_provider(self):
-        """Set default provider (first available)"""
-        providers = self.registry.get_all_providers()
-        if providers:
-            # Prefer groq, emergent, or gemini if available
-            for preferred in ['groq', 'emergent', 'gemini']:
-                if preferred in providers:
-                    self._default_provider = preferred
-                    logger.info(f"🎯 Default provider set to: {preferred}")
-                    return
+    def set_dependencies(self, external_benchmarks, pricing_engine):
+        """Set dependencies (called by server.py on startup)"""
+        self.external_benchmarks = external_benchmarks
+        self.pricing_engine = pricing_engine
+        logger.info("✅ ProviderManager connected to dynamic systems")
+    
+    async def select_best_model(
+        self,
+        category: str = "general",
+        max_cost_per_1m_tokens: Optional[float] = None,
+        min_quality_score: float = 0.0,
+        prefer_speed: bool = False,
+        exclude_providers: Optional[List[str]] = None
+    ) -> Tuple[str, str]:
+        """
+        Intelligently select best available model
+        
+        Uses multi-criteria decision analysis:
+        - Availability (.env)
+        - Quality (benchmarks)
+        - Cost (pricing engine)
+        - Speed (benchmarks metadata)
+        
+        Args:
+            category: Task category (coding, math, reasoning, etc.)
+            max_cost_per_1m_tokens: Maximum cost constraint
+            min_quality_score: Minimum quality threshold
+            prefer_speed: Optimize for speed over quality
+            exclude_providers: Providers to exclude
+        
+        Returns:
+            Tuple of (provider, model_name)
+        """
+        
+        exclude_providers = exclude_providers or []
+        available_providers = self.registry.get_all_providers()
+        
+        if not available_providers:
+            raise ProviderError("No providers available in .env")
+        
+        # Get benchmark rankings
+        rankings = []
+        if self.external_benchmarks:
+            try:
+                rankings = await self.external_benchmarks.get_rankings(category)
+            except Exception as e:
+                logger.warning(f"Failed to get rankings: {e}")
+        
+        # Build candidate list with scores
+        candidates = []
+        
+        for provider_name, provider_config in available_providers.items():
+            if provider_name in exclude_providers:
+                continue
             
-            # Otherwise use first available
-            self._default_provider = list(providers.keys())[0]
-            logger.info(f"🎯 Default provider set to: {self._default_provider}")
-        else:
-            logger.error("❌ No AI providers available!")
+            model_name = provider_config.get('model_name', 'default')
+            
+            # Get quality score from benchmarks
+            quality_score = 70.0  # Default baseline
+            speed_score = 50.0  # Default speed
+            
+            for ranking in rankings:
+                if ranking.provider == provider_name:
+                    quality_score = ranking.score
+                    speed_score = ranking.metadata.get('speed', 50.0) or 50.0
+                    break
+            
+            # Skip if below minimum quality
+            if quality_score < min_quality_score:
+                continue
+            
+            # Get cost
+            cost_score = 0.5  # Default middle
+            if self.pricing_engine:
+                try:
+                    pricing = await self.pricing_engine.get_pricing(provider_name, model_name)
+                    avg_cost = (pricing.input_cost_per_million + pricing.output_cost_per_million) / 2
+                    
+                    # Skip if too expensive
+                    if max_cost_per_1m_tokens and avg_cost > max_cost_per_1m_tokens:
+                        continue
+                    
+                    # Normalize cost (logarithmic scale)
+                    import math
+                    if avg_cost > 0:
+                        cost_score = 1.0 - min(1.0, math.log(avg_cost + 0.01) / math.log(100))
+                    
+                except Exception as e:
+                    logger.warning(f"Failed to get pricing for {provider_name}: {e}")
+            
+            # Normalize scores
+            quality_normalized = quality_score / 100.0
+            speed_normalized = min(1.0, speed_score / 500.0)
+            
+            # Calculate weighted score
+            weights = self.selection_weights.copy()
+            if prefer_speed:
+                weights['speed'] *= 1.5
+                weights['quality'] *= 0.7
+                total = sum(weights.values())
+                weights = {k: v/total for k, v in weights.items()}
+            
+            overall_score = (
+                weights['quality'] * quality_normalized +
+                weights['cost'] * cost_score +
+                weights['speed'] * speed_normalized +
+                weights['availability'] * 1.0
+            )
+            
+            candidates.append({
+                'provider': provider_name,
+                'model_name': model_name,
+                'overall_score': overall_score,
+                'quality_score': quality_score,
+                'cost_score': cost_score,
+                'speed_score': speed_score
+            })
+        
+        if not candidates:
+            raise ProviderError(f"No suitable models for category {category}")
+        
+        # Sort by overall score
+        candidates.sort(key=lambda x: x['overall_score'], reverse=True)
+        best = candidates[0]
+        
+        logger.info(
+            f"✅ Selected {best['provider']}:{best['model_name']} "
+            f"(score: {best['overall_score']:.3f}, quality: {best['quality_score']:.1f})"
+        )
+        
+        return best['provider'], best['model_name']
     
     async def generate(
         self,
         prompt: str,
+        category: str = "general",
         provider_name: Optional[str] = None,
-        max_tokens: int = 1000
+        max_tokens: int = 1000,
+        max_cost_per_1m: Optional[float] = None
     ) -> AIResponse:
         """
-        Generate AI response
-        Phase 1: Use specified provider or default
-        Phase 2: Will use smart routing based on benchmarks
+        Generate AI response with intelligent model selection
+        
+        If provider_name specified, uses that provider.
+        Otherwise, dynamically selects best available model.
+        
+        Args:
+            prompt: User prompt
+            category: Task category (coding, math, etc.)
+            provider_name: Specific provider to use (optional)
+            max_tokens: Maximum tokens
+            max_cost_per_1m: Maximum cost constraint (optional)
+        
+        Returns:
+            AIResponse
         """
         
-        # Use specified provider or default
-        target_provider = provider_name or self._default_provider
+        # If provider specified, use it
+        if provider_name:
+            logger.info(f"Using specified provider: {provider_name}")
+            target_provider = provider_name
+            provider_config = self.registry.get_provider(provider_name)
+            model_name = provider_config.get('model_name', 'default') if provider_config else 'default'
+        else:
+            # Dynamic selection!
+            try:
+                target_provider, model_name = await self.select_best_model(
+                    category=category,
+                    max_cost_per_1m_tokens=max_cost_per_1m
+                )
+            except Exception as e:
+                logger.error(f"Model selection failed: {e}")
+                # Fallback: use first available
+                available = self.registry.get_all_providers()
+                if available:
+                    target_provider = list(available.keys())[0]
+                    model_name = available[target_provider].get('model_name', 'default')
+                    logger.warning(f"Using fallback: {target_provider}")
+                else:
+                    raise ProviderError("No providers available")
         
-        if not target_provider:
-            raise ProviderError(
-                "No AI provider available",
-                details={'requested': provider_name}
-            )
-        
-        logger.info(f"🤖 Generating response using: {target_provider}")
+        # Generate using selected provider
+        logger.info(f"🤖 Generating with {target_provider}:{model_name} for category: {category}")
         
         try:
             response = await self.universal.generate(
@@ -364,30 +522,38 @@ class ProviderManager:
                 prompt=prompt,
                 max_tokens=max_tokens
             )
+            
+            # Add category to response
+            if hasattr(response, 'category'):
+                response.category = category
+            
             return response
         
         except ProviderError as e:
-            # Phase 1: Simple fallback to any other provider
-            logger.warning(f"Provider {target_provider} failed, trying fallback...")
+            # Intelligent fallback: try next best model
+            logger.warning(f"Provider {target_provider} failed: {e}, trying fallback...")
             
-            for fallback_provider in self.registry.get_all_providers():
-                if fallback_provider != target_provider:
-                    try:
-                        logger.info(f"🔄 Trying fallback provider: {fallback_provider}")
-                        response = await self.universal.generate(
-                            provider_name=fallback_provider,
-                            prompt=prompt,
-                            max_tokens=max_tokens
-                        )
-                        return response
-                    except:
-                        continue
-            
-            # All providers failed
-            raise ProviderError(
-                "All AI providers failed",
-                details={'attempted': list(self.registry.get_all_providers().keys())}
-            )
+            try:
+                # Select alternative, excluding failed provider
+                alt_provider, alt_model = await self.select_best_model(
+                    category=category,
+                    exclude_providers=[target_provider]
+                )
+                
+                logger.info(f"🔄 Using fallback: {alt_provider}:{alt_model}")
+                response = await self.universal.generate(
+                    provider_name=alt_provider,
+                    prompt=prompt,
+                    max_tokens=max_tokens
+                )
+                return response
+                
+            except Exception as fallback_error:
+                logger.error(f"All fallback attempts failed: {fallback_error}")
+                raise ProviderError(
+                    "All AI providers failed",
+                    details={'attempted': list(self.registry.get_all_providers().keys())}
+                )
     
     def get_available_providers(self) -> List[str]:
         """Get list of available provider names"""
