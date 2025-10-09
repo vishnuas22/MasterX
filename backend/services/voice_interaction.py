@@ -138,7 +138,8 @@ class GroqWhisperService:
             raise ValueError("GROQ_API_KEY not found in environment")
         
         self.client = Groq(api_key=self.api_key)
-        self.model = "whisper-large-v3-turbo"  # Fastest and most accurate
+        # Get model from configuration (AGENTS.md: zero hardcoded values)
+        self.model = settings.voice.whisper_model
         
         logger.info(f"✅ Groq Whisper service initialized with model: {self.model}")
     
@@ -383,20 +384,22 @@ class ElevenLabsTTSService:
     
     def _select_model(self, text: str) -> str:
         """
-        Select optimal model based on text characteristics
+        Select optimal ElevenLabs model based on text length
+        
+        Uses configuration-driven thresholds (AGENTS.md: zero hardcoded values)
         
         Args:
-            text: Input text
+            text: Text to synthesize
         
         Returns:
             Model ID
         """
-        # Use flash model for short text (low latency)
-        if len(text) < 200:
-            return "eleven_flash_v2_5"
+        # Use configuration for model selection
+        if len(text) < settings.voice.text_length_threshold:
+            return settings.voice.elevenlabs_model_short
         
         # Use multilingual model for longer text
-        return "eleven_multilingual_v2"
+        return settings.voice.elevenlabs_model_long
 
 
 class VoiceActivityDetector:
@@ -410,20 +413,23 @@ class VoiceActivityDetector:
     audio characteristics (following AGENTS.md principles).
     """
     
-    def __init__(self, sample_rate: int = 16000):
+    def __init__(self, sample_rate: Optional[int] = None):
         """
         Initialize VAD
         
+        Uses configuration for all parameters (AGENTS.md: zero hardcoded values)
+        
         Args:
-            sample_rate: Audio sample rate in Hz
+            sample_rate: Audio sample rate in Hz (defaults to config)
         """
-        self.sample_rate = sample_rate
-        self.frame_duration_ms = 30  # 30ms frames
-        self.frame_size = int(sample_rate * self.frame_duration_ms / 1000)
+        # Get parameters from configuration
+        self.sample_rate = sample_rate or settings.voice.vad_sample_rate
+        self.frame_duration_ms = settings.voice.vad_frame_duration_ms
+        self.frame_size = int(self.sample_rate * self.frame_duration_ms / 1000)
         
         # Adaptive threshold parameters
         self.energy_history = deque(maxlen=100)
-        self.min_speech_frames = 10  # Minimum frames to consider speech
+        self.min_speech_frames = settings.voice.vad_min_speech_frames
         
         # WebRTC VAD (if available)
         self.vad = None
@@ -592,8 +598,13 @@ class PronunciationAssessor:
     """
     
     def __init__(self):
-        """Initialize pronunciation assessor"""
-        self.min_word_length = 3
+        """
+        Initialize pronunciation assessor
+        
+        Uses configuration for all parameters (AGENTS.md: zero hardcoded values)
+        """
+        # Get parameters from configuration
+        self.min_word_length = settings.voice.pronunciation_min_word_length
         logger.info("✅ Pronunciation assessor initialized")
     
     def assess_pronunciation(
@@ -613,10 +624,11 @@ class PronunciationAssessor:
         Returns:
             Pronunciation score with detailed feedback
         """
-        # Estimate duration if not provided (assume ~2.5 words per second)
+        # Estimate duration if not provided using configured speaking rate
         if audio_duration is None:
             word_count = len(original_text.split())
-            audio_duration = word_count / 2.5  # Average speaking rate
+            # Use configuration for speaking rate (AGENTS.md: zero hardcoded values)
+            audio_duration = word_count / settings.voice.pronunciation_speaking_rate
         
         # Calculate word-level accuracy
         word_scores = self._calculate_word_scores(original_text, transcribed_text)
@@ -633,13 +645,19 @@ class PronunciationAssessor:
             audio_duration
         )
         
-        # Overall score (weighted average - ML-driven, no hardcoded thresholds)
-        overall_score = (
-            phoneme_accuracy * 0.5 +
-            fluency_score * 0.3 +
-            np.mean(list(word_scores.values())) * 0.2
-            if word_scores else phoneme_accuracy * 0.8 + fluency_score * 0.2
-        )
+        # Overall score using configured weights (AGENTS.md: zero hardcoded values)
+        if word_scores:
+            overall_score = (
+                phoneme_accuracy * settings.voice.pronunciation_phoneme_weight +
+                fluency_score * settings.voice.pronunciation_fluency_weight +
+                np.mean(list(word_scores.values())) * settings.voice.pronunciation_word_weight
+            )
+        else:
+            # Fallback weights when word scores unavailable
+            overall_score = (
+                phoneme_accuracy * settings.voice.pronunciation_phoneme_fallback_weight +
+                fluency_score * settings.voice.pronunciation_fluency_fallback_weight
+            )
         
         # Generate feedback
         feedback = self._generate_feedback(
