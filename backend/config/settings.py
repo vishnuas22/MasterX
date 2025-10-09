@@ -137,6 +137,97 @@ class PerformanceSettings(BaseSettings):
         env_prefix = "PERF_"
 
 
+class VoiceSettings(BaseSettings):
+    """
+    Voice interaction configuration (AGENTS.md compliant - zero hardcoded values)
+    All voice processing parameters configurable via environment
+    """
+    
+    # Speech-to-Text (Groq Whisper)
+    whisper_model: str = Field(
+        default_factory=lambda: os.getenv("WHISPER_MODEL_NAME", "whisper-large-v3-turbo"),
+        description="Groq Whisper model name"
+    )
+    
+    # Text-to-Speech (ElevenLabs)
+    elevenlabs_api_key: Optional[str] = Field(
+        default_factory=lambda: os.getenv("ELEVENLABS_API_KEY"),
+        description="ElevenLabs API key"
+    )
+    
+    elevenlabs_model_short: str = Field(
+        default="eleven_flash_v2_5",
+        description="ElevenLabs model for short text (<200 chars)"
+    )
+    
+    elevenlabs_model_long: str = Field(
+        default="eleven_multilingual_v2",
+        description="ElevenLabs model for long text (>=200 chars)"
+    )
+    
+    text_length_threshold: int = Field(
+        default=200,
+        description="Character threshold for model selection"
+    )
+    
+    # Voice Activity Detection (VAD)
+    vad_frame_duration_ms: int = Field(
+        default=30,
+        description="VAD frame duration in milliseconds"
+    )
+    
+    vad_min_speech_frames: int = Field(
+        default=10,
+        description="Minimum frames to consider speech"
+    )
+    
+    vad_sample_rate: int = Field(
+        default=16000,
+        description="Audio sample rate in Hz"
+    )
+    
+    # Pronunciation Assessment
+    pronunciation_min_word_length: int = Field(
+        default=3,
+        description="Minimum word length for pronunciation scoring"
+    )
+    
+    pronunciation_speaking_rate: float = Field(
+        default=2.5,
+        description="Average speaking rate (words per second)"
+    )
+    
+    # ML-based pronunciation scoring weights (configurable)
+    pronunciation_phoneme_weight: float = Field(
+        default=0.5,
+        description="Weight for phoneme accuracy in scoring"
+    )
+    
+    pronunciation_fluency_weight: float = Field(
+        default=0.3,
+        description="Weight for fluency in scoring"
+    )
+    
+    pronunciation_word_weight: float = Field(
+        default=0.2,
+        description="Weight for word accuracy in scoring"
+    )
+    
+    # Fallback weights when word scores unavailable
+    pronunciation_phoneme_fallback_weight: float = Field(
+        default=0.8,
+        description="Phoneme weight when no word scores"
+    )
+    
+    pronunciation_fluency_fallback_weight: float = Field(
+        default=0.2,
+        description="Fluency weight when no word scores"
+    )
+    
+    class Config:
+        env_prefix = "VOICE_"
+
+
 class SecuritySettings(BaseSettings):
     """
     Security configuration (AGENTS.md compliant - zero hardcoded values)
@@ -342,6 +433,7 @@ class MasterXSettings(BaseSettings):
     ai_providers: AIProviderSettings = Field(default_factory=AIProviderSettings)
     caching: CachingSettings = Field(default_factory=CachingSettings)
     performance: PerformanceSettings = Field(default_factory=PerformanceSettings)
+    voice: VoiceSettings = Field(default_factory=VoiceSettings)
     security: SecuritySettings = Field(default_factory=SecuritySettings)
     
     class Config:
