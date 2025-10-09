@@ -8,15 +8,22 @@ This module provides:
 - PAD (Pleasure-Arousal-Dominance) dimensional model
 - Intervention level definitions
 
+PRINCIPLES (AGENTS.md):
+- Type-safe with Pydantic models
+- Runtime validation for all data
+- No hardcoded values
+- Clean, professional naming
+
 Author: MasterX AI Team
-Version: 1.0 (Enhanced from v9.0)
+Version: 2.0 (Enhanced with Pydantic type safety)
 """
 
 import logging
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import Dict, Any, List, Optional
-from dataclasses import dataclass, field
 from datetime import datetime
+from pydantic import BaseModel, Field, field_validator
 
 logger = logging.getLogger(__name__)
 
@@ -114,139 +121,253 @@ class EmotionalTrajectory(Enum):
 # EMOTION METRICS
 # ============================================================================
 
-@dataclass
-class EmotionMetrics:
+class EmotionMetrics(BaseModel):
     """
     Comprehensive emotion metrics for a user interaction.
     
     Includes categorical emotions, dimensional model (PAD), and learning indicators.
+    Uses Pydantic for type safety and runtime validation (AGENTS.md compliant).
     """
     
     # Primary emotion data
-    primary_emotion: str = EmotionCategory.NEUTRAL.value
-    emotion_distribution: Dict[str, float] = field(default_factory=dict)
-    confidence: float = 0.5
+    primary_emotion: str = Field(
+        default=EmotionCategory.NEUTRAL.value,
+        description="Primary detected emotion"
+    )
+    emotion_distribution: Dict[str, float] = Field(
+        default_factory=dict,
+        description="Distribution of all detected emotions"
+    )
+    confidence: float = Field(
+        default=0.5,
+        ge=0.0,
+        le=1.0,
+        description="Confidence in emotion detection (0.0-1.0)"
+    )
     
     # PAD dimensional model
-    arousal: float = 0.5  # 0 (calm) to 1 (excited)
-    valence: float = 0.5  # 0 (negative) to 1 (positive)
-    dominance: float = 0.5  # 0 (submissive) to 1 (dominant)
+    arousal: float = Field(
+        default=0.5,
+        ge=0.0,
+        le=1.0,
+        description="Arousal level: 0 (calm) to 1 (excited)"
+    )
+    valence: float = Field(
+        default=0.5,
+        ge=0.0,
+        le=1.0,
+        description="Valence: 0 (negative) to 1 (positive)"
+    )
+    dominance: float = Field(
+        default=0.5,
+        ge=0.0,
+        le=1.0,
+        description="Dominance: 0 (submissive) to 1 (dominant)"
+    )
     
     # Learning indicators
-    learning_readiness: str = LearningReadiness.MODERATE_READINESS.value
-    cognitive_load: float = 0.5  # 0 (low) to 1 (high)
-    engagement_level: float = 0.5  # 0 (disengaged) to 1 (highly engaged)
+    learning_readiness: str = Field(
+        default=LearningReadiness.MODERATE_READINESS.value,
+        description="Current learning readiness state"
+    )
+    cognitive_load: float = Field(
+        default=0.5,
+        ge=0.0,
+        le=1.0,
+        description="Cognitive load: 0 (low) to 1 (high)"
+    )
+    engagement_level: float = Field(
+        default=0.5,
+        ge=0.0,
+        le=1.0,
+        description="Engagement: 0 (disengaged) to 1 (highly engaged)"
+    )
     
     # Intervention needs
-    intervention_level: str = InterventionLevel.NONE.value
-    intervention_confidence: float = 0.5
+    intervention_level: str = Field(
+        default=InterventionLevel.NONE.value,
+        description="Required intervention level"
+    )
+    intervention_confidence: float = Field(
+        default=0.5,
+        ge=0.0,
+        le=1.0,
+        description="Confidence in intervention recommendation"
+    )
     
     # Trajectory
-    emotional_trajectory: str = EmotionalTrajectory.STABLE_NEUTRAL.value
+    emotional_trajectory: str = Field(
+        default=EmotionalTrajectory.STABLE_NEUTRAL.value,
+        description="Emotional trajectory over time"
+    )
     
     # Metadata
-    analysis_time_ms: float = 0.0
-    model_version: str = "1.0"
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    analysis_time_ms: float = Field(
+        default=0.0,
+        ge=0.0,
+        description="Time taken for analysis in milliseconds"
+    )
+    model_version: str = Field(
+        default="2.0",
+        description="Model version used for analysis"
+    )
+    timestamp: datetime = Field(
+        default_factory=datetime.utcnow,
+        description="Timestamp of analysis"
+    )
+    
+    @field_validator('confidence', 'arousal', 'valence', 'dominance', 
+                     'cognitive_load', 'engagement_level', 'intervention_confidence')
+    @classmethod
+    def validate_range(cls, v: float) -> float:
+        """Validate that values are within 0.0-1.0 range"""
+        if not 0.0 <= v <= 1.0:
+            raise ValueError(f"Value must be between 0.0 and 1.0, got {v}")
+        return v
+    
+    class Config:
+        """Pydantic configuration"""
+        json_encoders = {
+            datetime: lambda v: v.isoformat()
+        }
+        validate_assignment = True  # Validate on attribute assignment
     
     def to_dict(self) -> Dict[str, Any]:
-        """Convert metrics to dictionary."""
-        return {
-            'primary_emotion': self.primary_emotion,
-            'emotion_distribution': self.emotion_distribution,
-            'confidence': self.confidence,
-            'arousal': self.arousal,
-            'valence': self.valence,
-            'dominance': self.dominance,
-            'learning_readiness': self.learning_readiness,
-            'cognitive_load': self.cognitive_load,
-            'engagement_level': self.engagement_level,
-            'intervention_level': self.intervention_level,
-            'intervention_confidence': self.intervention_confidence,
-            'emotional_trajectory': self.emotional_trajectory,
-            'analysis_time_ms': self.analysis_time_ms,
-            'model_version': self.model_version,
-            'timestamp': self.timestamp.isoformat() if self.timestamp else None
-        }
+        """
+        Convert metrics to dictionary.
+        
+        Uses Pydantic's model_dump for type-safe serialization.
+        """
+        return self.model_dump(mode='json')
     
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'EmotionMetrics':
-        """Create metrics from dictionary."""
-        timestamp = data.get('timestamp')
-        if isinstance(timestamp, str):
-            timestamp = datetime.fromisoformat(timestamp)
+        """
+        Create metrics from dictionary with type validation.
         
-        return cls(
-            primary_emotion=data.get('primary_emotion', EmotionCategory.NEUTRAL.value),
-            emotion_distribution=data.get('emotion_distribution', {}),
-            confidence=data.get('confidence', 0.5),
-            arousal=data.get('arousal', 0.5),
-            valence=data.get('valence', 0.5),
-            dominance=data.get('dominance', 0.5),
-            learning_readiness=data.get('learning_readiness', LearningReadiness.MODERATE_READINESS.value),
-            cognitive_load=data.get('cognitive_load', 0.5),
-            engagement_level=data.get('engagement_level', 0.5),
-            intervention_level=data.get('intervention_level', InterventionLevel.NONE.value),
-            intervention_confidence=data.get('intervention_confidence', 0.5),
-            emotional_trajectory=data.get('emotional_trajectory', EmotionalTrajectory.STABLE_NEUTRAL.value),
-            analysis_time_ms=data.get('analysis_time_ms', 0.0),
-            model_version=data.get('model_version', '1.0'),
-            timestamp=timestamp or datetime.utcnow()
-        )
+        Uses Pydantic's model_validate for runtime type checking.
+        """
+        return cls.model_validate(data)
 
 
 # ============================================================================
 # EMOTION RESULT
 # ============================================================================
 
-@dataclass
-class EmotionResult:
+class EmotionResult(BaseModel):
     """
     Complete emotion analysis result with recommendations.
+    
+    Uses Pydantic for type safety and runtime validation (AGENTS.md compliant).
     """
     
     # Core metrics
-    metrics: EmotionMetrics = field(default_factory=EmotionMetrics)
+    metrics: EmotionMetrics = Field(
+        default_factory=EmotionMetrics,
+        description="Emotion metrics from analysis"
+    )
     
     # User context
-    user_id: str = ""
-    session_id: Optional[str] = None
+    user_id: str = Field(
+        default="",
+        description="User identifier"
+    )
+    session_id: Optional[str] = Field(
+        default=None,
+        description="Session identifier"
+    )
     
     # Analysis details
-    text_analyzed: str = ""
-    context_factors: Dict[str, Any] = field(default_factory=dict)
+    text_analyzed: str = Field(
+        default="",
+        description="Text that was analyzed"
+    )
+    context_factors: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="Additional context factors"
+    )
     
     # Recommendations
-    intervention_needed: bool = False
-    intervention_type: Optional[str] = None
-    intervention_suggestions: List[str] = field(default_factory=list)
+    intervention_needed: bool = Field(
+        default=False,
+        description="Whether intervention is needed"
+    )
+    intervention_type: Optional[str] = Field(
+        default=None,
+        description="Type of intervention recommended"
+    )
+    intervention_suggestions: List[str] = Field(
+        default_factory=list,
+        description="Specific intervention suggestions"
+    )
     
     # Adaptive learning
-    difficulty_adjustment: float = 0.0  # -1 (easier) to +1 (harder)
-    pacing_adjustment: float = 0.0  # -1 (slower) to +1 (faster)
-    support_level: str = "standard"  # minimal, standard, enhanced, intensive
+    difficulty_adjustment: float = Field(
+        default=0.0,
+        ge=-1.0,
+        le=1.0,
+        description="Difficulty adjustment: -1 (easier) to +1 (harder)"
+    )
+    pacing_adjustment: float = Field(
+        default=0.0,
+        ge=-1.0,
+        le=1.0,
+        description="Pacing adjustment: -1 (slower) to +1 (faster)"
+    )
+    support_level: str = Field(
+        default="standard",
+        description="Support level: minimal, standard, enhanced, intensive"
+    )
     
     # Performance tracking
-    prediction_quality: float = 0.5
-    model_type: str = "unknown"
+    prediction_quality: float = Field(
+        default=0.5,
+        ge=0.0,
+        le=1.0,
+        description="Quality of prediction"
+    )
+    model_type: str = Field(
+        default="unknown",
+        description="Type of model used"
+    )
+    
+    @field_validator('difficulty_adjustment', 'pacing_adjustment')
+    @classmethod
+    def validate_adjustment_range(cls, v: float) -> float:
+        """Validate adjustment values are within -1.0 to 1.0 range"""
+        if not -1.0 <= v <= 1.0:
+            raise ValueError(f"Adjustment must be between -1.0 and 1.0, got {v}")
+        return v
+    
+    @field_validator('support_level')
+    @classmethod
+    def validate_support_level(cls, v: str) -> str:
+        """Validate support level is one of allowed values"""
+        allowed = ["minimal", "standard", "enhanced", "intensive"]
+        if v not in allowed:
+            raise ValueError(f"Support level must be one of {allowed}, got {v}")
+        return v
+    
+    class Config:
+        """Pydantic configuration"""
+        validate_assignment = True  # Validate on attribute assignment
     
     def to_dict(self) -> Dict[str, Any]:
-        """Convert result to dictionary."""
-        return {
-            'metrics': self.metrics.to_dict(),
-            'user_id': self.user_id,
-            'session_id': self.session_id,
-            'text_analyzed': self.text_analyzed,
-            'context_factors': self.context_factors,
-            'intervention_needed': self.intervention_needed,
-            'intervention_type': self.intervention_type,
-            'intervention_suggestions': self.intervention_suggestions,
-            'difficulty_adjustment': self.difficulty_adjustment,
-            'pacing_adjustment': self.pacing_adjustment,
-            'support_level': self.support_level,
-            'prediction_quality': self.prediction_quality,
-            'model_type': self.model_type
-        }
+        """
+        Convert result to dictionary.
+        
+        Uses Pydantic's model_dump for type-safe serialization.
+        """
+        return self.model_dump(mode='json')
+    
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'EmotionResult':
+        """
+        Create result from dictionary with type validation.
+        
+        Uses Pydantic's model_validate for runtime type checking.
+        """
+        return cls.model_validate(data)
     
     def is_struggling(self) -> bool:
         """Check if user is showing signs of struggle."""
