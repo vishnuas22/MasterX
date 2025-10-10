@@ -429,80 +429,91 @@ class AIProviderHealthChecker:
     - Rate limit status
     """
     
-    def __init__(self, analyzer: StatisticalHealthAnalyzer):
+    def __init__(self, analyzer: StatisticalHealthAnalyzer, provider_manager=None):
         self.analyzer = analyzer
+        self.provider_manager = provider_manager
+    
+    def set_provider_manager(self, provider_manager):
+        """Set provider manager dependency"""
+        self.provider_manager = provider_manager
     
     async def check_health(self) -> Dict[str, ComponentHealth]:
         """
         Check health of all AI providers
         
-        Integration: core/ai_providers.py
+        Uses existing health metrics tracked by ProviderManager
+        No test calls - uses real production metrics (AGENTS.md compliant)
         """
         provider_health = {}
         
+        if not self.provider_manager:
+            logger.warning("Provider manager not set for health checks")
+            return provider_health
+        
         try:
-            from core.ai_providers import get_provider_manager
+            provider_manager = self.provider_manager
             
-            provider_manager = get_provider_manager()
-            
-            # Check each provider
+            # Check each provider using tracked metrics
             for provider_name in provider_manager.registry.providers.keys():
                 try:
-                    # Simple health check: send test request with timeout
-                    start_time = time.time()
+                    # Get health metrics from provider manager
+                    metrics = await provider_manager.get_provider_health(provider_name)
                     
-                    await asyncio.wait_for(
-                        provider_manager.generate(
-                            "test",
-                            provider=provider_name
-                        ),
-                        timeout=settings.monitoring.provider_timeout_seconds
-                    )
+                    # Record metrics for statistical analysis
+                    key_latency = f"ai_provider_{provider_name}_latency"
+                    key_error = f"ai_provider_{provider_name}_error_rate"
                     
-                    latency_ms = (time.time() - start_time) * 1000
+                    self.analyzer.record_metric(key_latency, metrics.avg_response_time)
+                    self.analyzer.record_metric(key_error, metrics.error_rate)
                     
-                    # Record metrics
-                    key = f"ai_provider_{provider_name}_latency"
-                    self.analyzer.record_metric(key, latency_ms)
+                    # Calculate health score using percentile
+                    latency_score = self.analyzer.calculate_percentile_score(
+                        key_latency, metrics.avg_response_time, lower_is_better=True
+                    ) if len(self.analyzer.histories[key_latency]) >= 10 else 75.0
                     
-                    # Detect anomalies
-                    latency_anomaly, latency_z = self.analyzer.detect_anomaly(key, latency_ms)
+                    error_score = self.analyzer.calculate_percentile_score(
+                        key_error, metrics.error_rate, lower_is_better=True
+                    ) if len(self.analyzer.histories[key_error]) >= 10 else 75.0
                     
+                    # Weighted health score
+                    health_score = (latency_score * 0.6) + (error_score * 0.4)
+                    
+                    # Determine status
+                    if not metrics.is_available:
+                        status = HealthStatus.UNHEALTHY
+                    elif health_score >= 70:
+                        status = HealthStatus.HEALTHY
+                    elif health_score >= 40:
+                        status = HealthStatus.DEGRADED
+                    else:
+                        status = HealthStatus.UNHEALTHY
+                    
+                    # Detect trend
+                    trend = self.analyzer.detect_trend(key_latency)
+                    
+                    # Generate alerts
                     alerts = []
-                    if latency_anomaly:
-                        alerts.append(f"High latency (z-score: {latency_z:.2f})")
-                    
-                    # Calculate health score
-                    health_score = self.analyzer.calculate_health_score({
-                        "latency_ms": latency_ms,
-                        "error_rate": 0.0  # No error if we got here
-                    })
-                    
-                    status = HealthStatus.HEALTHY if health_score >= settings.monitoring.healthy_threshold else HealthStatus.DEGRADED
-                    trend = self.analyzer.detect_trend(key)
+                    if metrics.error_rate > 0.1:
+                        alerts.append(f"High error rate: {metrics.error_rate:.1%}")
+                    if metrics.avg_response_time > 10000:
+                        alerts.append(f"High latency: {metrics.avg_response_time:.0f}ms")
                     
                     provider_health[provider_name] = ComponentHealth(
                         name=f"ai_provider_{provider_name}",
                         status=status,
                         health_score=health_score,
                         metrics=ComponentMetrics(
-                            latency_ms=latency_ms,
-                            error_rate=0.0,
-                            custom_metrics={"provider": provider_name}
+                            latency_ms=metrics.avg_response_time,
+                            error_rate=metrics.error_rate,
+                            throughput=metrics.total_requests,
+                            custom_metrics={
+                                "rate_limit_remaining": metrics.rate_limit_remaining,
+                                "last_success": metrics.last_success.isoformat() if metrics.last_success else None
+                            }
                         ),
                         last_check=datetime.now(),
                         trend=trend,
                         alerts=alerts
-                    )
-                    
-                except asyncio.TimeoutError:
-                    provider_health[provider_name] = ComponentHealth(
-                        name=f"ai_provider_{provider_name}",
-                        status=HealthStatus.UNHEALTHY,
-                        health_score=0.0,
-                        metrics=ComponentMetrics(),
-                        last_check=datetime.now(),
-                        alerts=["Provider timeout"]
                     )
                     
                 except Exception as e:
@@ -540,15 +551,19 @@ class HealthMonitor:
     AGENTS.md compliant: Zero hardcoded thresholds, all ML/statistical
     """
     
-    def __init__(self):
+    def __init__(self, provider_manager=None):
         self.analyzer = StatisticalHealthAnalyzer()
         self.db_checker = DatabaseHealthChecker(self.analyzer)
-        self.ai_checker = AIProviderHealthChecker(self.analyzer)
+        self.ai_checker = AIProviderHealthChecker(self.analyzer, provider_manager)
         
         self.start_time = time.time()
         self.monitoring_task: Optional[asyncio.Task] = None
         
         logger.info("Health monitoring system initialized")
+    
+    def set_provider_manager(self, provider_manager):
+        """Set provider manager dependency for AI health checks"""
+        self.ai_checker.set_provider_manager(provider_manager)
     
     async def check_all_components(self) -> Dict[str, ComponentHealth]:
         """
@@ -698,17 +713,33 @@ class HealthMonitor:
 _health_monitor: Optional[HealthMonitor] = None
 
 
-def get_health_monitor() -> HealthMonitor:
+def get_health_monitor(provider_manager=None) -> HealthMonitor:
     """
     Get global health monitor instance (singleton pattern)
+    
+    Args:
+        provider_manager: Optional provider manager for AI health checks
     
     Returns:
         HealthMonitor instance
     """
     global _health_monitor
     if _health_monitor is None:
-        _health_monitor = HealthMonitor()
+        _health_monitor = HealthMonitor(provider_manager)
+    elif provider_manager is not None:
+        _health_monitor.set_provider_manager(provider_manager)
     return _health_monitor
+
+
+def set_health_monitor_dependencies(provider_manager):
+    """
+    Set dependencies for the health monitor
+    
+    Args:
+        provider_manager: Provider manager for AI health checks
+    """
+    monitor = get_health_monitor()
+    monitor.set_provider_manager(provider_manager)
 
 
 async def initialize_health_monitoring():
