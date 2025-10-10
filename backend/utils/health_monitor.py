@@ -312,6 +312,40 @@ class StatisticalHealthAnalyzer:
         percentile = (less_than / len(history)) * 100
         
         return percentile
+    
+    def calculate_percentile_score(
+        self,
+        key: str,
+        current_value: float,
+        lower_is_better: bool = True
+    ) -> float:
+        """
+        Calculate percentile-based score for a single metric
+        
+        Converts metric value to 0-100 health score based on historical distribution
+        
+        Args:
+            key: Metric identifier
+            current_value: Current metric value
+            lower_is_better: If True, lower values get higher scores (e.g., latency)
+        
+        Returns:
+            Health score (0-100)
+        """
+        history = list(self.histories.get(key, []))
+        
+        if len(history) < settings.monitoring.min_samples_for_score:
+            return 50.0  # Neutral score when insufficient data
+        
+        percentile = self._calculate_percentile(history, current_value)
+        
+        # Invert percentile if lower is better
+        if lower_is_better:
+            score = 100 - percentile
+        else:
+            score = percentile
+        
+        return score
 
 
 # ============================================================================
@@ -491,11 +525,11 @@ class AIProviderHealthChecker:
                     # Detect trend
                     trend = self.analyzer.detect_trend(key_latency)
                     
-                    # Generate alerts
+                    # Generate alerts (thresholds from config, not hardcoded)
                     alerts = []
-                    if metrics.error_rate > 0.1:
+                    if metrics.error_rate > settings.monitoring.alert_error_rate_threshold:
                         alerts.append(f"High error rate: {metrics.error_rate:.1%}")
-                    if metrics.avg_response_time > 10000:
+                    if metrics.avg_response_time > settings.monitoring.alert_latency_threshold_ms:
                         alerts.append(f"High latency: {metrics.avg_response_time:.0f}ms")
                     
                     provider_health[provider_name] = ComponentHealth(
