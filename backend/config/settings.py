@@ -10,7 +10,7 @@ PRINCIPLES (from AGENTS.md):
 """
 
 import os
-from typing import Optional, List
+from typing import Optional, List, Dict
 from pydantic import Field
 from pydantic_settings import BaseSettings
 from dotenv import load_dotenv
@@ -412,6 +412,112 @@ class SecuritySettings(BaseSettings):
         env_prefix = "SECURITY_"
 
 
+class MonitoringSettings(BaseSettings):
+    """
+    Health monitoring configuration (Phase 8C File 11)
+    
+    AGENTS.md compliant: All thresholds ML/statistical-based, not hardcoded
+    Configuration-driven parameters for Statistical Process Control
+    """
+    
+    # History and sampling
+    history_size: int = Field(
+        default=100,
+        description="Number of historical samples to maintain for SPC"
+    )
+    
+    min_samples_for_threshold: int = Field(
+        default=10,
+        description="Minimum samples required for threshold calculation"
+    )
+    
+    min_samples_for_trend: int = Field(
+        default=20,
+        description="Minimum samples required for trend detection"
+    )
+    
+    min_samples_for_score: int = Field(
+        default=10,
+        description="Minimum samples required for health score"
+    )
+    
+    # Statistical Process Control (SPC)
+    sigma_threshold: float = Field(
+        default=3.0,
+        description="Sigma threshold for anomaly detection (3.0 = 99.7% confidence)"
+    )
+    
+    # EWMA (Exponential Weighted Moving Average)
+    ewma_alpha: float = Field(
+        default=0.3,
+        description="EWMA smoothing factor (0.0-1.0, higher = more reactive)"
+    )
+    
+    # Trending
+    trend_window_size: int = Field(
+        default=10,
+        description="Window size for trend calculation"
+    )
+    
+    improvement_threshold_pct: float = Field(
+        default=5.0,
+        description="Percentage change threshold for improvement detection"
+    )
+    
+    degradation_threshold_pct: float = Field(
+        default=5.0,
+        description="Percentage change threshold for degradation detection"
+    )
+    
+    # Health scoring thresholds
+    healthy_threshold: float = Field(
+        default=70.0,
+        description="Health score threshold for HEALTHY status (0-100)"
+    )
+    
+    degraded_threshold: float = Field(
+        default=40.0,
+        description="Health score threshold for DEGRADED status (0-100)"
+    )
+    
+    # Metric weights for composite health score
+    metric_weights: Dict[str, float] = Field(
+        default={
+            'latency_ms': 0.35,      # Most important
+            'error_rate': 0.30,      # Very important
+            'throughput': 0.20,      # Important
+            'connections': 0.15      # Less important
+        },
+        description="Weights for health score calculation"
+    )
+    
+    # Component weights for system health score
+    component_weights: Dict[str, float] = Field(
+        default={
+            'database': 1.0,              # Critical
+            'ai_provider_groq': 0.8,      # Important
+            'ai_provider_emergent': 0.8,  # Important
+            'ai_provider_gemini': 0.8,    # Important
+            'external_apis': 0.5          # Less critical
+        },
+        description="Weights for system health calculation"
+    )
+    
+    # Monitoring intervals
+    check_interval_seconds: int = Field(
+        default=60,
+        description="Interval between health checks (seconds)"
+    )
+    
+    provider_timeout_seconds: int = Field(
+        default=5,
+        description="Timeout for AI provider health checks (seconds)"
+    )
+    
+    class Config:
+        env_prefix = "MONITORING_"
+
+
 class MasterXSettings(BaseSettings):
     """
     Master configuration class for MasterX
@@ -435,6 +541,7 @@ class MasterXSettings(BaseSettings):
     performance: PerformanceSettings = Field(default_factory=PerformanceSettings)
     voice: VoiceSettings = Field(default_factory=VoiceSettings)
     security: SecuritySettings = Field(default_factory=SecuritySettings)
+    monitoring: MonitoringSettings = Field(default_factory=MonitoringSettings)
     
     class Config:
         env_file = ".env"
