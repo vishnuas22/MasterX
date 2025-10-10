@@ -181,6 +181,18 @@ async def lifespan(app: FastAPI):
         
         logger.info("✅ Phase 4 optimization layer initialized (caching + performance)")
         
+        # Phase 8C File 11: Initialize health monitoring system
+        from utils.health_monitor import get_health_monitor, set_health_monitor_dependencies
+        
+        app.state.health_monitor = get_health_monitor()
+        
+        # Set dependencies for health checks
+        set_health_monitor_dependencies(app.state.engine.provider_manager)
+        
+        # Start background monitoring
+        await app.state.health_monitor.start_background_monitoring()
+        logger.info("✅ Phase 8C: Health monitoring system initialized and running")
+        
         logger.info("✅ MasterX server started successfully with DYNAMIC MODEL SYSTEM")
         logger.info(f"📊 Available AI providers: {app.state.engine.get_available_providers()}")
         logger.info(f"⚡ Model selection: Fully dynamic (quality + cost + speed + availability)")
@@ -193,6 +205,12 @@ async def lifespan(app: FastAPI):
     
     # Shutdown
     logger.info("👋 Shutting down MasterX server...")
+    
+    # Stop health monitoring (Phase 8C File 11)
+    if hasattr(app.state, 'health_monitor'):
+        await app.state.health_monitor.stop_background_monitoring()
+        logger.info("✅ Health monitoring stopped")
+    
     await close_mongodb_connection()
     logger.info("✅ MasterX server shut down gracefully")
 
@@ -251,49 +269,61 @@ async def health_check():
 
 
 @app.get("/api/health/detailed")
-async def detailed_health():
-    """Detailed health check with component status"""
+async def detailed_health(request: Request):
+    """
+    Detailed health check with ML-based component monitoring
     
-    checks = {}
+    Phase 8C File 11: Uses statistical health monitoring system
+    - 3-sigma anomaly detection
+    - EWMA trend analysis
+    - Percentile-based health scoring
+    - Zero hardcoded thresholds (AGENTS.md compliant)
+    """
     
-    # Check database
     try:
-        from utils.database import get_database
-        db = get_database()
-        await db.command('ping')
-        checks['database'] = 'healthy'
-    except Exception as e:
-        checks['database'] = f'unhealthy: {str(e)}'
-    
-    # Check AI providers
-    try:
-        providers = app.state.engine.get_available_providers()
-        checks['ai_providers'] = {
-            'status': 'healthy',
-            'count': len(providers),
-            'providers': providers
+        # Get comprehensive health from health monitor
+        health_monitor = request.app.state.health_monitor
+        system_health = await health_monitor.get_system_health()
+        
+        # Convert to response format
+        component_checks = {}
+        for comp_name, comp_health in system_health.components.items():
+            component_checks[comp_name] = {
+                'status': comp_health.status.value,
+                'health_score': round(comp_health.health_score, 2),
+                'trend': comp_health.trend,
+                'metrics': {
+                    'latency_ms': round(comp_health.metrics.latency_ms, 2),
+                    'error_rate': round(comp_health.metrics.error_rate, 4),
+                    'throughput': comp_health.metrics.throughput,
+                    'connections': comp_health.metrics.connections,
+                    **comp_health.metrics.custom_metrics
+                },
+                'alerts': comp_health.alerts,
+                'last_check': comp_health.last_check.isoformat()
+            }
+        
+        return {
+            'status': system_health.overall_status.value,
+            'health_score': round(system_health.health_score, 2),
+            'components': component_checks,
+            'uptime_seconds': round(system_health.uptime_seconds, 2),
+            'alerts': system_health.alerts,
+            'timestamp': system_health.timestamp.isoformat(),
+            'monitoring_system': 'Phase 8C ML-based (SPC + EWMA + Percentile)'
         }
+        
     except Exception as e:
-        checks['ai_providers'] = f'unhealthy: {str(e)}'
-    
-    # Check emotion detection
-    try:
-        emotion_engine = app.state.engine.emotion_engine
-        checks['emotion_detection'] = 'healthy'
-    except Exception as e:
-        checks['emotion_detection'] = f'unhealthy: {str(e)}'
-    
-    all_healthy = all(
-        isinstance(v, str) and 'healthy' in v or 
-        isinstance(v, dict) and v.get('status') == 'healthy'
-        for v in checks.values()
-    )
-    
-    return {
-        "status": "healthy" if all_healthy else "degraded",
-        "checks": checks,
-        "timestamp": datetime.utcnow().isoformat()
-    }
+        logger.error(f"Health check failed: {e}", exc_info=True)
+        
+        # Fallback to basic health check
+        return {
+            'status': 'degraded',
+            'health_score': 0.0,
+            'error': str(e),
+            'timestamp': datetime.utcnow().isoformat(),
+            'monitoring_system': 'fallback'
+        }
 
 
 
