@@ -660,12 +660,12 @@ async def lifespan(app: FastAPI):
     yield
     
     # Shutdown (FILE 13: Graceful shutdown)
-    logger.info("👋 Initiating graceful shutdown...")
+    logger.info(" Initiating graceful shutdown...")
     
     shutdown_manager = app.state.graceful_shutdown
     await shutdown_manager.shutdown()
     
-    logger.info("✅ Server shut down gracefully")
+    logger.info(" Server shut down gracefully")
 ```
 
 ### New Health Endpoints
