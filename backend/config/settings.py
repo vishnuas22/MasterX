@@ -514,6 +514,17 @@ class MonitoringSettings(BaseSettings):
         description="Timeout for AI provider health checks (seconds)"
     )
     
+    # Alert thresholds (statistical/ML-based, not hardcoded rules)
+    alert_error_rate_threshold: float = Field(
+        default=0.1,
+        description="Error rate threshold for alerts (10% = 0.1)"
+    )
+    
+    alert_latency_threshold_ms: float = Field(
+        default=10000.0,
+        description="Latency threshold for alerts in milliseconds"
+    )
+    
     class Config:
         env_prefix = "MONITORING_"
 
