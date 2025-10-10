@@ -634,11 +634,53 @@ class CostEnforcementSettings(BaseSettings):
         env_prefix = "COST_"
 
 
+class GracefulShutdownSettings(BaseSettings):
+    """
+    Graceful shutdown configuration (Phase 8C File 13)
+    
+    AGENTS.md compliant: Zero hardcoded timeouts, all configurable
+    """
+    
+    enabled: bool = Field(
+        default=True,
+        description="Enable graceful shutdown"
+    )
+    
+    shutdown_timeout: float = Field(
+        default=30.0,
+        description="Maximum shutdown time in seconds"
+    )
+    
+    drain_timeout_ratio: float = Field(
+        default=0.8,
+        description="Ratio of timeout for draining requests (0.0-1.0)"
+    )
+    
+    background_timeout_ratio: float = Field(
+        default=0.2,
+        description="Ratio of timeout for background tasks (0.0-1.0)"
+    )
+    
+    health_check_grace: float = Field(
+        default=0.1,
+        description="Grace period for load balancer health check detection (seconds)"
+    )
+    
+    check_interval: float = Field(
+        default=0.5,
+        description="Interval for checking in-flight requests (seconds)"
+    )
+    
+    class Config:
+        env_prefix = "GRACEFUL_SHUTDOWN_"
+
+
 class MasterXSettings(BaseSettings):
     """
     Master configuration class for MasterX
     
     Aggregates all configuration sections with zero hardcoded values.
+    Phase 8C enhanced with validation and production readiness checks.
     """
     
     environment: str = Field(
@@ -659,6 +701,7 @@ class MasterXSettings(BaseSettings):
     security: SecuritySettings = Field(default_factory=SecuritySettings)
     monitoring: MonitoringSettings = Field(default_factory=MonitoringSettings)
     cost_enforcement: CostEnforcementSettings = Field(default_factory=CostEnforcementSettings)
+    graceful_shutdown: GracefulShutdownSettings = Field(default_factory=GracefulShutdownSettings)
     
     class Config:
         env_file = ".env"
@@ -673,6 +716,10 @@ class MasterXSettings(BaseSettings):
         """Check if running in development"""
         return self.environment.lower() == "development"
     
+    def is_staging(self) -> bool:
+        """Check if running in staging"""
+        return self.environment.lower() == "staging"
+    
     def get_active_providers(self) -> List[str]:
         """Get list of configured AI providers"""
         providers = []
@@ -683,6 +730,141 @@ class MasterXSettings(BaseSettings):
         if self.ai_providers.gemini_api_key:
             providers.append("gemini")
         return providers
+    
+    def validate_production_ready(self) -> tuple[bool, List[str]]:
+        """
+        Validate production readiness (Phase 8C File 14)
+        
+        Checks critical configuration for production deployment.
+        AGENTS.md compliant: No hardcoded checks, validates actual config.
+        
+        Returns:
+            Tuple of (is_ready: bool, issues: List[str])
+        """
+        issues = []
+        
+        if not self.is_production():
+            # Non-production environments get a pass
+            return True, []
+        
+        # Database validation
+        if "localhost" in self.database.mongo_url:
+            issues.append("Production should not use localhost database")
+        
+        if self.database.max_pool_size < 50:
+            issues.append(f"Production pool size too small: {self.database.max_pool_size} (recommend >=50)")
+        
+        # Security validation
+        if not self.security.jwt_secret_key or len(self.security.jwt_secret_key) < 32:
+            issues.append("Production requires strong JWT secret key (>=32 chars)")
+        
+        if self.security.bcrypt_rounds < 12:
+            issues.append(f"Production bcrypt rounds too low: {self.security.bcrypt_rounds} (recommend >=12)")
+        
+        # AI providers validation
+        active_providers = self.get_active_providers()
+        if len(active_providers) == 0:
+            issues.append("No AI providers configured")
+        elif len(active_providers) < 2:
+            issues.append(f"Only {len(active_providers)} provider(s) configured (recommend >=2 for redundancy)")
+        
+        # Debug mode validation
+        if self.debug:
+            issues.append("Production should not run in debug mode")
+        
+        # Cost enforcement validation
+        if self.cost_enforcement.enforcement_mode == "disabled":
+            issues.append("Production should enable cost enforcement (advisory or strict)")
+        
+        # Monitoring validation
+        if not self.monitoring.history_size >= 50:
+            issues.append(f"Production monitoring history too small: {self.monitoring.history_size} (recommend >=50)")
+        
+        # Graceful shutdown validation
+        if not self.graceful_shutdown.enabled:
+            issues.append("Production should enable graceful shutdown")
+        
+        if self.graceful_shutdown.shutdown_timeout < 10:
+            issues.append(f"Production shutdown timeout too short: {self.graceful_shutdown.shutdown_timeout}s (recommend >=10s)")
+        
+        is_ready = len(issues) == 0
+        
+        return is_ready, issues
+    
+    def get_environment_info(self) -> Dict[str, any]:
+        """
+        Get environment information for debugging (Phase 8C File 14)
+        
+        Returns comprehensive configuration summary without exposing secrets.
+        """
+        return {
+            "environment": self.environment,
+            "debug": self.debug,
+            "database": {
+                "host": self.database.mongo_url.split("@")[-1] if "@" in self.database.mongo_url else "localhost",
+                "pool_size": f"{self.database.min_pool_size}-{self.database.max_pool_size}",
+                "name": self.database.database_name
+            },
+            "ai_providers": {
+                "configured": self.get_active_providers(),
+                "count": len(self.get_active_providers()),
+                "timeout_seconds": self.ai_providers.provider_timeout_seconds,
+                "max_retries": self.ai_providers.max_retries
+            },
+            "features": {
+                "caching": self.caching.enabled,
+                "performance_monitoring": self.performance.enabled,
+                "health_monitoring": True,  # Always enabled in Phase 8C
+                "cost_enforcement": self.cost_enforcement.enforcement_mode,
+                "graceful_shutdown": self.graceful_shutdown.enabled
+            },
+            "security": {
+                "jwt_configured": bool(self.security.jwt_secret_key),
+                "bcrypt_rounds": self.security.bcrypt_rounds,
+                "rate_limiting": {
+                    "ip_per_minute": self.security.rate_limit_ip_per_minute,
+                    "user_per_minute": self.security.rate_limit_user_per_minute,
+                    "chat_per_minute": self.security.rate_limit_chat_per_minute
+                }
+            },
+            "monitoring": {
+                "check_interval": self.monitoring.check_interval_seconds,
+                "history_size": self.monitoring.history_size,
+                "sigma_threshold": self.monitoring.sigma_threshold
+            },
+            "cost_enforcement": {
+                "mode": self.cost_enforcement.enforcement_mode,
+                "tiers": {
+                    "free": f"${self.cost_enforcement.free_tier_daily_limit:.2f}/day",
+                    "pro": f"${self.cost_enforcement.pro_tier_daily_limit:.2f}/day",
+                    "enterprise": f"${self.cost_enforcement.enterprise_tier_daily_limit:.2f}/day"
+                }
+            },
+            "graceful_shutdown": {
+                "enabled": self.graceful_shutdown.enabled,
+                "timeout": f"{self.graceful_shutdown.shutdown_timeout}s",
+                "drain_ratio": f"{self.graceful_shutdown.drain_timeout_ratio * 100}%"
+            }
+        }
+    
+    def get_config_summary(self) -> str:
+        """
+        Get human-readable configuration summary
+        
+        Returns:
+            Formatted string with key configuration
+        """
+        info = self.get_environment_info()
+        
+        summary = []
+        summary.append(f"Environment: {info['environment']}")
+        summary.append(f"Debug Mode: {info['debug']}")
+        summary.append(f"AI Providers: {', '.join(info['ai_providers']['configured'])} ({info['ai_providers']['count']} total)")
+        summary.append(f"Database: {info['database']['host']}")
+        summary.append(f"Cost Enforcement: {info['cost_enforcement']['mode']}")
+        summary.append(f"Graceful Shutdown: {'Enabled' if info['graceful_shutdown']['enabled'] else 'Disabled'}")
+        
+        return "\n".join(summary)
 
 
 # Global settings instance
