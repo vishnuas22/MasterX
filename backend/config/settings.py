@@ -529,6 +529,111 @@ class MonitoringSettings(BaseSettings):
         env_prefix = "MONITORING_"
 
 
+class CostEnforcementSettings(BaseSettings):
+    """
+    Cost enforcement configuration (Phase 8C File 12)
+    
+    AGENTS.md compliant: Zero hardcoded budgets, all from DB or environment
+    ML-based optimization with configurable parameters
+    """
+    
+    # Enforcement mode
+    enforcement_mode: str = Field(
+        default="disabled",
+        description="Cost enforcement mode: disabled, advisory, strict"
+    )
+    
+    # Tier-based budget limits (USD per day)
+    free_tier_daily_limit: float = Field(
+        default=0.50,
+        description="Daily budget limit for free tier (USD)"
+    )
+    
+    pro_tier_daily_limit: float = Field(
+        default=5.00,
+        description="Daily budget limit for pro tier (USD)"
+    )
+    
+    enterprise_tier_daily_limit: float = Field(
+        default=50.00,
+        description="Daily budget limit for enterprise tier (USD)"
+    )
+    
+    custom_tier_daily_limit: float = Field(
+        default=100.00,
+        description="Daily budget limit for custom tier (USD)"
+    )
+    
+    # Budget status thresholds (ML-driven, not hardcoded rules)
+    budget_warning_threshold: float = Field(
+        default=0.80,
+        description="Budget utilization threshold for warning (0.0-1.0)"
+    )
+    
+    budget_critical_threshold: float = Field(
+        default=0.90,
+        description="Budget utilization threshold for critical alert (0.0-1.0)"
+    )
+    
+    budget_safety_margin: float = Field(
+        default=0.80,
+        description="Safety margin for exhaustion prediction (0.8 = 20% early warning)"
+    )
+    
+    # Budget predictor settings
+    cost_predictor_history_hours: int = Field(
+        default=48,
+        description="Hours of history to use for cost prediction"
+    )
+    
+    cost_predictor_min_samples: int = Field(
+        default=3,
+        description="Minimum samples required for prediction"
+    )
+    
+    # Multi-Armed Bandit settings
+    bandit_exploration_rate: float = Field(
+        default=0.1,
+        description="Exploration rate for bandit algorithm (0.0-1.0)"
+    )
+    
+    bandit_value_threshold: float = Field(
+        default=0.5,
+        description="Value threshold for good/bad outcome classification"
+    )
+    
+    # Cache settings
+    budget_cache_ttl_seconds: int = Field(
+        default=60,
+        description="TTL for budget status cache (seconds)"
+    )
+    
+    # Global limits (safety nets)
+    global_hourly_limit: float = Field(
+        default=100.00,
+        description="Global hourly cost limit (USD)"
+    )
+    
+    global_daily_limit: float = Field(
+        default=1000.00,
+        description="Global daily cost limit (USD)"
+    )
+    
+    # Cost estimation settings
+    default_token_estimate: int = Field(
+        default=1000,
+        description="Default token estimate for cost calculation"
+    )
+    
+    cost_estimate_safety_multiplier: float = Field(
+        default=1.2,
+        description="Safety multiplier for cost estimates (20% buffer)"
+    )
+    
+    class Config:
+        env_prefix = "COST_"
+
+
 class MasterXSettings(BaseSettings):
     """
     Master configuration class for MasterX
@@ -553,6 +658,7 @@ class MasterXSettings(BaseSettings):
     voice: VoiceSettings = Field(default_factory=VoiceSettings)
     security: SecuritySettings = Field(default_factory=SecuritySettings)
     monitoring: MonitoringSettings = Field(default_factory=MonitoringSettings)
+    cost_enforcement: CostEnforcementSettings = Field(default_factory=CostEnforcementSettings)
     
     class Config:
         env_file = ".env"
