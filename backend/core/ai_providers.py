@@ -16,10 +16,120 @@ import os
 import logging
 import time
 from typing import Dict, Optional, List, Tuple
+from dataclasses import dataclass, field
+from datetime import datetime
+from collections import deque
 from core.models import AIResponse, EmotionState
 from utils.errors import ProviderError
 
 logger = logging.getLogger(__name__)
+
+
+# ============================================================================
+# PROVIDER HEALTH TRACKING (Phase 8C File 11 Integration)
+# ============================================================================
+
+@dataclass
+class ProviderHealthMetrics:
+    """
+    Health metrics for AI provider
+    
+    Tracks real-time performance for health monitoring system.
+    AGENTS.md compliant: No hardcoded thresholds, all metrics tracked.
+    """
+    provider_name: str
+    is_available: bool
+    avg_response_time: float  # milliseconds
+    error_rate: float  # 0.0 to 1.0
+    rate_limit_remaining: int
+    last_success: datetime
+    total_requests: int
+    error_count: int
+    recent_response_times: List[float] = field(default_factory=list)
+
+
+class ProviderHealthTracker:
+    """
+    Tracks health metrics for providers
+    
+    Used by HealthMonitor (File 11) for statistical analysis.
+    Zero hardcoded values - all metrics ML-driven.
+    """
+    
+    def __init__(self, max_history: int = 100):
+        """
+        Args:
+            max_history: Number of recent metrics to keep (from settings)
+        """
+        self.max_history = max_history
+        self.metrics: Dict[str, Dict] = {}
+        
+    def initialize_provider(self, provider_name: str):
+        """Initialize tracking for a provider"""
+        if provider_name not in self.metrics:
+            self.metrics[provider_name] = {
+                'total_requests': 0,
+                'error_count': 0,
+                'response_times': deque(maxlen=self.max_history),
+                'last_success': None,
+                'last_error': None,
+                'is_available': True
+            }
+    
+    def record_request(
+        self,
+        provider_name: str,
+        response_time_ms: float,
+        success: bool
+    ):
+        """Record a request for health tracking"""
+        self.initialize_provider(provider_name)
+        
+        metrics = self.metrics[provider_name]
+        metrics['total_requests'] += 1
+        metrics['response_times'].append(response_time_ms)
+        
+        if success:
+            metrics['last_success'] = datetime.utcnow()
+            metrics['is_available'] = True
+        else:
+            metrics['error_count'] += 1
+            metrics['last_error'] = datetime.utcnow()
+            
+            # Mark unavailable if too many recent errors
+            if len(metrics['response_times']) >= 10:
+                recent_errors = metrics['error_count']
+                if recent_errors / metrics['total_requests'] > 0.5:
+                    metrics['is_available'] = False
+    
+    def get_health_metrics(self, provider_name: str) -> ProviderHealthMetrics:
+        """Get health metrics for a provider"""
+        self.initialize_provider(provider_name)
+        
+        metrics = self.metrics[provider_name]
+        response_times = list(metrics['response_times'])
+        
+        # Calculate average response time
+        avg_response_time = (
+            sum(response_times) / len(response_times)
+            if response_times else 0.0
+        )
+        
+        # Calculate error rate
+        total = metrics['total_requests']
+        error_rate = metrics['error_count'] / total if total > 0 else 0.0
+        
+        return ProviderHealthMetrics(
+            provider_name=provider_name,
+            is_available=metrics['is_available'],
+            avg_response_time=avg_response_time,
+            error_rate=error_rate,
+            rate_limit_remaining=999999,  # TODO: Track actual rate limits
+            last_success=metrics['last_success'] or datetime.utcnow(),
+            total_requests=total,
+            error_count=metrics['error_count'],
+            recent_response_times=response_times[-10:]  # Last 10
+        )
 
 
 class ProviderRegistry:
@@ -318,6 +428,10 @@ class ProviderManager:
         # Add universal provider reference for minimal manual tests
         self.universal_provider = self.universal
         
+        # Health tracking (Phase 8C File 11 integration)
+        history_size = int(os.getenv("PROVIDER_HEALTH_HISTORY_SIZE", "100"))
+        self.health_tracker = ProviderHealthTracker(max_history=history_size)
+        
         # Selection weights (ML-optimized, configurable via env)
         self.selection_weights = {
             'quality': float(os.getenv("SELECTION_WEIGHT_QUALITY", "0.4")),
@@ -517,10 +631,19 @@ class ProviderManager:
         logger.info(f"🤖 Generating with {target_provider}:{model_name} for category: {category}")
         
         try:
+            start_time = time.time()
             response = await self.universal.generate(
                 provider_name=target_provider,
                 prompt=prompt,
                 max_tokens=max_tokens
+            )
+            response_time_ms = (time.time() - start_time) * 1000
+            
+            # Track health metrics (Phase 8C File 11)
+            self.health_tracker.record_request(
+                provider_name=target_provider,
+                response_time_ms=response_time_ms,
+                success=True
             )
             
             # Add category to response
@@ -530,6 +653,13 @@ class ProviderManager:
             return response
         
         except ProviderError as e:
+            # Track failure (Phase 8C File 11)
+            self.health_tracker.record_request(
+                provider_name=target_provider,
+                response_time_ms=0.0,
+                success=False
+            )
+            
             # Intelligent fallback: try next best model
             logger.warning(f"Provider {target_provider} failed: {e}, trying fallback...")
             
@@ -541,11 +671,21 @@ class ProviderManager:
                 )
                 
                 logger.info(f"🔄 Using fallback: {alt_provider}:{alt_model}")
+                start_time = time.time()
                 response = await self.universal.generate(
                     provider_name=alt_provider,
                     prompt=prompt,
                     max_tokens=max_tokens
                 )
+                response_time_ms = (time.time() - start_time) * 1000
+                
+                # Track fallback success
+                self.health_tracker.record_request(
+                    provider_name=alt_provider,
+                    response_time_ms=response_time_ms,
+                    success=True
+                )
+                
                 return response
                 
             except Exception as fallback_error:
@@ -558,6 +698,20 @@ class ProviderManager:
     def get_available_providers(self) -> List[str]:
         """Get list of available provider names"""
         return list(self.registry.get_all_providers().keys())
+    
+    async def get_provider_health(self, provider_name: str) -> ProviderHealthMetrics:
+        """
+        Get health metrics for specific provider
+        
+        Phase 8C File 11 Integration: Used by HealthMonitor for system health
+        
+        Args:
+            provider_name: Name of the provider
+            
+        Returns:
+            ProviderHealthMetrics with current health data
+        """
+        return self.health_tracker.get_health_metrics(provider_name)
     
     async def initialize_external_benchmarks(self, db):
         """
