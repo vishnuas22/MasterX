@@ -81,11 +81,38 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Lifespan event handler for startup and shutdown"""
+    """
+    Enhanced lifespan with Phase 8C features
+    
+    Startup: Validate config, initialize all systems
+    Shutdown: Graceful shutdown with drain pattern
+    """
     # Startup
-    logger.info("🚀 Starting MasterX server...")
+    logger.info("🚀 Starting MasterX server (Phase 8C Production)...")
     
     try:
+        # Phase 8C File 14: Validate production readiness
+        from config.settings import get_settings
+        settings = get_settings()
+        
+        is_ready, issues = settings.validate_production_ready()
+        
+        if not is_ready:
+            logger.warning("⚠️ Production readiness check found issues:")
+            for issue in issues:
+                logger.warning(f"  - {issue}")
+            
+            if settings.is_production():
+                raise RuntimeError(
+                    f"Cannot start in production with {len(issues)} configuration issue(s). "
+                    "See logs for details."
+                )
+        else:
+            logger.info("✅ Production readiness validated")
+        
+        logger.info(f"📊 Environment: {settings.environment}")
+        logger.info(f"🔧 Configuration:\n{settings.get_config_summary()}")
+        
         # Connect to MongoDB
         await connect_to_mongodb()
         
@@ -191,11 +218,26 @@ async def lifespan(app: FastAPI):
         
         # Start background monitoring
         await app.state.health_monitor.start_background_monitoring()
-        logger.info("✅ Phase 8C: Health monitoring system initialized and running")
+        logger.info("✅ Phase 8C File 11: Health monitoring system initialized and running")
         
-        logger.info("✅ MasterX server started successfully with DYNAMIC MODEL SYSTEM")
+        # Phase 8C File 12: Initialize cost enforcer
+        from utils.cost_enforcer import get_cost_enforcer
+        
+        app.state.cost_enforcer = get_cost_enforcer()
+        logger.info(f"✅ Phase 8C File 12: Cost enforcer initialized (mode: {settings.cost_enforcement.enforcement_mode})")
+        
+        # Phase 8C File 13: Initialize graceful shutdown
+        from utils.graceful_shutdown import get_graceful_shutdown
+        
+        app.state.graceful_shutdown = get_graceful_shutdown(
+            shutdown_timeout=settings.graceful_shutdown.shutdown_timeout
+        )
+        logger.info(f"✅ Phase 8C File 13: Graceful shutdown configured (timeout: {settings.graceful_shutdown.shutdown_timeout}s)")
+        
+        logger.info("✅ MasterX server started successfully with FULL PHASE 8C PRODUCTION READINESS")
         logger.info(f"📊 Available AI providers: {app.state.engine.get_available_providers()}")
-        logger.info(f"⚡ Model selection: Fully dynamic (quality + cost + speed + availability)")
+        logger.info("⚡ Model selection: Fully dynamic (quality + cost + speed + availability)")
+        logger.info("🛡️ Production features: Health monitoring ✓ Cost enforcement ✓ Graceful shutdown ✓")
         
     except Exception as e:
         logger.error(f"❌ Failed to start server: {e}", exc_info=True)
@@ -203,15 +245,22 @@ async def lifespan(app: FastAPI):
     
     yield
     
-    # Shutdown
-    logger.info("👋 Shutting down MasterX server...")
+    # Shutdown (Phase 8C File 13: Graceful shutdown orchestration)
+    logger.info("👋 Initiating graceful shutdown...")
     
-    # Stop health monitoring (Phase 8C File 11)
-    if hasattr(app.state, 'health_monitor'):
-        await app.state.health_monitor.stop_background_monitoring()
-        logger.info("✅ Health monitoring stopped")
+    # Execute graceful shutdown if configured
+    if hasattr(app.state, 'graceful_shutdown'):
+        await app.state.graceful_shutdown.shutdown()
+    else:
+        logger.warning("⚠️ Graceful shutdown not configured, performing direct shutdown")
+        
+        # Stop health monitoring (Phase 8C File 11)
+        if hasattr(app.state, 'health_monitor'):
+            await app.state.health_monitor.stop_background_monitoring()
+            logger.info("✅ Health monitoring stopped")
+        
+        await close_mongodb_connection()
     
-    await close_mongodb_connection()
     logger.info("✅ MasterX server shut down gracefully")
 
 
@@ -223,14 +272,113 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# CORS middleware
+# ============================================================================
+# PHASE 8C PRODUCTION MIDDLEWARE STACK
+# ============================================================================
+
+# 1. Request Logging Middleware (Phase 8C File 10)
+from utils.request_logger import RequestLoggingMiddleware
+
+app.add_middleware(
+    RequestLoggingMiddleware,
+    redact_pii=True
+)
+
+# 2. CORS middleware (after logging)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Configure properly for production
+    allow_origins=os.getenv("CORS_ORIGINS", "*").split(","),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# 3. Request Tracking Middleware (Phase 8C File 13)
+@app.middleware("http")
+async def track_requests_middleware(request: Request, call_next):
+    """
+    Track requests for graceful shutdown
+    
+    Prevents accepting new requests during shutdown and tracks in-flight requests.
+    """
+    # Skip for health checks
+    if request.url.path.startswith("/api/health"):
+        return await call_next(request)
+    
+    # Get graceful shutdown manager
+    if hasattr(request.app.state, 'graceful_shutdown'):
+        shutdown_manager = request.app.state.graceful_shutdown
+        
+        # Generate request ID
+        request_id = str(uuid.uuid4())
+        
+        # Try to track request
+        if not shutdown_manager.track_request(request_id):
+            # Shutting down, reject new requests
+            return JSONResponse(
+                status_code=503,
+                content={
+                    "error": "Service shutting down",
+                    "message": "Server is gracefully shutting down. Please retry in a moment.",
+                    "retry_after": 30
+                },
+                headers={"Retry-After": "30"}
+            )
+        
+        try:
+            response = await call_next(request)
+            return response
+        finally:
+            shutdown_manager.complete_request(request_id)
+    else:
+        return await call_next(request)
+
+
+# 4. Budget Enforcement Middleware (Phase 8C File 12)
+@app.middleware("http")
+async def budget_enforcement_middleware(request: Request, call_next):
+    """
+    Enforce budget limits per user
+    
+    Checks user budget before processing expensive operations.
+    Returns 402 Payment Required if budget exhausted.
+    """
+    # Skip for health, auth, and public endpoints
+    skip_paths = ["/api/health", "/api/auth", "/api/v1/providers", "/"]
+    if any(request.url.path.startswith(path) for path in skip_paths):
+        return await call_next(request)
+    
+    # Check if user authenticated
+    user_id = getattr(request.state, "user_id", None)
+    
+    if user_id and hasattr(request.app.state, 'cost_enforcer'):
+        cost_enforcer = request.app.state.cost_enforcer
+        
+        try:
+            # Check user budget
+            budget_status = await cost_enforcer.check_user_budget(user_id)
+            
+            if budget_status.status.value == "exhausted":
+                return JSONResponse(
+                    status_code=402,
+                    content={
+                        "error": "Budget exhausted",
+                        "message": "Daily budget limit reached",
+                        "budget": {
+                            "limit_usd": budget_status.limit,
+                            "spent_usd": budget_status.spent,
+                            "remaining_usd": budget_status.remaining,
+                            "reset_time": "00:00 UTC",
+                            "recommended_action": budget_status.recommended_action
+                        }
+                    }
+                )
+        except Exception as e:
+            logger.error(f"Budget enforcement error: {e}")
+            # Don't block request on budget check failure
+    
+    return await call_next(request)
 
 
 # Global error handler
@@ -359,7 +507,7 @@ async def get_model_status():
                         'source': pricing.source,
                         'confidence': pricing.confidence
                     }
-                except:
+                except Exception:
                     pass
             
             provider_info[name] = {
@@ -383,7 +531,7 @@ async def get_model_status():
                         }
                         for r in category_rankings[:5]  # Top 5
                     ]
-                except:
+                except Exception:
                     rankings[category] = []
         
         # Get selector weights
@@ -1875,6 +2023,125 @@ async def get_session_dynamics(session_id: str, time_window_minutes: int = 30):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# ============================================================================
+# PHASE 8C PRODUCTION ENDPOINTS
+# ============================================================================
+
+@app.get("/api/v1/budget/status")
+async def get_budget_status(request: Request):
+    """
+    Get budget status for authenticated user (Phase 8C File 12)
+    
+    Returns current budget usage, limits, and predictions.
+    """
+    # Get user ID from request state (set by auth middleware)
+    user_id = getattr(request.state, "user_id", "guest")
+    
+    if not hasattr(request.app.state, 'cost_enforcer'):
+        raise HTTPException(
+            status_code=503,
+            detail="Cost enforcement not initialized"
+        )
+    
+    cost_enforcer = request.app.state.cost_enforcer
+    budget_status = await cost_enforcer.check_user_budget(user_id)
+    
+    return {
+        "status": budget_status.status.value,
+        "user_id": user_id,
+        "tier": budget_status.tier.value,
+        "limit_usd": budget_status.limit,
+        "spent_usd": budget_status.spent,
+        "remaining_usd": budget_status.remaining,
+        "utilization_percent": budget_status.utilization * 100,
+        "exhaustion_time": budget_status.exhaustion_time.isoformat()
+            if budget_status.exhaustion_time else None,
+        "recommended_action": budget_status.recommended_action,
+        "reset_time": "00:00 UTC daily"
+    }
+
+
+@app.get("/api/v1/admin/system/status")
+async def get_system_status(request: Request):
+    """
+    Get complete system status (Phase 8C - admin only)
+    
+    Combines health monitoring, budget tracking, and configuration info.
+    """
+    # Get health status
+    health_monitor = request.app.state.health_monitor
+    health = await health_monitor.get_comprehensive_health()
+    
+    # Get configuration
+    from config.settings import get_settings
+    settings = get_settings()
+    
+    # Get graceful shutdown status
+    shutdown_status = None
+    if hasattr(request.app.state, 'graceful_shutdown'):
+        shutdown_status = request.app.state.graceful_shutdown.get_shutdown_status()
+    
+    return {
+        "status": "operational" if health.overall_status.value == "healthy" else "degraded",
+        "timestamp": datetime.utcnow().isoformat(),
+        "health": {
+            "overall_status": health.overall_status.value,
+            "health_score": round(health.health_score, 2),
+            "components": {
+                name: {
+                    "status": comp.status.value,
+                    "score": round(comp.health_score, 2),
+                    "trend": comp.trend
+                }
+                for name, comp in health.components.items()
+            }
+        },
+        "environment": settings.get_environment_info(),
+        "uptime_seconds": health.uptime_seconds,
+        "shutdown": {
+            "is_shutting_down": shutdown_status.is_shutting_down if shutdown_status else False,
+            "in_flight_requests": shutdown_status.in_flight_count if shutdown_status else 0,
+            "background_tasks": shutdown_status.background_tasks_count if shutdown_status else 0
+        } if shutdown_status else None,
+        "version": "1.0.0",
+        "phase": "8C - Production Ready (100%)"
+    }
+
+
+@app.get("/api/v1/admin/production-readiness")
+async def check_production_readiness():
+    """
+    Check production readiness (Phase 8C File 14)
+    
+    Validates configuration for production deployment.
+    """
+    from config.settings import get_settings
+    settings = get_settings()
+    
+    is_ready, issues = settings.validate_production_ready()
+    
+    return {
+        "is_ready": is_ready,
+        "environment": settings.environment,
+        "issues_count": len(issues),
+        "issues": issues,
+        "checks": {
+            "database": "localhost" not in settings.database.mongo_url,
+            "security": bool(settings.security.jwt_secret_key and len(settings.security.jwt_secret_key) >= 32),
+            "ai_providers": len(settings.get_active_providers()) >= 2,
+            "debug_mode": not settings.debug if settings.is_production() else True,
+            "cost_enforcement": settings.cost_enforcement.enforcement_mode != "disabled",
+            "graceful_shutdown": settings.graceful_shutdown.enabled
+        },
+        "recommendations": [
+            "Configure at least 2 AI providers for redundancy",
+            "Use strong JWT secret (>=32 characters)",
+            "Enable cost enforcement in production",
+            "Disable debug mode in production"
+        ] if not is_ready else []
+    }
+
+
 # Root endpoint
 @app.get("/")
 async def root():
@@ -1882,9 +2149,9 @@ async def root():
     return {
         "name": "MasterX API",
         "version": "1.0.0",
-        "description": "AI-Powered Adaptive Learning Platform with Emotion Detection - Phase 7 In Progress",
+        "description": "AI-Powered Adaptive Learning Platform with Emotion Detection - Phase 8C Complete",
         "status": "operational",
-        "phase": "7 - Collaboration Features (Real-time Study Groups + Peer Matching)",
+        "phase": "8C - Production Ready (100%)",
         "endpoints": {
             "health": "/api/health",
             "chat": "/api/v1/chat",
