@@ -412,12 +412,15 @@ class SecuritySettings(BaseSettings):
         env_prefix = "SECURITY_"
 
 
-class MonitoringSettings(BaseSettings):
+class HealthMonitorSettings(BaseSettings):
     """
     Health monitoring configuration (Phase 8C File 11)
     
     AGENTS.md compliant: All thresholds ML/statistical-based, not hardcoded
     Configuration-driven parameters for Statistical Process Control
+    
+    Note: This is the primary health monitoring configuration class.
+    MonitoringSettings is an alias for backward compatibility.
     """
     
     # History and sampling
@@ -527,6 +530,10 @@ class MonitoringSettings(BaseSettings):
     
     class Config:
         env_prefix = "MONITORING_"
+
+
+# Alias for backward compatibility
+MonitoringSettings = HealthMonitorSettings
 
 
 class CostEnforcementSettings(BaseSettings):
@@ -700,6 +707,7 @@ class MasterXSettings(BaseSettings):
     voice: VoiceSettings = Field(default_factory=VoiceSettings)
     security: SecuritySettings = Field(default_factory=SecuritySettings)
     monitoring: MonitoringSettings = Field(default_factory=MonitoringSettings)
+    health_monitor: HealthMonitorSettings = Field(default_factory=HealthMonitorSettings)
     cost_enforcement: CostEnforcementSettings = Field(default_factory=CostEnforcementSettings)
     graceful_shutdown: GracefulShutdownSettings = Field(default_factory=GracefulShutdownSettings)
     
