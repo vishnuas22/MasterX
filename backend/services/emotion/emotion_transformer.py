@@ -1,40 +1,31 @@
 """
-Emotion Transformer - Optimized for <100ms latency with GPU acceleration.
+Emotion Transformer - Enterprise-grade emotion detection using BERT/RoBERTa models.
 
-Phase 1 Optimizations:
-- Singleton pattern (model caching - load once, reuse forever)
-- GPU acceleration (CUDA/MPS auto-detect)
-- FP16 mixed precision (2x speed, 1/2 memory)
-- torch.compile() optimization (PyTorch 2.0+)
-- Pre-warming (eliminate cold start)
-- Input validation (OWASP compliant)
-- Prometheus metrics (observability)
-
-100% AGENTS.MD COMPLIANT:
-- All thresholds from config (zero hardcoded)
-- Configuration-driven behavior
-- Type-safe with Pydantic
-- Professional naming conventions
+This module provides ML-based emotion detection with:
+- Pre-trained transformer models (BERT, RoBERTa)
+- Real-time emotion classification
+- Adaptive threshold learning
+- Multi-model ensemble fusion
+- Production-ready error handling
 
 Author: MasterX AI Team
-Version: 2.0 (Performance Optimized)
+Version: 1.0 (Enhanced from v9.0)
 """
 
 import asyncio
 import logging
 import time
-import os
-import re
-import html
 from typing import Dict, Any, List, Optional, Tuple
+from dataclasses import dataclass, field
 from datetime import datetime
+import json
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 
-# Transformer imports with error handling
+# Transformer imports with graceful fallback
 try:
     from transformers import (
         AutoTokenizer,
@@ -45,180 +36,51 @@ try:
     TRANSFORMERS_AVAILABLE = True
 except ImportError:
     TRANSFORMERS_AVAILABLE = False
-    logging.error("❌ Transformers library not available")
+    logging.warning("Transformers library not available - using fallback methods")
+
+# ML imports
+try:
+    from sklearn.preprocessing import StandardScaler
+    from sklearn.ensemble import GradientBoostingClassifier
+    SKLEARN_AVAILABLE = True
+except ImportError:
+    SKLEARN_AVAILABLE = False
 
 from .emotion_core import (
     EmotionCategory,
-    EmotionConfig,
     LearningReadiness,
-    InterventionLevel
+    EmotionalTrajectory,
+    EmotionConstants
 )
 
 logger = logging.getLogger(__name__)
 
 
 # ============================================================================
-# PROMETHEUS METRICS (Observability)
-# ============================================================================
-
-try:
-    from prometheus_client import Counter, Histogram, Gauge
-    
-    # Prediction metrics
-    emotion_predictions_total = Counter(
-        'emotion_predictions_total',
-        'Total emotion predictions',
-        ['status', 'primary_emotion', 'environment']
-    )
-    
-    emotion_prediction_latency = Histogram(
-        'emotion_prediction_latency_seconds',
-        'Emotion prediction latency in seconds',
-        buckets=[0.01, 0.05, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0, 10.0]
-    )
-    
-    emotion_model_load_time = Gauge(
-        'emotion_model_load_time_seconds',
-        'Time to load emotion models'
-    )
-    
-    emotion_cache_hits = Counter(
-        'emotion_cache_hits_total',
-        'Total emotion prediction cache hits'
-    )
-    
-    emotion_rate_limit_exceeded = Counter(
-        'emotion_rate_limit_exceeded_total',
-        'Total rate limit exceeded errors',
-        ['user_id']
-    )
-    
-    emotion_validation_errors = Counter(
-        'emotion_validation_errors_total',
-        'Total input validation errors',
-        ['error_type']
-    )
-    
-    METRICS_AVAILABLE = True
-except ImportError:
-    METRICS_AVAILABLE = False
-    logger.warning("⚠ Prometheus client not available - metrics disabled")
-
-
-# ============================================================================
-# INPUT VALIDATION (OWASP Compliant)
-# ============================================================================
-
-class InputValidator:
-    """
-    Validates and sanitizes emotion detection inputs.
-    OWASP Top 10 compliant input validation.
-    """
-    
-    def __init__(self, config: EmotionConfig):
-        """
-        Initialize validator with configuration.
-        
-        Args:
-            config: Emotion configuration with validation limits
-        """
-        self.config = config
-        self.max_length = config.max_input_length
-        self.min_length = config.min_input_length
-        logger.info(f"✓ InputValidator initialized (min: {self.min_length}, max: {self.max_length})")
-    
-    def validate(self, text: str, user_id: Optional[str] = None) -> str:
-        """
-        Validate and sanitize input text for security.
-        
-        Security measures:
-        - Empty input validation
-        - Length validation (DoS prevention)
-        - Control character removal
-        - HTML escaping (XSS prevention)
-        - Unicode normalization
-        
-        Args:
-            text: Input text to validate
-            user_id: Optional user ID for logging
-        
-        Returns:
-            Sanitized text
-        
-        Raises:
-            ValueError: If input is invalid
-        """
-        # Validate not None
-        if text is None:
-            raise ValueError("Input text cannot be None")
-        
-        # Validate not empty after stripping
-        text = text.strip()
-        if len(text) == 0:
-            raise ValueError("Input text cannot be empty")
-        
-        # Validate minimum length
-        if len(text) < self.min_length:
-            raise ValueError(
-                f"Text too short: {len(text)} chars < {self.min_length} minimum"
-            )
-        
-        # Validate maximum length (DoS prevention)
-        if len(text) > self.max_length:
-            raise ValueError(
-                f"Text too long: {len(text)} chars > {self.max_length} maximum"
-            )
-        
-        # Remove control characters (security)
-        text = re.sub(r'[\x00-\x1F\x7F-\x9F]', '', text)
-        
-        # HTML escape (XSS prevention)
-        text = html.escape(text)
-        
-        # Unicode normalization (prevent homograph attacks)
-        import unicodedata
-        text = unicodedata.normalize('NFKC', text)
-        
-        # Log validation (for security audit)
-        if user_id and self.config.enable_detailed_logging:
-            logger.debug(f"Input validated for user {user_id}: {len(text)} chars")
-        
-        return text
-
-
-# ============================================================================
-# OPTIMIZED EMOTION CLASSIFIER (Phase 1)
+# ML-BASED EMOTION CLASSIFIER
 # ============================================================================
 
 class EmotionClassifier(nn.Module):
-    """
-    Neural network classifier for 40-emotion detection.
-    Optimized for GPU inference with FP16 support.
-    """
+    """Neural network classifier for emotion detection with PAD model."""
     
-    def __init__(
-        self,
-        hidden_size: int = 768,
-        num_emotions: int = 41,
-        dropout: float = 0.1
-    ):
+    def __init__(self, hidden_size: int = 768, num_emotions: int = 13, dropout: float = 0.1):
         """
         Initialize emotion classifier.
         
         Args:
-            hidden_size: Transformer hidden size (BERT/RoBERTa standard)
-            num_emotions: Number of emotion categories (40 + neutral)
+            hidden_size: Size of input features from transformer
+            num_emotions: Number of emotion categories
             dropout: Dropout probability for regularization
         """
         super().__init__()
         self.hidden_size = hidden_size
         self.num_emotions = num_emotions
         
-        # Feature projections for BERT and RoBERTa
+        # Feature projections for different transformer models
         self.bert_projection = nn.Linear(hidden_size, hidden_size)
         self.roberta_projection = nn.Linear(hidden_size, hidden_size)
         
-        # Multi-head attention for model fusion (learned weights)
+        # Multi-head attention for model fusion
         self.attention = nn.MultiheadAttention(
             embed_dim=hidden_size,
             num_heads=8,
@@ -226,438 +88,773 @@ class EmotionClassifier(nn.Module):
             batch_first=True
         )
         
-        # Main emotion classifier (40 emotions)
+        # Main emotion classifier
         self.classifier = nn.Sequential(
             nn.Linear(hidden_size, hidden_size // 2),
             nn.GELU(),
-            nn.LayerNorm(hidden_size // 2),
             nn.Dropout(dropout),
+            nn.LayerNorm(hidden_size // 2),
             nn.Linear(hidden_size // 2, num_emotions)
         )
         
-        # PAD (Pleasure-Arousal-Dominance) regressor
-        # Phase 1: Simple regressor, Phase 2: Will train specialized PADRegressor
-        self.pad_regressor = nn.Sequential(
-            nn.Linear(hidden_size, 384),
+        # PAD (Pleasure-Arousal-Dominance) dimensional model
+        self.arousal_head = self._create_regressor(hidden_size)
+        self.valence_head = self._create_regressor(hidden_size)
+        self.dominance_head = self._create_regressor(hidden_size)
+        
+        # Learning state predictor
+        self.learning_predictor = nn.Sequential(
+            nn.Linear(hidden_size, hidden_size // 2),
             nn.GELU(),
-            nn.LayerNorm(384),
             nn.Dropout(dropout),
-            nn.Linear(384, 3),  # [pleasure, arousal, dominance]
-            nn.Sigmoid()  # Output [0, 1]
+            nn.Linear(hidden_size // 2, 5)  # 5 learning states
         )
         
-        logger.info(f"✓ EmotionClassifier initialized ({num_emotions} emotions)")
+        # Confidence estimator
+        self.confidence_head = nn.Sequential(
+            nn.Linear(hidden_size, hidden_size // 4),
+            nn.GELU(),
+            nn.Linear(hidden_size // 4, 1),
+            nn.Sigmoid()
+        )
+        
+        self.dropout = nn.Dropout(dropout)
+        self.layer_norm = nn.LayerNorm(hidden_size)
+    
+    def _create_regressor(self, hidden_size: int) -> nn.Module:
+        """Create a regressor head for dimensional emotion values."""
+        return nn.Sequential(
+            nn.Linear(hidden_size, hidden_size // 4),
+            nn.GELU(),
+            nn.Dropout(0.1),
+            nn.Linear(hidden_size // 4, 1),
+            nn.Sigmoid()
+        )
     
     def forward(
-        self,
-        bert_embeddings: torch.Tensor,
-        roberta_embeddings: torch.Tensor
+        self, 
+        bert_features: Optional[torch.Tensor] = None,
+        roberta_features: Optional[torch.Tensor] = None
     ) -> Dict[str, torch.Tensor]:
         """
-        Forward pass with dual-encoder fusion.
+        Forward pass through the classifier.
         
         Args:
-            bert_embeddings: [batch, 768] from BERT
-            roberta_embeddings: [batch, 768] from RoBERTa
-        
+            bert_features: BERT embeddings [batch, hidden_size]
+            roberta_features: RoBERTa embeddings [batch, hidden_size]
+            
         Returns:
-            Dictionary with emotion logits and PAD scores
+            Dictionary containing all predictions
         """
-        # Project encoder outputs
-        bert_feat = self.bert_projection(bert_embeddings)
-        roberta_feat = self.roberta_projection(roberta_embeddings)
+        features = []
         
-        # Stack for attention fusion [batch, 2, 768]
-        encoder_feats = torch.stack([bert_feat, roberta_feat], dim=1)
+        # Project features from different models
+        if bert_features is not None:
+            bert_proj = self.bert_projection(bert_features)
+            features.append(bert_proj.unsqueeze(1))
         
-        # Attention learns fusion weights (replaces hardcoded averaging)
-        fused_feat, _ = self.attention(
-            encoder_feats, encoder_feats, encoder_feats
-        )
-        fused_feat = fused_feat.mean(dim=1)  # [batch, 768]
+        if roberta_features is not None:
+            roberta_proj = self.roberta_projection(roberta_features)
+            features.append(roberta_proj.unsqueeze(1))
         
-        # Emotion classification
-        emotion_logits = self.classifier(fused_feat)
-        emotion_probs = F.softmax(emotion_logits, dim=-1)
+        # Handle case with no features
+        if not features:
+            batch_size = 1
+            features = [torch.zeros(batch_size, 1, self.hidden_size)]
         
-        # PAD regression
-        pad_scores = self.pad_regressor(fused_feat)
+        # Multi-model fusion with attention
+        if len(features) > 1:
+            combined = torch.cat(features, dim=1)
+            fused, attn_weights = self.attention(combined, combined, combined)
+            pooled = fused.mean(dim=1)
+        else:
+            pooled = features[0].squeeze(1)
+            attn_weights = None
         
+        # Apply normalization and dropout
+        pooled = self.layer_norm(pooled)
+        pooled = self.dropout(pooled)
+        
+        # Generate all predictions
         return {
-            'emotion_logits': emotion_logits,
-            'emotion_probs': emotion_probs,
-            'pad_scores': pad_scores,
-            'fused_embeddings': fused_feat
+            'emotion_logits': self.classifier(pooled),
+            'arousal': self.arousal_head(pooled),
+            'valence': self.valence_head(pooled),
+            'dominance': self.dominance_head(pooled),
+            'learning_logits': self.learning_predictor(pooled),
+            'confidence': self.confidence_head(pooled),
+            'attention_weights': attn_weights,
+            'features': pooled
         }
 
 
 # ============================================================================
-# OPTIMIZED EMOTION TRANSFORMER (Singleton + GPU + FP16 + Caching)
+# ADAPTIVE THRESHOLD MANAGER
+# ============================================================================
+
+@dataclass
+class UserThresholds:
+    """Per-user adaptive thresholds for emotion detection."""
+    
+    confidence_threshold: float = 0.7
+    intervention_threshold: float = 0.4
+    optimal_cognitive_load: float = 0.6
+    bert_weight: float = 1.0
+    roberta_weight: float = 1.0
+    total_predictions: int = 0
+    successful_predictions: int = 0
+    learning_rate: float = 0.1
+    last_updated: Optional[datetime] = None
+    
+    def get(self, key: str, default: Any = None) -> Any:
+        """Dict-like get method for compatibility."""
+        return getattr(self, key, default)
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary."""
+        return {
+            'confidence_threshold': self.confidence_threshold,
+            'intervention_threshold': self.intervention_threshold,
+            'optimal_cognitive_load': self.optimal_cognitive_load,
+            'bert_weight': self.bert_weight,
+            'roberta_weight': self.roberta_weight,
+            'total_predictions': self.total_predictions,
+            'successful_predictions': self.successful_predictions,
+            'learning_rate': self.learning_rate,
+            'last_updated': self.last_updated.isoformat() if self.last_updated else None
+        }
+    
+    def update_learning_rate(self) -> None:
+        """Decay learning rate over time for stability using quantum-inspired exponential decay."""
+        # Quantum-inspired decay: faster decay initially, slower over time
+        decay_factor = 0.99 - (0.01 * np.exp(-self.total_predictions / 100))
+        self.learning_rate = max(0.01, self.learning_rate * decay_factor)
+    
+    def update_confidence_threshold(self, prediction_confidence: float) -> None:
+        """Adapt confidence threshold based on prediction quality using ML-based approach."""
+        lr = self.learning_rate
+        
+        # Adaptive target calculation using sigmoid-based smooth transitions
+        if prediction_confidence > 0.8:
+            # High confidence - gradually lower threshold
+            target = prediction_confidence - 0.1
+        elif prediction_confidence < 0.5:
+            # Low confidence - raise threshold with urgency
+            target = min(0.9, prediction_confidence + 0.2)
+        else:
+            # Moderate confidence - minor adjustments
+            return
+        
+        # Exponential moving average update
+        self.confidence_threshold = (1 - lr) * self.confidence_threshold + lr * target
+        self.confidence_threshold = np.clip(self.confidence_threshold, 0.3, 0.9)
+    
+    def update_model_weight(self, model_type: str, confidence: float) -> None:
+        """Update model-specific performance weights using quantum-inspired optimization."""
+        lr = self.learning_rate
+        
+        # Quantum-inspired weight update: consider both confidence and historical performance
+        if model_type == 'bert':
+            current_weight = self.bert_weight
+            # Weighted update with momentum
+            new_weight = (1 - lr) * current_weight + lr * (confidence * 2.0)
+            self.bert_weight = np.clip(new_weight, 0.1, 2.0)
+        elif model_type == 'roberta':
+            current_weight = self.roberta_weight
+            new_weight = (1 - lr) * current_weight + lr * (confidence * 2.0)
+            self.roberta_weight = np.clip(new_weight, 0.1, 2.0)
+
+
+class AdaptiveThresholdManager:
+    """Manages per-user adaptive thresholds for emotion detection."""
+    
+    def __init__(self):
+        self.thresholds: Dict[str, UserThresholds] = {}
+        logger.info("Adaptive threshold manager initialized")
+    
+    def get_thresholds(self, user_id: Optional[str]) -> UserThresholds:
+        """Get thresholds for a user, creating default if needed."""
+        if not user_id:
+            return UserThresholds()
+        
+        if user_id not in self.thresholds:
+            self.thresholds[user_id] = UserThresholds(last_updated=datetime.utcnow())
+        
+        return self.thresholds[user_id]
+    
+    def update_thresholds(
+        self,
+        user_id: str,
+        prediction_confidence: float,
+        model_type: str
+    ) -> None:
+        """Update thresholds based on prediction results."""
+        thresholds = self.get_thresholds(user_id)
+        
+        thresholds.total_predictions += 1
+        thresholds.update_learning_rate()
+        thresholds.update_confidence_threshold(prediction_confidence)
+        thresholds.update_model_weight(model_type, prediction_confidence)
+        thresholds.last_updated = datetime.utcnow()
+        
+        self.thresholds[user_id] = thresholds
+
+
+# ============================================================================
+# MAIN EMOTION TRANSFORMER
 # ============================================================================
 
 class EmotionTransformer:
     """
-    Optimized emotion transformer with <100ms latency target.
+    Enterprise-grade emotion detection using transformer models.
     
-    Phase 1 Optimizations:
-    - Singleton pattern (load models once globally)
-    - GPU acceleration (CUDA/MPS auto-detect)
-    - FP16 mixed precision (2x faster, 1/2 memory)
-    - torch.compile() (PyTorch 2.0+ optimization)
-    - Model pre-warming (eliminate cold start)
-    
-    Security:
-    - Input validation (OWASP compliant)
-    - Rate limiting integration
-    - XSS/DoS prevention
-    
-    Observability:
-    - Prometheus metrics
-    - Structured logging
-    - Performance tracking
+    Features:
+    - Multi-model support (BERT, RoBERTa)
+    - Adaptive threshold learning
+    - Ensemble prediction fusion
+    - Graceful fallback mechanisms
+    - Production-ready error handling
     """
     
-    _instance = None
-    _initialized = False
-    
-    def __new__(cls):
-        """Singleton pattern - create only one instance"""
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-        return cls._instance
-    
     def __init__(self):
-        """Initialize only once (singleton)"""
-        if self._initialized:
-            return
+        """Initialize emotion transformer."""
+        self.bert_model: Optional[Any] = None
+        self.roberta_model: Optional[Any] = None
+        self.bert_tokenizer: Optional[Any] = None
+        self.roberta_tokenizer: Optional[Any] = None
+        self.classifier: Optional[EmotionClassifier] = None
+        self.threshold_manager = AdaptiveThresholdManager()
+        self.is_initialized = False
         
-        logger.info("🚀 Initializing OptimizedEmotionTransformer (one-time setup)...")
+        # Model configuration
+        self.config = {
+            'bert_model': 'bert-base-uncased',
+            'roberta_model': 'roberta-base',
+            'max_length': 512,
+            'hidden_size': 768,
+            'num_emotions': len(EmotionCategory),
+            'batch_size': 16,
+            'dropout': 0.1
+        }
+        
+        # Performance tracking
+        self.stats = {
+            'total_predictions': 0,
+            'transformer_predictions': 0,
+            'fallback_predictions': 0,
+            'avg_confidence': 0.0,
+            'initialization_time': 0.0
+        }
+        
+        logger.info("EmotionTransformer initialized")
+    
+    async def initialize(self) -> bool:
+        """
+        Initialize transformer models and classifier.
+        
+        Returns:
+            True if initialization successful, False otherwise
+        """
+        if self.is_initialized:
+            return True
+        
         start_time = time.time()
+        logger.info("Initializing transformer models...")
         
-        # Load configuration (environment-aware)
-        env = os.getenv("ENVIRONMENT", "production")
-        self.config = EmotionConfig.for_environment(env)
-        logger.info(f"✓ Environment: {self.config.environment}")
-        
-        # Initialize input validator (OWASP compliant)
-        self.validator = InputValidator(self.config)
-        
-        # Auto-detect best device
-        self.device = self._detect_device()
-        
-        # Load transformer models
-        self._load_transformers()
-        
-        # Load/initialize classifier
-        self._load_classifier()
-        
-        # Apply optimizations
-        self._optimize_models()
-        
-        # Pre-warm models (eliminate cold start)
-        self._pre_warm_models()
-        
-        # Record load time metric
-        load_time = time.time() - start_time
-        if METRICS_AVAILABLE and self.config.enable_prometheus_metrics:
-            emotion_model_load_time.set(load_time)
-        
-        self._initialized = True
-        logger.info(f"✅ OptimizedEmotionTransformer ready ({load_time:.2f}s)")
-    
-    def _detect_device(self) -> torch.device:
-        """
-        Auto-detect best available device.
-        Priority from config: default is ["mps", "cuda", "cpu"]
-        """
-        for device_name in self.config.device_priority:
-            if device_name == "mps" and torch.backends.mps.is_available():
-                logger.info("✓ Using Apple Metal Performance Shaders (MPS)")
-                return torch.device("mps")
-            elif device_name == "cuda" and torch.cuda.is_available():
-                gpu_name = torch.cuda.get_device_name(0)
-                logger.info(f"✓ Using CUDA GPU: {gpu_name}")
-                return torch.device("cuda:0")
-        
-        logger.warning("⚠ No GPU available, using CPU (slower)")
-        return torch.device("cpu")
-    
-    def _load_transformers(self):
-        """Load BERT and RoBERTa models with caching"""
-        if not TRANSFORMERS_AVAILABLE:
-            raise RuntimeError("Transformers library not available")
-        
-        logger.info("Loading BERT...")
-        self.bert_tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
-        self.bert_model = AutoModel.from_pretrained("bert-base-uncased")
-        
-        logger.info("Loading RoBERTa...")
-        self.roberta_tokenizer = AutoTokenizer.from_pretrained("roberta-base")
-        self.roberta_model = AutoModel.from_pretrained("roberta-base")
-        
-        logger.info("✓ Transformers loaded (BERT + RoBERTa)")
-    
-    def _load_classifier(self):
-        """Load/initialize emotion classifier"""
-        self.classifier = EmotionClassifier(
-            hidden_size=self.config.hidden_size,
-            num_emotions=self.config.num_emotions,
-            dropout=0.1
-        )
-        
-        # Try to load trained weights (Phase 2)
-        model_path = os.getenv(
-            "EMOTION_MODEL_PATH",
-            "/app/backend/models/lightweight_emotion/emotion_classifier_40.pt"
-        )
-        
-        if os.path.exists(model_path):
+        try:
+            if not TRANSFORMERS_AVAILABLE:
+                logger.warning("Transformers library not available - using fallback only")
+                self.is_initialized = True
+                return True
+            
+            # Initialize BERT
             try:
-                checkpoint = torch.load(model_path, map_location='cpu')
-                self.classifier.load_state_dict(checkpoint['model_state_dict'])
-                logger.info(f"✓ Loaded trained classifier from {model_path}")
-            except Exception as e:
-                logger.warning(f"⚠ Could not load checkpoint: {e}")
-                logger.warning("  Using untrained classifier")
-        else:
-            logger.warning(f"⚠ No trained model at {model_path}")
-            logger.warning("  Using untrained classifier (Phase 1)")
-    
-    def _optimize_models(self):
-        """Apply all performance optimizations"""
-        # Move to device
-        self.bert_model = self.bert_model.to(self.device)
-        self.roberta_model = self.roberta_model.to(self.device)
-        self.classifier = self.classifier.to(self.device)
-        
-        # Set eval mode (disable dropout/batch_norm training behavior)
-        self.bert_model.eval()
-        self.roberta_model.eval()
-        self.classifier.eval()
-        
-        # Apply FP16 quantization (if GPU available and enabled)
-        if self.device.type in ['cuda', 'mps'] and self.config.use_fp16:
-            try:
-                self.bert_model = self.bert_model.half()
-                self.roberta_model = self.roberta_model.half()
-                self.classifier = self.classifier.half()
-                logger.info("✓ FP16 quantization applied (2x memory, ~1.5x speed)")
-            except Exception as e:
-                logger.warning(f"⚠ FP16 failed: {e}")
-        
-        # Torch compile (PyTorch 2.0+ optimization)
-        if hasattr(torch, 'compile') and self.config.use_torch_compile:
-            try:
-                self.bert_model = torch.compile(
-                    self.bert_model,
-                    mode="reduce-overhead"
+                self.bert_tokenizer = AutoTokenizer.from_pretrained(
+                    self.config['bert_model'],
+                    use_fast=True
                 )
-                self.roberta_model = torch.compile(
-                    self.roberta_model,
-                    mode="reduce-overhead"
-                )
-                self.classifier = torch.compile(
-                    self.classifier,
-                    mode="reduce-overhead"
-                )
-                logger.info("✓ torch.compile applied (~1.5-2x speedup)")
+                self.bert_model = AutoModel.from_pretrained(self.config['bert_model'])
+                self.bert_model.eval()
+                logger.info("✓ BERT model loaded successfully")
             except Exception as e:
-                logger.warning(f"⚠ torch.compile failed: {e}")
-    
-    def _pre_warm_models(self):
-        """
-        Pre-warm models with dummy input to eliminate cold start.
-        First prediction is always slow - do it during init.
-        """
-        logger.info("Pre-warming models...")
-        
-        dummy_text = "This is a test to warm up the models for optimal performance"
-        
-        with torch.inference_mode():
+                logger.error(f"Failed to load BERT: {e}")
+                self.bert_model = None
+            
+            # Initialize RoBERTa
             try:
-                # Tokenize
-                bert_inputs = self.bert_tokenizer(
-                    dummy_text,
-                    return_tensors="pt",
-                    padding=True,
-                    truncation=True,
-                    max_length=512
-                ).to(self.device)
-                
-                roberta_inputs = self.roberta_tokenizer(
-                    dummy_text,
-                    return_tensors="pt",
-                    padding=True,
-                    truncation=True,
-                    max_length=512
-                ).to(self.device)
-                
-                # Get embeddings
-                _ = self.bert_model(**bert_inputs)
-                _ = self.roberta_model(**roberta_inputs)
-                
-                logger.info("✓ Models pre-warmed (cold start eliminated)")
+                self.roberta_tokenizer = AutoTokenizer.from_pretrained(
+                    self.config['roberta_model'],
+                    use_fast=True
+                )
+                self.roberta_model = AutoModel.from_pretrained(self.config['roberta_model'])
+                self.roberta_model.eval()
+                logger.info("✓ RoBERTa model loaded successfully")
             except Exception as e:
-                logger.warning(f"⚠ Pre-warming failed: {e}")
+                logger.error(f"Failed to load RoBERTa: {e}")
+                self.roberta_model = None
+            
+            # Initialize classifier if at least one model loaded
+            if self.bert_model or self.roberta_model:
+                self.classifier = EmotionClassifier(
+                    hidden_size=self.config['hidden_size'],
+                    num_emotions=self.config['num_emotions'],
+                    dropout=self.config['dropout']
+                )
+                self.classifier.eval()
+                logger.info("✓ Emotion classifier initialized")
+            
+            init_time = time.time() - start_time
+            self.stats['initialization_time'] = init_time
+            self.is_initialized = True
+            
+            models_loaded = sum([
+                self.bert_model is not None,
+                self.roberta_model is not None
+            ])
+            logger.info(f"Initialization complete ({init_time:.2f}s, {models_loaded} models loaded)")
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"Initialization failed: {e}", exc_info=True)
+            self.is_initialized = True  # Allow fallback mode
+            return False
     
-    @torch.inference_mode()
     async def predict(
         self,
-        text: str,
+        input_data: Any,  # Can be str or Dict
         user_id: Optional[str] = None
     ) -> Dict[str, Any]:
         """
-        Predict emotion with <100ms latency target.
+        Predict emotion from input data with flexible input handling.
         
         Args:
-            text: Input text to analyze
-            user_id: User ID for rate limiting (optional)
-        
+            input_data: String text or dictionary containing 'text_data' key
+            user_id: Optional user ID for adaptive thresholds
+            
         Returns:
             Dictionary with emotion predictions
-        
-        Raises:
-            ValueError: If input validation fails
         """
-        start = time.time()
+        if not self.is_initialized:
+            await self.initialize()
+        
+        start_time = time.time()
         
         try:
-            # STEP 1: Input validation (OWASP compliant)
-            try:
-                text = self.validator.validate(text, user_id)
-            except ValueError as e:
-                if METRICS_AVAILABLE and self.config.enable_prometheus_metrics:
-                    emotion_validation_errors.labels(error_type='validation').inc()
-                logger.warning(f"Input validation failed: {e}")
-                raise
+            # Extract and validate text (handles both str and dict)
+            text = self._extract_text_flexible(input_data)
+            if not text:
+                return self._get_neutral_prediction()
             
-            # STEP 2: Rate limiting (if enabled and user_id provided)
-            # Will be integrated with rate_limiter in Phase 2
+            # Get user thresholds
+            thresholds = self.threshold_manager.get_thresholds(user_id)
             
-            # STEP 3: Tokenize and get embeddings
-            bert_inputs = self.bert_tokenizer(
-                text,
-                return_tensors="pt",
-                padding=True,
-                truncation=True,
-                max_length=512
-            ).to(self.device)
+            # Generate predictions from available models
+            predictions = []
             
-            roberta_inputs = self.roberta_tokenizer(
-                text,
-                return_tensors="pt",
-                padding=True,
-                truncation=True,
-                max_length=512
-            ).to(self.device)
+            if self.bert_model and self.bert_tokenizer:
+                bert_pred = await self._predict_bert(text, thresholds)
+                if bert_pred:
+                    predictions.append(bert_pred)
             
-            # Get embeddings ([CLS] token)
-            bert_output = self.bert_model(**bert_inputs)
-            bert_embeddings = bert_output.last_hidden_state[:, 0, :]
+            if self.roberta_model and self.roberta_tokenizer:
+                roberta_pred = await self._predict_roberta(text, thresholds)
+                if roberta_pred:
+                    predictions.append(roberta_pred)
             
-            roberta_output = self.roberta_model(**roberta_inputs)
-            roberta_embeddings = roberta_output.last_hidden_state[:, 0, :]
+            # Fuse predictions or use fallback
+            if predictions:
+                result = self._fuse_predictions(predictions, thresholds)
+                self.stats['transformer_predictions'] += 1
+            else:
+                result = await self._predict_fallback(text)
+                self.stats['fallback_predictions'] += 1
             
-            # STEP 4: Forward pass through classifier
-            results = self.classifier(bert_embeddings, roberta_embeddings)
+            # Update adaptive thresholds
+            if user_id and predictions:
+                self.threshold_manager.update_thresholds(
+                    user_id,
+                    result['confidence'],
+                    result['model_type']
+                )
             
-            # STEP 5: Convert to output format
-            emotion_probs = results['emotion_probs'].detach().cpu().float().numpy()[0]
-            pad_scores = results['pad_scores'].detach().cpu().float().numpy()[0]
-            
-            # Get primary emotion (highest probability)
-            primary_idx = emotion_probs.argmax()
-            emotions_list = list(EmotionCategory)
-            primary_emotion = emotions_list[primary_idx].value
-            confidence = float(emotion_probs[primary_idx])
-            
-            # Build response
-            response = {
-                'primary_emotion': primary_emotion,
-                'confidence': confidence,
-                'all_emotions': {
-                    emotions_list[i].value: float(prob)
-                    for i, prob in enumerate(emotion_probs)
-                },
-                'pad_scores': {
-                    'pleasure': float(pad_scores[0]),
-                    'arousal': float(pad_scores[1]),
-                    'dominance': float(pad_scores[2])
-                },
-                'latency_ms': (time.time() - start) * 1000
+            # Add metadata
+            prediction_time = (time.time() - start_time) * 1000
+            result['metadata'] = {
+                'prediction_time_ms': round(prediction_time, 2),
+                'models_used': len(predictions),
+                'adaptive_threshold': thresholds.confidence_threshold,
+                'version': '1.0'
             }
             
-            # STEP 6: Performance tracking
-            latency_ms = response['latency_ms']
+            # Update statistics
+            self.stats['total_predictions'] += 1
+            self._update_stats(result['confidence'])
             
-            # Prometheus metrics
-            if METRICS_AVAILABLE and self.config.enable_prometheus_metrics:
-                emotion_predictions_total.labels(
-                    status='success',
-                    primary_emotion=primary_emotion,
-                    environment=self.config.environment
-                ).inc()
-                emotion_prediction_latency.observe(latency_ms / 1000)
-            
-            # Logging
-            if latency_ms > self.config.target_latency_ms:
-                logger.warning(
-                    f"⚠ Slow prediction: {latency_ms:.1f}ms "
-                    f"(target: {self.config.target_latency_ms}ms)"
-                )
-            elif self.config.enable_detailed_logging:
-                logger.debug(f"✓ Prediction: {latency_ms:.1f}ms")
-            
-            return response
+            return result
             
         except Exception as e:
-            # Prometheus error metric
-            if METRICS_AVAILABLE and self.config.enable_prometheus_metrics:
-                emotion_predictions_total.labels(
-                    status='error',
-                    primary_emotion='unknown',
-                    environment=self.config.environment
-                ).inc()
+            logger.error(f"Prediction failed: {e}", exc_info=True)
+            return self._get_neutral_prediction(error=str(e))
+    
+    async def _predict_bert(
+        self,
+        text: str,
+        thresholds: UserThresholds
+    ) -> Optional[Dict[str, Any]]:
+        """Generate prediction using BERT model."""
+        try:
+            # Tokenize
+            inputs = self.bert_tokenizer(
+                text,
+                return_tensors="pt",
+                max_length=self.config['max_length'],
+                truncation=True,
+                padding=True
+            )
             
-            logger.error(f"❌ Prediction failed: {e}", exc_info=True)
-            raise
-
-
-# ============================================================================
-# BACKWARD COMPATIBILITY (Legacy components)
-# ============================================================================
-
-class AdaptiveThresholdManager:
-    """
-    Legacy adaptive threshold manager for backward compatibility.
-    DEPRECATED: Will be replaced with neural network in Phase 2.
-    """
+            # Get embeddings
+            with torch.no_grad():
+                outputs = self.bert_model(**inputs)
+                embeddings = outputs.last_hidden_state[:, 0, :]  # [CLS] token
+            
+            # Classify
+            if self.classifier:
+                outputs = self.classifier(bert_features=embeddings)
+                return self._process_classifier_output(
+                    outputs,
+                    thresholds,
+                    model_type='bert'
+                )
+            
+            return None
+            
+        except Exception as e:
+            logger.error(f"BERT prediction failed: {e}")
+            return None
     
-    def __init__(self):
-        """Initialize with default thresholds"""
-        logger.warning(
-            "⚠ AdaptiveThresholdManager is deprecated, "
-            "will be replaced with neural network in Phase 2"
-        )
-        # Placeholder implementation
-        self.thresholds = {}
+    async def _predict_roberta(
+        self,
+        text: str,
+        thresholds: UserThresholds
+    ) -> Optional[Dict[str, Any]]:
+        """Generate prediction using RoBERTa model."""
+        try:
+            # Tokenize
+            inputs = self.roberta_tokenizer(
+                text,
+                return_tensors="pt",
+                max_length=self.config['max_length'],
+                truncation=True,
+                padding=True
+            )
+            
+            # Get embeddings
+            with torch.no_grad():
+                outputs = self.roberta_model(**inputs)
+                embeddings = outputs.last_hidden_state[:, 0, :]  # [CLS] token
+            
+            # Classify
+            if self.classifier:
+                outputs = self.classifier(roberta_features=embeddings)
+                return self._process_classifier_output(
+                    outputs,
+                    thresholds,
+                    model_type='roberta'
+                )
+            
+            return None
+            
+        except Exception as e:
+            logger.error(f"RoBERTa prediction failed: {e}")
+            return None
     
-    async def get_thresholds(self, user_id: str) -> Dict[str, float]:
-        """Get user-specific thresholds (placeholder)"""
+    def _process_classifier_output(
+        self,
+        outputs: Dict[str, torch.Tensor],
+        thresholds: UserThresholds,
+        model_type: str
+    ) -> Dict[str, Any]:
+        """
+        Process classifier output with ML-based confidence calibration.
+        
+        Applies:
+        - Temperature scaling for calibration
+        - Adaptive thresholding
+        - Entropy-based uncertainty quantification
+        """
+        # Get emotion probabilities with temperature scaling
+        temperature = 1.5  # Smooth probabilities for better calibration
+        emotion_logits = outputs['emotion_logits'] / temperature
+        emotion_probs = F.softmax(emotion_logits, dim=-1)
+        emotion_categories = list(EmotionCategory)
+        
+        # Build emotion distribution
+        emotion_dist = {
+            emotion_categories[i].value: float(emotion_probs[0][i])
+            for i in range(len(emotion_categories))
+        }
+        
+        # Get primary emotion and raw confidence
+        primary_emotion = max(emotion_dist.keys(), key=lambda k: emotion_dist[k])
+        raw_confidence = emotion_dist[primary_emotion]
+        
+        # Calculate prediction entropy (uncertainty)
+        probs_array = emotion_probs[0].detach().cpu().numpy()
+        entropy = -np.sum(probs_array * np.log(probs_array + 1e-10))
+        max_entropy = np.log(len(emotion_categories))
+        uncertainty = entropy / max_entropy  # Normalized to [0, 1]
+        
+        # Calibrate confidence using uncertainty
+        calibrated_confidence = raw_confidence * (1 - uncertainty * 0.3)
+        
+        # Apply adaptive threshold
+        if calibrated_confidence < thresholds.confidence_threshold:
+            # Low confidence - default to neutral
+            logger.debug(
+                f"Low confidence {calibrated_confidence:.3f} < threshold "
+                f"{thresholds.confidence_threshold:.3f}, using neutral"
+            )
+            primary_emotion = EmotionCategory.NEUTRAL.value
+            calibrated_confidence = emotion_dist[primary_emotion]
+        
+        # Get learning state with similar calibration
+        learning_probs = F.softmax(outputs['learning_logits'], dim=-1)
+        learning_states = list(LearningReadiness)
+        learning_idx = torch.argmax(learning_probs, dim=-1).item()
+        learning_state = learning_states[learning_idx].value
+        
+        # Extract PAD dimensions with bounds checking
+        arousal = float(torch.clamp(outputs['arousal'][0], 0, 1).item())
+        valence = float(torch.clamp(outputs['valence'][0], 0, 1).item())
+        dominance = float(torch.clamp(outputs['dominance'][0], 0, 1).item())
+        
         return {
-            'confidence': 0.7,
-            'intervention': 0.6,
-            'readiness': 0.5
+            'primary_emotion': primary_emotion,
+            'emotion_distribution': emotion_dist,
+            'confidence': float(calibrated_confidence),
+            'raw_confidence': float(raw_confidence),
+            'uncertainty': float(uncertainty),
+            'arousal': arousal,
+            'valence': valence,
+            'dominance': dominance,
+            'learning_state': learning_state,
+            'model_type': model_type
+        }
+    
+    def _fuse_predictions(
+        self,
+        predictions: List[Dict[str, Any]],
+        thresholds: UserThresholds
+    ) -> Dict[str, Any]:
+        """
+        Fuse multiple model predictions using quantum-inspired ensemble optimization.
+        
+        Uses adaptive weighting based on:
+        - Model-specific confidence
+        - Historical performance
+        - Prediction agreement (quantum coherence)
+        """
+        if len(predictions) == 1:
+            return predictions[0]
+        
+        # Quantum-inspired weight calculation
+        weights = []
+        confidences = []
+        
+        for pred in predictions:
+            confidence = pred['confidence']
+            model_type = pred['model_type']
+            
+            # Base weight from confidence and model performance
+            if model_type == 'bert':
+                base_weight = confidence * thresholds.bert_weight
+            elif model_type == 'roberta':
+                base_weight = confidence * thresholds.roberta_weight
+            else:
+                base_weight = confidence
+            
+            weights.append(base_weight)
+            confidences.append(confidence)
+        
+        # Apply quantum coherence bonus: predictions that agree get boosted
+        if len(predictions) == 2:
+            # Calculate agreement on primary emotion
+            emotions = [p['primary_emotion'] for p in predictions]
+            if emotions[0] == emotions[1]:
+                # Coherent predictions - boost both weights
+                coherence_bonus = 1.2
+                weights = [w * coherence_bonus for w in weights]
+                logger.debug("Quantum coherence detected: predictions agree")
+        
+        # Normalize weights with numerical stability
+        total_weight = sum(weights)
+        if total_weight > 1e-6:
+            weights = [w / total_weight for w in weights]
+        else:
+            # Fallback to uniform weights
+            weights = [1.0 / len(predictions)] * len(predictions)
+        
+        # Fuse emotion distributions
+        fused_dist = {}
+        for emotion in EmotionCategory:
+            emotion_value = emotion.value
+            score = sum(
+                pred['emotion_distribution'].get(emotion_value, 0.0) * weights[i]
+                for i, pred in enumerate(predictions)
+            )
+            fused_dist[emotion_value] = score
+        
+        # Normalize distribution
+        total = sum(fused_dist.values())
+        if total > 0:
+            fused_dist = {k: v / total for k, v in fused_dist.items()}
+        
+        # Get primary emotion
+        primary_emotion = max(fused_dist.keys(), key=lambda k: fused_dist[k])
+        
+        # Fuse other metrics
+        result = {
+            'primary_emotion': primary_emotion,
+            'emotion_distribution': fused_dist,
+            'confidence': sum(pred['confidence'] * weights[i] for i, pred in enumerate(predictions)),
+            'arousal': sum(pred['arousal'] * weights[i] for i, pred in enumerate(predictions)),
+            'valence': sum(pred['valence'] * weights[i] for i, pred in enumerate(predictions)),
+            'dominance': sum(pred['dominance'] * weights[i] for i, pred in enumerate(predictions)),
+            'learning_state': max(predictions, key=lambda p: p['confidence'])['learning_state'],
+            'model_type': 'ensemble',
+            'ensemble_weights': dict(zip([p['model_type'] for p in predictions], weights))
+        }
+        
+        return result
+    
+    async def _predict_fallback(self, text: str) -> Dict[str, Any]:
+        """Fallback prediction using pattern matching."""
+        text_lower = text.lower()
+        
+        # Initialize scores
+        emotion_scores = {emotion.value: 0.0 for emotion in EmotionCategory}
+        
+        # Pattern-based scoring
+        patterns = {
+            EmotionCategory.JOY.value: ['happy', 'excited', 'joy', 'great', 'awesome', 'love', 'amazing', 'wonderful'],
+            EmotionCategory.SATISFACTION.value: ['satisfied', 'good', 'nice', 'pleased', 'content'],
+            EmotionCategory.FRUSTRATION.value: ['frustrated', 'annoyed', 'irritated', 'difficult', 'hard'],
+            EmotionCategory.CONFUSION.value: ['confused', 'unclear', 'lost', "don't understand", "don't get", 'puzzled'],
+            EmotionCategory.BREAKTHROUGH_MOMENT.value: ['understand', 'got it', 'makes sense', 'clear now', 'aha', 'finally'],
+            EmotionCategory.SADNESS.value: ['sad', 'unhappy', 'disappointed', 'down'],
+            EmotionCategory.ANXIETY.value: ['worried', 'anxious', 'nervous', 'scared', 'afraid'],
+        }
+        
+        # Score based on patterns
+        for emotion, keywords in patterns.items():
+            for keyword in keywords:
+                if keyword in text_lower:
+                    emotion_scores[emotion] += 0.2
+        
+        # Normalize
+        total_score = sum(emotion_scores.values())
+        if total_score > 0:
+            emotion_scores = {k: v / total_score for k, v in emotion_scores.items()}
+        else:
+            emotion_scores[EmotionCategory.NEUTRAL.value] = 1.0
+        
+        # Get primary emotion
+        primary_emotion = max(emotion_scores.keys(), key=lambda k: emotion_scores[k])
+        
+        return {
+            'primary_emotion': primary_emotion,
+            'emotion_distribution': emotion_scores,
+            'confidence': emotion_scores[primary_emotion],
+            'arousal': 0.5,
+            'valence': 0.5,
+            'dominance': 0.5,
+            'learning_state': LearningReadiness.MODERATE_READINESS.value,
+            'model_type': 'fallback'
+        }
+    
+    def _extract_text_flexible(self, input_data: Any) -> str:
+        """
+        Extract text from flexible input formats.
+        
+        Supports:
+        - Direct string input
+        - Dict with 'text_data' key
+        - Dict with 'text' or 'content' keys
+        - Complex nested structures
+        """
+        # Handle None
+        if input_data is None:
+            return ""
+        
+        # Handle direct string
+        if isinstance(input_data, str):
+            return input_data.strip()
+        
+        # Handle dictionary
+        if isinstance(input_data, dict):
+            # Try common keys
+            for key in ['text_data', 'text', 'content', 'message']:
+                if key in input_data:
+                    value = input_data[key]
+                    if isinstance(value, str):
+                        return value.strip()
+                    elif isinstance(value, dict):
+                        # Nested dict - recurse
+                        return self._extract_text_flexible(value)
+            
+            # Fallback: convert entire dict to string
+            return str(input_data).strip()
+        
+        # Handle other types
+        return str(input_data).strip()
+    
+    def _extract_text(self, input_data: Dict[str, Any]) -> str:
+        """
+        Legacy method for backward compatibility.
+        Delegates to flexible extraction.
+        """
+        return self._extract_text_flexible(input_data)
+    
+    def _get_neutral_prediction(self, error: Optional[str] = None) -> Dict[str, Any]:
+        """Get neutral prediction for error cases."""
+        result = {
+            'primary_emotion': EmotionCategory.NEUTRAL.value,
+            'emotion_distribution': {EmotionCategory.NEUTRAL.value: 1.0},
+            'confidence': 0.5,
+            'arousal': 0.5,
+            'valence': 0.5,
+            'dominance': 0.5,
+            'learning_state': LearningReadiness.MODERATE_READINESS.value,
+            'model_type': 'neutral_fallback'
+        }
+        
+        if error:
+            result['error'] = error
+        
+        return result
+    
+    def _update_stats(self, confidence: float) -> None:
+        """Update running statistics."""
+        n = self.stats['total_predictions']
+        if n > 0:
+            current_avg = self.stats['avg_confidence']
+            self.stats['avg_confidence'] = (current_avg * (n - 1) + confidence) / n
+    
+    def get_stats(self) -> Dict[str, Any]:
+        """Get performance statistics."""
+        models_available = []
+        if self.bert_model:
+            models_available.append('BERT')
+        if self.roberta_model:
+            models_available.append('RoBERTa')
+        
+        return {
+            **self.stats,
+            'models_available': models_available,
+            'total_users': len(self.threshold_manager.thresholds),
+            'is_initialized': self.is_initialized
         }
 
 
-# ============================================================================
-# EXPORTS
-# ============================================================================
-
-__all__ = [
-    'EmotionTransformer',
-    'EmotionClassifier',
-    'InputValidator',
-    'AdaptiveThresholdManager'  # Deprecated
-]
+__all__ = ['EmotionTransformer', 'EmotionClassifier', 'AdaptiveThresholdManager']
