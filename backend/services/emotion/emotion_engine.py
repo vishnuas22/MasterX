@@ -78,14 +78,19 @@ class EmotionEngine:
     - Trajectory prediction
     """
     
-    def __init__(self):
-        """Initialize emotion detection engine."""
+    def __init__(self, config: Optional[Dict[str, Any]] = None):
+        """
+        Initialize emotion detection engine (Phase 1 Optimized).
+        
+        Args:
+            config: Configuration dictionary (from settings)
+        """
         
         self.engine_id = str(uuid.uuid4())
         self.is_initialized = False
         
-        # Core components
-        self.transformer = EmotionTransformer()
+        # Phase 1: Pass config to transformer for optimizations
+        self.transformer = EmotionTransformer(config=config)
         self.threshold_manager = AdaptiveThresholdManager()
         
         # Legacy analyzers (if available)
@@ -111,7 +116,7 @@ class EmotionEngine:
         self.user_patterns: Dict[str, BehavioralPattern] = {}
         self.global_patterns: Dict[str, Any] = {}
         
-        # Caching for performance
+        # Caching for performance (Phase 1: transformer now handles result caching)
         self.emotion_cache: Dict[str, EmotionResult] = {}
         self.pattern_cache: Dict[str, Any] = {}
         
@@ -128,7 +133,7 @@ class EmotionEngine:
         self._learning_task: Optional[asyncio.Task] = None
         self._optimization_task: Optional[asyncio.Task] = None
         
-        logger.info(f"✅ Emotion Engine initialized - ID: {self.engine_id}")
+        logger.info(f"✅ Emotion Engine initialized (Phase 1 Optimized) - ID: {self.engine_id}")
     
     async def initialize(self) -> bool:
         """Initialize all engine components."""
