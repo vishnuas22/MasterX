@@ -137,6 +137,123 @@ class PerformanceSettings(BaseSettings):
         env_prefix = "PERF_"
 
 
+class EmotionDetectionSettings(BaseSettings):
+    """
+    Emotion detection optimization configuration (AGENTS.md compliant).
+    All performance tuning parameters from environment - zero hardcoded values.
+    """
+    
+    # Model Configuration
+    bert_model_name: str = Field(
+        default_factory=lambda: os.getenv("EMOTION_BERT_MODEL", "bert-base-uncased"),
+        description="BERT model for emotion detection"
+    )
+    
+    roberta_model_name: str = Field(
+        default_factory=lambda: os.getenv("EMOTION_ROBERTA_MODEL", "roberta-base"),
+        description="RoBERTa model for emotion detection"
+    )
+    
+    max_sequence_length: int = Field(
+        default=512,
+        description="Maximum sequence length for transformers"
+    )
+    
+    # GPU Acceleration Configuration
+    use_gpu: bool = Field(
+        default=True,
+        description="Enable GPU acceleration if available"
+    )
+    
+    device_type: str = Field(
+        default_factory=lambda: os.getenv("EMOTION_DEVICE", "auto"),
+        description="Device type: auto, cuda, mps, cpu"
+    )
+    
+    use_mixed_precision: bool = Field(
+        default=True,
+        description="Enable FP16 mixed precision for faster inference"
+    )
+    
+    enable_torch_compile: bool = Field(
+        default=True,
+        description="Enable torch.compile() for PyTorch 2.0+ optimization"
+    )
+    
+    # Model Caching Configuration
+    enable_model_caching: bool = Field(
+        default=True,
+        description="Cache models in memory for faster inference"
+    )
+    
+    preload_models_on_startup: bool = Field(
+        default=True,
+        description="Preload models during server startup"
+    )
+    
+    # Result Caching Configuration
+    enable_result_caching: bool = Field(
+        default=True,
+        description="Cache emotion detection results"
+    )
+    
+    result_cache_ttl_seconds: int = Field(
+        default=300,
+        description="TTL for emotion result cache"
+    )
+    
+    result_cache_max_size: int = Field(
+        default=1000,
+        description="Maximum number of cached results"
+    )
+    
+    # Batch Processing Configuration
+    enable_batch_processing: bool = Field(
+        default=False,
+        description="Enable batch processing for multiple requests"
+    )
+    
+    batch_size: int = Field(
+        default=16,
+        description="Maximum batch size for processing"
+    )
+    
+    batch_wait_ms: int = Field(
+        default=10,
+        description="Maximum wait time to collect batch in milliseconds"
+    )
+    
+    # Performance Thresholds
+    target_inference_time_ms: int = Field(
+        default=100,
+        description="Target inference time in milliseconds"
+    )
+    
+    slow_inference_threshold_ms: int = Field(
+        default=500,
+        description="Threshold for slow inference warning"
+    )
+    
+    # Model Configuration Parameters
+    hidden_size: int = Field(
+        default=768,
+        description="Hidden size of transformer models"
+    )
+    
+    num_emotions: int = Field(
+        default=18,
+        description="Number of emotion categories"
+    )
+    
+    dropout_rate: float = Field(
+        default=0.1,
+        description="Dropout rate for emotion classifier"
+    )
+    
+    class Config:
+        env_prefix = "EMOTION_"
+
+
 class VoiceSettings(BaseSettings):
     """
     Voice interaction configuration (AGENTS.md compliant - zero hardcoded values)
@@ -704,6 +821,7 @@ class MasterXSettings(BaseSettings):
     ai_providers: AIProviderSettings = Field(default_factory=AIProviderSettings)
     caching: CachingSettings = Field(default_factory=CachingSettings)
     performance: PerformanceSettings = Field(default_factory=PerformanceSettings)
+    emotion_detection: EmotionDetectionSettings = Field(default_factory=EmotionDetectionSettings)
     voice: VoiceSettings = Field(default_factory=VoiceSettings)
     security: SecuritySettings = Field(default_factory=SecuritySettings)
     monitoring: MonitoringSettings = Field(default_factory=MonitoringSettings)
