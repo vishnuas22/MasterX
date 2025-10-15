@@ -29,213 +29,15 @@ logger = logging.getLogger(__name__)
 
 
 # ============================================================================
-# EMOTION CONFIGURATION (AGENTS.MD COMPLIANT - ZERO HARDCODED VALUES)
+# EMOTION CONSTANTS
 # ============================================================================
 
-class EmotionConfig(BaseModel):
-    """
-    Configuration for emotion detection system.
-    100% AGENTS.MD COMPLIANT - All values from environment/config, zero hardcoded business logic.
-    
-    Only system limits and performance targets defined here (not business decisions).
-    All business logic thresholds will be learned by neural networks in Phase 2.
-    """
-    
-    # Performance targets (not business logic, just system goals)
-    target_latency_ms: float = Field(
-        default=100.0,
-        ge=1.0,
-        le=10000.0,
-        description="Target latency in milliseconds"
-    )
-    optimal_latency_ms: float = Field(
-        default=50.0,
-        ge=1.0,
-        le=1000.0,
-        description="Optimal latency goal"
-    )
-    
-    # System limits (capacity planning, not business rules)
-    max_concurrent_analyses: int = Field(
-        default=1000,
-        ge=1,
-        le=100000,
-        description="Maximum concurrent emotion analyses"
-    )
-    emotion_history_limit: int = Field(
-        default=1000,
-        ge=10,
-        le=100000,
-        description="Maximum emotion history entries per user"
-    )
-    
-    # Input validation (security - OWASP compliant, not business logic)
-    max_input_length: int = Field(
-        default=10000,
-        ge=100,
-        le=1000000,
-        description="Maximum input text length (DoS prevention)"
-    )
-    min_input_length: int = Field(
-        default=1,
-        ge=1,
-        le=100,
-        description="Minimum input text length"
-    )
-    
-    # Model architecture (from research papers, not hardcoded)
-    num_emotions: int = Field(
-        default=41,
-        description="Number of emotion categories (40 + neutral)"
-    )
-    hidden_size: int = Field(
-        default=768,
-        description="BERT/RoBERTa standard hidden size"
-    )
-    
-    # Device settings (auto-detected from environment)
-    device_priority: List[str] = Field(
-        default=["mps", "cuda", "cpu"],
-        description="Device priority order for GPU detection"
-    )
-    use_fp16: bool = Field(
-        default=True,
-        description="Enable FP16 mixed precision (if GPU available)"
-    )
-    use_torch_compile: bool = Field(
-        default=True,
-        description="Enable torch.compile optimization (PyTorch 2.0+)"
-    )
-    
-    # Circuit breaker (fault tolerance, not business thresholds)
-    failure_threshold: int = Field(
-        default=3,
-        ge=1,
-        le=100,
-        description="Failures before circuit opens"
-    )
-    recovery_timeout_seconds: float = Field(
-        default=30.0,
-        ge=1.0,
-        le=600.0,
-        description="Timeout before recovery attempt"
-    )
-    success_threshold: int = Field(
-        default=5,
-        ge=1,
-        le=100,
-        description="Successes before circuit closes"
-    )
-    
-    # Environment awareness
-    environment: str = Field(
-        default="production",
-        description="Environment: development, staging, production"
-    )
-    
-    # Rate limiting (security)
-    rate_limit_enabled: bool = Field(default=True)
-    rate_limit_requests_per_minute: int = Field(
-        default=60,
-        ge=1,
-        le=10000
-    )
-    
-    # Observability
-    enable_prometheus_metrics: bool = Field(default=True)
-    enable_tracing: bool = Field(default=True)
-    enable_detailed_logging: bool = Field(default=False)
-    
-    # Trajectory thresholds (from config, will be learned in Phase 2)
-    trajectory_improving_threshold: float = Field(
-        default=0.05,
-        ge=0.0,
-        le=1.0,
-        description="Threshold for improving trajectory detection"
-    )
-    trajectory_declining_threshold: float = Field(
-        default=-0.05,
-        ge=-1.0,
-        le=0.0,
-        description="Threshold for declining trajectory detection"
-    )
-    trajectory_stable_positive_threshold: float = Field(
-        default=0.6,
-        ge=0.0,
-        le=1.0,
-        description="Threshold for stable positive state"
-    )
-    trajectory_stable_negative_threshold: float = Field(
-        default=0.4,
-        ge=0.0,
-        le=1.0,
-        description="Threshold for stable negative state"
-    )
-    
-    # EMA parameters (exponential moving average for pattern updates)
-    pattern_ema_alpha: float = Field(
-        default=0.1,
-        ge=0.0,
-        le=1.0,
-        description="Alpha for exponential moving average"
-    )
-    
-    class Config:
-        """Pydantic configuration"""
-        env_prefix = "EMOTION_"  # Load from environment variables
-        validate_assignment = True
-    
-    @classmethod
-    def for_environment(cls, env: str) -> 'EmotionConfig':
-        """
-        Create environment-specific configuration.
-        
-        Args:
-            env: Environment name (development, staging, production)
-        
-        Returns:
-            EmotionConfig instance for specified environment
-        """
-        if env == "development":
-            return cls(
-                environment="development",
-                target_latency_ms=500.0,  # More relaxed for dev
-                use_fp16=False,  # Easier debugging
-                use_torch_compile=False,  # Faster startup
-                enable_prometheus_metrics=False,
-                enable_detailed_logging=True,
-                rate_limit_requests_per_minute=1000  # Higher for testing
-            )
-        elif env == "staging":
-            return cls(
-                environment="staging",
-                target_latency_ms=150.0,
-                use_fp16=True,
-                use_torch_compile=False,  # Avoid compilation overhead
-                enable_detailed_logging=True,
-                rate_limit_requests_per_minute=300
-            )
-        else:  # production
-            return cls(
-                environment="production",
-                target_latency_ms=100.0,
-                use_fp16=True,
-                use_torch_compile=True,
-                enable_detailed_logging=False,
-                rate_limit_requests_per_minute=60
-            )
-
-
-# Legacy support - will be deprecated after full migration
 class EmotionConstants:
-    """
-    Legacy constants for backward compatibility.
-    DEPRECATED: Use EmotionConfig instead.
-    """
+    """Constants for emotion detection system."""
     
     # Performance targets
-    TARGET_ANALYSIS_TIME_MS = 100.0
-    OPTIMAL_ANALYSIS_TIME_MS = 50.0
+    TARGET_ANALYSIS_TIME_MS = 15.0
+    OPTIMAL_ANALYSIS_TIME_MS = 10.0
     
     # Accuracy thresholds (adaptive)
     MIN_CONFIDENCE_THRESHOLD = 0.70
@@ -256,30 +58,17 @@ class EmotionConstants:
 # ============================================================================
 
 class EmotionCategory(Enum):
-    """
-    40-category emotion taxonomy for comprehensive emotion detection.
-    Based on EmoNet-Face 2025 dataset (203,000+ expert annotations).
-    Optimized for learning contexts with global applicability.
-    """
+    """Core emotion categories for learning contexts."""
     
-    # Basic emotions (6 - Ekman's universal emotions)
+    # Basic emotions
     JOY = "joy"
     SADNESS = "sadness"
     ANGER = "anger"
     FEAR = "fear"
     SURPRISE = "surprise"
-    DISGUST = "disgust"
+    NEUTRAL = "neutral"
     
-    # Social emotions (7)
-    PRIDE = "pride"
-    SHAME = "shame"
-    GUILT = "guilt"
-    GRATITUDE = "gratitude"
-    JEALOUSY = "jealousy"
-    ADMIRATION = "admiration"
-    SYMPATHY = "sympathy"
-    
-    # Learning emotions (14 - MasterX specialized)
+    # Learning-specific emotions
     FRUSTRATION = "frustration"
     SATISFACTION = "satisfaction"
     CURIOSITY = "curiosity"
@@ -288,36 +77,12 @@ class EmotionCategory(Enum):
     EXCITEMENT = "excitement"
     CONFUSION = "confusion"
     ENGAGEMENT = "engagement"
+    
+    # Advanced learning states
     FLOW_STATE = "flow_state"
     COGNITIVE_OVERLOAD = "cognitive_overload"
     BREAKTHROUGH_MOMENT = "breakthrough_moment"
-    MASTERY = "mastery"
-    ELATION = "elation"
-    AFFECTION = "affection"
-    
-    # Cognitive states (4)
-    CONCENTRATION = "concentration"
-    DOUBT = "doubt"
-    BOREDOM = "boredom"
-    AWE = "awe"
-    
-    # Negative emotions (5)
-    DISAPPOINTMENT = "disappointment"
-    DISTRESS = "distress"
-    BITTERNESS = "bitterness"
-    CONTEMPT = "contempt"
-    EMBARRASSMENT = "embarrassment"
-    
-    # Physical states (2)
-    FATIGUE = "fatigue"
-    PAIN = "pain"
-    
-    # Reflective states (2)
-    CONTENTMENT = "contentment"
-    SERENITY = "serenity"
-    
-    # Neutral (1)
-    NEUTRAL = "neutral"
+    MASTERY_JOY = "mastery_joy"
 
 
 class InterventionLevel(Enum):
@@ -740,8 +505,7 @@ class BehavioralPattern:
 
 
 __all__ = [
-    'EmotionConfig',
-    'EmotionConstants',  # Deprecated - use EmotionConfig
+    'EmotionConstants',
     'EmotionCategory',
     'InterventionLevel',
     'LearningReadiness',
