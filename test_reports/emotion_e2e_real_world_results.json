@@ -1,0 +1,66 @@
+{
+  "summary": {
+    "total_tests": 7,
+    "passed": 2,
+    "failed": 5,
+    "pass_rate": 28.57142857142857
+  },
+  "tests": [
+    {
+      "test_name": "API Health Check",
+      "status": "PASS",
+      "duration_ms": 3.1294822692871094,
+      "message": "Backend API is responding",
+      "details": {
+        "status": "ok",
+        "timestamp": "2025-10-16T15:07:25.284906",
+        "version": "1.0.0"
+      }
+    },
+    {
+      "test_name": "Detailed Health Check",
+      "status": "PASS",
+      "duration_ms": 3.3228397369384766,
+      "message": "Health score: 87.5/100",
+      "details": {
+        "health_score": 87.5,
+        "component_count": 7
+      }
+    },
+    {
+      "test_name": "Emotion Detection - Case 1",
+      "status": "FAIL",
+      "duration_ms": 2.7892589569091797,
+      "message": "Status: 500",
+      "details": null
+    },
+    {
+      "test_name": "Emotion Detection - Case 2",
+      "status": "FAIL",
+      "duration_ms": 2.6040077209472656,
+      "message": "Status: 500",
+      "details": null
+    },
+    {
+      "test_name": "Emotion Detection - Case 3",
+      "status": "FAIL",
+      "duration_ms": 2.3179054260253906,
+      "message": "Status: 500",
+      "details": null
+    },
+    {
+      "test_name": "Cache Effectiveness",
+      "status": "FAIL",
+      "duration_ms": 2.4018287658691406,
+      "message": "First request failed: 500",
+      "details": null
+    },
+    {
+      "test_name": "Concurrent Request Handling",
+      "status": "FAIL",
+      "duration_ms": 27.94933319091797,
+      "message": "Only 0/20 requests succeeded",
+      "details": null
+    }
+  ]
+}
