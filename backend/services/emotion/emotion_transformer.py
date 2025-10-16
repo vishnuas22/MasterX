@@ -72,6 +72,9 @@ from .emotion_core import (
 from .model_cache import ModelCache, model_cache
 from .result_cache import EmotionResultCache
 
+# Phase 2: GoEmotions fine-tuned model
+from .goemotions_model import GoEmotionsModel, GoEmotionsConfig
+
 logger = logging.getLogger(__name__)
 
 
@@ -368,6 +371,10 @@ class EmotionTransformer:
         self.roberta_tokenizer: Optional[Any] = None
         self.classifier: Optional[EmotionClassifier] = None
         
+        # Phase 2: GoEmotions fine-tuned model
+        self.goemotions_model: Optional[Any] = None
+        self.use_goemotions = config.get('use_goemotions_model', True) if config else True
+        
         # Phase 1: Result cache (from config)
         if config:
             self.result_cache = EmotionResultCache(
@@ -399,6 +406,7 @@ class EmotionTransformer:
         self.stats = {
             'total_predictions': 0,
             'transformer_predictions': 0,
+            'goemotions_predictions': 0,  # Phase 2: Track GoEmotions usage
             'fallback_predictions': 0,
             'cache_hits': 0,
             'avg_confidence': 0.0,
@@ -406,7 +414,10 @@ class EmotionTransformer:
             'initialization_time': 0.0
         }
         
-        logger.info("EmotionTransformer initialized (Phase 1 Optimized)")
+        logger.info(
+            f"EmotionTransformer initialized "
+            f"(Phase 1+2 Optimized, GoEmotions: {self.use_goemotions})"
+        )
     
     async def initialize(self) -> bool:
         """
@@ -481,13 +492,29 @@ class EmotionTransformer:
                 
                 logger.info("✓ Emotion classifier initialized on device")
             
+            # Phase 2: Initialize GoEmotions fine-tuned model
+            if self.use_goemotions:
+                try:
+                    goemotions_config = GoEmotionsConfig.from_dict(self.config)
+                    self.goemotions_model = GoEmotionsModel(
+                        config=goemotions_config,
+                        model_cache=self.model_cache
+                    )
+                    await self.goemotions_model.initialize()
+                    logger.info("✓ GoEmotions fine-tuned model initialized (Phase 2)")
+                except Exception as e:
+                    logger.warning(f"GoEmotions model failed to load: {e}")
+                    self.goemotions_model = None
+                    self.use_goemotions = False
+            
             init_time = time.time() - start_time
             self.stats['initialization_time'] = init_time
             self.is_initialized = True
             
             models_loaded = sum([
                 self.bert_model is not None,
-                self.roberta_model is not None
+                self.roberta_model is not None,
+                self.goemotions_model is not None
             ])
             
             logger.info(
@@ -539,51 +566,66 @@ class EmotionTransformer:
                 if cached_result is not None:
                     self.stats['cache_hits'] += 1
                     self.stats['total_predictions'] += 1
-                    logger.debug(f"Cache HIT for emotion detection (< 1ms)")
+                    logger.debug("Cache HIT for emotion detection (< 1ms)")
                     return cached_result
             
             # Get user thresholds
             thresholds = self.threshold_manager.get_thresholds(user_id)
             
-            # Generate predictions from available models (Phase 1: GPU-accelerated)
-            predictions = []
+            # Phase 2: Prioritize GoEmotions fine-tuned model (best accuracy)
+            result = None
+            if self.use_goemotions and self.goemotions_model:
+                try:
+                    result = await self.goemotions_model.predict(text)
+                    self.stats['goemotions_predictions'] += 1
+                    logger.debug(f"GoEmotions prediction complete ({result.get('inference_time_ms', 0):.1f}ms)")
+                except Exception as e:
+                    logger.warning(f"GoEmotions prediction failed, falling back: {e}")
+                    result = None
             
-            if self.bert_model and self.bert_tokenizer:
-                bert_pred = await self._predict_bert(text, thresholds)
-                if bert_pred:
-                    predictions.append(bert_pred)
-            
-            if self.roberta_model and self.roberta_tokenizer:
-                roberta_pred = await self._predict_roberta(text, thresholds)
-                if roberta_pred:
-                    predictions.append(roberta_pred)
-            
-            # Fuse predictions or use fallback
-            if predictions:
-                result = self._fuse_predictions(predictions, thresholds)
-                self.stats['transformer_predictions'] += 1
-            else:
-                result = await self._predict_fallback(text)
-                self.stats['fallback_predictions'] += 1
+            # Fallback to Phase 1 ensemble if GoEmotions unavailable
+            if result is None:
+                # Generate predictions from available models (Phase 1: GPU-accelerated)
+                predictions = []
+                
+                if self.bert_model and self.bert_tokenizer:
+                    bert_pred = await self._predict_bert(text, thresholds)
+                    if bert_pred:
+                        predictions.append(bert_pred)
+                
+                if self.roberta_model and self.roberta_tokenizer:
+                    roberta_pred = await self._predict_roberta(text, thresholds)
+                    if roberta_pred:
+                        predictions.append(roberta_pred)
+                
+                # Fuse predictions or use fallback
+                if predictions:
+                    result = self._fuse_predictions(predictions, thresholds)
+                    self.stats['transformer_predictions'] += 1
+                else:
+                    result = await self._predict_fallback(text)
+                    self.stats['fallback_predictions'] += 1
             
             # Update adaptive thresholds
-            if user_id and predictions:
+            if user_id and result:
                 self.threshold_manager.update_thresholds(
                     user_id,
                     result['confidence'],
-                    result['model_type']
+                    result.get('model_type', 'unknown')
                 )
             
             # Add metadata
             prediction_time = (time.time() - start_time) * 1000
-            result['metadata'] = {
+            if 'metadata' not in result:
+                result['metadata'] = {}
+            result['metadata'].update({
                 'prediction_time_ms': round(prediction_time, 2),
-                'models_used': len(predictions),
                 'adaptive_threshold': thresholds.confidence_threshold,
                 'from_cache': False,
                 'device': self.model_cache.get_device_info().device_type if self.model_cache.get_device_info() else 'unknown',
-                'version': '2.0-phase1'
-            }
+                'version': '2.0-phase2',
+                'goemotions_enabled': self.use_goemotions
+            })
             
             # Phase 1: Cache the result for future requests
             if self.use_result_cache:
@@ -975,12 +1017,14 @@ class EmotionTransformer:
             self.stats['avg_inference_time_ms'] = (current_avg_time * (n - 1) + inference_time_ms) / n
     
     def get_stats(self) -> Dict[str, Any]:
-        """Get performance statistics (Phase 1: includes cache & device info)."""
+        """Get performance statistics (Phase 1+2: includes cache, device & GoEmotions info)."""
         models_available = []
         if self.bert_model:
             models_available.append('BERT')
         if self.roberta_model:
             models_available.append('RoBERTa')
+        if self.goemotions_model:
+            models_available.append('GoEmotions')
         
         # Phase 1: Add cache and device statistics
         cache_stats = {}
@@ -989,6 +1033,11 @@ class EmotionTransformer:
         
         model_cache_stats = self.model_cache.get_stats()
         
+        # Phase 2: Add GoEmotions statistics
+        goemotions_stats = {}
+        if self.goemotions_model:
+            goemotions_stats = self.goemotions_model.get_stats()
+        
         return {
             **self.stats,
             'models_available': models_available,
@@ -996,7 +1045,9 @@ class EmotionTransformer:
             'is_initialized': self.is_initialized,
             'result_cache': cache_stats,
             'model_cache': model_cache_stats,
-            'phase1_optimized': True
+            'goemotions': goemotions_stats,
+            'phase1_optimized': True,
+            'phase2_optimized': True
         }
 
 
