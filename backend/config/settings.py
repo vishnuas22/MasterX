@@ -207,20 +207,107 @@ class EmotionDetectionSettings(BaseSettings):
         description="Maximum number of cached results"
     )
     
-    # Batch Processing Configuration
+    # Phase 3: Batch Processing Configuration (Adaptive)
     enable_batch_processing: bool = Field(
-        default=False,
-        description="Enable batch processing for multiple requests"
+        default=True,
+        description="Enable adaptive batch processing for high throughput"
     )
     
-    batch_size: int = Field(
-        default=16,
-        description="Maximum batch size for processing"
+    min_batch_size: int = Field(
+        default=1,
+        ge=1,
+        le=64,
+        description="Minimum batch size (process immediately if reached)"
+    )
+    
+    max_batch_size: int = Field(
+        default=32,
+        ge=1,
+        le=128,
+        description="Maximum batch size (hardware memory limit)"
     )
     
     batch_wait_ms: int = Field(
         default=10,
+        ge=1,
+        le=1000,
         description="Maximum wait time to collect batch in milliseconds"
+    )
+    
+    target_latency_ms: int = Field(
+        default=50,
+        ge=10,
+        le=500,
+        description="Target per-request latency for adaptive batch sizing"
+    )
+    
+    enable_adaptive_sizing: bool = Field(
+        default=True,
+        description="Enable automatic batch size optimization"
+    )
+    
+    enable_priority_queuing: bool = Field(
+        default=True,
+        description="Enable request prioritization in batching"
+    )
+    
+    adaptive_window_size: int = Field(
+        default=100,
+        ge=10,
+        le=1000,
+        description="Moving window size for adaptive calculations"
+    )
+    
+    latency_smoothing_factor: float = Field(
+        default=0.1,
+        ge=0.01,
+        le=0.5,
+        description="Exponential smoothing factor for latency tracking"
+    )
+    
+    # Phase 3: Model Quantization Configuration
+    enable_quantization: bool = Field(
+        default=True,
+        description="Enable INT8/FP8 model quantization for faster inference"
+    )
+    
+    quantization_type: str = Field(
+        default="dynamic_int8",
+        description="Quantization type: none, dynamic_int8, static_int8, fp8"
+    )
+    
+    target_accuracy_threshold: float = Field(
+        default=0.99,
+        ge=0.90,
+        le=1.0,
+        description="Minimum accuracy retention after quantization (0.99 = max 1% loss)"
+    )
+    
+    calibration_samples: int = Field(
+        default=100,
+        ge=10,
+        le=10000,
+        description="Number of samples for static quantization calibration"
+    )
+    
+    quantize_embeddings: bool = Field(
+        default=True,
+        description="Quantize embedding layers"
+    )
+    
+    quantize_attention: bool = Field(
+        default=True,
+        description="Quantize attention layers"
+    )
+    
+    quantize_feedforward: bool = Field(
+        default=True,
+        description="Quantize feed-forward layers"
+    )
+    
+    enable_dynamic_fallback: bool = Field(
+        default=True,
+        description="Fall back to full precision if quantization degrades performance"
     )
     
     # Performance Thresholds
