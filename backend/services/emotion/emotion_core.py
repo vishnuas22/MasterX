@@ -666,7 +666,7 @@ def get_emotion_dominance_mapping() -> Dict[EmotionCategory, float]:
         EmotionCategory.PRIDE: 0.9,
         EmotionCategory.ANGER: 0.85,
         EmotionCategory.ADMIRATION: 0.75,
-        EmotionCategory.APPROVAL: 0.7
+        EmotionCategory.APPROVAL: 0.7,
         
         # Medium-high dominance (0.5 to 0.7)
         EmotionCategory.JOY: 0.7,
