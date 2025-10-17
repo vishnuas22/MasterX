@@ -119,25 +119,8 @@ async def lifespan(app: FastAPI):
         # Initialize database (collections and indexes)
         await initialize_database()
         
-        # Initialize engine with Phase 1 optimization config
-        engine_config = {
-            'emotion_detection': {
-                'bert_model': settings.emotion_detection.bert_model_name,
-                'roberta_model': settings.emotion_detection.roberta_model_name,
-                'max_length': settings.emotion_detection.max_sequence_length,
-                'hidden_size': settings.emotion_detection.hidden_size,
-                'num_emotions': settings.emotion_detection.num_emotions,
-                'dropout': settings.emotion_detection.dropout_rate,
-                'use_gpu': settings.emotion_detection.use_gpu,
-                'device_type': settings.emotion_detection.device_type,
-                'use_mixed_precision': settings.emotion_detection.use_mixed_precision,
-                'enable_torch_compile': settings.emotion_detection.enable_torch_compile,
-                'enable_result_caching': settings.emotion_detection.enable_result_caching,
-                'result_cache_ttl_seconds': settings.emotion_detection.result_cache_ttl_seconds,
-                'result_cache_max_size': settings.emotion_detection.result_cache_max_size,
-            }
-        }
-        app.state.engine = MasterXEngine(config=engine_config)
+        # Initialize engine
+        app.state.engine = MasterXEngine()
         
         # Get database
         from utils.database import get_database
