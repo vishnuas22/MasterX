@@ -286,6 +286,45 @@ class GoEmotionsModel:
                 
                 logger.info(f"✓ Loaded directly (device: {device})")
             
+            # Validate model configuration
+            if hasattr(self.model, 'config'):
+                model_num_labels = self.model.config.num_labels
+                if model_num_labels != self.config.num_labels:
+                    logger.warning(
+                        f"Model has {model_num_labels} labels, "
+                        f"config expects {self.config.num_labels}. "
+                        f"Using model's configuration."
+                    )
+                    self.config.num_labels = model_num_labels
+            
+            # Validate model outputs logits
+            logger.info(f"Model type: {type(self.model).__name__}")
+            logger.info(f"Model class: {self.model.__class__.__module__}.{self.model.__class__.__name__}")
+            
+            # Warmup test to verify model outputs work correctly
+            try:
+                test_input = self.tokenizer(
+                    "test",
+                    return_tensors="pt",
+                    padding=True,
+                    truncation=True
+                )
+                device = self.model.device if hasattr(self.model, 'device') else torch.device('cpu')
+                test_input = {k: v.to(device) for k, v in test_input.items()}
+                
+                with torch.no_grad():
+                    test_output = self.model(**test_input)
+                
+                if hasattr(test_output, 'logits'):
+                    logger.info(f"✓ Model outputs logits correctly (shape: {test_output.logits.shape})")
+                else:
+                    logger.warning(
+                        f"⚠ Model output type: {type(test_output)}, "
+                        f"attributes: {[attr for attr in dir(test_output) if not attr.startswith('_')]}"
+                    )
+            except Exception as warmup_error:
+                logger.warning(f"Warmup test encountered issue: {warmup_error}")
+            
             init_time = (time.time() - start_time) * 1000
             self.is_initialized = True
             
@@ -342,8 +381,29 @@ class GoEmotionsModel:
                 else:
                     outputs = self.model(**inputs)
             
-            # Get logits and apply sigmoid (multi-label classification)
-            logits = outputs.logits[0]
+            # Get logits - handle different output types robustly
+            # AutoModelForSequenceClassification returns SequenceClassifierOutput with .logits
+            # But some models might return different structures
+            if hasattr(outputs, 'logits'):
+                # Standard case: outputs.logits is a tensor of shape (batch_size, num_labels)
+                logits = outputs.logits[0]  # Get first (and only) item from batch
+            elif isinstance(outputs, tuple):
+                # Fallback: some models return tuple (logits, ...)
+                logits = outputs[0][0]  # First element of tuple, first batch item
+                logger.warning("Model returned tuple output, using first element as logits")
+            elif isinstance(outputs, torch.Tensor):
+                # Direct tensor output
+                logits = outputs[0]
+                logger.warning("Model returned direct tensor output")
+            else:
+                # Last resort: try to extract from model output
+                error_msg = (
+                    f"Unexpected model output type: {type(outputs)}. "
+                    f"Expected SequenceClassifierOutput with .logits attribute. "
+                    f"Available attributes: {dir(outputs)}"
+                )
+                logger.error(error_msg)
+                raise AttributeError(error_msg)
             
             # Temperature scaling for calibration
             if self.config.use_temperature_scaling:
@@ -358,30 +418,35 @@ class GoEmotionsModel:
                 for i in range(len(self.emotion_labels))
             }
             
+            # Get ALL emotions sorted by confidence
+            all_emotions_sorted = sorted(
+                emotion_scores.items(),
+                key=lambda x: x[1],
+                reverse=True
+            )
+            
             # Get top emotions above threshold
-            top_emotions = [
+            top_emotions_threshold = [
                 (emotion, score)
-                for emotion, score in emotion_scores.items()
+                for emotion, score in all_emotions_sorted
                 if score >= self.config.confidence_threshold
             ]
-            top_emotions.sort(key=lambda x: x[1], reverse=True)
             
-            # Take top K
-            top_emotions = top_emotions[:self.config.top_k_emotions]
+            # If no emotions above threshold, take top K anyway
+            if not top_emotions_threshold:
+                top_emotions = all_emotions_sorted[:self.config.top_k_emotions]
+            else:
+                top_emotions = top_emotions_threshold[:self.config.top_k_emotions]
             
             # Primary emotion (highest confidence)
-            if top_emotions:
-                primary_emotion_go = top_emotions[0][0]
-                primary_confidence = top_emotions[0][1]
-            else:
-                primary_emotion_go = GoEmotionCategory.NEUTRAL.value
-                primary_confidence = emotion_scores[GoEmotionCategory.NEUTRAL.value]
+            primary_emotion_go = all_emotions_sorted[0][0]
+            primary_confidence = all_emotions_sorted[0][1]
             
             # Map to MasterX emotion categories
             primary_emotion_masterx = self._map_to_masterx(primary_emotion_go)
             
-            # Calculate overall confidence using max-pooling
-            overall_confidence = max(score for _, score in top_emotions) if top_emotions else primary_confidence
+            # Calculate overall confidence
+            overall_confidence = primary_confidence
             
             # Calculate prediction uncertainty (entropy)
             entropy = -np.sum(probs * np.log(probs + 1e-10))
@@ -409,14 +474,20 @@ class GoEmotionsModel:
                     }
                     for emotion, score in top_emotions
                 ],
+                # Add list format for compatibility
+                'top_emotions_goemotions': [
+                    (emotion, float(score))
+                    for emotion, score in top_emotions
+                ],
                 'model_type': 'goemotions',
                 'multi_label': len(top_emotions) > 1,
                 'inference_time_ms': round(inference_time, 2)
             }
             
-            # Add all scores if requested
+            # Add all scores if requested (both formats for compatibility)
             if return_all_scores:
                 result['all_scores'] = emotion_scores
+                result['all_emotion_scores'] = emotion_scores
             
             # Update statistics
             self.stats['total_predictions'] += 1
