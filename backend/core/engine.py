@@ -24,7 +24,7 @@ from core.models import (
 from core.ai_providers import ProviderManager
 from core.context_manager import ContextManager
 from core.adaptive_learning import AdaptiveLearningEngine, PerformanceMetrics as AdaptivePerformanceMetrics
-from services.emotion.emotion_engine import EmotionEngine
+from services.emotion.emotion_engine import EmotionEngine, EmotionEngineConfig
 from utils.errors import MasterXError
 from utils.cost_tracker import cost_tracker
 from utils.database import get_database
@@ -47,7 +47,7 @@ class MasterXEngine:
     def __init__(self):
         """Initialize MasterX engine with all intelligence components"""
         self.provider_manager = ProviderManager()
-        self.emotion_engine = EmotionEngine()
+        self.emotion_engine = EmotionEngine(config=EmotionEngineConfig())
         
         # Phase 3: Initialize context and adaptive learning components
         # Database will be set during server startup
