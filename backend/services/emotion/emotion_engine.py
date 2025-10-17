@@ -64,6 +64,10 @@ from services.emotion.emotion_transformer import (
     EmotionTransformer,
     EmotionTransformerConfig,
 )
+from services.emotion.emotion_cache import (
+    EmotionCache,
+    EmotionCacheConfig,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -80,6 +84,16 @@ class EmotionEngineConfig(BaseModel):
     # Transformer configuration
     transformer_config: EmotionTransformerConfig = Field(
         default_factory=EmotionTransformerConfig
+    )
+    
+    # Cache configuration
+    cache_config: EmotionCacheConfig = Field(
+        default_factory=EmotionCacheConfig,
+        description="Multi-level caching configuration"
+    )
+    enable_caching: bool = Field(
+        default=True,
+        description="Enable emotion result caching"
     )
     
     # Feature flags
@@ -946,6 +960,13 @@ class EmotionEngine:
         self.flow_detector = FlowStateDetector()
         self.intervention_recommender = InterventionRecommender()
         
+        # Initialize cache (Phase 4 optimization)
+        self.cache = (
+            EmotionCache(config.cache_config)
+            if config.enable_caching
+            else None
+        )
+        
         # Temporal tracking (user:session -> history)
         self.emotion_history: Dict[str, deque] = defaultdict(
             lambda: deque(maxlen=config.max_history_per_user)
@@ -954,7 +975,7 @@ class EmotionEngine:
         self._initialized = False
         self._last_cleanup = datetime.utcnow()
         
-        logger.info("EmotionEngine created")
+        logger.info("EmotionEngine created with caching enabled" if self.cache else "EmotionEngine created")
     
     async def initialize(self) -> None:
         """
@@ -962,6 +983,8 @@ class EmotionEngine:
         
         This loads transformer models, which takes 2-3 seconds.
         Call this once at startup.
+        
+        Phase 4: Includes cache warming for common phrases.
         """
         logger.info("🚀 Initializing EmotionEngine...")
         start_time = time.time()
@@ -969,11 +992,28 @@ class EmotionEngine:
         # Initialize transformer (loads models from HuggingFace)
         self.transformer.initialize()
         
+        # Cache warming with common learning phrases
+        if self.cache and self.config.cache_config.enable_cache_warming:
+            common_phrases = [
+                "I understand this concept",
+                "This is confusing",
+                "I'm stuck on this problem",
+                "This is too easy",
+                "I'm frustrated",
+                "This is interesting",
+                "I need help",
+                "I got it!",
+                "This is challenging",
+                "I'm bored"
+            ]
+            await self.cache.warm_cache(common_phrases, self)
+        
         self._initialized = True
         init_time = time.time() - start_time
         
+        cache_info = " with cache warmed" if self.cache else ""
         logger.info(
-            f"✅ EmotionEngine ready for production! ({init_time:.2f}s)"
+            f"✅ EmotionEngine ready for production{cache_info}! ({init_time:.2f}s)"
         )
     
     async def analyze_emotion(
@@ -1047,9 +1087,23 @@ class EmotionEngine:
         session_id: Optional[str],
         interaction_context: Optional[Dict[str, Any]]
     ) -> EmotionMetrics:
-        """Internal emotion analysis logic."""
+        """
+        Internal emotion analysis logic with caching.
+        
+        Phase 4 Optimization: Checks cache before analysis.
+        """
         start_time = time.time()
         
+        # Phase 4: Check cache first
+        if self.cache:
+            cached_result = await self.cache.get(text)
+            if cached_result is not None:
+                logger.debug(f"Cache hit for text: {text[:30]}...")
+                # Update timestamp for freshness
+                cached_result.timestamp = datetime.utcnow()
+                return cached_result
+        
+        # Cache miss - perform full analysis
         # Step 1: Get emotion probabilities from transformer
         emotion_probs = self.transformer.predict_emotion(
             text,
@@ -1140,8 +1194,13 @@ class EmotionEngine:
         if history_key and self.config.enable_history_tracking:
             self.emotion_history[history_key].append(result)
         
+        # Phase 4: Store in cache for future requests
+        if self.cache:
+            await self.cache.put(text, result)
+        
+        cache_status = " (cached)" if self.cache else ""
         logger.info(
-            f"✅ Emotion analysis: {primary_emotion} ({primary_confidence:.2f}), "
+            f"✅ Emotion analysis{cache_status}: {primary_emotion} ({primary_confidence:.2f}), "
             f"Readiness: {learning_readiness}, "
             f"Load: {cognitive_load}, "
             f"Flow: {flow_state} "
@@ -1160,6 +1219,20 @@ class EmotionEngine:
         # This prevents memory growth over time
         self._last_cleanup = now
         # In production, you might want to persist to database here
+    
+    def get_cache_statistics(self) -> Dict[str, Any]:
+        """
+        Get cache performance statistics.
+        
+        Phase 4 addition for monitoring cache effectiveness.
+        
+        Returns:
+            Dictionary with cache stats or empty dict if caching disabled
+        """
+        if not self.cache:
+            return {"caching_enabled": False}
+        
+        return self.cache.get_statistics()
 
 
 # ============================================================================
