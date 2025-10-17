@@ -44,20 +44,10 @@ class MasterXEngine:
     - Performance tracking (ability estimation, velocity)
     """
     
-    def __init__(self, config: Optional[dict] = None):
-        """
-        Initialize MasterX engine with all intelligence components (Phase 1 Optimized).
-        
-        Args:
-            config: Configuration dictionary (from settings)
-        """
+    def __init__(self):
+        """Initialize MasterX engine with all intelligence components"""
         self.provider_manager = ProviderManager()
-        
-        # Phase 1: Initialize emotion engine with config for optimizations
-        emotion_config = None
-        if config and 'emotion_detection' in config:
-            emotion_config = config['emotion_detection']
-        self.emotion_engine = EmotionEngine(config=emotion_config)
+        self.emotion_engine = EmotionEngine()
         
         # Phase 3: Initialize context and adaptive learning components
         # Database will be set during server startup
@@ -65,7 +55,7 @@ class MasterXEngine:
         self.adaptive_engine = None
         self._db_initialized = False
         
-        logger.info("✅ MasterXEngine initialized (Phase 1 Optimized + Phase 3: Full Intelligence)")
+        logger.info("✅ MasterXEngine initialized (Phase 3: Full Intelligence)")
     
     def initialize_intelligence_layer(self, db):
         """
