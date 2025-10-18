@@ -122,6 +122,10 @@ async def lifespan(app: FastAPI):
         # Initialize engine
         app.state.engine = MasterXEngine()
         
+        # Initialize emotion engine (loads ML models)
+        await app.state.engine.emotion_engine.initialize()
+        logger.info("✅ Emotion engine initialized")
+        
         # Get database
         from utils.database import get_database
         db = get_database()
@@ -2070,7 +2074,7 @@ async def get_system_status(request: Request):
     """
     # Get health status
     health_monitor = request.app.state.health_monitor
-    health = await health_monitor.get_comprehensive_health()
+    health = await health_monitor.get_system_health()
     
     # Get configuration
     from config.settings import get_settings
