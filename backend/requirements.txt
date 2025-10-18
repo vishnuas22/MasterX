@@ -146,4 +146,4 @@ zipp==3.23.0
 # ONNX Runtime dependencies (Phase 4D Optimization)
 onnx==1.17.0
 onnxruntime==1.20.1
-onnxruntime-gpu==1.20.1
+# onnxruntime-gpu==1.20.1  # GPU version not available in this environment, using CPU version
