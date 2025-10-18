@@ -149,20 +149,33 @@ class MasterXEngine:
             emotion_start = time.time()
             
             emotion_result = await self.emotion_engine.analyze_emotion(
-                user_id=user_id,
                 text=message,
-                context=context
+                user_id=user_id,
+                session_id=session_id,
+                interaction_context=context
             )
             
             emotion_time_ms = (time.time() - emotion_start) * 1000
-            logger.info(f"✅ Emotion detected: {emotion_result.metrics.primary_emotion} ({emotion_time_ms:.0f}ms)")
+            logger.info(f"✅ Emotion detected: {emotion_result.primary_emotion} ({emotion_time_ms:.0f}ms)")
+            
+            # Map EmotionCore LearningReadiness to Models LearningReadiness
+            readiness_map = {
+                "optimal": LearningReadiness.OPTIMAL_READINESS,
+                "good": LearningReadiness.HIGH_READINESS,
+                "moderate": LearningReadiness.MODERATE_READINESS,
+                "low": LearningReadiness.LOW_READINESS,
+                "blocked": LearningReadiness.NOT_READY
+            }
             
             # Create EmotionState for response
             emotion_state = EmotionState(
-                primary_emotion=emotion_result.metrics.primary_emotion,
-                arousal=emotion_result.metrics.arousal,
-                valence=emotion_result.metrics.valence,
-                learning_readiness=LearningReadiness(emotion_result.metrics.learning_readiness)
+                primary_emotion=emotion_result.primary_emotion,
+                arousal=emotion_result.pad_dimensions.arousal,
+                valence=emotion_result.pad_dimensions.pleasure,
+                learning_readiness=readiness_map.get(
+                    emotion_result.learning_readiness,
+                    LearningReadiness.MODERATE_READINESS
+                )
             )
             
             # ====================================================================
@@ -383,16 +396,29 @@ class MasterXEngine:
         
         # Basic emotion detection
         emotion_result = await self.emotion_engine.analyze_emotion(
-            user_id=user_id,
             text=message,
-            context=context
+            user_id=user_id,
+            session_id=session_id,
+            interaction_context=context
         )
         
+        # Map EmotionCore LearningReadiness to Models LearningReadiness
+        readiness_map = {
+            "optimal": LearningReadiness.OPTIMAL_READINESS,
+            "good": LearningReadiness.HIGH_READINESS,
+            "moderate": LearningReadiness.MODERATE_READINESS,
+            "low": LearningReadiness.LOW_READINESS,
+            "blocked": LearningReadiness.NOT_READY
+        }
+        
         emotion_state = EmotionState(
-            primary_emotion=emotion_result.metrics.primary_emotion,
-            arousal=emotion_result.metrics.arousal,
-            valence=emotion_result.metrics.valence,
-            learning_readiness=LearningReadiness(emotion_result.metrics.learning_readiness)
+            primary_emotion=emotion_result.primary_emotion,
+            arousal=emotion_result.pad_dimensions.arousal,
+            valence=emotion_result.pad_dimensions.pleasure,
+            learning_readiness=readiness_map.get(
+                emotion_result.learning_readiness,
+                LearningReadiness.MODERATE_READINESS
+            )
         )
         
         # Basic provider selection
