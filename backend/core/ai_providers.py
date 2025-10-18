@@ -192,6 +192,37 @@ class ProviderRegistry:
         """Get all discovered providers"""
         return self.providers
     
+    def get_llm_providers(self) -> Dict[str, Dict]:
+        """
+        Get only LLM providers (for text generation)
+        
+        Filters out non-LLM providers like:
+        - TTS providers (elevenlabs)
+        - Benchmark APIs (artificial_analysis, llm_stats)
+        
+        LLM providers are identified by having a MODEL_NAME for text generation
+        and NOT being in the excluded list.
+        """
+        # Providers that are NOT for LLM text generation
+        excluded_providers = {
+            'elevenlabs',      # TTS provider
+            'artificial_analysis',  # Benchmark API
+            'llm_stats',       # Benchmark API
+            'whisper',         # Speech-to-text
+            'stripe',          # Payment
+            'jwt'              # Authentication
+        }
+        
+        llm_providers = {}
+        for name, config in self.providers.items():
+            # Include only if:
+            # 1. Not in excluded list
+            # 2. Has a model_name (indicating it's for generation)
+            if name not in excluded_providers and config.get('model_name'):
+                llm_providers[name] = config
+        
+        return llm_providers
+    
     def is_available(self, name: str) -> bool:
         """Check if provider is available"""
         provider = self.get_provider(name)
@@ -481,10 +512,10 @@ class ProviderManager:
         """
         
         exclude_providers = exclude_providers or []
-        available_providers = self.registry.get_all_providers()
+        available_providers = self.registry.get_llm_providers()
         
         if not available_providers:
-            raise ProviderError("No providers available in .env")
+            raise ProviderError("No LLM providers available in .env")
         
         # Get benchmark rankings
         rankings = []
@@ -618,14 +649,14 @@ class ProviderManager:
                 )
             except Exception as e:
                 logger.error(f"Model selection failed: {e}")
-                # Fallback: use first available
-                available = self.registry.get_all_providers()
+                # Fallback: use first available LLM provider
+                available = self.registry.get_llm_providers()
                 if available:
                     target_provider = list(available.keys())[0]
                     model_name = available[target_provider].get('model_name', 'default')
                     logger.warning(f"Using fallback: {target_provider}")
                 else:
-                    raise ProviderError("No providers available")
+                    raise ProviderError("No LLM providers available")
         
         # Generate using selected provider
         logger.info(f"🤖 Generating with {target_provider}:{model_name} for category: {category}")
@@ -692,12 +723,12 @@ class ProviderManager:
                 logger.error(f"All fallback attempts failed: {fallback_error}")
                 raise ProviderError(
                     "All AI providers failed",
-                    details={'attempted': list(self.registry.get_all_providers().keys())}
+                    details={'attempted_llm_providers': list(self.registry.get_llm_providers().keys())}
                 )
     
     def get_available_providers(self) -> List[str]:
-        """Get list of available provider names"""
-        return list(self.registry.get_all_providers().keys())
+        """Get list of available LLM provider names (excluding TTS and Benchmark APIs)"""
+        return list(self.registry.get_llm_providers().keys())
     
     async def get_provider_health(self, provider_name: str) -> ProviderHealthMetrics:
         """
@@ -772,12 +803,13 @@ class ProviderManager:
                 rankings = await self.external_benchmarks.get_rankings(category)
                 
                 if rankings:
-                    # Get available providers
-                    available = set(self.get_available_providers())
+                    # Get available LLM providers only (excluding TTS, benchmark APIs)
+                    available_llm = set(self.get_available_providers())
+                    logger.info(f"Available LLM providers: {available_llm}")
                     
-                    # Find best available provider
+                    # Find best available provider from rankings
                     for ranking in rankings:
-                        if ranking.provider in available:
+                        if ranking.provider in available_llm:
                             logger.info(
                                 f"🎯 Selected {ranking.provider} for {category} "
                                 f"(rank #{ranking.rank}, score: {ranking.score:.1f}, "
@@ -786,15 +818,17 @@ class ProviderManager:
                             return ranking.provider
                     
                     logger.warning(
-                        f"No top-ranked providers available for {category}, "
-                        f"using default"
+                        f"No top-ranked LLM providers available for {category}, "
+                        f"using fallback"
                     )
             
             except Exception as e:
                 logger.error(f"Error selecting provider from benchmarks: {e}")
         
-        # Fallback to default provider
-        return self._default_provider or self.get_available_providers()[0]
+        # Fallback to default provider or first available LLM provider
+        fallback = self._default_provider or self.get_available_providers()[0]
+        logger.info(f"Using fallback LLM provider: {fallback}")
+        return fallback
     
     def detect_category_from_message(self, message: str, emotion_state: Optional[EmotionState] = None) -> str:
         """
