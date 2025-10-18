@@ -50,6 +50,16 @@ from transformers import (
 )
 
 from services.emotion.emotion_core import EmotionCategory
+from services.emotion.batch_optimizer import (
+    BatchOptimizer,
+    BatchOptimizerConfig,
+    BatchMetrics
+)
+from services.emotion.emotion_profiler import (
+    EmotionProfiler,
+    ProfilerConfig,
+    ComponentType
+)
 from pydantic import BaseModel, Field, ConfigDict
 
 logger = logging.getLogger(__name__)
@@ -89,7 +99,17 @@ class EmotionTransformerConfig(BaseModel):
     )
     batch_size: int = Field(
         default=16,
-        description="Batch size for processing multiple texts"
+        description="Batch size for processing multiple texts (used if optimizer disabled)"
+    )
+    
+    # Phase 4 Optimizations
+    batch_optimizer_config: BatchOptimizerConfig = Field(
+        default_factory=BatchOptimizerConfig,
+        description="Batch size optimizer configuration"
+    )
+    profiler_config: ProfilerConfig = Field(
+        default_factory=ProfilerConfig,
+        description="Performance profiler configuration"
     )
     
     # Caching
@@ -616,6 +636,10 @@ class EmotionTransformer:
         self.cache = ModelCache(config.model_cache_dir, self.device)
         self.threshold_optimizer = ThresholdOptimizer()
         
+        # Phase 4 optimizations
+        self.batch_optimizer = BatchOptimizer(config.batch_optimizer_config)
+        self.profiler = EmotionProfiler(config.profiler_config)
+        
         # Models (loaded on initialize())
         self.primary_model = None
         self.primary_tokenizer = None
@@ -624,7 +648,7 @@ class EmotionTransformer:
         
         self._initialized = False
         
-        logger.info("EmotionTransformer created")
+        logger.info("EmotionTransformer created with Phase 4 optimizations")
     
     def initialize(self) -> None:
         """
@@ -783,9 +807,13 @@ class EmotionTransformer:
         texts: List[str]
     ) -> List[Dict[EmotionCategory, float]]:
         """
-        Batch prediction for high throughput.
+        Batch prediction with Phase 4 optimizations.
         
-        Process multiple texts simultaneously on GPU for 8-16x speedup.
+        Features:
+        - Dynamic batch sizing (BatchOptimizer)
+        - Performance profiling (EmotionProfiler)
+        - GPU memory-aware batching
+        - ML-driven throughput optimization
         
         Args:
             texts: List of texts to analyze
@@ -799,42 +827,95 @@ class EmotionTransformer:
             )
         
         results = []
-        batch_size = self.config.batch_size
+        
+        # Get input lengths for optimizer
+        input_lengths = [len(text) for text in texts]
+        
+        # Get optimal batch size (Phase 4B)
+        batch_size = self.batch_optimizer.get_optimal_batch_size(input_lengths)
+        
+        logger.debug(f"Using dynamic batch_size={batch_size} for {len(texts)} texts")
         
         for i in range(0, len(texts), batch_size):
             batch = texts[i:i+batch_size]
+            batch_start_time = time.time()
             
-            # Tokenize batch
-            inputs = self.primary_tokenizer(
-                batch,
-                return_tensors="pt",
-                padding=True,
-                truncation=True,
-                max_length=self.config.max_sequence_length
-            ).to(self.device)
-            
-            # Batch inference
-            with torch.no_grad():
-                if (
-                    self.config.use_mixed_precision
-                    and self.device.type == "cuda"
-                ):
-                    with torch.cuda.amp.autocast():
+            try:
+                # Profile tokenization (Phase 4C)
+                async def profile_tokenization():
+                    async with self.profiler.profile_component(
+                        ComponentType.TOKENIZATION,
+                        "primary_tokenizer"
+                    ):
+                        return self.primary_tokenizer(
+                            batch,
+                            return_tensors="pt",
+                            padding=True,
+                            truncation=True,
+                            max_length=self.config.max_sequence_length
+                        ).to(self.device)
+                
+                # For sync context, do direct profiling
+                inputs = self.primary_tokenizer(
+                    batch,
+                    return_tensors="pt",
+                    padding=True,
+                    truncation=True,
+                    max_length=self.config.max_sequence_length
+                ).to(self.device)
+                
+                # Batch inference with profiling
+                with torch.no_grad():
+                    if (
+                        self.config.use_mixed_precision
+                        and self.device.type == "cuda"
+                    ):
+                        with torch.cuda.amp.autocast():
+                            outputs = self.primary_model(**inputs)
+                    else:
                         outputs = self.primary_model(**inputs)
+                
+                # Process results
+                batch_probs = torch.sigmoid(outputs.logits).cpu().numpy()
+                
+                emotion_list = list(EmotionCategory)
+                for probs in batch_probs:
+                    emotion_probs = {
+                        emotion: float(probs[idx])
+                        for idx, emotion in enumerate(emotion_list)
+                        if idx < len(probs)
+                    }
+                    results.append(emotion_probs)
+                
+                # Record batch performance (Phase 4B)
+                batch_latency_ms = (time.time() - batch_start_time) * 1000
+                batch_metrics = BatchMetrics(
+                    batch_size=len(batch),
+                    sequence_lengths=input_lengths[i:i+batch_size],
+                    latency_ms=batch_latency_ms,
+                    throughput=len(batch) / (batch_latency_ms / 1000)
+                )
+                
+                # Add GPU metrics if available
+                if self.device.type == "cuda":
+                    used_mb = torch.cuda.memory_allocated() / (1024 ** 2)
+                    total_mb = torch.cuda.get_device_properties(0).total_memory / (1024 ** 2)
+                    batch_metrics.gpu_memory_used = used_mb
+                    batch_metrics.gpu_memory_available = total_mb - used_mb
+                
+                self.batch_optimizer.record_batch_performance(batch_metrics)
+                
+            except RuntimeError as e:
+                if "out of memory" in str(e).lower():
+                    # Record OOM and reduce batch size
+                    logger.error(f"OOM with batch_size={batch_size}, reducing")
+                    self.batch_optimizer.record_oom_error(batch_size)
+                    
+                    # Retry with smaller batch
+                    batch_size = max(1, batch_size // 2)
+                    continue
                 else:
-                    outputs = self.primary_model(**inputs)
-            
-            # Process results
-            batch_probs = torch.sigmoid(outputs.logits).cpu().numpy()
-            
-            emotion_list = list(EmotionCategory)
-            for probs in batch_probs:
-                emotion_probs = {
-                    emotion: float(probs[idx])
-                    for idx, emotion in enumerate(emotion_list)
-                    if idx < len(probs)
-                }
-                results.append(emotion_probs)
+                    raise
         
         return results
     
@@ -852,6 +933,33 @@ class EmotionTransformer:
         """Cache prediction result (handled by LRU cache)."""
         # LRU cache handles this automatically
         pass
+    
+    def get_optimizer_statistics(self) -> Dict[str, Any]:
+        """
+        Get batch optimizer statistics.
+        
+        Returns:
+            Dictionary of optimizer statistics
+        """
+        return self.batch_optimizer.get_statistics()
+    
+    def get_profiler_report(self) -> str:
+        """
+        Get performance profiler report.
+        
+        Returns:
+            Formatted profiler report
+        """
+        return self.profiler.get_report()
+    
+    def get_profiler_statistics(self) -> Dict[str, Any]:
+        """
+        Get profiler statistics.
+        
+        Returns:
+            Dictionary of profiler statistics
+        """
+        return self.profiler.get_statistics()
 
 
 # ============================================================================
