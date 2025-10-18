@@ -341,7 +341,7 @@ class MasterXEngine:
             response.ability_info = AbilityInfo(
                 ability_level=ability,
                 recommended_difficulty=difficulty_level.value,
-                cognitive_load=emotion_result.metrics.arousal,  # Using arousal as proxy
+                cognitive_load=emotion_result.pad_dimensions.arousal,  # Using arousal as proxy
                 flow_state_score=None  # Could be calculated from emotion trajectory
             )
             
@@ -586,8 +586,8 @@ Provide a response that:
     def _get_emotion_guidance(self, emotion_result) -> str:
         """Get guidance for AI based on detected emotion"""
         
-        emotion = emotion_result.metrics.primary_emotion
-        readiness = emotion_result.metrics.learning_readiness
+        emotion = emotion_result.primary_emotion
+        readiness = emotion_result.learning_readiness
         
         # Emotion-specific guidance
         if emotion in ['frustration', 'anxiety', 'overwhelmed']:
