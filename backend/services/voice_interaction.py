@@ -241,12 +241,13 @@ class ElevenLabsTTSService:
     Supports multiple voices and styles for personalized learning.
     """
     
-    def __init__(self, api_key: Optional[str] = None):
+    def __init__(self, api_key: Optional[str] = None, voice_settings = None):
         """
         Initialize ElevenLabs TTS service
         
         Args:
             api_key: ElevenLabs API key (defaults to ELEVENLABS_API_KEY env var)
+            voice_settings: VoiceSettings instance for voice ID mappings
         """
         if not ELEVENLABS_AVAILABLE:
             raise RuntimeError("ElevenLabs SDK not installed. Install with: pip install elevenlabs")
@@ -257,16 +258,26 @@ class ElevenLabsTTSService:
         
         self.client = ElevenLabsClient(api_key=self.api_key)
         
-        # Voice configurations (emotion-aware)
-        self.voices = {
-            "encouraging": "Rachel",  # Warm, encouraging female voice
-            "calm": "Adam",  # Calm, professional male voice
-            "excited": "Bella",  # Energetic female voice
-            "professional": "Antoni",  # Professional male voice
-            "friendly": "Elli"  # Friendly female voice
-        }
+        # Voice configurations from settings (AGENTS.md compliant - no hardcoded values)
+        if voice_settings:
+            self.voices = {
+                "encouraging": voice_settings.voice_encouraging,
+                "calm": voice_settings.voice_calm,
+                "excited": voice_settings.voice_excited,
+                "professional": voice_settings.voice_professional,
+                "friendly": voice_settings.voice_friendly
+            }
+        else:
+            # Fallback to env vars if settings not provided
+            self.voices = {
+                "encouraging": os.getenv("ELEVENLABS_VOICE_ENCOURAGING", "Rachel"),
+                "calm": os.getenv("ELEVENLABS_VOICE_CALM", "Adam"),
+                "excited": os.getenv("ELEVENLABS_VOICE_EXCITED", "Bella"),
+                "professional": os.getenv("ELEVENLABS_VOICE_PROFESSIONAL", "Antoni"),
+                "friendly": os.getenv("ELEVENLABS_VOICE_FRIENDLY", "Elli")
+            }
         
-        logger.info("✅ ElevenLabs TTS service initialized")
+        logger.info(f"✅ ElevenLabs TTS service initialized with voices: {list(self.voices.keys())}")
     
     async def synthesize_speech(
         self,
@@ -846,14 +857,16 @@ class VoiceInteractionEngine:
     assessment for voice-based learning interactions.
     """
     
-    def __init__(self, db):
+    def __init__(self, db, voice_settings = None):
         """
         Initialize voice interaction engine
         
         Args:
             db: MongoDB database instance
+            voice_settings: Optional VoiceSettings for configuration
         """
         self.db = db
+        self.voice_settings = voice_settings
         
         # Initialize services
         try:
@@ -863,7 +876,7 @@ class VoiceInteractionEngine:
             self.stt_service = None
         
         try:
-            self.tts_service = ElevenLabsTTSService()
+            self.tts_service = ElevenLabsTTSService(voice_settings=voice_settings)
         except Exception as e:
             logger.warning(f"TTS service initialization failed: {e}")
             self.tts_service = None
