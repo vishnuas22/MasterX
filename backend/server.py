@@ -74,6 +74,10 @@ from utils.logging_config import setup_logging
 from utils.errors import MasterXError
 from utils.cost_tracker import cost_tracker
 
+# Import authentication middleware for admin endpoints
+from middleware.auth import require_admin, get_current_user
+from fastapi import Depends
+
 # Setup logging
 setup_logging(log_level=os.getenv("LOG_LEVEL", "INFO"))
 logger = logging.getLogger(__name__)
@@ -1066,8 +1070,12 @@ async def chat(request: ChatRequest):
 
 # Cost dashboard endpoint (admin)
 @app.get("/api/v1/admin/costs")
-async def get_cost_dashboard():
-    """Admin endpoint for cost monitoring"""
+async def get_cost_dashboard(admin_user: dict = Depends(require_admin)):
+    """
+    Admin endpoint for cost monitoring
+    
+    Requires: Admin authentication
+    """
     
     try:
         return {
@@ -1100,8 +1108,12 @@ async def get_providers():
 
 # Phase 4: Performance monitoring endpoint
 @app.get("/api/v1/admin/performance")
-async def get_performance_dashboard():
-    """Admin endpoint for performance monitoring"""
+async def get_performance_dashboard(admin_user: dict = Depends(require_admin)):
+    """
+    Admin endpoint for performance monitoring
+    
+    Requires: Admin authentication
+    """
     
     try:
         from optimization.performance import get_performance_tracker
@@ -1118,8 +1130,12 @@ async def get_performance_dashboard():
 
 # Phase 4: Cache statistics endpoint
 @app.get("/api/v1/admin/cache")
-async def get_cache_stats():
-    """Admin endpoint for cache statistics"""
+async def get_cache_stats(admin_user: dict = Depends(require_admin)):
+    """
+    Admin endpoint for cache statistics
+    
+    Requires: Admin authentication
+    """
     
     try:
         from optimization.caching import get_cache_manager
@@ -2066,10 +2082,11 @@ async def get_budget_status(request: Request):
 
 
 @app.get("/api/v1/admin/system/status")
-async def get_system_status(request: Request):
+async def get_system_status(request: Request, admin_user: dict = Depends(require_admin)):
     """
     Get complete system status (Phase 8C - admin only)
     
+    Requires: Admin authentication
     Combines health monitoring, budget tracking, and configuration info.
     """
     # Get health status
@@ -2113,9 +2130,11 @@ async def get_system_status(request: Request):
 
 
 @app.get("/api/v1/admin/production-readiness")
-async def check_production_readiness():
+async def check_production_readiness(admin_user: dict = Depends(require_admin)):
     """
     Check production readiness (Phase 8C File 14)
+    
+    Requires: Admin authentication
     
     Validates configuration for production deployment.
     """
