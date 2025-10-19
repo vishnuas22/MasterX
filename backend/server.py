@@ -156,7 +156,7 @@ async def lifespan(app: FastAPI):
         
         # Initialize voice interaction engine (Phase 6)
         try:
-            app.state.voice_interaction = VoiceInteractionEngine(db)
+            app.state.voice_interaction = VoiceInteractionEngine(db, settings.voice)
             logger.info("✅ Voice interaction engine initialized")
         except Exception as e:
             logger.warning(f"Voice interaction engine initialization failed: {e}")
