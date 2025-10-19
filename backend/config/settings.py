@@ -324,6 +324,16 @@ class SecuritySettings(BaseSettings):
         description="Max voice requests per minute (TTS/STT)"
     )
     
+    rate_limit_login_per_minute: int = Field(
+        default=5,
+        description="Max login attempts per minute"
+    )
+    
+    rate_limit_window_minutes: int = Field(
+        default=1,
+        description="Rate limit window in minutes"
+    )
+    
     # Cost-Based Limits
     rate_limit_user_daily_cost: float = Field(
         default=5.0,
