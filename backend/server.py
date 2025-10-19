@@ -284,7 +284,15 @@ app = FastAPI(
 # PHASE 8C PRODUCTION MIDDLEWARE STACK
 # ============================================================================
 
-# 1. Request Logging Middleware (Phase 8C File 10)
+# 1. Security Headers Middleware (FIRST - adds headers to all responses)
+from middleware.security_headers import SecurityHeadersMiddleware
+
+app.add_middleware(
+    SecurityHeadersMiddleware,
+    enable_hsts=os.getenv("ENABLE_HSTS", "false").lower() == "true"
+)
+
+# 2. Request Logging Middleware (Phase 8C File 10)
 from utils.request_logger import RequestLoggingMiddleware
 
 app.add_middleware(
@@ -292,17 +300,52 @@ app.add_middleware(
     redact_pii=True
 )
 
-# 2. CORS middleware (after logging)
+# 3. CORS middleware (after logging)
+# Security improvement: Don't allow all origins in production
+cors_origins = os.getenv("CORS_ORIGINS", "*")
+if cors_origins == "*":
+    logger.warning("⚠️  CORS is set to allow all origins (*). This is a security risk in production!")
+    logger.warning("⚠️  Set CORS_ORIGINS in .env to specific domains, e.g., 'https://yourdomain.com,https://app.yourdomain.com'")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=os.getenv("CORS_ORIGINS", "*").split(","),
+    allow_origins=cors_origins.split(",") if cors_origins != "*" else ["*"],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH"],
     allow_headers=["*"],
+    expose_headers=["*"]
 )
 
 
-# 3. Request Tracking Middleware (Phase 8C File 13)
+# 3. Global Rate Limiting Middleware
+from middleware.simple_rate_limit import rate_limiter
+
+@app.middleware("http")
+async def rate_limit_middleware(request: Request, call_next):
+    """
+    Global rate limiting for all endpoints
+    
+    Prevents DOS attacks and ensures fair usage.
+    """
+    # Skip health checks
+    if request.url.path.startswith("/api/health"):
+        return await call_next(request)
+    
+    # Check rate limit
+    ip = rate_limiter.get_client_ip(request)
+    endpoint = request.url.path
+    
+    if not rate_limiter.check_rate_limit(ip, endpoint):
+        return JSONResponse(
+            status_code=429,
+            content={"detail": "Too many requests. Please slow down."},
+            headers={"Retry-After": "60"}
+        )
+    
+    return await call_next(request)
+
+
+# 4. Request Tracking Middleware (Phase 8C File 13)
 @app.middleware("http")
 async def track_requests_middleware(request: Request, call_next):
     """
@@ -696,13 +739,24 @@ async def register(request: RegisterRequest):
 
 
 @app.post("/api/auth/login", response_model=TokenResponse)
-async def login(request: LoginRequest):
+async def login(request: LoginRequest, fastapi_request: Request = None):
     """
     User login
     
     Authenticates user with email and password.
     Returns JWT tokens on success.
     """
+    # Rate limiting for brute force protection
+    from middleware.simple_rate_limit import rate_limiter
+    if fastapi_request:
+        ip = rate_limiter.get_client_ip(fastapi_request)
+        if not rate_limiter.check_rate_limit(ip, "login"):
+            raise HTTPException(
+                status_code=http_status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="Too many login attempts. Please try again later.",
+                headers={"Retry-After": "60"}
+            )
+    
     logger.info(f"🔐 Login attempt: {request.email}")
     
     try:
