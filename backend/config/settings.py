@@ -170,6 +170,32 @@ class VoiceSettings(BaseSettings):
         description="Character threshold for model selection"
     )
     
+    # ElevenLabs Voice ID Mappings (configurable via environment)
+    voice_encouraging: str = Field(
+        default_factory=lambda: os.getenv("ELEVENLABS_VOICE_ENCOURAGING", "Rachel"),
+        description="Voice ID for encouraging tone"
+    )
+    
+    voice_calm: str = Field(
+        default_factory=lambda: os.getenv("ELEVENLABS_VOICE_CALM", "Adam"),
+        description="Voice ID for calm tone"
+    )
+    
+    voice_excited: str = Field(
+        default_factory=lambda: os.getenv("ELEVENLABS_VOICE_EXCITED", "Bella"),
+        description="Voice ID for excited tone"
+    )
+    
+    voice_professional: str = Field(
+        default_factory=lambda: os.getenv("ELEVENLABS_VOICE_PROFESSIONAL", "Antoni"),
+        description="Voice ID for professional tone"
+    )
+    
+    voice_friendly: str = Field(
+        default_factory=lambda: os.getenv("ELEVENLABS_VOICE_FRIENDLY", "Elli"),
+        description="Voice ID for friendly tone"
+    )
+    
     # Voice Activity Detection (VAD)
     vad_frame_duration_ms: int = Field(
         default=30,
