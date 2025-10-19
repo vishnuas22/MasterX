@@ -728,6 +728,16 @@ class MasterXSettings(BaseSettings):
         """Check if running in staging"""
         return self.environment.lower() == "staging"
     
+    @property
+    def JWT_SECRET_KEY(self) -> str:
+        """Convenience property for JWT secret key"""
+        return self.security.jwt_secret_key
+    
+    @property
+    def JWT_ALGORITHM(self) -> str:
+        """Convenience property for JWT algorithm"""
+        return self.security.jwt_algorithm
+    
     def get_active_providers(self) -> List[str]:
         """Get list of configured AI providers"""
         providers = []
