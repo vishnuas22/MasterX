@@ -1,6 +1,11 @@
 """
 Simple Rate Limiting Middleware
 For immediate deployment to fix brute force vulnerability
+
+AGENTS.md Compliance:
+- Zero hardcoded values (all from config)
+- Clean naming
+- Type safety
 """
 
 from collections import defaultdict
@@ -10,6 +15,8 @@ from typing import Dict, List
 import asyncio
 import logging
 
+from config.settings import get_settings
+
 logger = logging.getLogger(__name__)
 
 
@@ -18,16 +25,20 @@ class SimpleRateLimiter:
     Simple in-memory rate limiter for IP addresses
     
     Tracks requests per IP and blocks when limit is exceeded.
+    Zero hardcoded values - all configuration from environment.
     """
     
     def __init__(self):
+        # Load configuration from settings (AGENTS.md compliant)
+        settings = get_settings()
+        
         # Track requests: {ip: [timestamp1, timestamp2, ...]}
         self.requests: Dict[str, List[datetime]] = defaultdict(list)
         
-        # Configuration
-        self.max_requests_per_minute = 60
-        self.max_login_attempts_per_minute = 10
-        self.window = timedelta(minutes=1)
+        # Configuration from environment (zero hardcoded values)
+        self.max_requests_per_minute = settings.security.rate_limit_ip_per_minute
+        self.max_login_attempts_per_minute = settings.security.rate_limit_login_per_minute
+        self.window = timedelta(minutes=settings.security.rate_limit_window_minutes)
         
         # Start cleanup task
         asyncio.create_task(self._cleanup_old_data())
