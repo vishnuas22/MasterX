@@ -22,7 +22,7 @@ from datetime import datetime
 import uuid
 
 from core.models import ChatRequest, ChatResponse, EmotionState, ContextInfo, AbilityInfo
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator, model_validator
 from core.engine import MasterXEngine
 
 
@@ -1771,12 +1771,38 @@ async def voice_chat(
 
 # Collaboration Request Models
 class CreateCollaborationSessionRequest(BaseModel):
-    """Request model for creating collaboration session"""
-    user_id: str
+    """Request model for creating collaboration session
+    
+    Supports both 'user_id' and 'creator_id' for backward compatibility.
+    Following AGENTS.md: Clear, intuitive API design.
+    """
+    user_id: Optional[str] = None
+    creator_id: Optional[str] = None
     topic: str
     subject: str
     difficulty_level: float = 0.5
     max_participants: int = 4
+    
+    @field_validator('user_id', mode='before')
+    @classmethod
+    def validate_user_id(cls, v, info):
+        """Ensure either user_id or creator_id is provided"""
+        # If user_id not provided, try to use creator_id
+        if v is None and info.data.get('creator_id'):
+            return info.data['creator_id']
+        return v
+    
+    @model_validator(mode='after')
+    def validate_ids(self):
+        """Ensure at least one ID field is provided"""
+        if not self.user_id and not self.creator_id:
+            raise ValueError("Either 'user_id' or 'creator_id' must be provided")
+        # Set both to the same value for consistency
+        if self.user_id and not self.creator_id:
+            self.creator_id = self.user_id
+        elif self.creator_id and not self.user_id:
+            self.user_id = self.creator_id
+        return self
 
 
 class JoinSessionRequest(BaseModel):
