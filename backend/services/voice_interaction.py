@@ -269,12 +269,13 @@ class ElevenLabsTTSService:
             }
         else:
             # Fallback to env vars if settings not provided
+            # Using actual ElevenLabs voice IDs (not names) for API compatibility
             self.voices = {
-                "encouraging": os.getenv("ELEVENLABS_VOICE_ENCOURAGING", "Rachel"),
-                "calm": os.getenv("ELEVENLABS_VOICE_CALM", "Adam"),
-                "excited": os.getenv("ELEVENLABS_VOICE_EXCITED", "Bella"),
-                "professional": os.getenv("ELEVENLABS_VOICE_PROFESSIONAL", "Antoni"),
-                "friendly": os.getenv("ELEVENLABS_VOICE_FRIENDLY", "Elli")
+                "encouraging": os.getenv("ELEVENLABS_VOICE_ENCOURAGING", "21m00Tcm4TlvDq8ikWAM"),  # Rachel
+                "calm": os.getenv("ELEVENLABS_VOICE_CALM", "ErXwobaYiN019PkySvjV"),  # Adam
+                "excited": os.getenv("ELEVENLABS_VOICE_EXCITED", "EXAVITQu4vr4xnSDxMaL"),  # Bella
+                "professional": os.getenv("ELEVENLABS_VOICE_PROFESSIONAL", "yoZ06aMxZJJ28mfd3POQ"),  # Antoni
+                "friendly": os.getenv("ELEVENLABS_VOICE_FRIENDLY", "MF3mGyEYCl7XYWbV9V6O")  # Elli
             }
         
         logger.info(f"✅ ElevenLabs TTS service initialized with voices: {list(self.voices.keys())}")
