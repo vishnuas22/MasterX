@@ -226,8 +226,8 @@ class LearningReadinessCalculator:
         """Initialize learning readiness calculator."""
         # In production, this would load a pre-trained model
         # For now, we create a model with reasonable parameters
+        # Note: 'multi_class' removed - deprecated in sklearn 1.5, will use 'multinomial' by default
         self.model = LogisticRegression(
-            multi_class='multinomial',
             solver='lbfgs',
             max_iter=1000,
             random_state=42
