@@ -206,8 +206,8 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
               stateStyles[state],
               
               // Icon padding
-              leftIcon && 'pl-10',
-              rightIcon && 'pr-10',
+              leftIcon ? 'pl-10' : '',
+              rightIcon ? 'pr-10' : '',
               
               // Custom className
               className
