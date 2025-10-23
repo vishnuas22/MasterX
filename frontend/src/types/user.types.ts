@@ -48,6 +48,7 @@ export interface User {
   id: string; // UUID
   email: string;
   name: string;
+  avatar_url?: string; // Optional profile picture URL
   created_at: string; // ISO 8601
   learning_preferences: LearningPreferences;
   emotional_profile: EmotionalProfile;
