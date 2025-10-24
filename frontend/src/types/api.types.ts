@@ -1,8 +1,20 @@
-/**
- * Generic API Types
- * 
- * Reusable types for all API interactions
- */
+// **Purpose:** Reusable API types and patterns
+
+// **What This File Contributes:**
+// 1. Generic API response wrappers
+// 2. Error types
+// 3. Pagination types
+// 4. Loading states
+// 5. API status codes
+
+// **Implementation:**
+
+// /**
+//  * Generic API Types
+//  * 
+//  * Reusable types for all API interactions
+//  * Following REST best practices
+//  */
 
 // ============================================================================
 // API RESPONSE WRAPPERS
@@ -142,3 +154,16 @@ export const isAPIValidationError = (obj: unknown): obj is APIValidationError =>
 
 export type APIPromise<T> = Promise<APIResponse<T>>;
 export type QueryKey = readonly unknown[];
+
+
+// **Key Features:**
+// 1. **Generic wrappers:** Reusable response types
+// 2. **Error handling:** Comprehensive error types
+// 3. **Pagination:** Standard pagination pattern
+// 4. **Loading states:** Async operation tracking
+// 5. **Type safety:** Type guards for runtime checks
+
+// **Connected Files:**
+// - → All `*.api.ts` files (use these types)
+// - → React Query hooks (QueryState)
+// - → Error boundaries (APIError)
