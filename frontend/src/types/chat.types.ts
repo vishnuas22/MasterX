@@ -1,23 +1,13 @@
-// **Purpose:** Chat message types matching backend exactly
-
-// **What This File Contributes:**
-// 1. Message structure from backend
-// 2. Chat request/response types
-// 3. Context and ability information
-// 4. Real-time typing indicators
-
-// **Implementation:**
-
-// /**
-//  * Chat & Messaging Types
-//  * 
-//  * Matches backend models.py:
-//  * - Message (lines 203-218)
-//  * - ChatRequest (lines 374-379)
-//  * - ChatResponse (lines 382-403)
-//  * - ContextInfo (lines 334-339)
-//  * - AbilityInfo (lines 342-347)
-//  */
+/**
+ * Chat & Messaging Types
+ * 
+ * Matches backend models.py:
+ * - Message (lines 203-218)
+ * - ChatRequest (lines 374-379)
+ * - ChatResponse (lines 382-403)
+ * - ContextInfo (lines 334-339)
+ * - AbilityInfo (lines 342-347)
+ */
 
 import type { EmotionState, EmotionMetrics } from './emotion.types';
 
@@ -172,17 +162,3 @@ export type OptimisticMessage = Omit<Message, 'id'> & {
   id: string;
   optimistic: boolean;
 };
-
-
-// **Key Features:**
-// 1. **Complete message structure:** All backend fields
-// 2. **Real-time support:** WebSocket event types
-// 3. **Optimistic updates:** Temporary message IDs
-// 4. **Type guards:** Runtime validation
-// 5. **UI helpers:** Message grouping, state management
-
-// **Connected Files:**
-// - ← Backend: `core/models.py` (Message, ChatRequest, ChatResponse)
-// - → `store/chatStore.ts` (chat state)
-// - → `services/api/chat.api.ts` (API calls)
-// - → `components/chat/*` (UI components)
