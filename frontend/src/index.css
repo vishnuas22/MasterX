@@ -1,3 +1,7 @@
+/* **Purpose:** Import Tailwind, define global CSS variables, reset styles
+
+**Implementation:**
+```css */
 /* Tailwind directives */
 @tailwind base;
 @tailwind components;
@@ -53,10 +57,12 @@ html:not(.dark) {
     font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif;
   }
 
+  /* Smooth scrolling */
   html {
     scroll-behavior: smooth;
   }
   
+  /* Respect user's motion preferences */
   @media (prefers-reduced-motion: reduce) {
     * {
       animation-duration: 0.01ms !important;
@@ -65,6 +71,7 @@ html:not(.dark) {
     }
   }
   
+  /* Hide scrollbar but keep functionality */
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
@@ -73,6 +80,7 @@ html:not(.dark) {
     scrollbar-width: none;
   }
   
+  /* Custom scrollbar (dark theme) */
   ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
@@ -89,7 +97,9 @@ html:not(.dark) {
   }
 }
 
+/* Utility classes */
 @layer utilities {
+  /* Glass morphism effect */
   .glass {
     background: rgba(28, 28, 30, 0.7);
     backdrop-filter: blur(40px);
@@ -97,6 +107,7 @@ html:not(.dark) {
     border: 1px solid rgba(255, 255, 255, 0.1);
   }
   
+  /* Gradient text */
   .text-gradient {
     background: linear-gradient(135deg, var(--accent-primary), var(--accent-purple));
     -webkit-background-clip: text;
@@ -104,16 +115,20 @@ html:not(.dark) {
     background-clip: text;
   }
   
+  /* Smooth transitions */
   .transition-smooth {
     transition: all var(--transition-normal);
   }
 }
 
+/* Component-specific styles */
 @layer components {
+  /* Focus styles (accessibility) */
   .focus-ring {
     @apply focus:outline-none focus:ring-2 focus:ring-accent-primary focus:ring-offset-2 focus:ring-offset-bg-primary;
   }
   
+  /* Button base */
   .btn {
     @apply px-4 py-2 rounded-md font-medium transition-smooth focus-ring;
   }
@@ -127,31 +142,38 @@ html:not(.dark) {
   }
 }
 
+/* Animations */
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slideUp {
-  from { transform: translateY(10px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 @keyframes pulseSubtle {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
 }
 
-@keyframes slideInRight {
-  from { transform: translateX(100%); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
-}
-
+/* Apply animations */
 .animate-fade-in {
-  animation: fadeIn 250ms ease-out;
-}
-
-.animate-fadeIn {
   animation: fadeIn 250ms ease-out;
 }
 
@@ -159,14 +181,22 @@ html:not(.dark) {
   animation: slideUp 400ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.animate-slideUp {
-  animation: slideUp 400ms cubic-bezier(0.4, 0, 0.2, 1);
-}
-
 .animate-pulse-subtle {
   animation: pulseSubtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-.animate-slideInRight {
-  animation: slideInRight 300ms cubic-bezier(0.4, 0, 0.2, 1);
-}
+/* **Benefits:**
+1. **CSS variables:** Easy theme switching
+2. **Accessibility:** Reduced motion, focus styles
+3. **Glass morphism:** Apple-style elevated surfaces
+4. **Smooth scrolling:** Better UX
+5. **Custom scrollbar:** Consistent with dark theme
+
+**Performance:**
+- CSS-only animations (GPU-accelerated)
+- No JavaScript for theme variables
+- Minimal CSS bundle (~10KB gzipped)
+
+**Connected Files:**
+- → All components inherit these base styles
+- ← `tailwind.config.js` extends these styles */
