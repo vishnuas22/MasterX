@@ -1,24 +1,13 @@
-// **Purpose:** Complete emotion detection type system matching backend
-
-// **What This File Contributes:**
-// 1. 27 emotion categories (GoEmotions)
-// 2. PAD dimensions (Pleasure-Arousal-Dominance)
-// 3. Learning readiness states
-// 4. Cognitive load levels
-// 5. Flow state indicators
-
-// **Implementation:**
-
-// /**
-//  * Emotion Detection Types
-//  * 
-//  * Matches backend emotion_core.py exactly:
-//  * - EmotionCategory (lines 29-78)
-//  * - LearningReadiness (lines 84-101)
-//  * - CognitiveLoadLevel (lines 104-121)
-//  * - FlowStateIndicator (lines 124-145)
-//  * - EmotionMetrics (lines 283-507)
-//  */
+/**
+ * Emotion Detection Types
+ * 
+ * Matches backend emotion_core.py exactly:
+ * - EmotionCategory (lines 29-78)
+ * - LearningReadiness (lines 84-101)
+ * - CognitiveLoadLevel (lines 104-121)
+ * - FlowStateIndicator (lines 124-145)
+ * - EmotionMetrics (lines 283-507)
+ */
 
 // ============================================================================
 // EMOTION CATEGORIES (27 from GoEmotions Dataset)
@@ -175,7 +164,6 @@ export const EMOTION_COLORS: EmotionColorMap = {
   confusion: '#FF9F0A',
   excitement: '#FFD60A',
   neutral: '#8E8E93',
-  // Add all 27 emotions...
 };
 
 export interface EmotionVisualization {
@@ -251,17 +239,3 @@ export const isNegativeEmotion = (emotion: EmotionCategory): boolean => {
   ];
   return negativeEmotions.includes(emotion);
 };
-
-
-// **Key Features:**
-// 1. **Complete emotion taxonomy:** All 27 GoEmotions categories
-// 2. **Learning psychology:** Readiness, flow, cognitive load
-// 3. **Type safety:** Enums for all categorical data
-// 4. **Helper functions:** Common emotion operations
-// 5. **Visualization support:** Color mapping for UI
-
-// **Connected Files:**
-// - ← Backend: `services/emotion/emotion_core.py`
-// - → `store/emotionStore.ts` (emotion state management)
-// - → `components/emotion/*` (emotion visualization)
-// - → `hooks/useEmotion.ts` (emotion operations)
