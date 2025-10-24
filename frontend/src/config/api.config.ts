@@ -1,18 +1,9 @@
-// **Purpose:** Centralized API endpoint definitions
-
-// **What This File Contributes:**
-// 1. All backend API endpoints
-// 2. URL construction helpers
-// 3. Type-safe endpoint access
-
-// **Implementation:**
-// ```typescript
-// /**
-//  * API Endpoints Configuration
-//  * 
-//  * Matches backend server.py endpoints exactly
-//  * Auto-generates typed endpoint URLs
-//  */
+/**
+ * API Endpoints Configuration
+ * 
+ * Matches backend server.py endpoints exactly
+ * Auto-generates typed endpoint URLs
+ */
 
 const API_BASE = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8001';
 
@@ -181,16 +172,3 @@ export const API_ENDPOINTS = {
 // ============================================================================
 
 export type EndpointCategory = keyof typeof API_ENDPOINTS;
-
-
-// **Key Features:**
-// 1. **Complete coverage:** All backend endpoints
-// 2. **Type-safe:** Functions for dynamic URLs
-// 3. **Environment-aware:** Uses VITE_BACKEND_URL
-// 4. **Organized:** Grouped by feature
-// 5. **Easy to maintain:** Single source of truth
-
-// **Connected Files:**
-// - ← Backend: `server.py` (all routes)
-// - → All `*.api.ts` files
-// - → Type-safe URL construction
