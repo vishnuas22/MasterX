@@ -1,13 +1,23 @@
-/**
- * User & Authentication Types
- * 
- * Matches backend models.py exactly:
- * - UserDocument (lines 107-136)
- * - RegisterRequest (lines 409-414)
- * - LoginRequest (lines 417-420)
- * - TokenResponse (lines 423-429)
- * - UserResponse (lines 436-445)
- */
+// **Purpose:** Type-safe user and authentication data structures matching backend exactly
+
+// **What This File Contributes:**
+// 1. User profile types from backend `UserDocument`
+// 2. Authentication request/response types
+// 3. Subscription tiers
+// 4. Learning preferences
+
+// **Implementation:**
+
+// /**
+//  * User & Authentication Types
+//  * 
+//  * Matches backend models.py exactly:
+//  * - UserDocument (lines 107-136)
+//  * - RegisterRequest (lines 409-414)
+//  * - LoginRequest (lines 417-420)
+//  * - TokenResponse (lines 423-429)
+//  * - UserResponse (lines 436-445)
+//  */
 
 // ============================================================================
 // ENUMS
@@ -57,10 +67,11 @@ export interface User {
 }
 
 export interface UserDocument extends User {
+  // Additional fields from backend UserDocument
   is_active: boolean;
   is_verified: boolean;
   failed_login_attempts?: number;
-  locked_until?: string | null;
+  locked_until?: string | null; // ISO 8601
 }
 
 // ============================================================================
@@ -83,7 +94,7 @@ export interface LoginResponse {
   access_token: string;
   refresh_token: string;
   token_type: 'Bearer';
-  expires_in: number;
+  expires_in: number; // seconds
   user: {
     id: string;
     email: string;
@@ -94,7 +105,7 @@ export interface LoginResponse {
 export interface TokenVerifyResponse {
   user_id: string;
   email: string;
-  exp: number;
+  exp: number; // Unix timestamp
 }
 
 export interface UserProfileResponse {
@@ -118,9 +129,9 @@ export enum SessionStatus {
 }
 
 export interface LearningSession {
-  id: string;
+  id: string; // UUID
   user_id: string;
-  started_at: string;
+  started_at: string; // ISO 8601
   ended_at?: string | null;
   current_topic?: string;
   assigned_provider?: string;
@@ -129,7 +140,7 @@ export interface LearningSession {
   total_cost: number;
   avg_response_time_ms: number;
   emotion_trajectory: string[];
-  performance_score: number;
+  performance_score: number; // 0.0 - 1.0
   status: SessionStatus;
 }
 
@@ -165,3 +176,17 @@ export type PartialUser = Partial<User>;
 export type UserUpdatePayload = Pick<User, 'name'> & {
   learning_preferences?: Partial<LearningPreferences>;
 };
+
+
+// **Key Features:**
+// 1. **Exact backend match:** Types mirror backend models.py
+// 2. **Type guards:** Runtime type checking
+// 3. **Strict nullability:** Explicit null/undefined handling
+// 4. **Enums:** Type-safe constants
+// 5. **Helper types:** Utility types for common operations
+
+// **Connected Files:**
+// - ← Backend: `core/models.py` (UserDocument, RegisterRequest, etc.)
+// - → `store/authStore.ts` (uses User, LoginResponse)
+// - → `services/api/auth.api.ts` (API types)
+// - → All components using user data
