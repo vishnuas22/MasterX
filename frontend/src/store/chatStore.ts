@@ -1,0 +1,191 @@
+// **Purpose:** Manage chat messages, conversation history, real-time updates
+
+// **What This File Contributes:**
+// 1. Message list management (add, update, delete)
+// 2. Typing indicators
+// 3. Real-time emotion updates
+// 4. Conversation context
+// 5. Optimistic UI updates
+
+// **Implementation:**
+// ```typescript
+import { create } from 'zustand';
+import { chatAPI } from '@services/api/chat.api';
+import type { Message, ChatRequest, ChatResponse } from '@types/chat.types';
+import type { EmotionMetrics } from '@types/emotion.types';
+
+interface ChatState {
+  // State
+  messages: Message[];
+  isTyping: boolean;
+  isLoading: boolean;
+  currentEmotion: EmotionMetrics | null;
+  sessionId: string | null;
+  error: string | null;
+  
+  // Actions
+  sendMessage: (content: string) => Promise<void>;
+  addMessage: (message: Message) => void;
+  updateMessageEmotion: (messageId: string, emotion: EmotionMetrics) => void;
+  clearMessages: () => void;
+  loadHistory: (sessionId: string) => Promise<void>;
+  setTyping: (isTyping: boolean) => void;
+  setCurrentEmotion: (emotion: EmotionMetrics | null) => void;
+}
+
+export const useChatStore = create<ChatState>((set, get) => ({
+  // Initial state
+  messages: [],
+  isTyping: false,
+  isLoading: false,
+  currentEmotion: null,
+  sessionId: null,
+  error: null,
+  
+  // Send message action
+  sendMessage: async (content: string) => {
+    const { sessionId } = get();
+    
+    // Optimistic update: Add user message immediately
+    const userMessage: Message = {
+      id: `temp-${Date.now()}`,
+      role: 'user',
+      content,
+      timestamp: new Date().toISOString(),
+      emotion: null,
+    };
+    
+    set((state) => ({
+      messages: [...state.messages, userMessage],
+      isLoading: true,
+      isTyping: true,
+      error: null,
+    }));
+    
+    try {
+      // Call backend API
+      const request: ChatRequest = {
+        message: content,
+        user_id: 'current_user', // Get from authStore
+        session_id: sessionId || undefined,
+      };
+      
+      const response: ChatResponse = await chatAPI.sendMessage(request);
+      
+      // Replace temp message with actual message (has ID from backend)
+      set((state) => ({
+        messages: state.messages.map((msg) =>
+          msg.id === userMessage.id
+            ? { ...msg, id: response.user_message_id, emotion: response.emotion_state }
+            : msg
+        ),
+      }));
+      
+      // Add AI response
+      const aiMessage: Message = {
+        id: response.message_id,
+        role: 'assistant',
+        content: response.message,
+        timestamp: response.timestamp,
+        emotion: response.emotion_state,
+        provider: response.provider_used,
+        responseTime: response.response_time_ms,
+      };
+      
+      set((state) => ({
+        messages: [...state.messages, aiMessage],
+        isLoading: false,
+        isTyping: false,
+        currentEmotion: response.emotion_state,
+        sessionId: response.session_id,
+      }));
+    } catch (error: any) {
+      // Remove optimistic message on error
+      set((state) => ({
+        messages: state.messages.filter((msg) => msg.id !== userMessage.id),
+        isLoading: false,
+        isTyping: false,
+        error: error.message || 'Failed to send message',
+      }));
+      throw error;
+    }
+  },
+  
+  // Add message (for WebSocket updates)
+  addMessage: (message) => {
+    set((state) => ({
+      messages: [...state.messages, message],
+    }));
+  },
+  
+  // Update emotion for existing message
+  updateMessageEmotion: (messageId, emotion) => {
+    set((state) => ({
+      messages: state.messages.map((msg) =>
+        msg.id === messageId ? { ...msg, emotion } : msg
+      ),
+      currentEmotion: emotion,
+    }));
+  },
+  
+  // Clear all messages
+  clearMessages: () => {
+    set({
+      messages: [],
+      currentEmotion: null,
+      sessionId: null,
+      error: null,
+    });
+  },
+  
+  // Load message history
+  loadHistory: async (sessionId: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      const messages = await chatAPI.getHistory(sessionId);
+      set({
+        messages,
+        sessionId,
+        isLoading: false,
+      });
+    } catch (error: any) {
+      set({
+        error: error.message,
+        isLoading: false,
+      });
+    }
+  },
+  
+  // Set typing indicator
+  setTyping: (isTyping) => set({ isTyping }),
+  
+  // Set current emotion
+  setCurrentEmotion: (emotion) => set({ currentEmotion: emotion }),
+}));
+
+
+// **Key Features:**
+// 1. **Optimistic updates:** Instant UI feedback (feels fast)
+// 2. **Real-time emotion:** Updates as AI analyzes
+// 3. **Message history:** Load past conversations
+// 4. **Error handling:** Rollback on API failure
+// 5. **Session management:** Track conversation context
+
+// **Performance:**
+// - Optimistic update: 0ms perceived latency
+// - Only re-renders <MessageList> when messages change
+// - Efficient array updates (immutable patterns)
+
+// **Connected Files:**
+// - ← `services/api/chat.api.ts` (API calls)
+// - ← `types/chat.types.ts`, `types/emotion.types.ts` (types)
+// - → `components/chat/MessageList.tsx` (displays messages)
+// - → `components/chat/MessageInput.tsx` (uses sendMessage)
+// - → `components/emotion/EmotionWidget.tsx` (displays currentEmotion)
+// - ← `services/websocket/socket.client.ts` (real-time updates)
+
+// **Integration with Backend:**
+// ```
+// POST /api/v1/chat              ← chatAPI.sendMessage()
+// GET  /api/v1/chat/history/:id  ← chatAPI.getHistory()
+// WebSocket /ws/chat             ← Real-time emotion updates
