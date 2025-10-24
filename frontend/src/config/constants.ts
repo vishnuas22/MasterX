@@ -1,21 +1,11 @@
-// **Purpose:** Centralized constants and configuration values
-
-// **What This File Contributes:**
-// 1. App-wide constants
-// 2. API timeouts
-// 3. Cache durations
-// 4. UI configuration
-
-// **Implementation:**
-// ```typescript
-// /**
-//  * Application Constants
-//  * 
-//  * Following AGENTS_FRONTEND.md:
-//  * - No magic numbers in code
-//  * - Centralized configuration
-//  * - Type-safe constants
-//  */
+/**
+ * Application Constants
+ * 
+ * Following AGENTS_FRONTEND.md:
+ * - No magic numbers in code
+ * - Centralized configuration
+ * - Type-safe constants
+ */
 
 // ============================================================================
 // APPLICATION INFO
@@ -148,21 +138,19 @@ export const REGEX_PATTERNS = {
 } as const;
 
 // ============================================================================
+// FEATURE FLAGS (Environment-based)
+// ============================================================================
+
+export const FEATURES = {
+  VOICE_ENABLED: import.meta.env.VITE_ENABLE_VOICE === 'true',
+  ANALYTICS_ENABLED: import.meta.env.VITE_ENABLE_ANALYTICS === 'true',
+  GAMIFICATION_ENABLED: import.meta.env.VITE_ENABLE_GAMIFICATION === 'true',
+  DARK_MODE_ONLY: import.meta.env.VITE_DARK_MODE_ONLY === 'true',
+} as const;
+
+// ============================================================================
 // TYPE EXPORTS
 // ============================================================================
 
 export type RouteKey = keyof typeof ROUTES;
 export type StorageKey = keyof typeof STORAGE_KEYS;
-// ```
-
-// // **Key Features:**
-// // 1. **Centralized:** All constants in one place
-// // 2. **Type-safe:** `as const` for literal types
-// // 3. **Organized:** Grouped by functionality
-// // 4. **No magic numbers:** Named constants throughout
-// // 5. **Easily maintainable:** Single source of truth
-
-// // **Connected Files:**
-// // - → All components import from here
-// // - → No hardcoded values in codebase
-// // - → Type-safe constant usage
