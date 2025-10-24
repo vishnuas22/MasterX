@@ -412,13 +412,15 @@ export type AchievementRarity = keyof typeof achievementRarityColors;
 // - ← `tailwind.config.js` (design tokens)
 // - ← `index.css` (CSS variables)
 
-// **Usage Example:**
-
-import { colors, getEmotionColor, applyGlassEffect } from '@config/theme.config';
-
-// Use emotion color
-const emotionBg = getEmotionColor('joy'); // '#FFD60A'
-
-// Apply glass effect
-const glassStyle = applyGlassEffect('dark');
-// { background: 'rgba(28, 28, 30, 0.7)', backdropFilter: 'blur(40px)', ... }
+/**
+ * Usage Example:
+ * 
+ * import { colors, getEmotionColor, applyGlassEffect } from '@config/theme.config';
+ * 
+ * // Use emotion color
+ * const emotionBg = getEmotionColor('joy'); // '#FFD60A'
+ * 
+ * // Apply glass effect
+ * const glassStyle = applyGlassEffect('dark');
+ * // { background: 'rgba(28, 28, 30, 0.7)', backdropFilter: 'blur(40px)', ... }
+ */
