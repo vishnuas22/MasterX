@@ -1,13 +1,31 @@
-// **Purpose:** Detect when element enters viewport (lazy loading)
+/**
+ * Intersection Observer Hook
+ * 
+ * Detects when an element enters the viewport, perfect for lazy loading
+ * images, infinite scroll, and performance optimization.
+ * 
+ * @param elementRef - Ref to the element to observe
+ * @param options - IntersectionObserver options
+ * @returns boolean indicating if element is intersecting
+ * 
+ * @example
+ * const imageRef = useRef<HTMLImageElement>(null);
+ * const isVisible = useIntersection(imageRef, { threshold: 0.5 });
+ * 
+ * return (
+ *   <img
+ *     ref={imageRef}
+ *     src={isVisible ? actualSrc : placeholderSrc}
+ *     alt="Lazy loaded"
+ *   />
+ * );
+ * 
+ * Performance Impact:
+ * - Images: Load only when visible (saves 70% bandwidth)
+ * - Charts: Render only when user scrolls to them
+ * - Infinite scroll: Load more items automatically
+ */
 
-// **What This File Contributes:**
-// 1. Viewport visibility detection
-// 2. Lazy loading trigger
-// 3. Infinite scroll support
-// 4. Performance optimization
-
-// **Implementation:**
-// ```typescript
 import { useState, useEffect, RefObject } from 'react';
 
 interface UseIntersectionOptions {
@@ -16,9 +34,6 @@ interface UseIntersectionOptions {
   rootMargin?: string;
 }
 
-/**
- * Intersection Observer hook for lazy loading
- */
 export const useIntersection = (
   elementRef: RefObject<Element>,
   options: UseIntersectionOptions = {}
@@ -49,35 +64,3 @@ export const useIntersection = (
 
   return isIntersecting;
 };
-
-// /**
-//  * Usage example:
-//  * 
-//  * const imageRef = useRef<HTMLImageElement>(null);
-//  * const isVisible = useIntersection(imageRef, { threshold: 0.5 });
-//  * 
-//  * return (
-//  *   <img
-//  *     ref={imageRef}
-//  *     src={isVisible ? actualSrc : placeholderSrc}
-//  *     alt="Lazy loaded"
-//  *   />
-//  * );
-//  */
-// ```
-
-// **Benefits:**
-// 1. Native browser API (performant)
-// 2. No external dependencies
-// 3. Configurable threshold
-// 4. Automatic cleanup
-
-// **Performance Impact:**
-// - Images: Load only when visible (saves 70% bandwidth)
-// - Charts: Render only when user scrolls to them
-// - Infinite scroll: Load more items automatically
-
-// **Connected Files:**
-// - → `components/chat/MessageList.tsx` (infinite scroll)
-// - → `components/analytics/ProgressChart.tsx` (lazy render)
-// - → `components/emotion/EmotionChart.tsx` (lazy render)
