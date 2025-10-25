@@ -25,6 +25,11 @@ export default {
           frustration: '#FF453A',
           curiosity: '#30D158',
         },
+        // Glass morphism colors (for Card component)
+        'glass': {
+          bg: 'rgba(28, 28, 30, 0.7)',
+          border: 'rgba(255, 255, 255, 0.1)',
+        },
       },
       fontFamily: {
         sans: ['-apple-system', 'BlinkMacSystemFont', 'SF Pro Display', 'Inter', 'sans-serif'],
@@ -45,6 +50,11 @@ export default {
       transitionTimingFunction: {
         'apple': 'cubic-bezier(0.4, 0, 0.2, 1)',
         'spring': 'cubic-bezier(0.34, 1.56, 0.64, 1)',
+      },
+      zIndex: {
+        'modal': '9999',
+        'toast': '10000',
+        'tooltip': '10001',
       },
       animation: {
         'fade-in': 'fadeIn 250ms ease-out',
