@@ -304,143 +304,23 @@ ToastContainer.displayName = 'ToastContainer';
 // ============================================================================
 
 export default ToastContainer;
-```
 
-**Key Features:**
-1. ✅ **4 Variants:** Success, error, warning, info (color-coded, accessible)
-2. ✅ **Auto-Dismiss:** Configurable duration (default 5s)
-3. ✅ **Manual Dismiss:** Click or swipe to remove
-4. ✅ **Stacking:** Max 3 toasts (prevents overwhelm)
-5. ✅ **Action Button:** Optional CTA in toast
-6. ✅ **Portal Rendering:** No layout shift
-7. ✅ **Animations:** Smooth, 60fps (Framer Motion)
-8. ✅ **Mobile Gestures:** Swipe-to-dismiss
-
-**Performance Metrics:**
-- Initial render: <20ms
-- Animation: 60fps
-- Bundle size: 3KB gzipped
-- Zero layout shift (portal)
-
-**Accessibility:**
-- ✅ role="status" for announcements
-- ✅ aria-live="polite" for screen readers
-- ✅ Sufficient contrast (WCAG 2.1 AA)
-- ✅ Keyboard dismissible (Esc key)
-- ✅ Focus management (optional)
-
-**Usage Examples:**
-```typescript
-// Success toast
-toast.success('Settings saved successfully');
-
-// Error with description
-toast.error('Failed to send message', {
-  description: 'Please check your internet connection',
-});
-
-// Warning with action
-toast.warning('Session expiring soon', {
-  action: {
-    label: 'Extend Session',
-    onClick: () => extendSession(),
-  },
-});
-
-// Custom duration (10 seconds)
-toast.info('New feature available!', {
-  duration: 10000,
-});
-
-// No auto-dismiss
-toast.info('Important notice', {
-  duration: 0, // Must manually dismiss
-});
-
-// Dismiss specific toast
-const id = toast.info('Processing...');
-setTimeout(() => toast.dismiss(id), 2000);
-
-// Clear all toasts
-toast.dismissAll();
-```
-
-// **Connected Files:**
-// - ← `chatStore.ts` (message sent/failed)
-// - ← `authStore.ts` (login success/error)
-// - ← `useChat.ts` (API responses)
-// - ← `useAuth.ts` (auth events)
-// - → `App.tsx` (render ToastContainer)
-
-// **Backend Integration Examples:**
-// ```typescript
-// Chat API success
-try {
-  await chatApi.sendMessage(message);
-  toast.success('Message sent');
-} catch (error) {
-  toast.error('Failed to send message', {
-    description: error.message,
-    action: {
-      label: 'Retry',
-      onClick: () => retrySendMessage(),
-    },
-  });
-}
-
-// Voice recording success
-toast.success('Voice message recorded', {
-  description: 'Processing with Whisper AI...',
-  duration: 3000,
-});
-
-// Achievement unlocked (gamification)
-toast.success('🎉 Achievement Unlocked!', {
-  description: 'Complete 10 sessions in a row',
-  duration: 7000,
-});
-
-// Session expiring (from WebSocket)
-socket.on('session:expiring', () => {
-  toast.warning('Session expiring in 2 minutes', {
-    action: {
-      label: 'Extend',
-      onClick: () => extendSession(),
-    },
-    duration: 0, // Don't auto-dismiss
-  });
-});
-```
-
-**Testing Strategy:**
-```typescript
-// Test auto-dismiss
-test('auto-dismisses after duration', async () => {
-  jest.useFakeTimers();
-  const { container } = render(<ToastContainer />);
-  
-  toast.info('Test', { duration: 3000 });
-  expect(container.textContent).toContain('Test');
-  
-  jest.advanceTimersByTime(3000);
-  await waitFor(() => {
-    expect(container.textContent).not.toContain('Test');
-  });
-  
-  jest.useRealTimers();
-});
-
-// Test max toasts limit
-test('limits to 3 simultaneous toasts', () => {
-  render(<ToastContainer />);
-  
-  toast.info('Toast 1');
-  toast.info('Toast 2');
-  toast.info('Toast 3');
-  toast.info('Toast 4'); // Should remove Toast 1
-  
-  const toasts = screen.getAllByRole('status');
-  expect(toasts).toHaveLength(3);
-  expect(screen.queryByText('Toast 1')).not.toBeInTheDocument();
-});
-```
+/*
+ * Usage Examples:
+ * 
+ * // Success toast
+ * toast.success('Settings saved successfully');
+ * 
+ * // Error with description
+ * toast.error('Failed to send message', {
+ *   description: 'Please check your internet connection',
+ * });
+ * 
+ * // Warning with action
+ * toast.warning('Session expiring soon', {
+ *   action: {
+ *     label: 'Extend Session',
+ *     onClick: () => extendSession(),
+ *   },
+ * });
+ */
