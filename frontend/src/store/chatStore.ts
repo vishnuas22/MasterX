@@ -29,6 +29,7 @@ interface ChatState {
   addMessage: (message: Message) => void;
   updateMessageEmotion: (messageId: string, emotion: EmotionState) => void;
   clearMessages: () => void;
+  loadHistory: (sessionId: string) => Promise<void>;
   setTyping: (isTyping: boolean) => void;
   setCurrentEmotion: (emotion: EmotionState | null) => void;
 }
@@ -141,6 +142,25 @@ export const useChatStore = create<ChatState>((set, get) => ({
       sessionId: null,
       error: null,
     });
+  },
+  
+  // Load message history
+  loadHistory: async (sessionId: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      const messages = await chatAPI.getHistory(sessionId);
+      set({
+        messages,
+        sessionId,
+        isLoading: false,
+      });
+    } catch (error: any) {
+      set({
+        error: error.message || 'Failed to load history',
+        isLoading: false,
+      });
+      throw error;
+    }
   },
   
   // Set typing indicator
