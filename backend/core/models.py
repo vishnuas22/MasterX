@@ -196,7 +196,7 @@ class EmotionState(BaseModel):
     """Emotion analysis state"""
     primary_emotion: str
     arousal: float = Field(ge=0.0, le=1.0)
-    valence: float = Field(ge=0.0, le=1.0)
+    valence: float = Field(ge=-1.0, le=1.0)  # Fixed: valence can be negative (PAD model)
     learning_readiness: LearningReadiness
 
 
