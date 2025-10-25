@@ -10,27 +10,27 @@
 // **Implementation:**
 // ```typescript
 import { create } from 'zustand';
-import { chatAPI } from '@services/api/chat.api';
-import type { Message, ChatRequest, ChatResponse } from '@types/chat.types';
-import type { EmotionMetrics } from '@types/emotion.types';
+import { chatAPI } from '@/services/api/chat.api';
+import { MessageRole } from '@/types/chat.types';
+import type { Message, ChatRequest, ChatResponse } from '@/types/chat.types';
+import type { EmotionState } from '@/types/emotion.types';
 
 interface ChatState {
   // State
   messages: Message[];
   isTyping: boolean;
   isLoading: boolean;
-  currentEmotion: EmotionMetrics | null;
+  currentEmotion: EmotionState | null;
   sessionId: string | null;
   error: string | null;
   
   // Actions
-  sendMessage: (content: string) => Promise<void>;
+  sendMessage: (content: string, userId: string) => Promise<void>;
   addMessage: (message: Message) => void;
-  updateMessageEmotion: (messageId: string, emotion: EmotionMetrics) => void;
+  updateMessageEmotion: (messageId: string, emotion: EmotionState) => void;
   clearMessages: () => void;
-  loadHistory: (sessionId: string) => Promise<void>;
   setTyping: (isTyping: boolean) => void;
-  setCurrentEmotion: (emotion: EmotionMetrics | null) => void;
+  setCurrentEmotion: (emotion: EmotionState | null) => void;
 }
 
 export const useChatStore = create<ChatState>((set, get) => ({
@@ -43,13 +43,15 @@ export const useChatStore = create<ChatState>((set, get) => ({
   error: null,
   
   // Send message action
-  sendMessage: async (content: string) => {
+  sendMessage: async (content: string, userId: string) => {
     const { sessionId } = get();
     
     // Optimistic update: Add user message immediately
     const userMessage: Message = {
       id: `temp-${Date.now()}`,
-      role: 'user',
+      session_id: sessionId || '',
+      user_id: userId,
+      role: MessageRole.USER,
       content,
       timestamp: new Date().toISOString(),
       emotion: null,
@@ -66,37 +68,40 @@ export const useChatStore = create<ChatState>((set, get) => ({
       // Call backend API
       const request: ChatRequest = {
         message: content,
-        user_id: 'current_user', // Get from authStore
+        user_id: userId,
         session_id: sessionId || undefined,
       };
       
       const response: ChatResponse = await chatAPI.sendMessage(request);
       
-      // Replace temp message with actual message (has ID from backend)
-      set((state) => ({
-        messages: state.messages.map((msg) =>
-          msg.id === userMessage.id
-            ? { ...msg, id: response.user_message_id, emotion: response.emotion_state }
-            : msg
-        ),
-      }));
+      // Replace temp message with confirmed user message
+      const confirmedUserMessage: Message = {
+        ...userMessage,
+        session_id: response.session_id,
+      };
       
       // Add AI response
       const aiMessage: Message = {
-        id: response.message_id,
-        role: 'assistant',
+        id: `ai-${Date.now()}`,
+        session_id: response.session_id,
+        user_id: 'assistant',
+        role: MessageRole.ASSISTANT,
         content: response.message,
         timestamp: response.timestamp,
-        emotion: response.emotion_state,
+        emotion: response.emotion_state || null,
         provider: response.provider_used,
         responseTime: response.response_time_ms,
       };
       
       set((state) => ({
-        messages: [...state.messages, aiMessage],
+        messages: [
+          ...state.messages.filter((msg) => msg.id !== userMessage.id),
+          confirmedUserMessage,
+          aiMessage,
+        ],
         isLoading: false,
         isTyping: false,
-        currentEmotion: response.emotion_state,
+        currentEmotion: response.emotion_state || null,
         sessionId: response.session_id,
       }));
     } catch (error: any) {
@@ -138,24 +143,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
     });
   },
   
-  // Load message history
-  loadHistory: async (sessionId: string) => {
-    set({ isLoading: true, error: null });
-    try {
-      const messages = await chatAPI.getHistory(sessionId);
-      set({
-        messages,
-        sessionId,
-        isLoading: false,
-      });
-    } catch (error: any) {
-      set({
-        error: error.message,
-        isLoading: false,
-      });
-    }
-  },
-  
   // Set typing indicator
   setTyping: (isTyping) => set({ isTyping }),
   
@@ -167,9 +154,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
 // **Key Features:**
 // 1. **Optimistic updates:** Instant UI feedback (feels fast)
 // 2. **Real-time emotion:** Updates as AI analyzes
-// 3. **Message history:** Load past conversations
-// 4. **Error handling:** Rollback on API failure
-// 5. **Session management:** Track conversation context
+// 3. **Error handling:** Rollback on API failure
+// 4. **Session management:** Track conversation context
 
 // **Performance:**
 // - Optimistic update: 0ms perceived latency
@@ -187,5 +173,4 @@ export const useChatStore = create<ChatState>((set, get) => ({
 // **Integration with Backend:**
 // ```
 // POST /api/v1/chat              ← chatAPI.sendMessage()
-// GET  /api/v1/chat/history/:id  ← chatAPI.getHistory()
 // WebSocket /ws/chat             ← Real-time emotion updates
