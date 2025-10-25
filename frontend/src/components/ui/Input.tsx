@@ -1,24 +1,14 @@
-// **Purpose:** Accessible text input with validation states and labels
-
-// **What This File Contributes:**
-// 1. Text, email, password input types
-// 2. Error and success states
-// 3. Helper text
-// 4. Icon support
-// 5. Character count
-// 6. Full accessibility
-
-// **Implementation:**
-// ```typescript
-// /**
-//  * Input Component - Accessible Form Input
-//  * 
-//  * Following AGENTS_FRONTEND.md:
-//  * - WCAG 2.1 AA compliant
-//  * - Clear error messages
-//  * - Label association
-//  * - Validation states
-//  */
+/**
+ * Input Component - Accessible Form Input
+ * 
+ * Features:
+ * - Text, email, password types
+ * - Error, success, default states
+ * - Left/right icons
+ * - Character count display
+ * - Helper text and labels
+ * - Full accessibility (WCAG 2.1 AA)
+ */
 
 import React, { forwardRef, InputHTMLAttributes, ReactNode, useState } from 'react';
 import { clsx } from 'clsx';
@@ -221,64 +211,15 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
 
 Input.displayName = 'Input';
 
-// ============================================================================
-// USAGE EXAMPLES
-// ============================================================================
-
 /*
-// Basic input
-<Input
-  label="Email"
-  placeholder="Enter your email"
-  type="email"
-/>
-
-// With error
-<Input
-  label="Password"
-  type="password"
-  error="Password must be at least 8 characters"
-/>
-
-// With icon and character count
-<Input
-  label="Username"
-  leftIcon={<UserIcon />}
-  showCount
-  maxLength={20}
-/>
-
-// Controlled input
-const [email, setEmail] = useState('');
-<Input
-  label="Email"
-  value={email}
-  onChange={(e) => setEmail(e.target.value)}
-/>
-*/
-// ```
-
-// **Key Features:**
-// 1. **Validation states:** Default, error, success
-// 2. **Icon support:** Left and right icons
-// 3. **Character count:** Optional max length display
-// 4. **Helper text:** Contextual help below input
-// 5. **Accessibility:** Labels, ARIA, focus states
-// 6. **Type-safe:** Full TypeScript support
-
-// **Accessibility:**
-// - ✅ Labels properly associated (htmlFor + id)
-// - ✅ Required field indicators
-// - ✅ Error messages announced (ARIA)
-// - ✅ Focus indicators visible
-// - ✅ Min 44px height (WCAG)
-
-// **Performance:**
-// - CSS-only transitions
-// - Memoized internal state
-// - ~2.5KB gzipped
-
-// **Connected Files:**
-// - → Login, Signup, Settings forms
-// - → Chat input (extended version)
-// - ← `theme.config.ts` (colors)
+ * Usage Examples:
+ * 
+ * // Basic input
+ * <Input label="Email" placeholder="Enter your email" type="email" />
+ * 
+ * // With error
+ * <Input label="Password" type="password" error="Password must be at least 8 characters" />
+ * 
+ * // With icon and character count
+ * <Input label="Username" leftIcon={<UserIcon />} showCount maxLength={20} />
+ */
