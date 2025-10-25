@@ -247,86 +247,28 @@ SkeletonDashboard.displayName = 'SkeletonDashboard';
 // ============================================================================
 
 export default Skeleton;
-```
 
-**Key Features:**
-1. ✅ **8 Variants:** Default, text, circle, card, avatar, button, + 4 presets
-2. ✅ **Accessibility:** WCAG 2.1 AA, aria-busy, screen reader text
-3. ✅ **Performance:** Pure CSS, GPU-accelerated, <1KB
-4. ✅ **Reduced Motion:** Respects user preference
-5. ✅ **Composable:** Build complex loading states
-6. ✅ **Type-Safe:** Full TypeScript support
-
-**Performance Metrics:**
-- Initial render: <10ms
-- Re-render: <5ms (memoized)
-- Bundle size: 0.8KB gzipped
-- Animation: 60fps (CSS-only)
-
-**Accessibility:**
-- ✅ role="status" for dynamic content
-- ✅ aria-busy="true" for loading state
-- ✅ Screen reader text ("Loading content...")
-- ✅ Respects prefers-reduced-motion
-- ✅ Sufficient contrast (WCAG 2.1 AA)
-
-**Usage Examples:**
-```typescript
-// Basic skeleton
-<Skeleton />
-
-// Custom dimensions
-<Skeleton width="200px" height="100px" />
-
-// Multiple text lines
-<Skeleton variant="text" lines={3} />
-
-// Avatar + name
-<div className="flex items-center space-x-3">
-  <Skeleton variant="avatar" />
-  <Skeleton width="120px" height="20px" />
-</div>
-
-// Preset compositions
-<SkeletonCard />
-<SkeletonMessage />
-<SkeletonList items={10} />
-<SkeletonDashboard />
-```
-
-// **Connected Files:**
-// - ← `chatStore.ts` (loading state)
-// - ← `MessageList.tsx` (loading messages)
-// - ← `Dashboard.tsx` (loading analytics)
-// - ← `Leaderboard.tsx` (loading rankings)
-// - → All page components use skeleton loaders
-
-// **Backend Integration:**
-// - Shows while awaiting API responses
-// - Matches backend response structure
-// - Prevents layout shift (CLS = 0)
-
-// **Testing Strategy:**
-```typescript
-// Test reduced motion preference
-test('respects prefers-reduced-motion', () => {
-  window.matchMedia = jest.fn().mockImplementation(query => ({
-    matches: query === '(prefers-reduced-motion: reduce)',
-    addEventListener: jest.fn(),
-    removeEventListener: jest.fn(),
-  }));
-  
-  render(<Skeleton />);
-  const skeleton = screen.getByRole('status');
-  expect(skeleton).not.toHaveClass('animate-pulse-subtle');
-});
-
-// Test accessibility
-test('has proper ARIA attributes', () => {
-  render(<Skeleton />);
-  const skeleton = screen.getByRole('status');
-  expect(skeleton).toHaveAttribute('aria-busy', 'true');
-  expect(screen.getByText('Loading content...')).toBeInTheDocument();
-});
-
-```
+/*
+ * Usage Examples:
+ * 
+ * // Basic skeleton
+ * <Skeleton />
+ * 
+ * // Custom dimensions
+ * <Skeleton width="200px" height="100px" />
+ * 
+ * // Multiple text lines
+ * <Skeleton variant="text" lines={3} />
+ * 
+ * // Avatar + name
+ * <div className="flex items-center space-x-3">
+ *   <Skeleton variant="avatar" />
+ *   <Skeleton width="120px" height="20px" />
+ * </div>
+ * 
+ * // Preset compositions
+ * <SkeletonCard />
+ * <SkeletonMessage />
+ * <SkeletonList items={10} />
+ * <SkeletonDashboard />
+ */
