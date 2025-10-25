@@ -1,23 +1,13 @@
-// **Purpose:** User profile picture with fallback and status indicators
-
-// **What This File Contributes:**
-// 1. Image with fallback to initials
-// 2. Multiple sizes
-// 3. Status indicator (online/offline)
-// 4. Loading state
-// 5. Accessibility (alt text)
-
-// **Implementation:**
-// ```typescript
-// /**
-//  * Avatar Component - User Profile Picture
-//  * 
-//  * Following AGENTS_FRONTEND.md:
-//  * - Accessibility (alt text)
-//  * - Graceful fallback (initials)
-//  * - Status indicators
-//  * - Loading states
-//  */
+/**
+ * Avatar Component - User Profile Picture
+ * 
+ * Features:
+ * - 5 sizes (xs to xl)
+ * - Image with fallback to initials
+ * - Status indicators
+ * - Loading states
+ * - Avatar groups for collaboration
+ */
 
 import React, { useState } from 'react';
 import { clsx } from 'clsx';
@@ -265,86 +255,15 @@ export const AvatarGroup: React.FC<{
   );
 };
 
-// ============================================================================
-// USAGE EXAMPLES
-// ============================================================================
-
 /*
-// Basic avatar
-<Avatar name="John Doe" />
-
-// With image
-<Avatar
-  name="Jane Smith"
-  src="https://example.com/avatar.jpg"
-/>
-
-// With status
-<Avatar
-  name="John Doe"
-  src="https://example.com/avatar.jpg"
-  status="online"
-  showStatus
-/>
-
-// Different sizes
-<Avatar name="John" size="xs" />
-<Avatar name="Jane" size="sm" />
-<Avatar name="Bob" size="md" />
-<Avatar name="Alice" size="lg" />
-<Avatar name="Charlie" size="xl" />
-
-// Avatar group (for collaboration features)
-<AvatarGroup
-  users={[
-    { name: 'Alice', src: '/alice.jpg' },
-    { name: 'Bob', src: '/bob.jpg' },
-    { name: 'Charlie' },
-    { name: 'David' },
-  ]}
-  max={3}
-  size="sm"
-/>
-
-// In header with status
-<div className="flex items-center gap-2">
-  <Avatar
-    name={user.name}
-    src={user.avatar}
-    status="online"
-    showStatus
-  />
-  <div>
-    <p className="font-medium">{user.name}</p>
-    <p className="text-sm text-text-tertiary">Online</p>
-  </div>
-</div>
-*/
-// ```
-
-// **Key Features:**
-// 1. **5 sizes:** Extra small to extra large
-// 2. **Fallback system:** Image → Initials → Default
-// 3. **Status indicators:** Online, offline, away, busy
-// 4. **Loading states:** Skeleton while image loads
-// 5. **Deterministic colors:** Same name = same color
-// 6. **Avatar groups:** Collaboration UI support
-// 7. **Accessibility:** Alt text, ARIA labels
-
-// **Accessibility:**
-// - ✅ Alt text for images
-// - ✅ Status announced to screen readers
-// - ✅ Semantic HTML
-// - ✅ Color not sole indicator
-
-// **Performance:**
-// - Lazy image loading
-// - Error handling
-// - CSS-only animations
-// - ~2KB gzipped
-
-// **Connected Files:**
-// - → Header, profile, collaboration features
-// - → Chat interface (user identification)
-// - → Leaderboards
-// - → Comment threads
+ * Usage Examples:
+ * 
+ * // Basic avatar
+ * <Avatar name="John Doe" />
+ * 
+ * // With image and status
+ * <Avatar name="Jane" src="/avatar.jpg" status="online" showStatus />
+ * 
+ * // Avatar group
+ * <AvatarGroup users={[{name: 'Alice'}, {name: 'Bob'}]} max={3} />
+ */
