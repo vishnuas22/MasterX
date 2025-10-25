@@ -1,24 +1,13 @@
-// **Purpose:** Versatile card container with glass morphism and variants
-
-// **What This File Contributes:**
-// 1. Multiple visual variants (glass, solid, bordered)
-// 2. Hover effects
-// 3. Padding variations
-// 4. Header and footer sections
-// 5. Click handler support
-// 6. Apple-style glass morphism
-
-// **Implementation:**
-// ```typescript
-// /**
-//  * Card Component - Versatile Container
-//  * 
-//  * Following AGENTS_FRONTEND.md:
-//  * - Glass morphism (Apple Liquid Glass)
-//  * - Smooth transitions
-//  * - Hover states
-//  * - Semantic HTML
-//  */
+/**
+ * Card Component - Versatile Container
+ * 
+ * Features:
+ * - 4 variants: glass, solid, bordered, elevated
+ * - Flexible padding options
+ * - Header and footer sections
+ * - Click handler support
+ * - Apple-style glass morphism
+ */
 
 import React, { ReactNode } from 'react';
 import { clsx } from 'clsx';
@@ -172,78 +161,18 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
 
 Card.displayName = 'Card';
 
-// ============================================================================
-// USAGE EXAMPLES
-// ============================================================================
-
 /*
-// Basic solid card
-<Card>
-  <h3>Card Title</h3>
-  <p>Card content goes here.</p>
-</Card>
-
-// Glass morphism card
-<Card variant="glass">
-  <div className="flex items-center gap-4">
-    <EmotionIcon emotion="joy" />
-    <div>
-      <h4>Joyful State</h4>
-      <p>You're in an optimal learning zone!</p>
-    </div>
-  </div>
-</Card>
-
-// Clickable card with hover
-<Card
-  variant="solid"
-  hoverable
-  onClick={() => navigate('/session/123')}
->
-  <h3>Session #123</h3>
-  <p>Math: Calculus</p>
-</Card>
-
-// Card with header and footer
-<Card
-  header={<h3 className="text-lg font-semibold">Achievement Unlocked!</h3>}
-  footer={<Button fullWidth>Claim Reward</Button>}
->
-  <div className="text-center py-4">
-    <span className="text-4xl">🏆</span>
-    <p>Week Warrior - 7 day streak!</p>
-  </div>
-</Card>
-
-// Analytics card (elevated)
-<Card variant="elevated" padding="lg">
-  <div className="space-y-4">
-    <h3 className="text-xl font-semibold">Learning Stats</h3>
-    <div className="grid grid-cols-2 gap-4">
-      <StatItem label="Sessions" value="42" />
-      <StatItem label="Hours" value="12.5" />
-    </div>
-  </div>
-</Card>
-*/
-// ```
-
-// **Key Features:**
-// 1. **4 variants:** Glass, solid, bordered, elevated
-// 2. **Flexible padding:** None to large (4 levels)
-// 3. **Header/footer:** Optional sections with dividers
-// 4. **Interactive:** Click handlers with hover effects
-// 5. **Glass morphism:** Apple-style translucent effect
-// 6. **Semantic HTML:** Button when clickable, div otherwise
-
-// **Performance:**
-// - CSS-only animations
-// - GPU-accelerated transforms
-// - No JavaScript for hover
-// - ~2KB gzipped
-
-// **Connected Files:**
-// - → Session cards, achievement cards, analytics widgets
-// - → Dashboard, profile pages
-// - ← `theme.config.ts` (glass effect)
-// - → Emotion detail views
+ * Usage Examples:
+ * 
+ * // Basic card
+ * <Card><h3>Title</h3><p>Content</p></Card>
+ * 
+ * // Glass morphism
+ * <Card variant="glass"><EmotionIndicator /></Card>
+ * 
+ * // Clickable card
+ * <Card hoverable onClick={() => navigate('/session')}><h3>Session</h3></Card>
+ * 
+ * // With header and footer
+ * <Card header={<h3>Achievement</h3>} footer={<Button>Claim</Button>}>Content</Card>
+ */
