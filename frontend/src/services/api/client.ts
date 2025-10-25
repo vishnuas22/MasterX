@@ -1,19 +1,33 @@
-// **Purpose:** Configured Axios instance with interceptors
+/**
+ * API Client Configuration
+ * 
+ * Configured Axios instance with:
+ * - Base URL configuration from environment
+ * - JWT token injection via interceptors
+ * - Request/response logging (dev only)
+ * - Global error handling with user-friendly messages
+ * - Retry logic with exponential backoff
+ * - Timeout protection
+ * 
+ * @module services/api/client
+ */
 
-// **What This File Contributes:**
-// 1. Base URL configuration
-// 2. JWT token injection
-// 3. Request/response logging
-// 4. Error handling
-// 5. Retry logic
-
-// **Implementation:**
-
-import axios, { AxiosError, AxiosResponse, InternalAxesRequestConfig } from 'axios';
+import axios, { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 import { useAuthStore } from '@store/authStore';
 import { useUIStore } from '@store/uiStore';
 
-// Create axios instance
+/**
+ * Extended Axios config with retry support
+ */
+interface RetryConfig extends InternalAxiosRequestConfig {
+  retry?: number;
+  __retryCount?: number;
+}
+
+/**
+ * Main Axios instance for API communication
+ * Automatically configured with base URL and default headers
+ */
 export const apiClient = axios.create({
   baseURL: import.meta.env.VITE_BACKEND_URL || 'http://localhost:8001',
   timeout: 30000, // 30 seconds
@@ -22,9 +36,12 @@ export const apiClient = axios.create({
   },
 });
 
-// Request interceptor (add JWT token)
+/**
+ * Request Interceptor
+ * Injects JWT token from auth store into all requests
+ */
 apiClient.interceptors.request.use(
-  (config: InternalAxesRequestConfig) => {
+  (config: InternalAxiosRequestConfig) => {
     // Get token from auth store
     const token = useAuthStore.getState().token;
     
@@ -32,7 +49,7 @@ apiClient.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`;
     }
     
-    // Log request in dev
+    // Log request in development
     if (import.meta.env.DEV) {
       console.log(`→ ${config.method?.toUpperCase()} ${config.url}`);
     }
@@ -44,10 +61,13 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Response interceptor (handle errors)
+/**
+ * Response Interceptor - Error Handler
+ * Handles common error scenarios with user-friendly messages
+ */
 apiClient.interceptors.response.use(
   (response: AxiosResponse) => {
-    // Log response in dev
+    // Log response in development
     if (import.meta.env.DEV) {
       console.log(`← ${response.status} ${response.config.url}`);
     }
@@ -57,7 +77,7 @@ apiClient.interceptors.response.use(
   async (error: AxiosError) => {
     const { response, config } = error;
     
-    // Log error
+    // Log error in development
     if (import.meta.env.DEV) {
       console.error(`✗ ${response?.status} ${config?.url}`, error);
     }
@@ -66,11 +86,19 @@ apiClient.interceptors.response.use(
     if (response) {
       switch (response.status) {
         case 401:
-          // Unauthorized - token expired
+          // Unauthorized - token expired or invalid
           useAuthStore.getState().logout();
           useUIStore.getState().showToast({
             type: 'error',
             message: 'Session expired. Please log in again.',
+          });
+          break;
+          
+        case 403:
+          // Forbidden
+          useUIStore.getState().showToast({
+            type: 'error',
+            message: 'You do not have permission to perform this action.',
           });
           break;
           
@@ -110,13 +138,20 @@ apiClient.interceptors.response.use(
   }
 );
 
-// Retry logic for failed requests
+/**
+ * Response Interceptor - Retry Logic
+ * Automatically retries failed requests with exponential backoff
+ * Only retries on network errors or 5xx server errors
+ */
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
-    const config = error.config;
+    const config = error.config as RetryConfig;
     
-    // Retry only on network errors or 5xx
+    // Don't retry if:
+    // - No config
+    // - No retry count specified
+    // - Max retries reached
     if (
       !config ||
       !config.retry ||
@@ -125,10 +160,19 @@ apiClient.interceptors.response.use(
       return Promise.reject(error);
     }
     
+    // Only retry on network errors or 5xx
+    const shouldRetry = 
+      !error.response || 
+      (error.response.status >= 500 && error.response.status < 600);
+    
+    if (!shouldRetry) {
+      return Promise.reject(error);
+    }
+    
     config.__retryCount = config.__retryCount || 0;
     config.__retryCount += 1;
     
-    // Exponential backoff
+    // Exponential backoff: 1s, 2s, 4s, 8s...
     const delay = Math.pow(2, config.__retryCount) * 1000;
     await new Promise((resolve) => setTimeout(resolve, delay));
     
@@ -137,86 +181,3 @@ apiClient.interceptors.response.use(
 );
 
 export default apiClient;
-
-
-// **Key Features:**
-// 1. **Auto JWT injection:** No manual header management
-// 2. **Error handling:** User-friendly messages
-// 3. **Retry logic:** Automatic retry on transient errors
-// 4. **Logging:** Dev-only request/response logs
-// 5. **Timeout:** Prevents hanging requests
-
-// **Performance:**
-// - Request interceptor: <1ms overhead
-// - Retry logic: Only on failures
-// - Timeout: Prevents slow APIs from blocking UI
-
-// **Connected Files:**
-// - → All `*.api.ts` files use this instance
-// - ← `store/authStore.ts` (provides JWT token)
-// - ← `store/uiStore.ts` (shows error toasts)
-
-// ---
-
-// ### 13. `src/services/api/chat.api.ts` - Chat API Endpoints
-
-// **Purpose:** Chat-related API calls
-
-// **What This File Contributes:**
-// 1. Send message to backend
-// 2. Get conversation history
-// 3. Real-time typing indicators
-
-// **Implementation:**
-// ```typescript
-// import apiClient from './client';
-// import type { ChatRequest, ChatResponse, Message } from '@types/chat.types';
-
-// export const chatAPI = {
-//   /**
-//    * Send a chat message
-//    * Backend: POST /api/v1/chat
-//    */
-//   sendMessage: async (request: ChatRequest): Promise<ChatResponse> => {
-//     const { data } = await apiClient.post<ChatResponse>('/api/v1/chat', request, {
-//       retry: 2, // Retry twice on failure
-//     });
-//     return data;
-//   },
-  
-//   /**
-//    * Get conversation history
-//    * Backend: GET /api/v1/chat/history/:sessionId
-//    */
-//   getHistory: async (sessionId: string): Promise<Message[]> => {
-//     const { data } = await apiClient.get<Message[]>(
-//       `/api/v1/chat/history/${sessionId}`
-//     );
-//     return data;
-//   },
-  
-//   /**
-//    * Delete conversation
-//    * Backend: DELETE /api/v1/chat/session/:sessionId
-//    */
-//   deleteSession: async (sessionId: string): Promise<void> => {
-//     await apiClient.delete(`/api/v1/chat/session/${sessionId}`);
-//   },
-// };
-// ```
-
-// **Key Features:**
-// 1. **Type-safe:** Full TypeScript types
-// 2. **Error handling:** Automatic via interceptors
-// 3. **Retry:** Configured per-endpoint
-
-// **Connected Files:**
-// - ← `services/api/client.ts` (axios instance)
-// - ← `types/chat.types.ts` (type definitions)
-// - → `store/chatStore.ts` (uses these functions)
-
-// **Integration with Backend:**
-// ```
-// POST   /api/v1/chat                  ← sendMessage()
-// GET    /api/v1/chat/history/:id      ← getHistory()
-// DELETE /api/v1/chat/session/:id      ← deleteSession()
