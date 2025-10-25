@@ -9,24 +9,24 @@
 // **Implementation:**
 // ```typescript
 import { create } from 'zustand';
-import type { EmotionMetrics, EmotionHistory } from '@types/emotion.types';
+import type { EmotionState, EmotionHistory, LearningReadiness, CognitiveLoadLevel } from '@/types/emotion.types';
 
-interface EmotionState {
+interface EmotionStoreState {
   // State
-  currentEmotion: EmotionMetrics | null;
+  currentEmotion: EmotionState | null;
   emotionHistory: EmotionHistory[];
   dominantEmotion: string | null;
-  learningReadiness: string | null;
-  cognitiveLoad: number | null;
+  learningReadiness: LearningReadiness | null;
+  cognitiveLoad: CognitiveLoadLevel | null;
   
   // Actions
-  addEmotionData: (emotion: EmotionMetrics) => void;
+  addEmotionData: (emotion: EmotionState) => void;
   getEmotionTrend: (minutes: number) => EmotionHistory[];
   clearHistory: () => void;
   calculateDominantEmotion: () => void;
 }
 
-export const useEmotionStore = create<EmotionState>((set, get) => ({
+export const useEmotionStore = create<EmotionStoreState>((set, get) => ({
   // Initial state
   currentEmotion: null,
   emotionHistory: [],
@@ -39,18 +39,16 @@ export const useEmotionStore = create<EmotionState>((set, get) => ({
     const historyEntry: EmotionHistory = {
       timestamp: new Date().toISOString(),
       emotion: emotion.primary_emotion,
-      intensity: emotion.emotion_scores[emotion.primary_emotion] || 0,
-      valence: emotion.pad_dimensions?.valence || 0,
-      arousal: emotion.pad_dimensions?.arousal || 0,
+      intensity: 1.0, // Default intensity
+      valence: emotion.valence,
+      arousal: emotion.arousal,
       learningReadiness: emotion.learning_readiness,
-      cognitiveLoad: emotion.cognitive_load,
     };
     
     set((state) => ({
       currentEmotion: emotion,
       emotionHistory: [...state.emotionHistory, historyEntry].slice(-100), // Keep last 100
       learningReadiness: emotion.learning_readiness,
-      cognitiveLoad: emotion.cognitive_load,
     }));
     
     // Calculate dominant emotion
