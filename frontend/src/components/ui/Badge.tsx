@@ -1,27 +1,17 @@
-// **Purpose:** Small label/tag component for status, counts, and categories
-
-// **What This File Contributes:**
-// 1. Multiple color variants
-// 2. Size variations
-// 3. Dot indicator option
-// 4. Removable badges
-// 5. Emotion and gamification color support
-
-// **Implementation:**
-// ```typescript
-// /**
-//  * Badge Component - Status Labels & Tags
-//  * 
-//  * Following AGENTS_FRONTEND.md:
-//  * - Clear visual hierarchy
-//  * - Emotion-specific colors
-//  * - Achievement rarity colors
-//  * - Accessibility
-//  */
+/**
+ * Badge Component - Status Labels & Tags
+ * 
+ * Features:
+ * - 7 variants including emotion and rarity
+ * - 3 sizes
+ * - Dot indicator option
+ * - Removable badges
+ * - Emotion and gamification color support
+ */
 
 import React, { ReactNode } from 'react';
 import { clsx } from 'clsx';
-import { emotionColorMap, achievementRarityColors } from '@config/theme.config';
+import { emotionColorMap, achievementRarityColors } from '@/config/theme.config';
 
 // ============================================================================
 // TYPES
@@ -245,65 +235,22 @@ export const AchievementBadge: React.FC<{
   );
 };
 
-// ============================================================================
-// USAGE EXAMPLES
-// ============================================================================
-
 /*
-// Basic badges
-<Badge variant="success">Active</Badge>
-<Badge variant="error">Failed</Badge>
-<Badge variant="warning">Pending</Badge>
-
-// With dot indicator
-<Badge variant="primary" dot>
-  Online
-</Badge>
-
-// Removable tag
-<Badge variant="neutral" onRemove={() => removeTag('math')}>
-  Math
-</Badge>
-
-// Emotion badge
-<EmotionBadge emotion="joy" confidence={0.87} />
-
-// Achievement badge
-<AchievementBadge rarity="legendary" name="Century Club" />
-
-// Count badge
-<Badge variant="error" size="sm">
-  3
-</Badge>
-
-// Learning readiness
-<Badge variant={readiness === 'optimal' ? 'success' : 'warning'}>
-  {readiness}
-</Badge>
-*/
-// ```
-
-// **Key Features:**
-// 1. **7 variants:** Primary, success, warning, error, neutral, purple, emotion, rarity
-// 2. **3 sizes:** Small (notification counts), medium (tags), large (labels)
-// 3. **Dot indicator:** Visual status indicator
-// 4. **Removable:** Optional close button
-// 5. **Emotion colors:** Maps to backend emotion categories
-// 6. **Achievement rarities:** Matches gamification system
-
-// **Accessibility:**
-// - ✅ Color not sole indicator (text + icon)
-// - ✅ Remove button accessible
-// - ✅ Focus indicators
-// - ✅ ARIA labels where needed
-
-// **Performance:**
-// - Pure CSS styling
-// - No JavaScript unless removable
-// - ~1.5KB gzipped
-
-// **Connected Files:**
-// - → Emotion displays, achievement lists
-// - → Chat interface (emotion badges)
-// - → Analytics dashboard (status badges)
-// - ← `theme.config.ts` (emotion/rarity colors)
+ * Usage Examples:
+ * 
+ * // Basic badges
+ * <Badge variant="success">Active</Badge>
+ * <Badge variant="error">Failed</Badge>
+ * 
+ * // With dot
+ * <Badge variant="primary" dot>Online</Badge>
+ * 
+ * // Removable
+ * <Badge onRemove={() => removeTag('math')}>Math</Badge>
+ * 
+ * // Emotion badge
+ * <EmotionBadge emotion="joy" confidence={0.87} />
+ * 
+ * // Achievement badge
+ * <AchievementBadge rarity="legendary" name="Century Club" />
+ */
