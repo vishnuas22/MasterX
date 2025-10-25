@@ -1,17 +1,18 @@
-// **Purpose:** Simplified authentication operations
+/**
+ * Authentication Hook
+ * 
+ * Provides simplified authentication operations with automatic
+ * navigation and toast notifications.
+ * 
+ * @example
+ * const { login, signup, logout, isAuthenticated, user } = useAuth();
+ * await login({ email: 'user@example.com', password: 'password' });
+ */
 
-// **What This File Contributes:**
-// 1. Login/logout/signup actions
-// 2. Auth state access
-// 3. Loading/error states
-// 4. Auto-redirect logic
-
-// **Implementation:**
-// ```typescript
-import { useAuthStore } from '@store/authStore';
+import { useAuthStore } from '@/store/authStore';
 import { useNavigate } from 'react-router-dom';
-import { useUIStore } from '@store/uiStore';
-import type { LoginCredentials, SignupData } from '@types/user.types';
+import { useUIStore } from '@/store/uiStore';
+import type { LoginCredentials, SignupData } from '@/types/user.types';
 
 export const useAuth = () => {
   const navigate = useNavigate();
@@ -29,6 +30,7 @@ export const useAuth = () => {
 
   /**
    * Login with credentials
+   * Automatically navigates to /app on success
    */
   const login = async (credentials: LoginCredentials) => {
     try {
@@ -48,6 +50,7 @@ export const useAuth = () => {
 
   /**
    * Signup new user
+   * Automatically navigates to /onboarding on success
    */
   const signup = async (data: SignupData) => {
     try {
@@ -67,6 +70,7 @@ export const useAuth = () => {
 
   /**
    * Logout user
+   * Clears auth state and navigates to landing page
    */
   const logout = () => {
     storeLogout();
@@ -91,20 +95,3 @@ export const useAuth = () => {
     clearError,
   };
 };
-
-
-// **Benefits:**
-// 1. Single hook for all auth operations
-// 2. Automatic navigation after login/signup
-// 3. Toast notifications included
-// 4. Type-safe operations
-
-// **Performance:**
-// - No additional overhead (thin wrapper)
-// - Zustand ensures minimal re-renders
-
-// **Connected Files:**
-// - ← `store/authStore.ts`
-// - ← `store/uiStore.ts`
-// - → `pages/Login.tsx`, `pages/Signup.tsx`
-// - → `components/layout/Header.tsx`
