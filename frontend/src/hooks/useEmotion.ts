@@ -1,16 +1,17 @@
-// **Purpose:** Access and analyze emotion data
+/**
+ * Emotion Tracking Hook
+ * 
+ * Provides access to emotion data with helpful utilities for
+ * visualization and analysis. Includes color mapping, readiness
+ * indicators, and entropy-based diversity calculation.
+ * 
+ * @example
+ * const { currentEmotion, dominantEmotion, getEmotionColor } = useEmotion();
+ * const color = getEmotionColor('joy'); // Returns '#FFD60A'
+ */
 
-// **What This File Contributes:**
-// 1. Current emotion access
-// 2. Emotion history
-// 3. Trend analysis
-// 4. Dominant emotion calculation
-
-// **Implementation:**
-// ```typescript
-import { useEmotionStore } from '@store/emotionStore';
+import { useEmotionStore } from '@/store/emotionStore';
 import { useMemo } from 'react';
-import type { EmotionMetrics } from '@types/emotion.types';
 
 export const useEmotion = () => {
   const {
@@ -24,6 +25,7 @@ export const useEmotion = () => {
 
   /**
    * Get emotion color for visualization
+   * Colors follow Apple HIG guidelines with WCAG 2.1 AA contrast
    */
   const getEmotionColor = (emotion: string): string => {
     const colorMap: Record<string, string> = {
@@ -41,6 +43,7 @@ export const useEmotion = () => {
 
   /**
    * Get learning readiness indicator
+   * Provides visual feedback about user's learning state
    */
   const getReadinessIndicator = (): {
     label: string;
@@ -51,7 +54,7 @@ export const useEmotion = () => {
       return { label: 'Unknown', color: '#8E8E93', icon: '?' };
     }
 
-    const indicators: Record<string, any> = {
+    const indicators: Record<string, { label: string; color: string; icon: string }> = {
       OPTIMAL: { label: 'Optimal', color: '#30D158', icon: '🎯' },
       READY: { label: 'Ready', color: '#64D2FF', icon: '✓' },
       STRUGGLING: { label: 'Struggling', color: '#FF9F0A', icon: '⚠️' },
@@ -69,7 +72,9 @@ export const useEmotion = () => {
   };
 
   /**
-   * Calculate emotion diversity (entropy)
+   * Calculate emotion diversity using Shannon entropy
+   * Higher values indicate more varied emotional states
+   * Range: 0 (single emotion) to ~3.32 (maximum diversity)
    */
   const emotionDiversity = useMemo(() => {
     if (emotionHistory.length < 5) return 0;
@@ -107,19 +112,3 @@ export const useEmotion = () => {
     getRecentTrend,
   };
 };
-
-
-// **Benefits:**
-// 1. Color mapping for UI consistency
-// 2. Readiness indicators for visual feedback
-// 3. Trend analysis helpers
-// 4. Emotion diversity metric
-
-// **Performance:**
-// - useMemo for expensive calculations
-// - Only recalculates when emotion history changes
-
-// **Connected Files:**
-// - ← `store/emotionStore.ts`
-// - → `components/emotion/EmotionWidget.tsx`
-// - → `components/emotion/EmotionChart.tsx`
