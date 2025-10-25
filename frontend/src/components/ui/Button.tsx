@@ -1,25 +1,14 @@
-// **Purpose:** Reusable, accessible button component with multiple variants and states
-
-// **What This File Contributes:**
-// 1. Primary, secondary, ghost button variants
-// 2. Size variations (sm, md, lg)
-// 3. Loading states
-// 4. Icon support
-// 5. Full accessibility (WCAG 2.1 AA)
-// 6. Keyboard navigation
-
-// **Implementation:**
-// ```typescript
-// /**
-//  * Button Component - Universal, Accessible Button
-//  * 
-//  * Following AGENTS_FRONTEND.md:
-//  * - WCAG 2.1 AA compliant
-//  * - Keyboard accessible
-//  * - Touch-friendly (min 44x44px)
-//  * - Loading states
-//  * - Type-safe props
-//  */
+/**
+ * Button Component - Universal, Accessible Button
+ * 
+ * Features:
+ * - 4 variants: primary, secondary, ghost, danger
+ * - 3 sizes: sm (32px), md (44px WCAG), lg (52px)
+ * - Loading states with spinner
+ * - Icon support (left/right)
+ * - Full accessibility (WCAG 2.1 AA)
+ * - Type-safe props
+ */
 
 import React from 'react';
 import { clsx } from 'clsx';
@@ -203,63 +192,18 @@ const LoadingSpinner: React.FC<{ size: ButtonSize }> = ({ size }) => {
   );
 };
 
-// ============================================================================
-// USAGE EXAMPLES
-// ============================================================================
-
 /*
-// Primary button
-<Button variant="primary" onClick={handleClick}>
-  Save Changes
-</Button>
-
-// With left icon
-<Button variant="primary" leftIcon={<SaveIcon />}>
-  Save
-</Button>
-
-// Loading state
-<Button variant="primary" loading>
-  Saving...
-</Button>
-
-// Full width
-<Button variant="primary" fullWidth>
-  Continue
-</Button>
-
-// With test ID
-<Button data-testid="submit-button" onClick={handleSubmit}>
-  Submit
-</Button>
-*/
-// ```
-
-
-
-
-// // **Key Features:**
-// // 1. **4 variants:** Primary, secondary, ghost, danger
-// // 2. **3 sizes:** Small (32px), medium (44px - WCAG), large (52px)
-// // 3. **Loading states:** Built-in spinner
-// // 4. **Accessibility:** Focus rings, ARIA, keyboard support
-// // 5. **Icon support:** Left and right icons
-// // 6. **Type-safe:** Full TypeScript support
-
-// // **Accessibility:**
-// // - ✅ Min 44x44px touch target (WCAG 2.5.5)
-// // - ✅ Focus indicators (WCAG 2.4.7)
-// // - ✅ Color contrast ≥ 4.5:1 (WCAG 1.4.3)
-// // - ✅ Keyboard navigable
-// // - ✅ Disabled states clear
-
-// // **Performance:**
-// // - CSS-only animations (GPU accelerated)
-// // - No JavaScript for hover/active states
-// // - Tree-shakeable
-// // - ~2KB gzipped
-
-// // **Connected Files:**
-// // - → All forms, modals, pages use Button
-// // - ← `theme.config.ts` (colors, spacing)
-// // - → Testing: Button.test.tsx
+ * Usage Examples:
+ * 
+ * // Primary button
+ * <Button variant="primary" onClick={handleClick}>Save Changes</Button>
+ * 
+ * // With icon
+ * <Button variant="primary" leftIcon={<SaveIcon />}>Save</Button>
+ * 
+ * // Loading state
+ * <Button variant="primary" loading>Saving...</Button>
+ * 
+ * // Full width
+ * <Button variant="primary" fullWidth>Continue</Button>
+ */
