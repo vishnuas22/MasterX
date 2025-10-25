@@ -1,121 +1,145 @@
-// **Purpose:** Fetch user analytics and learning progress data
+/**
+ * Analytics API Service
+ * 
+ * Handles analytics and learning progress data:
+ * - Real-time dashboard metrics
+ * - Performance analysis over time
+ * - Learning insights and trends
+ * 
+ * Backend Integration:
+ * GET /api/v1/analytics/dashboard/{user_id}    - Real-time dashboard metrics
+ * GET /api/v1/analytics/performance/{user_id}  - Performance analysis
+ * 
+ * Caching Strategy (via React Query):
+ * - Dashboard data: 5 minutes cache
+ * - Performance data: 10 minutes cache
+ * - Stale-while-revalidate pattern
+ * 
+ * @module services/api/analytics.api
+ */
 
-// **What This File Contributes:**
-// 1. Learning performance metrics
-// 2. Emotion trends over time
-// 3. Topic mastery data
-// 4. Learning velocity
-// 5. Session statistics
-
-// **Implementation:**
-// ```typescript
 import apiClient from './client';
-import type { 
-  PerformanceMetrics,
-  EmotionTrend,
-  TopicMastery,
-  LearningVelocity,
-  SessionStats
-} from '@types/api.types';
 
+/**
+ * Dashboard Metrics Response
+ */
+export interface DashboardMetrics {
+  total_interactions: number;
+  total_sessions: number;
+  average_session_duration: number;
+  total_cost: number;
+  primary_emotions: Record<string, number>;
+  learning_velocity: number;
+  ability_estimates: Record<string, number>;
+  recent_achievements: Array<{
+    id: string;
+    title: string;
+    earned_at: string;
+  }>;
+}
+
+/**
+ * Performance Analysis Response
+ */
+export interface PerformanceAnalysis {
+  user_id: string;
+  time_period: {
+    start_date: string;
+    end_date: string;
+    days: number;
+  };
+  learning_metrics: {
+    total_interactions: number;
+    average_daily_interactions: number;
+    total_learning_time_minutes: number;
+    topics_explored: string[];
+  };
+  emotion_analysis: {
+    primary_emotions: Record<string, number>;
+    emotion_trajectory: Array<{
+      date: string;
+      emotion: string;
+      count: number;
+    }>;
+    learning_readiness_distribution: Record<string, number>;
+  };
+  performance_trends: {
+    ability_growth: Record<string, number>;
+    difficulty_progression: Array<{
+      date: string;
+      difficulty: number;
+    }>;
+    success_rate: number;
+  };
+  insights: string[];
+}
+
+/**
+ * Analytics API endpoints
+ */
 export const analyticsAPI = {
   /**
-   * Get user performance metrics
-   * GET /api/v1/analytics/performance/:userId
+   * Get real-time analytics dashboard
+   * 
+   * Provides comprehensive dashboard metrics including:
+   * - Total interactions and sessions
+   * - Primary emotions detected
+   * - Learning velocity (progress rate)
+   * - Ability estimates by subject
+   * - Recent achievements
+   * 
+   * @param userId - User identifier
+   * @returns Dashboard metrics
+   * @throws 500 - Failed to fetch dashboard data
+   * 
+   * @example
+   * ```typescript
+   * const metrics = await analyticsAPI.getDashboard('user-123');
+   * console.log(metrics.total_interactions); // 45
+   * console.log(metrics.primary_emotions); // { "curiosity": 20, "frustration": 10 }
+   * ```
    */
-  getPerformance: async (userId: string, timeRange?: string): Promise<PerformanceMetrics> => {
-    const { data } = await apiClient.get<PerformanceMetrics>(
+  getDashboard: async (userId: string): Promise<DashboardMetrics> => {
+    const { data } = await apiClient.get<DashboardMetrics>(
+      `/api/v1/analytics/dashboard/${userId}`
+    );
+    return data;
+  },
+
+  /**
+   * Get comprehensive performance analysis
+   * 
+   * Analyzes user performance over a time period:
+   * - Learning metrics (interactions, time, topics)
+   * - Emotion analysis (primary emotions, trajectory)
+   * - Performance trends (ability growth, success rate)
+   * - AI-generated insights
+   * 
+   * @param userId - User identifier
+   * @param daysBack - Number of days to analyze (default: 30)
+   * @returns Performance analysis with trends and insights
+   * @throws 500 - Failed to fetch performance data
+   * 
+   * @example
+   * ```typescript
+   * // Get last 7 days of performance
+   * const analysis = await analyticsAPI.getPerformance('user-123', 7);
+   * 
+   * console.log(analysis.learning_metrics.total_interactions); // 25
+   * console.log(analysis.performance_trends.success_rate); // 0.85
+   * console.log(analysis.insights); // ["Great progress in calculus!", ...]
+   * ```
+   */
+  getPerformance: async (
+    userId: string,
+    daysBack: number = 30
+  ): Promise<PerformanceAnalysis> => {
+    const { data } = await apiClient.get<PerformanceAnalysis>(
       `/api/v1/analytics/performance/${userId}`,
       {
-        params: { time_range: timeRange || '7d' },
+        params: { days_back: daysBack },
       }
-    );
-    return data;
-  },
-
-  /**
-   * Get emotion trends
-   * GET /api/v1/analytics/emotions/:userId
-   */
-  getEmotionTrends: async (userId: string, days: number = 7): Promise<EmotionTrend[]> => {
-    const { data } = await apiClient.get<EmotionTrend[]>(
-      `/api/v1/analytics/emotions/${userId}`,
-      {
-        params: { days },
-      }
-    );
-    return data;
-  },
-
-  /**
-   * Get topic mastery
-   * GET /api/v1/analytics/topics/:userId
-   */
-  getTopicMastery: async (userId: string): Promise<TopicMastery[]> => {
-    const { data } = await apiClient.get<TopicMastery[]>(
-      `/api/v1/analytics/topics/${userId}`
-    );
-    return data;
-  },
-
-  /**
-   * Get learning velocity
-   * GET /api/v1/analytics/velocity/:userId
-   */
-  getLearningVelocity: async (userId: string): Promise<LearningVelocity> => {
-    const { data } = await apiClient.get<LearningVelocity>(
-      `/api/v1/analytics/velocity/${userId}`
-    );
-    return data;
-  },
-
-  /**
-   * Get session statistics
-   * GET /api/v1/analytics/sessions/:userId
-   */
-  getSessionStats: async (userId: string): Promise<SessionStats> => {
-    const { data } = await apiClient.get<SessionStats>(
-      `/api/v1/analytics/sessions/${userId}`
-    );
-    return data;
-  },
-
-  /**
-   * Get insights (AI-generated)
-   * GET /api/v1/analytics/insights/:userId
-   */
-  getInsights: async (userId: string): Promise<{ insights: string[] }> => {
-    const { data } = await apiClient.get<{ insights: string[] }>(
-      `/api/v1/analytics/insights/${userId}`
     );
     return data;
   },
 };
-
-
-// **Caching Strategy:**
-// - Performance data: Cache 5 minutes (React Query)
-// - Emotion trends: Cache 10 minutes
-// - Topic mastery: Cache 15 minutes
-// - Insights: Cache 30 minutes
-
-// **Performance:**
-// - All requests use React Query automatic caching
-// - Parallel requests when loading dashboard
-// - Stale-while-revalidate pattern
-
-// **Connected Files:**
-// - ← `services/api/client.ts`
-// - ← `types/api.types.ts`
-// - → `store/analyticsStore.ts`
-// - → `components/analytics/*` (charts, stats)
-// - → `pages/Dashboard.tsx`
-
-// **Backend Integration:**
-// ```
-// GET /api/v1/analytics/performance/:userId  ← getPerformance()
-// GET /api/v1/analytics/emotions/:userId     ← getEmotionTrends()
-// GET /api/v1/analytics/topics/:userId       ← getTopicMastery()
-// GET /api/v1/analytics/velocity/:userId     ← getLearningVelocity()
-// GET /api/v1/analytics/sessions/:userId     ← getSessionStats()
-// GET /api/v1/analytics/insights/:userId     ← getInsights()
