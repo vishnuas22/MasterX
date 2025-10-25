@@ -10,8 +10,8 @@
 // ```typescript
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { authAPI } from '@services/api/auth.api';
-import type { User, LoginCredentials, SignupData } from '@types/user.types';
+import { authAPI } from '@/services/api/auth.api';
+import type { User, LoginCredentials, SignupData } from '@/types/user.types';
 
 interface AuthState {
   // State
@@ -44,15 +44,19 @@ export const useAuthStore = create<AuthState>()(
       login: async (credentials) => {
         set({ isLoading: true, error: null });
         try {
-          const { user, token } = await authAPI.login(credentials);
+          const response = await authAPI.login(credentials);
+          // Get full user profile
+          const fullUser = await authAPI.getCurrentUser();
+          
           set({
-            user,
-            token,
+            user: fullUser,
+            token: response.access_token,
             isAuthenticated: true,
             isLoading: false,
           });
-          // Store token in localStorage for API requests
-          localStorage.setItem('jwt_token', token);
+          // Store tokens in localStorage for API requests
+          localStorage.setItem('jwt_token', response.access_token);
+          localStorage.setItem('refresh_token', response.refresh_token);
         } catch (error: any) {
           set({
             error: error.message || 'Login failed',
@@ -66,14 +70,18 @@ export const useAuthStore = create<AuthState>()(
       signup: async (data) => {
         set({ isLoading: true, error: null });
         try {
-          const { user, token } = await authAPI.signup(data);
+          const response = await authAPI.signup(data);
+          // Get full user profile
+          const fullUser = await authAPI.getCurrentUser();
+          
           set({
-            user,
-            token,
+            user: fullUser,
+            token: response.access_token,
             isAuthenticated: true,
             isLoading: false,
           });
-          localStorage.setItem('jwt_token', token);
+          localStorage.setItem('jwt_token', response.access_token);
+          localStorage.setItem('refresh_token', response.refresh_token);
         } catch (error: any) {
           set({
             error: error.message || 'Signup failed',
@@ -86,6 +94,7 @@ export const useAuthStore = create<AuthState>()(
       // Logout action
       logout: () => {
         localStorage.removeItem('jwt_token');
+        localStorage.removeItem('refresh_token');
         set({
           user: null,
           token: null,
@@ -103,7 +112,7 @@ export const useAuthStore = create<AuthState>()(
         }
         
         try {
-          const user = await authAPI.verifyToken(token);
+          const user = await authAPI.getCurrentUser();
           set({
             user,
             token,
@@ -121,8 +130,11 @@ export const useAuthStore = create<AuthState>()(
         if (!user) return;
         
         try {
-          const updatedUser = await authAPI.updateProfile(user.id, updates);
-          set({ user: updatedUser });
+          // Call the getCurrentUser after potential profile updates
+          // Note: Backend doesn't have updateProfile endpoint yet
+          // For now, we'll just update local state
+          set({ user: { ...user, ...updates } });
+          // TODO: Implement backend profile update endpoint
         } catch (error: any) {
           set({ error: error.message });
           throw error;
