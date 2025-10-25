@@ -1,17 +1,18 @@
-// **Purpose:** Simplified chat operations
+/**
+ * Chat Operations Hook
+ * 
+ * Provides simplified chat operations with automatic emotion tracking,
+ * error handling, and user feedback via toast notifications.
+ * 
+ * @example
+ * const { sendMessage, messages, isTyping, currentEmotion } = useChat();
+ * await sendMessage('What is photosynthesis?');
+ */
 
-// **What This File Contributes:**
-// 1. Send message action
-// 2. Message list access
-// 3. Typing indicators
-// 4. Real-time emotion updates
-
-// **Implementation:**
-// ```typescript
-import { useChatStore } from '@store/chatStore';
-import { useEmotionStore } from '@store/emotionStore';
-import { useAuthStore } from '@store/authStore';
-import { useUIStore } from '@store/uiStore';
+import { useChatStore } from '@/store/chatStore';
+import { useEmotionStore } from '@/store/emotionStore';
+import { useAuthStore } from '@/store/authStore';
+import { useUIStore } from '@/store/uiStore';
 
 export const useChat = () => {
   const { user } = useAuthStore();
@@ -24,7 +25,6 @@ export const useChat = () => {
     sessionId,
     error,
     sendMessage: storeSendMessage,
-    loadHistory,
     clearMessages,
   } = useChatStore();
   
@@ -32,6 +32,7 @@ export const useChat = () => {
 
   /**
    * Send message with automatic emotion tracking
+   * Validates input and provides user feedback
    */
   const sendMessage = async (content: string) => {
     if (!content.trim()) {
@@ -42,8 +43,16 @@ export const useChat = () => {
       return;
     }
 
+    if (!user) {
+      showToast({
+        type: 'error',
+        message: 'Please login to send messages',
+      });
+      return;
+    }
+
     try {
-      await storeSendMessage(content);
+      await storeSendMessage(content, user.id);
       
       // Add emotion to emotion store for tracking
       if (currentEmotion) {
@@ -58,21 +67,8 @@ export const useChat = () => {
   };
 
   /**
-   * Load conversation history
-   */
-  const loadConversation = async (sessionId: string) => {
-    try {
-      await loadHistory(sessionId);
-    } catch (error: any) {
-      showToast({
-        type: 'error',
-        message: 'Failed to load conversation',
-      });
-    }
-  };
-
-  /**
    * Start new conversation
+   * Clears current messages and provides feedback
    */
   const startNewConversation = () => {
     clearMessages();
@@ -93,25 +89,6 @@ export const useChat = () => {
     
     // Actions
     sendMessage,
-    loadConversation,
     startNewConversation,
   };
 };
-
-
-// **Benefits:**
-// 1. Single hook for chat operations
-// 2. Automatic emotion tracking
-// 3. Error handling included
-// 4. Type-safe
-
-// **Performance:**
-// - Zustand optimized re-renders
-// - Only components using chat data re-render
-
-// **Connected Files:**
-// - ← `store/chatStore.ts`
-// - ← `store/emotionStore.ts`
-// - ← `store/authStore.ts`
-// - → `components/chat/MessageInput.tsx`
-// - → `pages/MainApp.tsx`
