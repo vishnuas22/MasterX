@@ -30,57 +30,14 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { analyticsApi } from '@services/api/analytics.api';
+import { analyticsAPI, type DashboardMetrics, type PerformanceAnalysis } from '@/services/api/analytics.api';
 
 // ============================================================================
-// TYPES
+// TYPES - Using API response types
 // ============================================================================
 
-export interface DashboardStats {
-  total_sessions: number;
-  total_time_minutes: number;
-  current_streak: number;
-  longest_streak: number;
-  topics_mastered: number;
-  achievements_unlocked: number;
-  average_session_length: number;
-  weekly_goal_progress: number;
-}
-
-export interface PerformanceMetrics {
-  overall_accuracy: number; // 0.0 - 1.0
-  learning_velocity: number; // Topics per week
-  engagement_score: number; // 0.0 - 1.0
-  difficulty_preference: 'easy' | 'medium' | 'hard' | 'adaptive';
-  strong_subjects: string[];
-  improvement_areas: string[];
-}
-
-export interface TopicMastery {
-  topic: string;
-  mastery_level: number; // 0.0 - 1.0
-  sessions_completed: number;
-  last_practiced: string; // ISO 8601
-  next_review: string; // ISO 8601
-  confidence_score: number; // 0.0 - 1.0
-}
-
-export interface LearningPathProgress {
-  path_id: string;
-  path_name: string;
-  total_topics: number;
-  completed_topics: number;
-  current_topic: string;
-  estimated_completion_days: number;
-  progress_percentage: number;
-}
-
-export interface TimeSeriesData {
-  date: string; // ISO 8601
-  sessions: number;
-  time_minutes: number;
-  accuracy: number;
-}
+// Re-export API types for convenience
+export type { DashboardMetrics, PerformanceAnalysis };
 
 // ============================================================================
 // STORE STATE
@@ -88,16 +45,12 @@ export interface TimeSeriesData {
 
 interface AnalyticsStore {
   // Data
-  dashboardStats: DashboardStats | null;
-  performanceMetrics: PerformanceMetrics | null;
-  topicMastery: TopicMastery[];
-  learningPaths: LearningPathProgress[];
-  timeSeriesData: TimeSeriesData[];
+  dashboardStats: DashboardMetrics | null;
+  performanceMetrics: PerformanceAnalysis | null;
   
   // Loading states
   isLoadingDashboard: boolean;
   isLoadingPerformance: boolean;
-  isLoadingTopics: boolean;
   
   // Error states
   dashboardError: string | null;
@@ -109,10 +62,7 @@ interface AnalyticsStore {
   
   // Actions
   fetchDashboard: (userId: string, forceRefresh?: boolean) => Promise<void>;
-  fetchPerformance: (userId: string, forceRefresh?: boolean) => Promise<void>;
-  fetchTopicMastery: (userId: string) => Promise<void>;
-  fetchLearningPaths: (userId: string) => Promise<void>;
-  fetchTimeSeries: (userId: string, days?: number) => Promise<void>;
+  fetchPerformance: (userId: string, daysBack?: number, forceRefresh?: boolean) => Promise<void>;
   clearAnalytics: () => void;
 }
 
@@ -132,13 +82,9 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
       // Initial state
       dashboardStats: null,
       performanceMetrics: null,
-      topicMastery: [],
-      learningPaths: [],
-      timeSeriesData: [],
       
       isLoadingDashboard: false,
       isLoadingPerformance: false,
-      isLoadingTopics: false,
       
       dashboardError: null,
       performanceError: null,
@@ -164,7 +110,7 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
         set({ isLoadingDashboard: true, dashboardError: null });
 
         try {
-          const data = await analyticsApi.getDashboard(userId);
+          const data = await analyticsAPI.getDashboard(userId);
           set({
             dashboardStats: data,
             lastFetchedDashboard: now,
@@ -179,7 +125,7 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
       },
 
       // Fetch performance metrics
-      fetchPerformance: async (userId, forceRefresh = false) => {
+      fetchPerformance: async (userId, daysBack = 30, forceRefresh = false) => {
         const state = get();
         const now = Date.now();
         
@@ -196,7 +142,7 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
         set({ isLoadingPerformance: true, performanceError: null });
 
         try {
-          const data = await analyticsApi.getPerformance(userId);
+          const data = await analyticsAPI.getPerformance(userId, daysBack);
           set({
             performanceMetrics: data,
             lastFetchedPerformance: now,
@@ -210,50 +156,11 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
         }
       },
 
-      // Fetch topic mastery
-      fetchTopicMastery: async (userId) => {
-        set({ isLoadingTopics: true });
-
-        try {
-          const data = await analyticsApi.getTopicMastery(userId);
-          set({
-            topicMastery: data,
-            isLoadingTopics: false,
-          });
-        } catch (error: any) {
-          console.error('Failed to fetch topic mastery:', error);
-          set({ isLoadingTopics: false });
-        }
-      },
-
-      // Fetch learning paths
-      fetchLearningPaths: async (userId) => {
-        try {
-          const data = await analyticsApi.getLearningPaths(userId);
-          set({ learningPaths: data });
-        } catch (error: any) {
-          console.error('Failed to fetch learning paths:', error);
-        }
-      },
-
-      // Fetch time series data
-      fetchTimeSeries: async (userId, days = 30) => {
-        try {
-          const data = await analyticsApi.getTimeSeries(userId, days);
-          set({ timeSeriesData: data });
-        } catch (error: any) {
-          console.error('Failed to fetch time series:', error);
-        }
-      },
-
       // Clear all analytics data
       clearAnalytics: () => {
         set({
           dashboardStats: null,
           performanceMetrics: null,
-          topicMastery: [],
-          learningPaths: [],
-          timeSeriesData: [],
           lastFetchedDashboard: null,
           lastFetchedPerformance: null,
           dashboardError: null,
@@ -267,8 +174,6 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
         // Only persist data, not loading/error states
         dashboardStats: state.dashboardStats,
         performanceMetrics: state.performanceMetrics,
-        topicMastery: state.topicMastery,
-        learningPaths: state.learningPaths,
         lastFetchedDashboard: state.lastFetchedDashboard,
         lastFetchedPerformance: state.lastFetchedPerformance,
       }),
@@ -282,12 +187,9 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
 
 export const selectDashboardStats = (state: AnalyticsStore) => state.dashboardStats;
 export const selectPerformanceMetrics = (state: AnalyticsStore) => state.performanceMetrics;
-export const selectTopicMastery = (state: AnalyticsStore) => state.topicMastery;
-export const selectLearningPaths = (state: AnalyticsStore) => state.learningPaths;
-export const selectTimeSeriesData = (state: AnalyticsStore) => state.timeSeriesData;
 
 export const selectIsLoadingAny = (state: AnalyticsStore) =>
-  state.isLoadingDashboard || state.isLoadingPerformance || state.isLoadingTopics;
+  state.isLoadingDashboard || state.isLoadingPerformance;
 
 // ============================================================================
 // EXPORTS
