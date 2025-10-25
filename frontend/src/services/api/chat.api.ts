@@ -87,4 +87,28 @@ export const chatAPI = {
     );
     return data;
   },
+
+  /**
+   * Get conversation history
+   * 
+   * Retrieves all messages from a specific session for displaying
+   * conversation history when user returns.
+   * 
+   * @param sessionId - Session identifier
+   * @returns Array of messages in chronological order
+   * 
+   * @throws 404 - Session not found
+   * 
+   * @example
+   * ```typescript
+   * const messages = await chatAPI.getHistory('session-abc');
+   * console.log(messages.length); // Number of messages in conversation
+   * ```
+   */
+  getHistory: async (sessionId: string): Promise<any[]> => {
+    const { data } = await apiClient.get(
+      `/api/v1/chat/history/${sessionId}`
+    );
+    return data.messages || [];
+  },
 };
