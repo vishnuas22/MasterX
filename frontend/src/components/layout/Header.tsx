@@ -1,34 +1,22 @@
-// **Purpose:** Primary navigation bar with user controls, theme toggle, and quick actions
-
-// **What This File Contributes:**
-// 1. Logo and branding
-// 2. Global search trigger (Cmd+K)
-// 3. Theme toggle (dark/light)
-// 4. Notification indicator
-// 5. User dropdown menu
-// 6. Mobile menu toggle
-
-// **Implementation:**
-// ```typescript
-// /**
-//  * Header Component - Top Navigation Bar
-//  * 
-//  * WCAG 2.1 AA Compliant:
-//  * - Landmark <header> element
-//  * - Keyboard navigation (Tab, Enter, Esc)
-//  * - ARIA labels on all controls
-//  * - Focus indicators visible
-//  * 
-//  * Performance:
-//  * - Sticky positioning (no JS required)
-//  * - Memoized to prevent re-renders
-//  * - Lazy load user menu
-//  * 
-//  * Backend Integration:
-//  * - User data from /api/auth/me
-//  * - Logout via /api/auth/logout
-//  * - Notifications from WebSocket
-//  */
+/**
+ * Header Component - Top Navigation Bar
+ * 
+ * WCAG 2.1 AA Compliant:
+ * - Landmark <header> element
+ * - Keyboard navigation (Tab, Enter, Esc)
+ * - ARIA labels on all controls
+ * - Focus indicators visible
+ * 
+ * Performance:
+ * - Sticky positioning (no JS required)
+ * - Memoized to prevent re-renders
+ * - Lazy load user menu
+ * 
+ * Backend Integration:
+ * - User data from /api/auth/me
+ * - Logout via /api/auth/logout
+ * - Notifications from WebSocket
+ */
 
 import React from 'react';
 import { Link } from 'react-router-dom';
@@ -37,8 +25,8 @@ import {
   Search, Bell, Sun, Moon, Menu, X, User, Settings,
   LogOut, BarChart3, Trophy, HelpCircle, ChevronDown
 } from 'lucide-react';
-import { useAuthStore } from '@store/authStore';
-import { useUIStore } from '@store/uiStore';
+import { useAuthStore } from '@/store/authStore';
+import { useUIStore } from '@/store/uiStore';
 import { cn } from '@/utils/cn';
 import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
@@ -267,12 +255,12 @@ UserMenu.displayName = 'UserMenu';
 // MAIN HEADER COMPONENT
 // ============================================================================
 
-export const Header = React.memo<HeaderProps>(({
+export const Header = React.memo<HeaderProps>({
   showMobileToggle = true,
   enableSearch = true,
   showNotifications = true,
   className,
-}) => {
+}: HeaderProps = {}) => {
   const { user } = useAuthStore();
   const { theme, toggleTheme, toggleSidebar, isSidebarOpen } = useUIStore();
   const [showUserMenu, setShowUserMenu] = React.useState(false);
@@ -434,84 +422,3 @@ Header.displayName = 'Header';
 // ============================================================================
 
 export default Header;
-
-// **Key Features:**
-// 1. ✅ **Responsive Design:** Mobile menu toggle, adaptive search bar
-// 2. ✅ **User Menu:** Profile, analytics, settings, logout (with dropdown)
-// 3. ✅ **Theme Toggle:** Dark/light mode with smooth transition
-// 4. ✅ **Notifications:** Badge with count, real-time updates (WebSocket)
-// 5. ✅ **Global Search:** Keyboard shortcut (Cmd+K), modal trigger
-// 6. ✅ **Subscription Badge:** Shows user tier (Free, Pro, Premium)
-// 7. ✅ **Sticky Position:** Always visible at top (CSS-only)
-
-// **Performance Metrics:**
-// - Initial render: <20ms
-// - Re-render: <5ms (fully memoized)
-// - Bundle size: 4KB gzipped
-// - Smooth animations: 60fps
-
-// **Accessibility:**
-// - ✅ Landmark <header> element
-// - ✅ ARIA labels on all controls
-// - ✅ Keyboard navigation (Tab, Enter, Esc)
-// - ✅ Focus indicators visible
-// - ✅ Screen reader compatible
-
-// **Backend Integration:**
-// User data from backend
-// GET /api/auth/me
-// Response: {
-//   id: "uuid",
-//   name: "John Doe",
-//   email: "john@example.com",
-//   avatar_url: "https://...",
-//   subscription_tier: "pro",
-//   ...
-// }
-//
-// Logout
-// POST /api/auth/logout
-// Headers: Authorization: Bearer <token>
-// Response: { message: "Logged out successfully" }
-//
-// Notifications (WebSocket)
-// socket.on('notification:new', (notification) => {
-//   setNotificationCount(count + 1);
-// });
-
-// **Connected Files:**
-// - ← authStore.ts (user data, logout)
-// - ← uiStore.ts (theme, sidebar toggle)
-// - → Avatar.tsx (user avatar)
-// - → Badge.tsx (subscription tier)
-// - → Tooltip.tsx (hover hints)
-
-// **Testing Strategy:**
-// Test theme toggle
-// test('toggles theme on button click', () => {
-//   render(<Header />);
-//   const themeButton = screen.getByLabelText(/switch to/i);
-  
-//   fireEvent.click(themeButton);
-//   expect(useUIStore.getState().theme).toBe('light');
-// });
-
-// Test user menu
-// test('opens and closes user menu', () => {
-//   render(<Header />);
-//   const userButton = screen.getByLabelText('User menu');
-  
-//   fireEvent.click(userButton);
-//   expect(screen.getByRole('menu')).toBeInTheDocument();
-  
-//   fireEvent.click(document.body);
-//   expect(screen.queryByRole('menu')).not.toBeInTheDocument();
-// });
-
-// // Test keyboard shortcut
-// test('opens search on Cmd+K', () => {
-//   render(<Header />);
-//  
-//   fireEvent.keyDown(window, { key: 'k', metaKey: true });
-//   // Assert search modal opened
-// });
