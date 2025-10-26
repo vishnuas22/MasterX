@@ -1,46 +1,22 @@
-// **Purpose:** Top-level layout orchestrator for the main app (post-authentication)
-
-// **What This File Contributes:**
-// 1. Global layout structure (header, sidebar, content, modals)
-// 2. Responsive navigation (desktop sidebar, mobile bottom nav)
-// 3. Modal management (dashboard, settings, profile)
-// 4. WebSocket connection initialization
-// 5. Global keyboard shortcuts
-// 6. Emotion widget (persistent)
-
-// **Architecture:**
-// ```
-// AppShell
-// ├── Header (top nav, user menu, theme toggle)
-// ├── Sidebar (desktop only, navigation links)
-// ├── Main Content Area
-// │   └── {children} (ChatContainer, etc.)
-// ├── Emotion Widget (bottom-left, draggable)
-// ├── Modals (dashboard, settings, profile)
-// └── Bottom Nav (mobile only)
-// ```
-
-// **Implementation:**
-// ```typescript
-// /**
-//  * AppShell - Main Application Layout
-//  * 
-//  * WCAG 2.1 AA Compliant:
-//  * - Landmark regions (nav, main, aside)
-//  * - Skip links for keyboard navigation
-//  * - Focus management for modals
-//  * - Mobile: 44x44px touch targets
-//  * 
-//  * Performance:
-//  * - Lazy load modals (code splitting)
-//  * - Memoized layout components
-//  * - Virtualized sidebar (if needed)
-//  * 
-//  * Responsive:
-//  * - Desktop: Sidebar + header
-//  * - Tablet: Collapsible sidebar
-//  * - Mobile: Bottom navigation
-//  */
+/**
+ * AppShell - Main Application Layout
+ * 
+ * WCAG 2.1 AA Compliant:
+ * - Landmark regions (nav, main, aside)
+ * - Skip links for keyboard navigation
+ * - Focus management for modals
+ * - Mobile: 44x44px touch targets
+ * 
+ * Performance:
+ * - Lazy load modals (code splitting)
+ * - Memoized layout components
+ * - Virtualized sidebar (if needed)
+ * 
+ * Responsive:
+ * - Desktop: Sidebar + header
+ * - Tablet: Collapsible sidebar
+ * - Mobile: Bottom navigation
+ */
 
 import React, { lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -49,16 +25,16 @@ import {
   Home, MessageSquare, BarChart3, Trophy, Settings, 
   User, LogOut, Sun, Moon, Menu, X 
 } from 'lucide-react';
-import { useAuthStore } from '@store/authStore';
-import { useUIStore } from '@store/uiStore';
-import { useEmotionStore } from '@store/emotionStore';
-import { useWebSocket } from '@hooks/useWebSocket';
+import { useAuthStore } from '@/store/authStore';
+import { useUIStore } from '@/store/uiStore';
+import { useEmotionStore } from '@/store/emotionStore';
+import { useWebSocket } from '@/hooks/useWebSocket';
 import { cn } from '@/utils/cn';
 
 // Lazy load modals (code splitting)
-const Dashboard = lazy(() => import('@/components/modals/Dashboard'));
-const SettingsModal = lazy(() => import('@/components/modals/Settings'));
-const ProfileModal = lazy(() => import('@/components/modals/Profile'));
+const Dashboard = lazy(() => import('@/pages/Dashboard'));
+const SettingsModal = lazy(() => import('@/pages/Settings'));
+const ProfileModal = lazy(() => import('@/pages/Profile'));
 
 // ============================================================================
 // TYPES
@@ -451,133 +427,3 @@ AppShell.displayName = 'AppShell';
 // ============================================================================
 
 export default AppShell;
-// ```
-
-// **Key Features:**
-// 1. ✅ **Responsive Layout:** Desktop sidebar, mobile bottom nav
-// 2. ✅ **Modal Management:** Dashboard, settings, profile (lazy loaded)
-// 3. ✅ **Theme Toggle:** Dark/light mode switch
-// 4. ✅ **User Menu:** Profile, logout
-// 5. ✅ **Emotion Widget:** Persistent, draggable (bottom-left)
-// 6. ✅ **WebSocket Init:** Real-time connection on mount
-// 7. ✅ **Keyboard Shortcuts:** Cmd+K (search), Esc (close modal)
-// 8. ✅ **Skip Links:** Accessibility for keyboard users
-
-// **Performance Metrics:**
-// - Initial render: <50ms
-// - Layout shift: 0 (CLS = 0)
-// - Bundle size: 5KB (excluding modals)
-// - Modal load: <100ms (lazy loaded)
-
-// **Accessibility:**
-// - ✅ Landmark regions (header, nav, main)
-// - ✅ Skip links for keyboard navigation
-// - ✅ ARIA labels on all interactive elements
-// - ✅ Focus management for modals
-// - ✅ Mobile: 44x44px touch targets (WCAG 2.1 AA)
-
-// **Responsive Breakpoints:**
-// ```css
-// /* Mobile: 0-1023px */
-// - Bottom navigation (4 items)
-// - Collapsible sidebar (overlay)
-// - Emotion widget: bottom-20
-
-// /* Desktop: 1024px+ */
-// - Persistent sidebar (left)
-// - No bottom navigation
-// - Emotion widget: bottom-4
-// ```
-
-// **Connected Files:**
-// - ← `authStore.ts` (user data, logout)
-// - ← `uiStore.ts` (theme, sidebar, modals)
-// - ← `emotionStore.ts` (current emotion)
-// - ← `useWebSocket.ts` (real-time connection)
-// - → All page content renders inside AppShell
-// - → `Dashboard.tsx` (modal)
-// - → `Settings.tsx` (modal)
-// - → `Profile.tsx` (modal)
-
-// **Backend Integration:**
-// ```typescript
-// // WebSocket connection (real-time emotions)
-// useWebSocket() initializes on mount
-
-// // User data from auth
-// const { user } = useAuthStore();
-// // user.name, user.email from backend /api/auth/me
-
-// // Current emotion (from backend via WebSocket)
-// const { currentEmotion } = useEmotionStore();
-// // Updated in real-time from backend emotion engine
-// ```
-
-// **Usage:**
-// ```typescript
-// // In MainApp.tsx
-// import { AppShell } from '@/components/layout/AppShell';
-// import { ChatContainer } from '@/components/chat/ChatContainer';
-
-// function MainApp() {
-//   return (
-//     <AppShell>
-//       <ChatContainer />
-//     </AppShell>
-//   );
-// }
-// // ```
-
-// **Testing Strategy:**
-// ```typescript
-// // Test responsive behavior
-// test('shows sidebar on desktop, bottom nav on mobile', () => {
-//   // Desktop
-//   window.innerWidth = 1280;
-//   render(<AppShell><div>Content</div></AppShell>);
-//   expect(screen.getByRole('navigation', { name: 'Main navigation' })).toBeVisible();
-//   expect(screen.queryByRole('navigation', { name: 'Bottom navigation' })).not.toBeInTheDocument();
-  
-//   // Mobile
-//   window.innerWidth = 375;
-//   render(<AppShell><div>Content</div></AppShell>);
-//   expect(screen.getByRole('navigation', { name: 'Bottom navigation' })).toBeVisible();
-// });
-
-// // Test keyboard shortcuts
-// test('closes modal on Escape key', () => {
-//   const { container } = render(<AppShell><div>Content</div></AppShell>);
-  
-//   // Open modal
-//   fireEvent.click(screen.getByText('Dashboard'));
-//   expect(screen.getByText('Dashboard Modal')).toBeInTheDocument();
-  
-//   // Press Escape
-//   fireEvent.keyDown(container, { key: 'Escape' });
-//   expect(screen.queryByText('Dashboard Modal')).not.toBeInTheDocument();
-// });
-// ```
-
-// ---
-
-// ## 🎯 SUMMARY: PART 6 COMPLETE
-
-// **Files Documented:** 44-47 (4 files)
-
-// 1. ✅ **Skeleton.tsx** - Loading states (8 variants, <1KB, WCAG 2.1 AA)
-// 2. ✅ **Toast.tsx** - Notifications (4 variants, auto-dismiss, swipe)
-// 3. ✅ **Tooltip.tsx** - Contextual help (smart positioning, keyboard accessible)
-// 4. ✅ **AppShell.tsx** - Main layout (responsive, modals, WebSocket)
-
-// **Total Code:** ~800 lines of production-ready TypeScript
-
-// **Performance:**
-// - Combined bundle: <12KB gzipped
-// - All animations: 60fps
-// - Zero layout shift (CLS = 0)
-// - Accessibility: WCAG 2.1 AA compliant
-
-// **Backend Integration:**
-// - Toast: API response feedback
-// - Emotion Widget: Real-time emotion from WebSocket
-// - AppShell: User data from /api/auth/me
