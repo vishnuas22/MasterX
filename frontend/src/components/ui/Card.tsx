@@ -99,37 +99,35 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
     ref
   ) => {
     const isClickable = !!onClick;
-    const Component = isClickable ? 'button' : 'div';
 
-    return (
-      <Component
-        ref={ref as any}
-        onClick={onClick}
-        data-testid={testId}
-        className={clsx(
-          // Base styles
-          'rounded-xl overflow-hidden',
-          'transition-all duration-250',
-          
-          // Variant
-          variantStyles[variant],
-          
-          // Hover effect
-          (hoverable || isClickable) && clsx(
-            'hover:scale-[1.02] hover:shadow-xl',
-            'active:scale-[0.98]'
-          ),
-          
-          // Clickable styles
-          isClickable && clsx(
-            'cursor-pointer text-left w-full',
-            'focus:outline-none focus:ring-2 focus:ring-accent-primary focus:ring-offset-2 focus:ring-offset-bg-primary'
-          ),
-          
-          // Custom className
-          className
-        )}
-      >
+    // Shared className logic
+    const cardClassName = clsx(
+      // Base styles
+      'rounded-xl overflow-hidden',
+      'transition-all duration-250',
+      
+      // Variant
+      variantStyles[variant],
+      
+      // Hover effect
+      (hoverable || isClickable) && clsx(
+        'hover:scale-[1.02] hover:shadow-xl',
+        'active:scale-[0.98]'
+      ),
+      
+      // Clickable styles
+      isClickable && clsx(
+        'cursor-pointer text-left w-full',
+        'focus:outline-none focus:ring-2 focus:ring-accent-primary focus:ring-offset-2 focus:ring-offset-bg-primary'
+      ),
+      
+      // Custom className
+      className
+    );
+
+    // Shared content
+    const cardContent = (
+      <>
         {/* Header */}
         {header && (
           <div className={clsx(
@@ -139,12 +137,12 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
             {header}
           </div>
         )}
-
-        {/* Content */}
-        <div className={padding !== 'none' ? paddingStyles[padding] : ''}>
+        
+        {/* Body */}
+        <div className={padding !== 'none' ? paddingStyles[padding] : undefined}>
           {children}
         </div>
-
+        
         {/* Footer */}
         {footer && (
           <div className={clsx(
@@ -154,7 +152,32 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
             {footer}
           </div>
         )}
-      </Component>
+      </>
+    );
+
+    // Render button if clickable
+    if (isClickable) {
+      return (
+        <button
+          ref={ref as React.Ref<HTMLButtonElement>}
+          onClick={onClick}
+          data-testid={testId}
+          className={cardClassName}
+        >
+          {cardContent}
+        </button>
+      );
+    }
+
+    // Render div if not clickable
+    return (
+      <div
+        ref={ref}
+        data-testid={testId}
+        className={cardClassName}
+      >
+        {cardContent}
+      </div>
     );
   }
 );
