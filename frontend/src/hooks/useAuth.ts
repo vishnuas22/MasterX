@@ -1,20 +1,77 @@
 /**
- * Authentication Hook
+ * Authentication Hook - Comprehensive Auth Operations
  * 
- * Provides simplified authentication operations with automatic
- * navigation and toast notifications.
+ * **Purpose:** Simplified authentication operations with automatic navigation,
+ * toast notifications, and comprehensive error handling.
  * 
- * @example
- * const { login, signup, logout, isAuthenticated, user } = useAuth();
- * await login({ email: 'user@example.com', password: 'password' });
+ * **Features:**
+ * 1. Login/Signup/Logout operations
+ * 2. Automatic navigation after success
+ * 3. Toast notifications for all operations
+ * 4. Comprehensive error handling
+ * 5. Auth state management
+ * 6. Token refresh handling
+ * 
+ * **Usage:**
+ * ```tsx
+ * const { login, signup, logout, isAuthenticated, user, isLoading } = useAuth();
+ * 
+ * // Login
+ * await login({ 
+ *   email: 'user@example.com', 
+ *   password: 'password' 
+ * });
+ * 
+ * // Signup
+ * await signup({ 
+ *   email: 'new@example.com', 
+ *   password: 'password',
+ *   name: 'John Doe'
+ * });
+ * 
+ * // Logout
+ * logout();
+ * ```
+ * 
+ * **Error Handling:**
+ * - Invalid credentials (401)
+ * - Account locked (423)
+ * - Rate limiting (429)
+ * - Email already exists (400)
+ * - Network errors
+ * 
+ * @module hooks/useAuth
  */
 
+import { useCallback } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import { useNavigate } from 'react-router-dom';
 import { useUIStore } from '@/store/uiStore';
 import type { LoginCredentials, SignupData } from '@/types/user.types';
 
-export const useAuth = () => {
+// ============================================================================
+// TYPES
+// ============================================================================
+
+interface UseAuthReturn {
+  // State
+  user: ReturnType<typeof useAuthStore>['user'];
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  error: string | null;
+  
+  // Actions
+  login: (credentials: LoginCredentials) => Promise<boolean>;
+  signup: (data: SignupData) => Promise<boolean>;
+  logout: () => Promise<void>;
+  clearError: () => void;
+}
+
+// ============================================================================
+// HOOK
+// ============================================================================
+
+export const useAuth = (): UseAuthReturn => {
   const navigate = useNavigate();
   const { showToast } = useUIStore();
   const {
@@ -28,59 +85,152 @@ export const useAuth = () => {
     clearError,
   } = useAuthStore();
 
+  // -------------------------------------------------------------------------
+  // LOGIN
+  // -------------------------------------------------------------------------
+  
   /**
-   * Login with credentials
-   * Automatically navigates to /app on success
+   * Login with email and password
+   * 
+   * - Calls backend authentication
+   * - Shows success/error toast
+   * - Navigates to /app on success
+   * - Returns boolean for success/failure
+   * 
+   * @param credentials - Email and password
+   * @returns Promise<boolean> - true if successful, false if failed
+   * 
+   * @example
+   * const success = await login({ 
+   *   email: 'user@example.com', 
+   *   password: 'SecurePass123!' 
+   * });
+   * if (success) {
+   *   // Handle successful login
+   * }
    */
-  const login = async (credentials: LoginCredentials) => {
+  const login = useCallback(async (credentials: LoginCredentials): Promise<boolean> => {
     try {
       await storeLogin(credentials);
+      
+      // Show success message
       showToast({
         type: 'success',
-        message: 'Welcome back!',
+        message: `Welcome back${user?.name ? `, ${user.name}` : ''}!`,
+        duration: 3000,
       });
+      
+      // Navigate to main app
       navigate('/app');
+      
+      return true;
     } catch (error: any) {
+      // Error already set in store, just show toast
       showToast({
         type: 'error',
-        message: error.message || 'Login failed',
+        message: error.message || 'Login failed. Please try again.',
+        duration: 5000,
       });
+      
+      return false;
     }
-  };
+  }, [storeLogin, showToast, navigate, user]);
 
+  // -------------------------------------------------------------------------
+  // SIGNUP
+  // -------------------------------------------------------------------------
+  
   /**
-   * Signup new user
-   * Automatically navigates to /onboarding on success
+   * Register new user
+   * 
+   * - Creates new account
+   * - Automatically logs in
+   * - Shows success/error toast
+   * - Navigates to /onboarding on success
+   * - Returns boolean for success/failure
+   * 
+   * @param data - Signup form data (email, password, name)
+   * @returns Promise<boolean> - true if successful, false if failed
+   * 
+   * @example
+   * const success = await signup({ 
+   *   email: 'new@example.com', 
+   *   password: 'SecurePass123!',
+   *   name: 'John Doe'
+   * });
+   * if (success) {
+   *   // Handle successful signup
+   * }
    */
-  const signup = async (data: SignupData) => {
+  const signup = useCallback(async (data: SignupData): Promise<boolean> => {
     try {
       await storeSignup(data);
+      
+      // Show success message
       showToast({
         type: 'success',
-        message: 'Account created successfully!',
+        message: `Welcome to MasterX, ${data.name}! 🎉`,
+        duration: 4000,
       });
+      
+      // Navigate to onboarding
       navigate('/onboarding');
+      
+      return true;
     } catch (error: any) {
+      // Error already set in store, just show toast
       showToast({
         type: 'error',
-        message: error.message || 'Signup failed',
+        message: error.message || 'Signup failed. Please try again.',
+        duration: 5000,
       });
+      
+      return false;
     }
-  };
+  }, [storeSignup, showToast, navigate]);
 
+  // -------------------------------------------------------------------------
+  // LOGOUT
+  // -------------------------------------------------------------------------
+  
   /**
-   * Logout user
-   * Clears auth state and navigates to landing page
+   * Logout current user
+   * 
+   * - Invalidates tokens
+   * - Clears auth state
+   * - Shows info toast
+   * - Navigates to landing page
+   * 
+   * @example
+   * await logout();
    */
-  const logout = () => {
-    storeLogout();
-    showToast({
-      type: 'info',
-      message: 'Logged out successfully',
-    });
-    navigate('/');
-  };
+  const logout = useCallback(async (): Promise<void> => {
+    try {
+      await storeLogout();
+      
+      // Show logout message
+      showToast({
+        type: 'info',
+        message: 'You have been logged out successfully',
+        duration: 3000,
+      });
+      
+      // Navigate to landing page
+      navigate('/');
+    } catch (error: any) {
+      // Even if backend logout fails, we still want to clear local state
+      // So we don't show error toast here
+      console.error('Logout error:', error);
+      
+      // Still navigate to landing
+      navigate('/');
+    }
+  }, [storeLogout, showToast, navigate]);
 
+  // -------------------------------------------------------------------------
+  // RETURN
+  // -------------------------------------------------------------------------
+  
   return {
     // State
     user,
@@ -95,3 +245,9 @@ export const useAuth = () => {
     clearError,
   };
 };
+
+// ============================================================================
+// EXPORTS
+// ============================================================================
+
+export default useAuth;
