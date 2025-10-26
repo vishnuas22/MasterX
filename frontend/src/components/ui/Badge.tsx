@@ -95,22 +95,33 @@ export const Badge: React.FC<BadgeProps> = ({
   'data-testid': testId,
 }) => {
   // Determine dynamic styles for emotion/rarity variants
-  let dynamicStyle = '';
+  let dynamicClasses = '';
+  let dynamicInlineStyle: React.CSSProperties = {};
   
   if (variant === 'emotion' && emotion) {
     const emotionColor = emotionColorMap[emotion.toLowerCase()] || emotionColorMap.neutral;
-    dynamicStyle = `border-[${emotionColor}]/20`;
-    // Note: For production, use CSS variables or predefined classes
+    dynamicClasses = 'border';
+    dynamicInlineStyle = {
+      backgroundColor: `${emotionColor}1A`, // 10% opacity (hex)
+      color: emotionColor,
+      borderColor: `${emotionColor}33`, // 20% opacity (hex)
+    };
   }
   
   if (variant === 'rarity' && rarity) {
     const rarityColor = achievementRarityColors[rarity];
-    dynamicStyle = `border-[${rarityColor}]/20`;
+    dynamicClasses = 'border';
+    dynamicInlineStyle = {
+      backgroundColor: `${rarityColor}1A`, // 10% opacity (hex)
+      color: rarityColor,
+      borderColor: `${rarityColor}33`, // 20% opacity (hex)
+    };
   }
 
   return (
     <span
       data-testid={testId}
+      style={dynamicInlineStyle}
       className={clsx(
         // Base styles
         'inline-flex items-center gap-1.5',
@@ -120,10 +131,10 @@ export const Badge: React.FC<BadgeProps> = ({
         // Size
         sizeStyles[size],
         
-        // Variant
+        // Variant (only for non-dynamic variants)
         variant !== 'emotion' && variant !== 'rarity' 
           ? variantStyles[variant]
-          : dynamicStyle,
+          : dynamicClasses,
         
         // Custom className
         className
