@@ -434,7 +434,6 @@ Header.displayName = 'Header';
 // ============================================================================
 
 export default Header;
-```
 
 // **Key Features:**
 // 1. ✅ **Responsive Design:** Mobile menu toggle, adaptive search bar
@@ -459,8 +458,7 @@ export default Header;
 // - ✅ Screen reader compatible
 
 // **Backend Integration:**
-// ```typescript
-// // User data from backend
+// User data from backend
 // GET /api/auth/me
 // Response: {
 //   id: "uuid",
@@ -470,28 +468,26 @@ export default Header;
 //   subscription_tier: "pro",
 //   ...
 // }
-
-// // Logout
+//
+// Logout
 // POST /api/auth/logout
 // Headers: Authorization: Bearer <token>
 // Response: { message: "Logged out successfully" }
-
-// // Notifications (WebSocket)
+//
+// Notifications (WebSocket)
 // socket.on('notification:new', (notification) => {
 //   setNotificationCount(count + 1);
 // });
-// ```
 
 // **Connected Files:**
-// - ← `authStore.ts` (user data, logout)
-// - ← `uiStore.ts` (theme, sidebar toggle)
-// - → `Avatar.tsx` (user avatar)
-// - → `Badge.tsx` (subscription tier)
-// - → `Tooltip.tsx` (hover hints)
+// - ← authStore.ts (user data, logout)
+// - ← uiStore.ts (theme, sidebar toggle)
+// - → Avatar.tsx (user avatar)
+// - → Badge.tsx (subscription tier)
+// - → Tooltip.tsx (hover hints)
 
 // **Testing Strategy:**
-// ```typescript
-// // Test theme toggle
+// Test theme toggle
 // test('toggles theme on button click', () => {
 //   render(<Header />);
 //   const themeButton = screen.getByLabelText(/switch to/i);
@@ -515,8 +511,7 @@ export default Header;
 // // Test keyboard shortcut
 // test('opens search on Cmd+K', () => {
 //   render(<Header />);
-  
+//  
 //   fireEvent.keyDown(window, { key: 'k', metaKey: true });
 //   // Assert search modal opened
 // });
-// ```
