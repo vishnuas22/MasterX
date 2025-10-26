@@ -120,10 +120,6 @@ const calculatePosition = (
   
   const gap = 8; // Space between trigger and tooltip
   const arrowSize = 6;
-  
-  let position = preferredPosition;
-  let top = 0;
-  let left = 0;
 
   // Calculate for each position
   const positions: Record<TooltipPosition, Position> = {
@@ -201,7 +197,7 @@ export const Tooltip = React.memo<TooltipProps>(({
   
   const triggerRef = React.useRef<HTMLElement>(null);
   const tooltipRef = React.useRef<HTMLDivElement>(null);
-  const timeoutRef = React.useRef<NodeJS.Timeout>();
+  const timeoutRef = React.useRef<number>();
 
   React.useEffect(() => {
     setMounted(true);
