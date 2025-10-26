@@ -66,12 +66,21 @@ const ComponentShowcase = lazy(() =>
                 Backend API running on: {import.meta.env.VITE_BACKEND_URL || 'Not configured'}
               </p>
             </div>
+            <div className="p-6 bg-accent-primary/10 border border-accent-primary/30 rounded-lg">
+              <h2 className="text-2xl font-semibold mb-4">🧪 Test Pages:</h2>
+              <a href="/test-login" className="text-accent-primary hover:underline block">
+                → Test LoginForm Component
+              </a>
+            </div>
           </div>
         </div>
       </div>
     )
   }))
 );
+
+// Test page for LoginForm
+const TestLogin = lazy(() => import('./pages/TestLogin'));
 
 // Will be implemented from documentation
 // const Landing = lazy(() => import('@/pages/Landing'));
@@ -212,6 +221,9 @@ function App() {
         <Routes>
           {/* Temporary showcase route */}
           <Route path="/" element={<ComponentShowcase />} />
+          
+          {/* Test routes */}
+          <Route path="/test-login" element={<TestLogin />} />
           
           {/* Public routes - Will be implemented from documentation */}
           {/* <Route path="/" element={<Landing />} /> */}
