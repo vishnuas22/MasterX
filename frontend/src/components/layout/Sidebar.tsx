@@ -1,36 +1,25 @@
-// **Purpose:** Desktop sidebar navigation with collapsible sections and active state
+/**
+ * Sidebar Component - Desktop Navigation
+ * 
+ * WCAG 2.1 AA Compliant:
+ * - Landmark <nav> element
+ * - Keyboard navigation (Arrow keys, Enter)
+ * - Skip navigation link
+ * - Focus management
+ * 
+ * Performance:
+ * - Memoized navigation items
+ * - CSS transitions (no JS)
+ * - Lazy render badges
+ * 
+ * Responsive:
+ * - Desktop: Always visible (280px)
+ * - Tablet/Mobile: Overlay with backdrop
+ */
 
-// **What This File Contributes:**
-// 1. Main navigation links (Chat, Dashboard, Analytics, etc.)
-// 2. Collapsible sections (optional grouping)
-// 3. Active state indication
-// 4. Badge support (unread counts)
-// 5. Tooltip for collapsed state
-
-// **Implementation:**
-// ```typescript
-// /**
-//  * Sidebar Component - Desktop Navigation
-//  * 
-//  * WCAG 2.1 AA Compliant:
-//  * - Landmark <nav> element
-//  * - Keyboard navigation (Arrow keys, Enter)
-//  * - Skip navigation link
-//  * - Focus management
-//  * 
-//  * Performance:
-//  * - Memoized navigation items
-//  * - CSS transitions (no JS)
-//  * - Lazy render badges
-//  * 
-//  * Responsive:
-//  * - Desktop: Always visible (280px)
-//  * - Tablet/Mobile: Overlay with backdrop
-//  */
-
-import React from 'react';
+import React, { useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   MessageSquare, Home, BarChart3, Trophy, BookOpen,
   Compass, Users, Settings, ChevronRight
@@ -247,16 +236,16 @@ NavItemComponent.displayName = 'NavItemComponent';
 // MAIN SIDEBAR COMPONENT
 // ============================================================================
 
-export const Sidebar = React.memo<SidebarProps>(({
+export const Sidebar = React.memo<SidebarProps>({
   isOpen,
   onClose,
   isCollapsed = false,
   className,
-}) => {
+}: SidebarProps) => {
   const sidebarRef = React.useRef<HTMLElement>(null);
 
   // Close on Escape (mobile)
-  React.useEffect(() => {
+  useEffect(() => {
     if (!isOpen) return;
 
     const handleEscape = (e: KeyboardEvent) => {
@@ -270,16 +259,18 @@ export const Sidebar = React.memo<SidebarProps>(({
   return (
     <>
       {/* Backdrop (mobile only) */}
-      {isOpen && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={onClose}
-          className="lg:hidden fixed inset-0 bg-black/50 z-30 backdrop-blur-sm"
-          aria-hidden="true"
-        />
-      )}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="lg:hidden fixed inset-0 bg-black/50 z-30 backdrop-blur-sm"
+            aria-hidden="true"
+          />
+        )}
+      </AnimatePresence>
 
       {/* Sidebar */}
       <motion.aside
@@ -330,7 +321,7 @@ export const Sidebar = React.memo<SidebarProps>(({
           ))}
         </nav>
 
-        {/* Collapse toggle (desktop only) */}
+        {/* Collapse toggle (desktop only) - TODO: Implement toggle state */}
         {/* <button
           onClick={() => toggleCollapse()}
           className="hidden lg:flex absolute -right-3 top-6 w-6 h-6 bg-bg-secondary border border-white/10 rounded-full items-center justify-center hover:bg-bg-tertiary transition-colors"
@@ -347,59 +338,4 @@ export const Sidebar = React.memo<SidebarProps>(({
 
 Sidebar.displayName = 'Sidebar';
 
-// ============================================================================
-// EXPORTS
-// ============================================================================
-
 export default Sidebar;
-
-// **Key Features:**
-// 1. ✅ **Organized Sections:** Grouped navigation with titles
-// 2. ✅ **Active State:** Animated indicator for current page
-// 3. ✅ **Badges:** Notification counts (achievements, messages)
-// 4. ✅ **Collapsible:** Optional compact mode (64px width)
-// 5. ✅ **Tooltips:** Show labels when collapsed
-// 6. ✅ **Mobile Overlay:** Backdrop with blur effect
-// 7. ✅ **Smooth Animations:** Framer Motion spring physics
-
-// **Performance Metrics:**
-// - Initial render: <15ms
-// - Navigation transition: <200ms
-// - Bundle size: 3KB gzipped
-// - No layout shift (fixed width)
-
-// **Accessibility:**
-// - ✅ Landmark <nav> element
-// - ✅ Keyboard navigation (Tab, Enter, Esc)
-// - ✅ ARIA labels
-// - ✅ Focus indicators
-// - ✅ Screen reader compatible
-
-// **Connected Files:**
-// - ← uiStore.ts (sidebar state)
-// - → Badge.tsx (notification counts)
-// - → Tooltip.tsx (collapsed labels)
-// - → All page routes
-
-// **Testing Strategy:**
-// Test active state
-// test('highlights active navigation item', () => {
-//   render(<Sidebar isOpen onClose={jest.fn()} />, {
-//     initialRoute: '/app/analytics',
-//   });
-//  
-//   const analyticsLink = screen.getByText('Progress');
-//   expect(analyticsLink.closest('a')).toHaveClass('bg-accent-primary/10');
-// });
-
-// // Test mobile close on backdrop click
-// test('closes sidebar when clicking backdrop on mobile', () => {
-//   const onClose = jest.fn();
-//   render(<Sidebar isOpen onClose={onClose} />);
-  
-//   const backdrop = screen.getByRole('presentation', { hidden: true });
-//   fireEvent.click(backdrop);
-  
-//   expect(onClose).toHaveBeenCalled();
-// });
-// ```
