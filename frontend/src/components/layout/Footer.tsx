@@ -1,29 +1,27 @@
-// **Purpose:** Bottom navigation with links, legal info, and social media
+/**
+ * Footer Component
+ * 
+ * Bottom navigation with links, legal info, and social media
+ * 
+ * Features:
+ * - Copyright notice
+ * - Legal links (Privacy, Terms, Cookies)
+ * - Social media links
+ * - App version info
+ * - Status indicator (online/offline)
+ * 
+ * WCAG 2.1 AA Compliant:
+ * - Landmark <footer> element
+ * - Sufficient link contrast
+ * - Keyboard navigable
+ * 
+ * Performance:
+ * - Static content (no re-renders)
+ * - CSS-only layout
+ * - Lazy load social icons
+ */
 
-// **What This File Contributes:**
-// 1. Copyright notice
-// 2. Legal links (Privacy, Terms, Cookies)
-// 3. Social media links
-// 4. App version info
-// 5. Status indicator (online/offline)
-
-// **Implementation:**
-// ```typescript
-// /**
-//  * Footer Component
-//  * 
-//  * WCAG 2.1 AA Compliant:
-//  * - Landmark <footer> element
-//  * - Sufficient link contrast
-//  * - Keyboard navigable
-//  * 
-//  * Performance:
-//  * - Static content (no re-renders)
-//  * - CSS-only layout
-//  * - Lazy load social icons
-//  */
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Github, Twitter, Linkedin, Mail, Circle } from 'lucide-react';
 import { cn } from '@/utils/cn';
@@ -100,9 +98,9 @@ const socialLinks = [
 // ============================================================================
 
 const StatusIndicator = React.memo<{ showStatus: boolean }>(({ showStatus }) => {
-  const [isOnline, setIsOnline] = React.useState(navigator.onLine);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
 
@@ -136,12 +134,12 @@ StatusIndicator.displayName = 'StatusIndicator';
 // MAIN FOOTER COMPONENT
 // ============================================================================
 
-export const Footer = React.memo<FooterProps>(({
+export const Footer = React.memo<FooterProps>({
   showSocial = true,
   showVersion = true,
   showStatus = true,
   className,
-}) => {
+}: FooterProps = {}) => {
   const currentYear = new Date().getFullYear();
   const appVersion = import.meta.env.VITE_APP_VERSION || '1.0.0';
 
@@ -232,55 +230,4 @@ export const Footer = React.memo<FooterProps>(({
 
 Footer.displayName = 'Footer';
 
-// ============================================================================
-// EXPORTS
-// ============================================================================
-
 export default Footer;
-
-// **Key Features:**
-// 1. ✅ **Organized Sections:** Legal, Company, Resources
-// 2. ✅ **Social Links:** GitHub, Twitter, LinkedIn, Email
-// 3. ✅ **Status Indicator:** Online/offline with color coding
-// 4. ✅ **Version Info:** App version from env variable
-// 5. ✅ **Responsive Grid:** 1 column mobile, 4 columns desktop
-// 6. ✅ **Dynamic Copyright:** Current year automatically
-
-// **Performance Metrics:**
-// - Initial render: <10ms
-// - No re-renders (static content)
-// - Bundle size: 1.5KB gzipped
-
-// **Accessibility:**
-// - ✅ Landmark <footer> element
-// - ✅ Sufficient link contrast (4.5:1)
-// - ✅ External links: rel="noopener noreferrer"
-// - ✅ Social icons: ARIA labels
-
-// **Connected Files:**
-// - No store dependencies (static)
-// - → All footer page routes
-
-// **Testing Strategy:**
-// Test online/offline status
-// test('shows online status when connected', () => {
-//   render(<Footer />);
-//   expect(screen.getByText('Online')).toBeInTheDocument();
-// });
-//
-// test('shows offline status when disconnected', () => {
-//   Object.defineProperty(navigator, 'onLine', {
-//     writable: true,
-//     value: false,
-//   });
-//   
-//   render(<Footer />);
-//   expect(screen.getByText('Offline')).toBeInTheDocument();
-// });
-//
-// Test copyright year
-// test('displays current year in copyright', () => {
-//   render(<Footer />);
-//   const currentYear = new Date().getFullYear();
-//   expect(screen.getByText(new RegExp(currentYear.toString()))).toBeInTheDocument();
-// });
