@@ -237,7 +237,6 @@ Footer.displayName = 'Footer';
 // ============================================================================
 
 export default Footer;
-```
 
 // **Key Features:**
 // 1. ✅ **Organized Sections:** Legal, Company, Resources
@@ -263,27 +262,25 @@ export default Footer;
 // - → All footer page routes
 
 // **Testing Strategy:**
-```typescript
 // Test online/offline status
-test('shows online status when connected', () => {
-  render(<Footer />);
-  expect(screen.getByText('Online')).toBeInTheDocument();
-});
-
-test('shows offline status when disconnected', () => {
-  Object.defineProperty(navigator, 'onLine', {
-    writable: true,
-    value: false,
-  });
-  
-  render(<Footer />);
-  expect(screen.getByText('Offline')).toBeInTheDocument();
-});
-
+// test('shows online status when connected', () => {
+//   render(<Footer />);
+//   expect(screen.getByText('Online')).toBeInTheDocument();
+// });
+//
+// test('shows offline status when disconnected', () => {
+//   Object.defineProperty(navigator, 'onLine', {
+//     writable: true,
+//     value: false,
+//   });
+//   
+//   render(<Footer />);
+//   expect(screen.getByText('Offline')).toBeInTheDocument();
+// });
+//
 // Test copyright year
-test('displays current year in copyright', () => {
-  render(<Footer />);
-  const currentYear = new Date().getFullYear();
-  expect(screen.getByText(new RegExp(currentYear.toString()))).toBeInTheDocument();
-});
-```
+// test('displays current year in copyright', () => {
+//   render(<Footer />);
+//   const currentYear = new Date().getFullYear();
+//   expect(screen.getByText(new RegExp(currentYear.toString()))).toBeInTheDocument();
+// });
