@@ -48,7 +48,9 @@ export default function ComponentShowcase() {
 
   // Test toast
   const handleShowToast = () => {
-    toast.success('Test Toast', 'This is a test toast notification!');
+    toast.success('Test Toast', { 
+      description: 'This is a test toast notification!' 
+    });
   };
 
   return (
@@ -321,21 +323,12 @@ export default function ComponentShowcase() {
                 Test toast notifications
               </p>
               <div className="flex flex-wrap gap-3">
-                <Button onClick={() => setShowToast(true)}>
+                <Button onClick={handleShowToast}>
                   Show Toast
                 </Button>
               </div>
             </div>
           </Card>
-
-          {showToast && (
-            <Toast
-              variant="success"
-              title="Success!"
-              message="This is a test toast notification"
-              onClose={() => setShowToast(false)}
-            />
-          )}
         </section>
 
         {/* Tooltip Component */}
