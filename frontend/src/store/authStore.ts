@@ -1,182 +1,413 @@
-// **Purpose:** Manage user authentication, JWT tokens, profile data
+/**
+ * Authentication Store - JWT Token Management & User State
+ * 
+ * **Purpose:** Manage user authentication, JWT tokens, profile data
+ * 
+ * **Features:**
+ * 1. Centralized auth state (logged in/out)
+ * 2. Token management (access + refresh tokens)
+ * 3. Automatic token refresh
+ * 4. User profile caching
+ * 5. Login/logout/signup flows
+ * 6. Secure token storage
+ * 
+ * **Security:**
+ * - JWT tokens stored securely in localStorage
+ * - Auto token refresh before expiration
+ * - Rate limiting awareness
+ * - Account lock detection
+ * 
+ * **Performance:**
+ * - Zustand optimized re-renders
+ * - LocalStorage persistence
+ * - Minimal bundle size
+ * 
+ * **Backend Integration:**
+ * - POST /api/auth/login - Email/password authentication
+ * - POST /api/auth/register - User registration
+ * - POST /api/auth/refresh - Token refresh
+ * - POST /api/auth/logout - Token invalidation
+ * - GET /api/auth/me - Get current user
+ * 
+ * @module store/authStore
+ */
 
-// **What This File Contributes:**
-// 1. Centralized auth state (logged in/out)
-// 2. Token management (auto-refresh)
-// 3. User profile caching
-// 4. Login/logout/signup flows
-
-// **Implementation:**
-// ```typescript
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { authAPI } from '@/services/api/auth.api';
 import type { User, LoginCredentials, SignupData } from '@/types/user.types';
 
+// ============================================================================
+// TYPES
+// ============================================================================
+
 interface AuthState {
   // State
   user: User | null;
-  token: string | null;
+  accessToken: string | null;
+  refreshToken: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
+  lastRefreshTime: number | null;
   
   // Actions
   login: (credentials: LoginCredentials) => Promise<void>;
   signup: (data: SignupData) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
+  refreshAccessToken: () => Promise<void>;
   updateProfile: (updates: Partial<User>) => Promise<void>;
   clearError: () => void;
 }
+
+// ============================================================================
+// TOKEN MANAGEMENT
+// ============================================================================
+
+/**
+ * Check if token is expired or about to expire (within 5 minutes)
+ */
+const isTokenExpiringSoon = (token: string | null): boolean => {
+  if (!token) return true;
+  
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    const expirationTime = payload.exp * 1000; // Convert to milliseconds
+    const currentTime = Date.now();
+    const fiveMinutes = 5 * 60 * 1000;
+    
+    return (expirationTime - currentTime) < fiveMinutes;
+  } catch {
+    return true; // If we can't parse, treat as expired
+  }
+};
+
+// ============================================================================
+// STORE
+// ============================================================================
 
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
       // Initial state
       user: null,
-      token: null,
+      accessToken: null,
+      refreshToken: null,
       isAuthenticated: false,
       isLoading: false,
       error: null,
+      lastRefreshTime: null,
       
-      // Login action
+      // -----------------------------------------------------------------------
+      // LOGIN
+      // -----------------------------------------------------------------------
+      
+      /**
+       * Login with email and password
+       * 
+       * - Authenticates user with backend
+       * - Stores access and refresh tokens
+       * - Fetches user profile
+       * - Sets authenticated state
+       * 
+       * @throws Error if login fails (invalid credentials, account locked, rate limited)
+       */
       login: async (credentials) => {
         set({ isLoading: true, error: null });
+        
         try {
+          // Authenticate with backend
           const response = await authAPI.login(credentials);
-          // Get full user profile
-          const fullUser = await authAPI.getCurrentUser();
           
-          set({
-            user: fullUser,
-            token: response.access_token,
-            isAuthenticated: true,
-            isLoading: false,
-          });
-          // Store tokens in localStorage for API requests
+          // Fetch full user profile
+          // Set token first so getCurrentUser can use it
           localStorage.setItem('jwt_token', response.access_token);
           localStorage.setItem('refresh_token', response.refresh_token);
-        } catch (error: any) {
+          
+          const user = await authAPI.getCurrentUser();
+          
+          // Update state
           set({
-            error: error.message || 'Login failed',
+            user,
+            accessToken: response.access_token,
+            refreshToken: response.refresh_token,
+            isAuthenticated: true,
             isLoading: false,
+            lastRefreshTime: Date.now(),
+            error: null,
           });
-          throw error;
+        } catch (error: any) {
+          // Clear any stored tokens on error
+          localStorage.removeItem('jwt_token');
+          localStorage.removeItem('refresh_token');
+          
+          // Parse error message for better UX
+          let errorMessage = 'Login failed. Please try again.';
+          
+          if (error.response?.status === 401) {
+            errorMessage = 'Invalid email or password';
+          } else if (error.response?.status === 423) {
+            errorMessage = 'Account temporarily locked. Please try again in 15 minutes.';
+          } else if (error.response?.status === 429) {
+            errorMessage = 'Too many login attempts. Please try again later.';
+          } else if (error.message) {
+            errorMessage = error.message;
+          }
+          
+          set({
+            error: errorMessage,
+            isLoading: false,
+            isAuthenticated: false,
+          });
+          
+          throw new Error(errorMessage);
         }
       },
       
-      // Signup action
+      // -----------------------------------------------------------------------
+      // SIGNUP
+      // -----------------------------------------------------------------------
+      
+      /**
+       * Register new user
+       * 
+       * - Creates new account
+       * - Automatically logs in user
+       * - Stores tokens
+       * - Fetches user profile
+       * 
+       * @throws Error if signup fails (email exists, invalid data, rate limited)
+       */
       signup: async (data) => {
         set({ isLoading: true, error: null });
+        
         try {
+          // Register with backend
           const response = await authAPI.signup(data);
-          // Get full user profile
-          const fullUser = await authAPI.getCurrentUser();
           
-          set({
-            user: fullUser,
-            token: response.access_token,
-            isAuthenticated: true,
-            isLoading: false,
-          });
+          // Store tokens
           localStorage.setItem('jwt_token', response.access_token);
           localStorage.setItem('refresh_token', response.refresh_token);
-        } catch (error: any) {
+          
+          // Fetch user profile
+          const user = await authAPI.getCurrentUser();
+          
+          // Update state
           set({
-            error: error.message || 'Signup failed',
+            user,
+            accessToken: response.access_token,
+            refreshToken: response.refresh_token,
+            isAuthenticated: true,
             isLoading: false,
+            lastRefreshTime: Date.now(),
+            error: null,
           });
-          throw error;
+        } catch (error: any) {
+          // Clear tokens on error
+          localStorage.removeItem('jwt_token');
+          localStorage.removeItem('refresh_token');
+          
+          // Parse error message
+          let errorMessage = 'Signup failed. Please try again.';
+          
+          if (error.response?.status === 400) {
+            if (error.response.data?.detail?.includes('email')) {
+              errorMessage = 'This email is already registered';
+            } else {
+              errorMessage = 'Invalid signup data. Please check your information.';
+            }
+          } else if (error.response?.status === 429) {
+            errorMessage = 'Too many signup attempts. Please try again later.';
+          } else if (error.message) {
+            errorMessage = error.message;
+          }
+          
+          set({
+            error: errorMessage,
+            isLoading: false,
+            isAuthenticated: false,
+          });
+          
+          throw new Error(errorMessage);
         }
       },
       
-      // Logout action
-      logout: () => {
+      // -----------------------------------------------------------------------
+      // LOGOUT
+      // -----------------------------------------------------------------------
+      
+      /**
+       * Logout user
+       * 
+       * - Invalidates tokens on backend
+       * - Clears local storage
+       * - Resets auth state
+       */
+      logout: async () => {
+        try {
+          // Call backend logout to invalidate token
+          await authAPI.logout();
+        } catch {
+          // Continue with logout even if backend call fails
+        }
+        
+        // Clear storage
         localStorage.removeItem('jwt_token');
         localStorage.removeItem('refresh_token');
+        
+        // Reset state
         set({
           user: null,
-          token: null,
+          accessToken: null,
+          refreshToken: null,
           isAuthenticated: false,
           error: null,
+          lastRefreshTime: null,
         });
       },
       
-      // Check auth on app load
+      // -----------------------------------------------------------------------
+      // CHECK AUTH
+      // -----------------------------------------------------------------------
+      
+      /**
+       * Check authentication on app load
+       * 
+       * - Verifies stored tokens
+       * - Fetches user profile if valid
+       * - Refreshes token if needed
+       * - Logs out if invalid
+       */
       checkAuth: async () => {
         const token = localStorage.getItem('jwt_token');
+        const refreshToken = localStorage.getItem('refresh_token');
+        
         if (!token) {
           set({ isAuthenticated: false });
           return;
         }
         
+        // Check if token is expiring soon
+        if (isTokenExpiringSoon(token) && refreshToken) {
+          try {
+            await get().refreshAccessToken();
+            return;
+          } catch {
+            // If refresh fails, try to get user with current token
+          }
+        }
+        
         try {
+          // Verify token by fetching user
           const user = await authAPI.getCurrentUser();
+          
           set({
             user,
-            token,
+            accessToken: token,
+            refreshToken,
             isAuthenticated: true,
           });
         } catch (error) {
-          // Token invalid or expired
-          get().logout();
+          // Token invalid or expired, logout
+          await get().logout();
         }
       },
       
-      // Update user profile
+      // -----------------------------------------------------------------------
+      // REFRESH TOKEN
+      // -----------------------------------------------------------------------
+      
+      /**
+       * Refresh access token using refresh token
+       * 
+       * - Called automatically when token expires
+       * - Updates access token
+       * - Maintains user session
+       * 
+       * @throws Error if refresh fails (user must login again)
+       */
+      refreshAccessToken: async () => {
+        const { refreshToken } = get();
+        
+        if (!refreshToken) {
+          throw new Error('No refresh token available');
+        }
+        
+        try {
+          const response = await authAPI.refresh(refreshToken);
+          
+          // Update tokens
+          localStorage.setItem('jwt_token', response.access_token);
+          localStorage.setItem('refresh_token', response.refresh_token);
+          
+          set({
+            accessToken: response.access_token,
+            refreshToken: response.refresh_token,
+            lastRefreshTime: Date.now(),
+          });
+        } catch (error) {
+          // Refresh failed, logout user
+          await get().logout();
+          throw new Error('Session expired. Please login again.');
+        }
+      },
+      
+      // -----------------------------------------------------------------------
+      // UPDATE PROFILE
+      // -----------------------------------------------------------------------
+      
+      /**
+       * Update user profile
+       * 
+       * Note: Backend profile update endpoint not yet implemented
+       * Currently updates local state only
+       * 
+       * @param updates - Partial user data to update
+       */
       updateProfile: async (updates) => {
         const { user } = get();
         if (!user) return;
         
         try {
-          // Call the getCurrentUser after potential profile updates
-          // Note: Backend doesn't have updateProfile endpoint yet
-          // For now, we'll just update local state
-          set({ user: { ...user, ...updates } });
-          // TODO: Implement backend profile update endpoint
+          // TODO: Implement backend profile update when available
+          // const updatedUser = await authAPI.updateProfile(user.id, updates);
+          
+          // For now, update local state
+          set({ 
+            user: { ...user, ...updates },
+            error: null,
+          });
         } catch (error: any) {
-          set({ error: error.message });
+          set({ error: error.message || 'Failed to update profile' });
           throw error;
         }
       },
       
-      // Clear error
+      // -----------------------------------------------------------------------
+      // CLEAR ERROR
+      // -----------------------------------------------------------------------
+      
+      /**
+       * Clear error state
+       */
       clearError: () => set({ error: null }),
     }),
     {
-      name: 'auth-storage', // LocalStorage key
+      name: 'auth-storage',
+      // Only persist these fields (don't persist loading/error states)
       partialize: (state) => ({
-        // Only persist these fields
-        token: state.token,
         user: state.user,
+        accessToken: state.accessToken,
+        refreshToken: state.refreshToken,
+        lastRefreshTime: state.lastRefreshTime,
       }),
     }
   )
 );
 
+// ============================================================================
+// EXPORTS
+// ============================================================================
 
-// **Key Features:**
-// 1. **Persist middleware:** Survives page refresh
-// 2. **Async actions:** Promise-based, easy error handling
-// 3. **Auto token management:** Stores JWT securely
-// 4. **Type-safe:** Full TypeScript support
-
-// **Performance:**
-// - Zustand re-renders only components using changed state
-// - LocalStorage read/write: <1ms
-// - No unnecessary re-renders (selector-based)
-
-// **Connected Files:**
-// - ← `services/api/auth.api.ts` (API calls)
-// - ← `types/user.types.ts` (type definitions)
-// - → `pages/Login.tsx`, `pages/Signup.tsx` (uses login/signup actions)
-// - → `App.tsx` (uses checkAuth on mount)
-// - → `components/Header.tsx` (uses user data, logout)
-
-// **Integration with Backend:**
-// ```
-// POST /api/v1/auth/login     ← authAPI.login()
-// POST /api/v1/auth/register  ← authAPI.signup()
-// GET  /api/v1/auth/me        ← authAPI.verifyToken()
-// PATCH /api/v1/auth/profile  ← authAPI.updateProfile()
+export default useAuthStore;
