@@ -10,7 +10,7 @@
  * - Full accessibility (WCAG 2.1 AA)
  */
 
-import React, { forwardRef, InputHTMLAttributes, ReactNode, useState } from 'react';
+import React, { forwardRef, InputHTMLAttributes, ReactNode, useState, useId } from 'react';
 import { clsx } from 'clsx';
 
 // ============================================================================
@@ -107,8 +107,9 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     ref
   ) => {
     const [internalValue, setInternalValue] = useState('');
+    const generatedId = useId();
     const inputValue = value !== undefined ? value : internalValue;
-    const inputId = id || `input-${Math.random().toString(36).substr(2, 9)}`;
+    const inputId = id || generatedId;
     
     // Determine state
     const state: InputState = error ? 'error' : success ? 'success' : 'default';
