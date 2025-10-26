@@ -352,7 +352,6 @@ Sidebar.displayName = 'Sidebar';
 // ============================================================================
 
 export default Sidebar;
-```
 
 // **Key Features:**
 // 1. ✅ **Organized Sections:** Grouped navigation with titles
@@ -377,19 +376,18 @@ export default Sidebar;
 // - ✅ Screen reader compatible
 
 // **Connected Files:**
-// - ← `uiStore.ts` (sidebar state)
-// - → `Badge.tsx` (notification counts)
-// - → `Tooltip.tsx` (collapsed labels)
+// - ← uiStore.ts (sidebar state)
+// - → Badge.tsx (notification counts)
+// - → Tooltip.tsx (collapsed labels)
 // - → All page routes
 
-**Testing Strategy:**
-```typescript
-// // Test active state
+// **Testing Strategy:**
+// Test active state
 // test('highlights active navigation item', () => {
 //   render(<Sidebar isOpen onClose={jest.fn()} />, {
 //     initialRoute: '/app/analytics',
 //   });
-  
+//  
 //   const analyticsLink = screen.getByText('Progress');
 //   expect(analyticsLink.closest('a')).toHaveClass('bg-accent-primary/10');
 // });
