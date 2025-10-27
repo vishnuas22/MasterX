@@ -28,13 +28,24 @@ export interface Message {
   role: MessageRole;
   content: string;
   timestamp: string; // ISO 8601
-  emotion?: EmotionState | EmotionMetrics | null;
-  provider?: string;
-  responseTime?: number; // milliseconds
+  
+  // Emotion data (for user messages)
+  emotion_state?: EmotionState | null;
+  
+  // AI response metadata (for assistant messages)
+  provider_used?: string;
+  response_time_ms?: number; // milliseconds
   tokens_used?: number;
   cost?: number;
+  
+  // Optional fields
   embedding?: number[];
   quality_rating?: number; // 1-5
+  
+  // Legacy aliases for backward compatibility
+  emotion?: EmotionState | EmotionMetrics | null;
+  provider?: string;
+  responseTime?: number;
 }
 
 // ============================================================================
