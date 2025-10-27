@@ -29,6 +29,7 @@ interface ChatState {
   addMessage: (message: Message) => void;
   updateMessageEmotion: (messageId: string, emotion: EmotionState) => void;
   clearMessages: () => void;
+  clearError: () => void;
   loadHistory: (sessionId: string) => Promise<void>;
   setTyping: (isTyping: boolean) => void;
   setCurrentEmotion: (emotion: EmotionState | null) => void;
@@ -146,16 +147,33 @@ export const useChatStore = create<ChatState>((set, get) => ({
     });
   },
   
+  // Clear error
+  clearError: () => {
+    set({ error: null });
+  },
+  
   // Load message history
   loadHistory: async (sessionId: string) => {
     set({ isLoading: true, error: null });
     try {
-      const messages = await chatAPI.getHistory(sessionId);
+      // TODO: Backend endpoint /api/v1/chat/history/{sessionId} not yet implemented
+      // For now, we'll maintain messages in the store from sendMessage responses
+      // When the endpoint is available, uncomment below:
+      
+      // const messages = await chatAPI.getHistory(sessionId);
+      // set({
+      //   messages,
+      //   sessionId,
+      //   isLoading: false,
+      // });
+      
+      // Temporary implementation: just set the sessionId
       set({
-        messages,
         sessionId,
         isLoading: false,
       });
+      
+      console.warn('[ChatStore] History endpoint not implemented yet. Messages will be loaded from sendMessage responses.');
     } catch (error: any) {
       set({
         error: error.message || 'Failed to load history',
