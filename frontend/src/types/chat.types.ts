@@ -96,6 +96,20 @@ export interface ChatResponse {
   processing_breakdown?: Record<string, number>;
 }
 
+/**
+ * Chat History Response
+ * 
+ * Response from GET /api/v1/chat/history/{session_id}
+ * Returns all messages from a conversation session
+ */
+export interface ChatHistoryResponse {
+  session_id: string;
+  messages: Message[];
+  total_messages: number;
+  session_started: string; // ISO 8601
+  total_cost: number;
+}
+
 // ============================================================================
 // REAL-TIME TYPES (WebSocket)
 // ============================================================================
