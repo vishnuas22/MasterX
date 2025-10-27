@@ -20,7 +20,7 @@
  */
 
 import apiClient from './client';
-import type { ChatRequest, ChatResponse } from '../../types/chat.types';
+import type { ChatRequest, ChatResponse, ChatHistoryResponse } from '../../types/chat.types';
 
 /**
  * Chat API endpoints
@@ -92,23 +92,47 @@ export const chatAPI = {
    * Get conversation history
    * 
    * Retrieves all messages from a specific session for displaying
-   * conversation history when user returns.
+   * conversation history when user returns to a previous chat.
    * 
-   * @param sessionId - Session identifier
-   * @returns Array of messages in chronological order
+   * Returns messages in chronological order with full metadata:
+   * - User and AI messages
+   * - Emotion states detected
+   * - Providers used
+   * - Response times and costs
+   * 
+   * Use Cases:
+   * - Loading previous conversations on app start
+   * - Displaying chat history when switching sessions
+   * - Exporting conversation data
+   * - Analytics and review
+   * 
+   * @param sessionId - Session identifier (UUID)
+   * @returns Chat history with messages and metadata
    * 
    * @throws 404 - Session not found
+   * @throws 500 - Failed to fetch history
    * 
    * @example
    * ```typescript
-   * const messages = await chatAPI.getHistory('session-abc');
-   * console.log(messages.length); // Number of messages in conversation
+   * const history = await chatAPI.getHistory('session-abc-123');
+   * 
+   * console.log(`${history.total_messages} messages`);
+   * console.log(`Session started: ${history.session_started}`);
+   * console.log(`Total cost: $${history.total_cost}`);
+   * 
+   * // Display messages
+   * history.messages.forEach(msg => {
+   *   console.log(`[${msg.role}]: ${msg.content}`);
+   *   if (msg.emotion_state) {
+   *     console.log(`  Emotion: ${msg.emotion_state.primary_emotion}`);
+   *   }
+   * });
    * ```
    */
-  getHistory: async (sessionId: string): Promise<any[]> => {
-    const { data } = await apiClient.get(
+  getHistory: async (sessionId: string): Promise<ChatHistoryResponse> => {
+    const { data } = await apiClient.get<ChatHistoryResponse>(
       `/api/v1/chat/history/${sessionId}`
     );
-    return data.messages || [];
+    return data;
   },
 };
