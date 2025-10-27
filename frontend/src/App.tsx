@@ -35,57 +35,16 @@ import { useUIStore } from '@/store/uiStore';
  * - Reduces Time to Interactive by 40%
  */
 
-// Temporary placeholder component until pages are implemented
-const ComponentShowcase = lazy(() => 
-  import('./pages/ComponentShowcase').catch(() => ({
-    default: () => (
-      <div className="min-h-screen bg-bg-primary text-text-primary p-8">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-4xl font-bold mb-8">MasterX Frontend - Component Showcase</h1>
-          <p className="text-text-secondary mb-6">
-            Frontend is running! Pages are being implemented.
-          </p>
-          <div className="space-y-4">
-            <div className="p-6 bg-bg-secondary rounded-lg">
-              <h2 className="text-2xl font-semibold mb-4">✅ Working Components:</h2>
-              <ul className="list-disc list-inside space-y-2 text-text-secondary">
-                <li>Button (4 variants, loading states)</li>
-                <li>Input (error states, icons)</li>
-                <li>Modal (focus trap, portal)</li>
-                <li>Card (glass morphism)</li>
-                <li>Badge (emotion support)</li>
-                <li>Avatar (status indicators)</li>
-                <li>Skeleton (loading states)</li>
-                <li>Toast (notifications)</li>
-                <li>Tooltip (contextual help)</li>
-              </ul>
-            </div>
-            <div className="p-6 bg-bg-secondary rounded-lg">
-              <h2 className="text-2xl font-semibold mb-4">🔧 Backend Status:</h2>
-              <p className="text-text-secondary">
-                Backend API running on: {import.meta.env.VITE_BACKEND_URL || 'Not configured'}
-              </p>
-            </div>
-            <div className="p-6 bg-accent-primary/10 border border-accent-primary/30 rounded-lg">
-              <h2 className="text-2xl font-semibold mb-4">🧪 Test Pages:</h2>
-              <a href="/test-login" className="text-accent-primary hover:underline block">
-                → Test LoginForm Component
-              </a>
-            </div>
-          </div>
-        </div>
-      </div>
-    )
-  }))
-);
+// Main application pages
+const Landing = lazy(() => import('@/pages/Landing'));
+const Login = lazy(() => import('@/pages/Login'));
+const Signup = lazy(() => import('@/pages/Signup'));
 
-// Test page for LoginForm
+// Test/Debug pages (for development)
+const ComponentShowcase = lazy(() => import('./pages/ComponentShowcase'));
 const TestLogin = lazy(() => import('./pages/TestLogin'));
 
-// Will be implemented from documentation
-// const Landing = lazy(() => import('@/pages/Landing'));
-// const Login = lazy(() => import('@/pages/Login'));
-// const Signup = lazy(() => import('@/pages/Signup'));
+// TODO: Implement these pages
 // const Onboarding = lazy(() => import('@/pages/Onboarding'));
 // const MainApp = lazy(() => import('@/pages/MainApp'));
 
@@ -219,18 +178,16 @@ function App() {
     <div className="min-h-screen bg-bg-primary text-text-primary">
       <Suspense fallback={<LoadingScreen />}>
         <Routes>
-          {/* Temporary showcase route */}
-          <Route path="/" element={<ComponentShowcase />} />
+          {/* Public routes */}
+          <Route path="/" element={<Landing />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
           
-          {/* Test routes */}
+          {/* Test/Debug routes (for development) */}
+          <Route path="/showcase" element={<ComponentShowcase />} />
           <Route path="/test-login" element={<TestLogin />} />
           
-          {/* Public routes - Will be implemented from documentation */}
-          {/* <Route path="/" element={<Landing />} /> */}
-          {/* <Route path="/login" element={<Login />} /> */}
-          {/* <Route path="/signup" element={<Signup />} /> */}
-          
-          {/* Protected routes - Will be implemented from documentation */}
+          {/* Protected routes - TODO: Implement these pages */}
           {/* <Route
             path="/onboarding"
             element={
