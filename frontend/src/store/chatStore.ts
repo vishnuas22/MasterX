@@ -55,7 +55,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       role: MessageRole.USER,
       content,
       timestamp: new Date().toISOString(),
-      emotion: null,
+      emotion_state: null,
     };
     
     set((state) => ({
@@ -89,9 +89,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
         role: MessageRole.ASSISTANT,
         content: response.message,
         timestamp: response.timestamp,
-        emotion: response.emotion_state || null,
-        provider: response.provider_used,
-        responseTime: response.response_time_ms,
+        emotion_state: response.emotion_state || null,
+        provider_used: response.provider_used,
+        response_time_ms: response.response_time_ms,
+        tokens_used: response.tokens_used,
+        cost: response.cost,
       };
       
       set((state) => ({
