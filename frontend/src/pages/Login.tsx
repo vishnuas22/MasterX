@@ -113,7 +113,7 @@ export const Login: React.FC<LoginProps> = ({
 
   // Local state
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [generalError, setGeneralError] = useState<string | null>(null);
 
   // -------------------------------------------------------------------------
   // Effects
@@ -121,17 +121,17 @@ export const Login: React.FC<LoginProps> = ({
 
   useEffect(() => {
     if (authError) {
-      setError(authError);
+      setGeneralError(authError);
     }
   }, [authError]);
 
   // Clear error when user starts typing
   useEffect(() => {
-    if (error) {
-      const timer = setTimeout(() => setError(null), 5000);
+    if (generalError) {
+      const timer = setTimeout(() => setGeneralError(null), 5000);
       return () => clearTimeout(timer);
     }
-  }, [error]);
+  }, [generalError]);
 
   // -------------------------------------------------------------------------
   // Event Handlers
@@ -139,7 +139,7 @@ export const Login: React.FC<LoginProps> = ({
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-      setError(null);
+      setGeneralError(null);
       
       const success = await login({
         email: data.email,
@@ -156,7 +156,7 @@ export const Login: React.FC<LoginProps> = ({
 
     } catch (err: any) {
       const errorMessage = err.response?.data?.detail || err.message || 'Login failed. Please try again.';
-      setError(errorMessage);
+      setGeneralError(errorMessage);
       
       // Set form-level error
       setError('root', {
@@ -168,11 +168,11 @@ export const Login: React.FC<LoginProps> = ({
 
   const handleGoogleLogin = async () => {
     try {
-      setError(null);
+      setGeneralError(null);
       // TODO: Implement Google OAuth flow
-      setError('Social login coming soon!');
+      setGeneralError('Social login coming soon!');
     } catch (err: any) {
-      setError(err.message || 'Google login failed');
+      setGeneralError(err.message || 'Google login failed');
     }
   };
 
@@ -275,7 +275,7 @@ export const Login: React.FC<LoginProps> = ({
           >
             <Card className="p-8 bg-bg-secondary/50 backdrop-blur-xl border border-white/10 shadow-xl">
               {/* Error Alert */}
-              {error && (
+              {generalError && (
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -283,7 +283,7 @@ export const Login: React.FC<LoginProps> = ({
                   className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg"
                   role="alert"
                 >
-                  <p className="text-sm text-red-400">{error}</p>
+                  <p className="text-sm text-red-400">{generalError}</p>
                 </motion.div>
               )}
 
