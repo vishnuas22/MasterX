@@ -38,7 +38,13 @@ export default defineConfig({
     chunkSizeWarningLimit: 500,
   },
   server: {
+    host: '0.0.0.0',
     port: 3000,
+    allowedHosts: [
+      '4cc3583d-34e4-45c4-8925-cb018c0d93f1.preview.emergentagent.com',
+      'localhost',
+      '.preview.emergentagent.com'
+    ],
     proxy: {
       '/api': {
         target: process.env.VITE_BACKEND_URL || 'http://localhost:8001',
