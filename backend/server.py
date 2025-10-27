@@ -1122,6 +1122,55 @@ async def chat(request: ChatRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get("/api/v1/chat/history/{session_id}")
+async def get_chat_history(session_id: str):
+    """
+    Get conversation history for a session
+    
+    Returns all messages (user + AI) in chronological order
+    """
+    try:
+        messages_collection = get_messages_collection()
+        sessions_collection = get_sessions_collection()
+        
+        # Check if session exists
+        session = await sessions_collection.find_one({"_id": session_id})
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+        
+        # Fetch all messages for this session
+        cursor = messages_collection.find(
+            {"session_id": session_id}
+        ).sort("timestamp", 1)  # Chronological order
+        
+        messages = []
+        async for msg in cursor:
+            messages.append({
+                "id": msg["_id"],
+                "role": msg["role"],
+                "content": msg["content"],
+                "timestamp": msg["timestamp"].isoformat(),
+                "emotion_state": msg.get("emotion_state"),
+                "provider_used": msg.get("provider_used"),
+                "response_time_ms": msg.get("response_time_ms"),
+                "cost": msg.get("cost")
+            })
+        
+        return {
+            "session_id": session_id,
+            "messages": messages,
+            "total_messages": len(messages),
+            "session_started": session["started_at"].isoformat(),
+            "total_cost": session.get("total_cost", 0.0)
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error fetching chat history: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # Cost dashboard endpoint (admin)
 @app.get("/api/v1/admin/costs")
 async def get_cost_dashboard(admin_user: dict = Depends(require_admin)):
