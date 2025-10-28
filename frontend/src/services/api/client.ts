@@ -37,13 +37,13 @@ export const apiClient = axios.create({
 });
 
 /**
- * Request Interceptor
+ * Request Interceptor - FIXED
  * Injects JWT token from auth store into all requests
  */
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    // Get token from auth store
-    const token = useAuthStore.getState().token;
+    // ✅ FIXED: Use correct field name
+    const token = useAuthStore.getState().accessToken;
     
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -62,8 +62,9 @@ apiClient.interceptors.request.use(
 );
 
 /**
- * Response Interceptor - Error Handler
+ * Response Interceptor - Enhanced Error Handler with Token Refresh
  * Handles common error scenarios with user-friendly messages
+ * Automatically attempts token refresh on 401 errors
  */
 apiClient.interceptors.response.use(
   (response: AxiosResponse) => {
@@ -85,14 +86,44 @@ apiClient.interceptors.response.use(
     // Handle specific error codes
     if (response) {
       switch (response.status) {
-        case 401:
-          // Unauthorized - token expired or invalid
-          useAuthStore.getState().logout();
+        case 401: {
+          // ✅ NEW: Try to refresh token before logging out
+          const { refreshToken, refreshAccessToken, logout } = useAuthStore.getState();
+          
+          // Prevent infinite loop
+          if (config && !(config as any).__isRetry && refreshToken) {
+            try {
+              // Mark as retry attempt
+              (config as any).__isRetry = true;
+              
+              // Attempt token refresh
+              await refreshAccessToken();
+              
+              // Get new token and retry original request
+              const newToken = useAuthStore.getState().accessToken;
+              if (config.headers && newToken) {
+                config.headers.Authorization = `Bearer ${newToken}`;
+              }
+              
+              console.log('✓ Token refreshed, retrying request');
+              return apiClient(config);
+              
+            } catch (refreshError) {
+              // Refresh failed, proceed to logout
+              console.error('✗ Token refresh failed:', refreshError);
+              logout();
+            }
+          } else {
+            // No refresh token or already retried, logout
+            logout();
+          }
+          
           useUIStore.getState().showToast({
             type: 'error',
             message: 'Session expired. Please log in again.',
           });
           break;
+        }
           
         case 403:
           // Forbidden
