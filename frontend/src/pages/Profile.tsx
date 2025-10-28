@@ -25,6 +25,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
+import { AchievementBadge } from '@/components/gamification/AchievementBadge';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/utils/cn';
 
@@ -33,6 +34,46 @@ export interface ProfileProps {
 }
 
 type ProfileTab = 'overview' | 'stats' | 'achievements';
+
+// Mock achievements data - In real app, fetch from backend
+const mockAchievements = [
+  {
+    id: '1',
+    name: 'First Steps',
+    description: 'Complete your first learning session',
+    icon: '🏆',
+    rarity: 'common' as const,
+    xpReward: 50,
+    unlockedAt: new Date()
+  },
+  {
+    id: '2',
+    name: 'Week Warrior',
+    description: 'Maintain a 7-day streak',
+    icon: '🔥',
+    rarity: 'rare' as const,
+    xpReward: 100,
+    unlockedAt: new Date()
+  },
+  {
+    id: '3',
+    name: 'Knowledge Seeker',
+    description: 'Ask 100 questions',
+    icon: '🎯',
+    rarity: 'epic' as const,
+    xpReward: 200,
+    unlockedAt: new Date()
+  },
+  {
+    id: '4',
+    name: 'Master Mind',
+    description: 'Master 10 different topics',
+    icon: '💎',
+    rarity: 'legendary' as const,
+    xpReward: 500,
+    progress: 0.6 // Locked, showing progress
+  }
+];
 
 export const Profile: React.FC<ProfileProps> = ({ onClose }) => {
   const { user } = useAuth();
@@ -209,29 +250,27 @@ export const Profile: React.FC<ProfileProps> = ({ onClose }) => {
 
           {activeTab === 'achievements' && (
             <div className="space-y-4">
-              <div className="flex items-center space-x-4 p-4 bg-dark-700 rounded-lg">
-                <div className="text-4xl">🏆</div>
-                <div className="flex-1">
-                  <h4 className="text-white font-semibold">First Steps</h4>
-                  <p className="text-sm text-gray-400">Complete your first learning session</p>
+              <div className="mb-4">
+                <h4 className="text-white font-semibold mb-2">
+                  Unlocked: {mockAchievements.filter(a => a.unlockedAt).length}/{mockAchievements.length}
+                </h4>
+                <div className="h-2 bg-dark-700 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-500"
+                    style={{ width: `${(mockAchievements.filter(a => a.unlockedAt).length / mockAchievements.length) * 100}%` }}
+                  />
                 </div>
-                <Badge variant="success">Unlocked</Badge>
               </div>
-              <div className="flex items-center space-x-4 p-4 bg-dark-700 rounded-lg">
-                <div className="text-4xl">🔥</div>
-                <div className="flex-1">
-                  <h4 className="text-white font-semibold">Week Warrior</h4>
-                  <p className="text-sm text-gray-400">Maintain a 7-day streak</p>
-                </div>
-                <Badge variant="success">Unlocked</Badge>
-              </div>
-              <div className="flex items-center space-x-4 p-4 bg-dark-700 rounded-lg opacity-50">
-                <div className="text-4xl">💎</div>
-                <div className="flex-1">
-                  <h4 className="text-white font-semibold">Master Mind</h4>
-                  <p className="text-sm text-gray-400">Master 10 different topics</p>
-                </div>
-                <Badge variant="neutral">Locked</Badge>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {mockAchievements.map((achievement) => (
+                  <AchievementBadge
+                    key={achievement.id}
+                    achievement={achievement}
+                    size="md"
+                    showDetails={true}
+                  />
+                ))}
               </div>
             </div>
           )}
