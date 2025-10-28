@@ -21,6 +21,7 @@ import { useEffect, lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
 import { useUIStore } from '@/store/uiStore';
+import { ErrorBoundary, ChatErrorFallback } from '@/components/ErrorBoundary';
 
 // ============================================================================
 // LAZY LOADED PAGES
@@ -175,29 +176,30 @@ function App() {
    * - * - Redirect to landing (404 handling)
    */
   return (
-    <div className="min-h-screen bg-bg-primary text-text-primary">
-      <Suspense fallback={<LoadingScreen />}>
-        <Routes>
-          {/* Public routes */}
-          <Route path="/" element={<Landing />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          
-          {/* Test/Debug routes (for development) */}
-          <Route path="/showcase" element={<ComponentShowcase />} />
-          <Route path="/test-login" element={<TestLogin />} />
-          
-          {/* Protected routes - TODO: Implement these pages */}
-          {/* <Route
-            path="/onboarding"
-            element={
-              <ProtectedRoute>
-                <Onboarding />
-              </ProtectedRoute>
-            }
-          /> */}
-          {/* <Route
-            path="/app"
+    <ErrorBoundary>
+      <div className="min-h-screen bg-bg-primary text-text-primary">
+        <Suspense fallback={<LoadingScreen />}>
+          <Routes>
+            {/* Public routes */}
+            <Route path="/" element={<Landing />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            
+            {/* Test/Debug routes (for development) */}
+            <Route path="/showcase" element={<ComponentShowcase />} />
+            <Route path="/test-login" element={<TestLogin />} />
+            
+            {/* Protected routes - TODO: Implement these pages */}
+            {/* <Route
+              path="/onboarding"
+              element={
+                <ProtectedRoute>
+                  <Onboarding />
+                </ProtectedRoute>
+              }
+            /> */}
+            {/* <Route
+              path="/app"
             element={
               <ProtectedRoute>
                 <MainApp />
@@ -210,6 +212,7 @@ function App() {
         </Routes>
       </Suspense>
     </div>
+    </ErrorBoundary>
   );
 }
 
