@@ -236,7 +236,7 @@ NavItemComponent.displayName = 'NavItemComponent';
 // MAIN SIDEBAR COMPONENT
 // ============================================================================
 
-export const Sidebar = React.memo<SidebarProps>({
+export const Sidebar = React.memo<SidebarProps>(({
   isOpen,
   onClose,
   isCollapsed = false,
