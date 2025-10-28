@@ -44,10 +44,8 @@ const Signup = lazy(() => import('@/pages/Signup'));
 // Test/Debug pages (for development)
 const ComponentShowcase = lazy(() => import('./pages/ComponentShowcase'));
 const TestLogin = lazy(() => import('./pages/TestLogin'));
-
-// TODO: Implement these pages
-// const Onboarding = lazy(() => import('@/pages/Onboarding'));
-// const MainApp = lazy(() => import('@/pages/MainApp'));
+const Onboarding = lazy(() => import('@/pages/Onboarding'));
+const MainApp = lazy(() => import('@/pages/MainApp'));
 
 // ============================================================================
 // LOADING SCREEN
