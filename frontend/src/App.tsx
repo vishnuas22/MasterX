@@ -43,6 +43,7 @@ const Signup = lazy(() => import('@/pages/Signup'));
 
 // Test/Debug pages (for development)
 const ComponentShowcase = lazy(() => import('./pages/ComponentShowcase'));
+const GamificationShowcase = lazy(() => import('./pages/GamificationShowcase'));
 const TestLogin = lazy(() => import('./pages/TestLogin'));
 const Onboarding = lazy(() => import('@/pages/Onboarding'));
 const MainApp = lazy(() => import('@/pages/MainApp'));
@@ -185,6 +186,7 @@ function App() {
             
             {/* Test/Debug routes (for development) */}
             <Route path="/showcase" element={<ComponentShowcase />} />
+            <Route path="/gamification" element={<GamificationShowcase />} />
             <Route path="/test-login" element={<TestLogin />} />
             
             {/* Protected routes - TODO: Implement these pages */}
