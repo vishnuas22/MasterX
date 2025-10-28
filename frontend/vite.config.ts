@@ -14,6 +14,7 @@ export default defineConfig({
       '@utils': path.resolve(__dirname, './src/utils'),
       '@types': path.resolve(__dirname, './src/types'),
       '@config': path.resolve(__dirname, './src/config'),
+      'refractor': path.resolve(__dirname, './node_modules/refractor'),
     },
   },
   build: {
@@ -54,6 +55,7 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: ['react', 'react-dom', 'zustand', 'axios'],
+    exclude: ['react-syntax-highlighter']
   },
   define: {
     __APP_VERSION__: JSON.stringify(process.env.npm_package_version),
