@@ -134,12 +134,12 @@ StatusIndicator.displayName = 'StatusIndicator';
 // MAIN FOOTER COMPONENT
 // ============================================================================
 
-export const Footer = React.memo<FooterProps>({
+export const Footer = React.memo<FooterProps>(({
   showSocial = true,
   showVersion = true,
   showStatus = true,
   className,
-}: FooterProps = {}) => {
+}: FooterProps) => {
   const currentYear = new Date().getFullYear();
   const appVersion = import.meta.env.VITE_APP_VERSION || '1.0.0';
 
