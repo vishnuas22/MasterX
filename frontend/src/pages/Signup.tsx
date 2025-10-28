@@ -26,8 +26,8 @@
  * @module pages/Signup
  */
 
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -130,7 +130,6 @@ function getPasswordStrengthInfo(strength: number) {
 // ============================================================================
 
 export const Signup: React.FC = () => {
-  const navigate = useNavigate();
   const { signup, isLoading } = useAuth();
 
   // Form state
