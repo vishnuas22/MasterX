@@ -18,7 +18,7 @@
  * - Mobile: Bottom navigation
  */
 
-import React, { lazy, Suspense } from 'react';
+import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
 import { 
@@ -28,13 +28,13 @@ import {
 import { useAuthStore } from '@/store/authStore';
 import { useUIStore } from '@/store/uiStore';
 import { useEmotionStore } from '@/store/emotionStore';
-import { useWebSocket } from '@/hooks/useWebSocket';
+// import { useWebSocket } from '@/hooks/useWebSocket'; // TODO: Implement WebSocket hook
 import { cn } from '@/utils/cn';
 
-// Lazy load modals (code splitting)
-const Dashboard = lazy(() => import('@/pages/Dashboard'));
-const SettingsModal = lazy(() => import('@/pages/Settings'));
-const ProfileModal = lazy(() => import('@/pages/Profile'));
+// Lazy load modals (code splitting) - TODO: Implement these pages
+// const Dashboard = lazy(() => import('@/pages/Dashboard'));
+// const SettingsModal = lazy(() => import('@/pages/Settings'));
+// const ProfileModal = lazy(() => import('@/pages/Profile'));
 
 // ============================================================================
 // TYPES
@@ -199,7 +199,7 @@ Header.displayName = 'Header';
 // ============================================================================
 
 const Sidebar = React.memo<{ items: NavItem[] }>(({ items }) => {
-  const { isSidebarOpen, closeSidebar } = useUIStore();
+  const { isSidebarOpen, toggleSidebar } = useUIStore();
   const location = useLocation();
 
   return (
@@ -211,7 +211,7 @@ const Sidebar = React.memo<{ items: NavItem[] }>(({ items }) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={closeSidebar}
+            onClick={() => toggleSidebar()}
             className="fixed inset-0 bg-black/50 z-30 lg:hidden"
           />
         )}
@@ -237,7 +237,7 @@ const Sidebar = React.memo<{ items: NavItem[] }>(({ items }) => {
               key={item.id}
               onClick={() => {
                 item.onClick?.();
-                closeSidebar(); // Close on mobile
+                if (window.innerWidth < 1024) toggleSidebar(); // Close on mobile
               }}
               className={cn(
                 'w-full flex items-center gap-3 px-4 py-3 rounded-lg transition',
@@ -338,7 +338,7 @@ export const AppShell = React.memo<AppShellProps>(({ children }) => {
   const { openModal, closeModal, activeModal } = useUIStore();
   
   // Initialize WebSocket connection
-  useWebSocket();
+  // useWebSocket(); // TODO: Implement WebSocket hook
 
   // Navigation items with modal handlers
   const navItems = getNavigationItems(
@@ -402,8 +402,8 @@ export const AppShell = React.memo<AppShellProps>(({ children }) => {
       {/* Emotion widget */}
       <EmotionWidget />
 
-      {/* Modals (lazy loaded) */}
-      <Suspense fallback={null}>
+      {/* Modals (lazy loaded) - TODO: Uncomment when pages are implemented */}
+      {/* <Suspense fallback={null}>
         <AnimatePresence>
           {activeModal === 'dashboard' && (
             <Dashboard onClose={closeModal} />
@@ -415,7 +415,7 @@ export const AppShell = React.memo<AppShellProps>(({ children }) => {
             <ProfileModal onClose={closeModal} />
           )}
         </AnimatePresence>
-      </Suspense>
+      </Suspense> */}
     </div>
   );
 });
