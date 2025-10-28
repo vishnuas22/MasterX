@@ -292,7 +292,7 @@ export const Login: React.FC<LoginProps> = ({
                 <>
                   <div className="space-y-3 mb-6">
                     <Button
-                      variant="outline"
+                      variant="secondary"
                       size="lg"
                       onClick={handleGoogleLogin}
                       disabled={isLoading || isSubmitting}
@@ -335,7 +335,7 @@ export const Login: React.FC<LoginProps> = ({
                     type="email"
                     autoComplete="email"
                     placeholder="you@example.com"
-                    error={!!errors.email}
+                    error={errors.email?.message}
                     disabled={isSubmitting || isLoading}
                     data-testid="email-input"
                     className="w-full"
@@ -371,7 +371,7 @@ export const Login: React.FC<LoginProps> = ({
                       type={showPassword ? 'text' : 'password'}
                       autoComplete="current-password"
                       placeholder="Enter your password"
-                      error={!!errors.password}
+                      error={errors.password?.message}
                       disabled={isSubmitting || isLoading}
                       data-testid="password-input"
                       className="w-full pr-12"
