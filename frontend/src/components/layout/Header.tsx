@@ -191,10 +191,9 @@ const UserMenu = React.memo<UserMenuProps>(({ isOpen, onClose }) => {
           <div className="p-4 border-b border-white/10">
             <div className="flex items-center gap-3">
               <Avatar
-                src={user.avatar_url}
-                alt={user.name}
+                name={user.name}
+                src={undefined}
                 size="md"
-                fallback={user.name[0].toUpperCase()}
               />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-text-primary truncate">
@@ -255,12 +254,12 @@ UserMenu.displayName = 'UserMenu';
 // MAIN HEADER COMPONENT
 // ============================================================================
 
-export const Header = React.memo<HeaderProps>({
+export const Header = React.memo<HeaderProps>(({
   showMobileToggle = true,
   enableSearch = true,
   showNotifications = true,
   className,
-}: HeaderProps = {}) => {
+}: HeaderProps) => {
   const { user } = useAuthStore();
   const { theme, toggleTheme, toggleSidebar, isSidebarOpen } = useUIStore();
   const [showUserMenu, setShowUserMenu] = React.useState(false);
@@ -393,10 +392,9 @@ export const Header = React.memo<HeaderProps>({
                 aria-haspopup="true"
               >
                 <Avatar
-                  src={user.avatar_url}
-                  alt={user.name}
+                  name={user.name}
+                  src={undefined}
                   size="sm"
-                  fallback={user.name[0].toUpperCase()}
                 />
                 <ChevronDown
                   className={cn(
