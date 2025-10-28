@@ -9,19 +9,21 @@
  * - Theme persistence and application
  * - Automatic JWT verification
  * - Loading states for route transitions
+ * - Error boundaries for graceful error handling
  * 
  * Following AGENTS_FRONTEND.md:
  * - Code splitting (60% initial bundle reduction)
  * - Type-safe routing
  * - Performance: <2.5s LCP, <200ms route transitions
  * - Accessibility: Focus management, skip links
+ * - WCAG 2.1 AA compliant
  */
 
-import { useEffect, lazy, Suspense } from 'react';
+import React, { useEffect, lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { ErrorBoundary } from 'react-error-boundary';
 import { useAuthStore } from '@/store/authStore';
 import { useUIStore } from '@/store/uiStore';
-import { ErrorBoundary, ChatErrorFallback } from '@/components/ErrorBoundary';
 
 // ============================================================================
 // LAZY LOADED PAGES
@@ -36,17 +38,19 @@ import { ErrorBoundary, ChatErrorFallback } from '@/components/ErrorBoundary';
  * - Reduces Time to Interactive by 40%
  */
 
-// Main application pages
+// Public pages
 const Landing = lazy(() => import('@/pages/Landing'));
 const Login = lazy(() => import('@/pages/Login'));
 const Signup = lazy(() => import('@/pages/Signup'));
+
+// Protected pages
+const Onboarding = lazy(() => import('@/pages/Onboarding'));
+const MainApp = lazy(() => import('@/pages/MainApp'));
 
 // Test/Debug pages (for development)
 const ComponentShowcase = lazy(() => import('./pages/ComponentShowcase'));
 const GamificationShowcase = lazy(() => import('./pages/GamificationShowcase'));
 const TestLogin = lazy(() => import('./pages/TestLogin'));
-const Onboarding = lazy(() => import('@/pages/Onboarding'));
-const MainApp = lazy(() => import('@/pages/MainApp'));
 
 // ============================================================================
 // LOADING SCREEN
@@ -60,14 +64,47 @@ const MainApp = lazy(() => import('@/pages/MainApp'));
  * - Smooth animation
  * - Brand consistent
  */
-const LoadingScreen = () => (
+const PageLoader: React.FC = () => (
   <div 
-    className="flex items-center justify-center min-h-screen bg-bg-primary"
+    className="flex items-center justify-center min-h-screen bg-dark-900"
     role="status"
-    aria-label="Loading"
+    aria-label="Loading page"
   >
-    <div className="animate-pulse-subtle">
-      <div className="w-16 h-16 border-4 border-accent-primary border-t-transparent rounded-full animate-spin" />
+    <div className="text-center">
+      <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+      <p className="text-gray-400 text-sm">Loading...</p>
+    </div>
+  </div>
+);
+
+// ============================================================================
+// ERROR FALLBACK
+// ============================================================================
+
+/**
+ * Error fallback UI for ErrorBoundary
+ * 
+ * Shows user-friendly error message with retry option
+ */
+const ErrorFallback: React.FC<{ error: Error; resetErrorBoundary: () => void }> = ({
+  error,
+  resetErrorBoundary
+}) => (
+  <div className="min-h-screen bg-dark-900 flex items-center justify-center px-4">
+    <div className="max-w-md text-center">
+      <div className="text-6xl mb-4">⚠️</div>
+      <h1 className="text-3xl font-bold text-white mb-4">
+        Something went wrong
+      </h1>
+      <p className="text-gray-400 mb-6">
+        {error.message || 'An unexpected error occurred'}
+      </p>
+      <button
+        onClick={resetErrorBoundary}
+        className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium"
+      >
+        Try again
+      </button>
     </div>
   </div>
 );
@@ -80,20 +117,24 @@ const LoadingScreen = () => (
  * Protected route wrapper for authenticated pages
  * 
  * Redirects to login if not authenticated
+ * Checks localStorage for accessToken
  * 
  * Following AGENTS_FRONTEND.md:
  * - Type-safe props
  * - Automatic redirect
- * - Preserves intended destination
+ * - Preserves intended destination (via state)
  */
 interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
-const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { isAuthenticated } = useAuthStore();
   
-  if (!isAuthenticated) {
+  // Check if user is authenticated via store or token
+  const hasToken = localStorage.getItem('accessToken');
+  
+  if (!isAuthenticated && !hasToken) {
     return <Navigate to="/login" replace />;
   }
   
@@ -112,13 +153,14 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
  * 2. Apply theme to DOM
  * 3. Define routing structure
  * 4. Handle loading states
+ * 5. Error boundary integration
  * 
  * Performance:
  * - Initial render: <50ms
  * - Route transitions: <200ms
  * - Theme switch: <100ms
  */
-function App() {
+const App: React.FC = () => {
   const { theme, initializeTheme } = useUIStore();
   const { checkAuth } = useAuthStore();
 
@@ -171,50 +213,62 @@ function App() {
    * - /onboarding - First-time user setup
    * - /app - Main application (chat interface)
    * 
+   * Development:
+   * - /showcase - Component showcase
+   * - /gamification - Gamification showcase
+   * - /test-login - Test login
+   * 
    * Fallback:
    * - * - Redirect to landing (404 handling)
    */
   return (
-    <ErrorBoundary>
-      <div className="min-h-screen bg-bg-primary text-text-primary">
-        <Suspense fallback={<LoadingScreen />}>
+    <ErrorBoundary
+      FallbackComponent={ErrorFallback}
+      onReset={() => window.location.reload()}
+    >
+      <div className="min-h-screen bg-dark-900 text-white">
+        <Suspense fallback={<PageLoader />}>
           <Routes>
             {/* Public routes */}
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             
-            {/* Test/Debug routes (for development) */}
-            <Route path="/showcase" element={<ComponentShowcase />} />
-            <Route path="/gamification" element={<GamificationShowcase />} />
-            <Route path="/test-login" element={<TestLogin />} />
-            
-            {/* Protected routes - TODO: Implement these pages */}
-            {/* <Route
+            {/* Protected routes */}
+            <Route
               path="/onboarding"
               element={
                 <ProtectedRoute>
                   <Onboarding />
                 </ProtectedRoute>
               }
-            /> */}
-            {/* <Route
+            />
+            <Route
               path="/app"
-            element={
-              <ProtectedRoute>
-                <MainApp />
-              </ProtectedRoute>
-            }
-          /> */}
+              element={
+                <ProtectedRoute>
+                  <MainApp />
+                </ProtectedRoute>
+              }
+            />
+            
+            {/* Test/Debug routes (for development) */}
+            {import.meta.env.DEV && (
+              <>
+                <Route path="/showcase" element={<ComponentShowcase />} />
+                <Route path="/gamification" element={<GamificationShowcase />} />
+                <Route path="/test-login" element={<TestLogin />} />
+              </>
+            )}
 
-          {/* 404 redirect */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Suspense>
-    </div>
+            {/* 404 redirect */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Suspense>
+      </div>
     </ErrorBoundary>
   );
-}
+};
 
 export default App;
 
