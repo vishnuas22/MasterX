@@ -25,7 +25,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useChatStore } from '@/store/chatStore';
 import { useEmotionStore } from '@/store/emotionStore';
 import { useAuthStore } from '@/store/authStore';
-// import { useWebSocket } from '@/hooks/useWebSocket'; // TODO: Implement in GROUP 14
+import { useWebSocket } from '@/hooks/useWebSocket';
+import { joinSession, leaveSession } from '@/services/websocket/socket.handlers';
 import { MessageList } from './MessageList';
 import { MessageInput } from './MessageInput';
 import { EmotionIndicator } from './EmotionIndicator';
@@ -123,57 +124,43 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
   const activeSessionId = propSessionId || urlSessionId || storeSessionId;
   
   // ============================================================================
-  // WEBSOCKET CONNECTION (TODO: Implement in GROUP 14)
+  // WEBSOCKET CONNECTION - Real-time updates
   // ============================================================================
   
-  // TODO: Uncomment when useWebSocket hook is implemented
-  // const { 
-  //   isConnected,
-  //   sendEvent
-  // } = useWebSocket({
-  //   url: import.meta.env.VITE_WS_URL || 'ws://localhost:8001/ws',
-  //   onMessage: useCallback((event: any) => {
-  //     // Handle real-time emotion updates
-  //     if (event.type === 'emotion_update') {
-  //       useEmotionStore.getState().updateEmotion(event.data);
-  //     }
-  //     
-  //     // Handle typing indicators
-  //     if (event.type === 'ai_typing') {
-  //       setTyping(event.data.isTyping);
-  //     }
-  //     
-  //     // Handle message updates
-  //     if (event.type === 'message_update') {
-  //       // Update message in store if needed
-  //       console.log('Message update received:', event.data);
-  //     }
-  //   }, [setTyping]),
-  //   onConnect: useCallback(() => {
-  //     setConnectionStatus('connected');
-  //     
-  //     // Join session room for real-time updates
-  //     if (activeSessionId) {
-  //       sendEvent({
-  //         type: 'join_session',
-  //         sessionId: activeSessionId
-  //       });
-  //     }
-  //   }, [activeSessionId]),
-  //   onDisconnect: useCallback(() => {
-  //     setConnectionStatus('disconnected');
-  //   }, []),
-  //   onError: useCallback((error: Error) => {
-  //     console.error('WebSocket error:', error);
-  //     setConnectionStatus('error');
-  //   }, [])
-  // });
+  const { isConnected, subscribe } = useWebSocket();
   
-  // Temporary mock for WebSocket functionality
-  const isConnected = true; // Mock connection status
-  const sendEvent = (event: any) => {
-    console.log('WebSocket sendEvent (mocked):', event);
-  };
+  // Update connection status based on WebSocket state
+  useEffect(() => {
+    setConnectionStatus(isConnected ? 'connected' : 'disconnected');
+  }, [isConnected]);
+  
+  // Join/leave session for real-time updates
+  useEffect(() => {
+    if (!isConnected || !activeSessionId) return;
+    
+    // Join session room
+    joinSession(activeSessionId);
+    console.log('✓ Joined chat session:', activeSessionId);
+    
+    // Leave session on unmount or session change
+    return () => {
+      leaveSession(activeSessionId);
+      console.log('✓ Left chat session:', activeSessionId);
+    };
+  }, [isConnected, activeSessionId]);
+  
+  // Subscribe to real-time events (emotion updates, typing indicators are handled in socket.handlers.ts)
+  useEffect(() => {
+    if (!isConnected) return;
+    
+    // Subscribe to session-specific updates
+    const unsubscribe = subscribe('session_update', (data: any) => {
+      console.log('Session update:', data);
+      // Additional session-specific logic can be added here
+    });
+    
+    return unsubscribe;
+  }, [isConnected, subscribe]);
   
   
   // ============================================================================
