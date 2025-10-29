@@ -37,21 +37,27 @@ describe('Button Component', () => {
       render(<Button variant="primary">Primary</Button>);
       
       const button = screen.getByRole('button');
-      expect(button).toHaveClass('bg-blue-500');
+      // Check semantic theme tokens
+      expect(button).toHaveClass('bg-accent-primary');
+      expect(button).toHaveClass('text-white');
     });
 
     it('should render secondary variant', () => {
       render(<Button variant="secondary">Secondary</Button>);
       
       const button = screen.getByRole('button');
-      expect(button).toHaveClass('bg-gray-700');
+      // Check semantic theme tokens
+      expect(button).toHaveClass('bg-bg-secondary');
+      expect(button).toHaveClass('text-text-primary');
     });
 
-    it('should render outline variant', () => {
-      render(<Button variant="outline">Outline</Button>);
+    it('should render ghost variant', () => {
+      render(<Button variant="ghost">Ghost</Button>);
       
       const button = screen.getByRole('button');
-      expect(button).toHaveClass('border');
+      // Check semantic theme tokens
+      expect(button).toHaveClass('bg-transparent');
+      expect(button).toHaveClass('text-text-primary');
     });
 
     it('should render different sizes', () => {
@@ -120,11 +126,13 @@ describe('Button Component', () => {
       expect(button).toBeDisabled();
     });
 
-    it('should have opacity class when disabled', () => {
+    it('should have disabled styles when disabled', () => {
       render(<Button disabled>Disabled</Button>);
       
       const button = screen.getByRole('button');
-      expect(button).toHaveClass('opacity-50');
+      // Check for disabled state classes (Tailwind applies these conditionally)
+      expect(button).toHaveClass('disabled:opacity-50');
+      expect(button).toHaveClass('disabled:cursor-not-allowed');
     });
   });
 
