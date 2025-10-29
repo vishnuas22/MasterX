@@ -120,21 +120,26 @@ export const useAuthStore = create<AuthState>()(
           // Authenticate with backend
           const response = await authAPI.login(credentials);
           
-          // Fetch full user profile
-          // Set token first so getCurrentUser can use it
-          localStorage.setItem('jwt_token', response.access_token);
-          localStorage.setItem('refresh_token', response.refresh_token);
-          
-          const user = await authAPI.getCurrentUser();
-          
-          // Update state
+          // CRITICAL: Set tokens in state FIRST before making getCurrentUser call
+          // This ensures Axios interceptor has access to the token
           set({
-            user,
             accessToken: response.access_token,
             refreshToken: response.refresh_token,
             isAuthenticated: true,
-            isLoading: false,
             lastRefreshTime: Date.now(),
+          });
+          
+          // Also store in localStorage for backup
+          localStorage.setItem('jwt_token', response.access_token);
+          localStorage.setItem('refresh_token', response.refresh_token);
+          
+          // Now fetch user profile with token attached
+          const user = await authAPI.getCurrentUser();
+          
+          // Update state with user info
+          set({
+            user,
+            isLoading: false,
             error: null,
           });
         } catch (error: any) {
@@ -186,21 +191,25 @@ export const useAuthStore = create<AuthState>()(
           // Register with backend
           const response = await authAPI.signup(data);
           
-          // Store tokens
-          localStorage.setItem('jwt_token', response.access_token);
-          localStorage.setItem('refresh_token', response.refresh_token);
-          
-          // Fetch user profile
-          const user = await authAPI.getCurrentUser();
-          
-          // Update state
+          // CRITICAL: Set tokens in state FIRST before making getCurrentUser call
           set({
-            user,
             accessToken: response.access_token,
             refreshToken: response.refresh_token,
             isAuthenticated: true,
-            isLoading: false,
             lastRefreshTime: Date.now(),
+          });
+          
+          // Store tokens in localStorage for backup
+          localStorage.setItem('jwt_token', response.access_token);
+          localStorage.setItem('refresh_token', response.refresh_token);
+          
+          // Fetch user profile with token attached
+          const user = await authAPI.getCurrentUser();
+          
+          // Update state with user info
+          set({
+            user,
+            isLoading: false,
             error: null,
           });
         } catch (error: any) {
