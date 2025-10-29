@@ -138,9 +138,11 @@ Object.defineProperty(window, 'SpeechRecognition', {
 /**
  * Mock clipboard API
  * Used by: copy functionality
+ * FIX: Changed writable to false to prevent conflict with userEvent.setup()
  */
 Object.defineProperty(navigator, 'clipboard', {
-  writable: true,
+  writable: false,
+  configurable: true,
   value: {
     writeText: vi.fn().mockResolvedValue(undefined),
     readText: vi.fn().mockResolvedValue(''),
