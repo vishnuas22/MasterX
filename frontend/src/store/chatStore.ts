@@ -131,7 +131,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   updateMessageEmotion: (messageId, emotion) => {
     set((state) => ({
       messages: state.messages.map((msg) =>
-        msg.id === messageId ? { ...msg, emotion } : msg
+        msg.id === messageId ? { ...msg, emotion_state: emotion } : msg
       ),
       currentEmotion: emotion,
     }));
