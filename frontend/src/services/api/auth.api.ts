@@ -139,12 +139,12 @@ export const authAPI = {
    * Refresh access token
    * 
    * Uses refresh token to obtain a new access token.
-   * Called automatically when access token expires (15 minutes).
+   * Called automatically when access token expires (30 minutes).
    * 
    * Token Lifecycle:
-   * - Access token: Valid for 15 minutes
-   * - Refresh token: Valid for 7 days
-   * - Auto-refresh: Triggered 2 minutes before expiration
+   * - Access token: Valid for 30 minutes (matches backend ACCESS_TOKEN_EXPIRE_MINUTES)
+   * - Refresh token: Valid for 7 days (matches backend REFRESH_TOKEN_EXPIRE_DAYS)
+   * - Auto-refresh: Triggered 5 minutes before expiration
    * 
    * @param refreshToken - Valid refresh token
    * @returns New tokens and updated user data
