@@ -22,14 +22,12 @@ import asyncio
 from typing import Dict, Set, Any, Optional
 from datetime import datetime
 from fastapi import WebSocket, WebSocketDisconnect, HTTPException, status
-from jose import jwt, JWTError
-import os
+
+# Import centralized security configuration and verification
+from utils.security import SecurityConfig, TokenData
+from utils.security import verify_token as verify_jwt_token
 
 logger = logging.getLogger(__name__)
-
-# Get JWT settings from environment
-JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "your-secret-key-here")
-JWT_ALGORITHM = "HS256"
 
 
 class ConnectionManager:
@@ -191,15 +189,22 @@ manager = ConnectionManager()
 def verify_token(token: str) -> Optional[str]:
     """
     Verify JWT token and return user_id
+    
+    Uses centralized security module for consistency.
+    This is a convenience wrapper for WebSocket authentication.
+    
+    Args:
+        token: JWT access token
+        
+    Returns:
+        user_id if token valid, None otherwise
     """
     try:
-        payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
-        user_id: str = payload.get("sub")
-        if user_id is None:
-            return None
-        return user_id
-    except JWTError as e:
-        logger.error(f"JWT verification failed: {e}")
+        # Use centralized verify_token from security module
+        token_data: TokenData = verify_jwt_token(token)
+        return token_data.user_id
+    except Exception as e:
+        logger.error(f"WebSocket JWT verification failed: {e}")
         return None
 
 

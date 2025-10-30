@@ -125,14 +125,6 @@ class UserLogin(BaseModel):
     password: str
 
 
-class TokenResponse(BaseModel):
-    """JWT token response"""
-    access_token: str
-    refresh_token: str
-    token_type: str = "Bearer"
-    expires_in: int  # seconds
-
-
 class TokenData(BaseModel):
     """JWT token payload data"""
     user_id: str
@@ -140,6 +132,25 @@ class TokenData(BaseModel):
     token_type: str  # "access" or "refresh"
     issued_at: datetime
     expires_at: datetime
+
+
+class TokenPair(BaseModel):
+    """
+    Internal token pair response (without user info)
+    
+    Used by TokenManager internally. 
+    Server endpoints should use core.models.TokenResponse which includes user field.
+    """
+    access_token: str
+    refresh_token: str
+    token_type: str = "Bearer"
+    expires_in: int  # seconds
+
+
+# ============================================================================
+# NOTE: Complete TokenResponse with user field is in core/models.py
+# Server endpoints import from there: from core.models import TokenResponse
+# ============================================================================
 
 
 # ============================================================================
@@ -349,7 +360,7 @@ class TokenManager:
         logger.debug(f"Refresh token created for user {user_id}")
         return token
     
-    def create_token_pair(self, user_id: str, email: str) -> TokenResponse:
+    def create_token_pair(self, user_id: str, email: str) -> TokenPair:
         """
         Create access + refresh token pair
         
@@ -358,15 +369,16 @@ class TokenManager:
             email: User's email
             
         Returns:
-            TokenResponse with both tokens
+            TokenPair with both tokens (without user info)
+            Server endpoints should wrap this in core.models.TokenResponse with user data
         """
         access_token = self.create_access_token(user_id, email)
         refresh_token = self.create_refresh_token(user_id, email)
         
-        return TokenResponse(
+        return TokenPair(
             access_token=access_token,
             refresh_token=refresh_token,
-            token_type=self.config.TOKEN_TYPE,
+            token_type="Bearer",
             expires_in=self.config.ACCESS_TOKEN_EXPIRE_MINUTES * 60
         )
     
@@ -515,7 +527,7 @@ class AuthenticationManager:
         
         return is_valid
     
-    def create_session(self, user_id: str, email: str) -> TokenResponse:
+    def create_session(self, user_id: str, email: str) -> TokenPair:
         """
         Create authenticated session (login)
         
@@ -542,7 +554,7 @@ class AuthenticationManager:
         """
         return self.token_manager.verify_token(access_token, "access")
     
-    def refresh_session(self, refresh_token: str) -> TokenResponse:
+    def refresh_session(self, refresh_token: str) -> TokenPair:
         """
         Refresh expired access token
         
@@ -603,7 +615,7 @@ def verify_password(plain: str, hashed: str) -> bool:
     return auth_manager.password_manager.verify_password(plain, hashed)
 
 
-def create_tokens(user_id: str, email: str) -> TokenResponse:
+def create_tokens(user_id: str, email: str) -> TokenPair:
     """Helper: Create token pair"""
     return auth_manager.token_manager.create_token_pair(user_id, email)
 
