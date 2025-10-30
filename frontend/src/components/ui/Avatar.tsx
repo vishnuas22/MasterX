@@ -114,6 +114,11 @@ const getColorFromName = (name: string): string => {
     'bg-teal-500',
   ];
   
+  // Handle undefined or empty name
+  if (!name || name.trim() === '') {
+    return colors[0]; // Default to first color
+  }
+  
   const hash = name.split('').reduce((acc, char) => {
     return acc + char.charCodeAt(0);
   }, 0);
