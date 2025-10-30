@@ -296,12 +296,14 @@ export const Message: React.FC<MessageProps> = ({
         <div className="flex-shrink-0">
           {isOwn ? (
             <Avatar
+              name="You"
               size="sm"
               fallback={<User className="w-4 h-4" />}
               className="bg-accent-primary text-white"
             />
           ) : (
             <Avatar
+              name={message.provider_used || message.provider || 'AI'}
               size="sm"
               fallback={<Bot className="w-4 h-4" />}
               className="bg-accent-purple text-white"
