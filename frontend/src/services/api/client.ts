@@ -32,11 +32,17 @@ interface RetryConfig extends InternalAxiosRequestConfig {
  * - Preview/Production: Relative URL (empty string - uses same domain via Kubernetes ingress)
  * 
  * This allows seamless testing in both environments without manual configuration changes.
+ * 
+ * FIX: Check for non-empty string to avoid empty VITE_BACKEND_URL breaking detection
  */
 const getBaseURL = (): string => {
-  // If VITE_BACKEND_URL is explicitly set in .env, use it
-  if (import.meta.env.VITE_BACKEND_URL) {
-    return import.meta.env.VITE_BACKEND_URL;
+  // Check for explicit backend URL (must be non-empty string)
+  const envBackendUrl = import.meta.env.VITE_BACKEND_URL;
+  
+  if (envBackendUrl && typeof envBackendUrl === 'string' && envBackendUrl.trim() !== '') {
+    const trimmedUrl = envBackendUrl.trim();
+    console.log(`✓ Using explicit VITE_BACKEND_URL: ${trimmedUrl}`);
+    return trimmedUrl;
   }
   
   // Auto-detect environment based on hostname
@@ -44,10 +50,12 @@ const getBaseURL = (): string => {
   
   // Local development: use localhost backend
   if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    console.log('✓ Detected localhost - using http://localhost:8001');
     return 'http://localhost:8001';
   }
   
   // Preview/Production: use relative URLs (Kubernetes ingress routes /api to backend)
+  console.log('✓ Detected production - using relative URLs');
   return '';
 };
 
@@ -70,15 +78,15 @@ export const apiClient = axios.create({
 /**
  * Request Interceptor - Enhanced with Fallback
  * Injects JWT token from auth store into all requests
- * Falls back to localStorage if Zustand state not yet updated
+ * Falls back to localStorage/sessionStorage if Zustand state not yet updated
  */
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     // Try Zustand store first (primary source)
     let token = useAuthStore.getState().accessToken;
     
-    // Fallback to localStorage if not in store yet (handles race conditions)
-    if (!token) {
+    // Fallback 1: localStorage (handles race conditions)
+    if (!token || token.trim() === '') {
       token = localStorage.getItem('jwt_token');
       
       if (import.meta.env.DEV && token) {
@@ -86,14 +94,23 @@ apiClient.interceptors.request.use(
       }
     }
     
-    if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`;
+    // Fallback 2: sessionStorage
+    if (!token || token.trim() === '') {
+      token = sessionStorage.getItem('jwt_token');
+      
+      if (import.meta.env.DEV && token) {
+        console.log('⚠️ Using token from sessionStorage fallback');
+      }
+    }
+    
+    if (token && token.trim() !== '' && config.headers) {
+      config.headers.Authorization = `Bearer ${token.trim()}`;
       
       if (import.meta.env.DEV) {
         console.log(`→ ${config.method?.toUpperCase()} ${config.url} [Auth: ✓]`);
       }
     } else if (import.meta.env.DEV) {
-      console.log(`→ ${config.method?.toUpperCase()} ${config.url} [Auth: ✗]`);
+      console.warn(`→ ${config.method?.toUpperCase()} ${config.url} [Auth: ✗ No token]`);
     }
     
     return config;
