@@ -25,7 +25,7 @@
  */
 
 import { useEffect, useState, useCallback } from 'react';
-import socketClient from '@/services/websocket/socket.client';
+import nativeSocketClient, { type WebSocketEvent } from '@/services/websocket/native-socket.client';
 import { 
   initializeSocketHandlers, 
   cleanupSocketHandlers 
@@ -63,14 +63,14 @@ export const useWebSocket = (): UseWebSocketReturn => {
 
   useEffect(() => {
     // Connect on mount
-    socketClient.connect();
+    nativeSocketClient.connect();
     
     // Initialize event handlers
     initializeSocketHandlers();
 
     // Listen to connection state
     const checkConnection = () => {
-      setIsConnected(socketClient.isConnected());
+      setIsConnected(nativeSocketClient.isConnected());
     };
 
     const interval = setInterval(checkConnection, 1000);
@@ -80,7 +80,7 @@ export const useWebSocket = (): UseWebSocketReturn => {
     return () => {
       clearInterval(interval);
       cleanupSocketHandlers();
-      socketClient.disconnect();
+      nativeSocketClient.disconnect();
     };
   }, []);
 
@@ -88,11 +88,11 @@ export const useWebSocket = (): UseWebSocketReturn => {
    * Subscribe to event (returns unsubscribe function)
    */
   const subscribe = useCallback((event: string, callback: (data: any) => void): (() => void) => {
-    socketClient.on(event, callback);
+    nativeSocketClient.on(event as WebSocketEvent, callback);
     
     // Return unsubscribe function
     return () => {
-      socketClient.off(event, callback);
+      nativeSocketClient.off(event as WebSocketEvent, callback);
     };
   }, []);
 
@@ -100,21 +100,21 @@ export const useWebSocket = (): UseWebSocketReturn => {
    * Emit event to server
    */
   const emit = useCallback((event: string, data: any) => {
-    socketClient.emit(event, data);
+    nativeSocketClient.send(event as WebSocketEvent, data);
   }, []);
 
   /**
    * Manually reconnect
    */
   const reconnect = useCallback(() => {
-    socketClient.reconnect();
+    nativeSocketClient.reconnect();
   }, []);
 
   /**
    * Manually disconnect
    */
   const disconnect = useCallback(() => {
-    socketClient.disconnect();
+    nativeSocketClient.disconnect();
   }, []);
 
   return {
