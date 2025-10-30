@@ -18,7 +18,7 @@
  * - Direct store updates (no re-renders unless subscribed)
  */
 
-import socketClient from './socket.client';
+import nativeSocketClient from './native-socket.client';
 import { useChatStore } from '@/store/chatStore';
 import { useEmotionStore } from '@/store/emotionStore';
 import type { Message } from '@/types/chat.types';
@@ -29,7 +29,7 @@ import type { EmotionState } from '@/types/emotion.types';
  */
 export const initializeSocketHandlers = (): void => {
   // Real-time emotion update during AI processing
-  socketClient.on('emotion_update', (data: {
+  nativeSocketClient.on('emotion_update', (data: {
     message_id: string;
     emotion: EmotionState;
   }) => {
@@ -43,17 +43,17 @@ export const initializeSocketHandlers = (): void => {
   });
 
   // AI typing indicator
-  socketClient.on('typing_indicator', (data: { isTyping: boolean }) => {
+  nativeSocketClient.on('typing_indicator', (data: { isTyping: boolean }) => {
     useChatStore.getState().setTyping(data.isTyping);
   });
 
   // New message received (for multi-user scenarios)
-  socketClient.on('message_received', (data: { message: Message }) => {
+  nativeSocketClient.on('message_received', (data: { message: Message }) => {
     useChatStore.getState().addMessage(data.message);
   });
 
   // Session state update
-  socketClient.on('session_update', (data: {
+  nativeSocketClient.on('session_update', (data: {
     session_id: string;
     status: string;
     message_count: number;
@@ -63,7 +63,7 @@ export const initializeSocketHandlers = (): void => {
   });
 
   // Error from server
-  socketClient.on('error', (data: { message: string; code: string }) => {
+  nativeSocketClient.on('error', (data: { message: string; code: string }) => {
     console.error('WebSocket error:', data);
     
     import('@/store/uiStore').then(({ useUIStore }) => {
@@ -79,30 +79,30 @@ export const initializeSocketHandlers = (): void => {
  * Clean up all event handlers
  */
 export const cleanupSocketHandlers = (): void => {
-  socketClient.off('emotion_update');
-  socketClient.off('typing_indicator');
-  socketClient.off('message_received');
-  socketClient.off('session_update');
-  socketClient.off('error');
+  nativeSocketClient.off('emotion_update');
+  nativeSocketClient.off('typing_indicator');
+  nativeSocketClient.off('message_received');
+  nativeSocketClient.off('session_update');
+  nativeSocketClient.off('error');
 };
 
 /**
  * Emit typing indicator to server
  */
 export const emitTypingIndicator = (isTyping: boolean): void => {
-  socketClient.emit('user_typing', { isTyping });
+  nativeSocketClient.send('user_typing', { isTyping });
 };
 
 /**
  * Join a chat session (for real-time updates)
  */
 export const joinSession = (sessionId: string): void => {
-  socketClient.emit('join_session', { session_id: sessionId });
+  nativeSocketClient.send('join_session', { session_id: sessionId });
 };
 
 /**
  * Leave a chat session
  */
 export const leaveSession = (sessionId: string): void => {
-  socketClient.emit('leave_session', { session_id: sessionId });
+  nativeSocketClient.send('leave_session', { session_id: sessionId });
 };
