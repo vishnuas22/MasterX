@@ -68,21 +68,32 @@ export const apiClient = axios.create({
 });
 
 /**
- * Request Interceptor - FIXED
+ * Request Interceptor - Enhanced with Fallback
  * Injects JWT token from auth store into all requests
+ * Falls back to localStorage if Zustand state not yet updated
  */
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    // ✅ FIXED: Use correct field name
-    const token = useAuthStore.getState().accessToken;
+    // Try Zustand store first (primary source)
+    let token = useAuthStore.getState().accessToken;
+    
+    // Fallback to localStorage if not in store yet (handles race conditions)
+    if (!token) {
+      token = localStorage.getItem('jwt_token');
+      
+      if (import.meta.env.DEV && token) {
+        console.log('⚠️ Using token from localStorage fallback');
+      }
+    }
     
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
-    }
-    
-    // Log request in development
-    if (import.meta.env.DEV) {
-      console.log(`→ ${config.method?.toUpperCase()} ${config.url}`);
+      
+      if (import.meta.env.DEV) {
+        console.log(`→ ${config.method?.toUpperCase()} ${config.url} [Auth: ✓]`);
+      }
+    } else if (import.meta.env.DEV) {
+      console.log(`→ ${config.method?.toUpperCase()} ${config.url} [Auth: ✗]`);
     }
     
     return config;
