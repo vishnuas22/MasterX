@@ -98,6 +98,20 @@ export interface TokenVerifyResponse {
   exp: number; // Unix timestamp
 }
 
+/**
+ * User API Response from Backend
+ * Matches backend UserResponse model exactly (models.py lines 436-445)
+ */
+export interface UserApiResponse {
+  id: string;
+  email: string;
+  name: string;
+  subscription_tier: string;
+  total_sessions: number;
+  created_at: string;
+  last_active: string;
+}
+
 export interface UserProfileResponse {
   id: string;
   email: string;
@@ -107,6 +121,41 @@ export interface UserProfileResponse {
   created_at: string;
   last_active: string;
 }
+
+/**
+ * Adapter: Convert Backend UserApiResponse to Frontend User Type
+ * 
+ * Backend returns minimal user data without nested objects.
+ * Frontend needs full User type with learning_preferences and emotional_profile.
+ * 
+ * @param apiUser - User data from backend API
+ * @returns Complete User object with default preferences
+ */
+export const adaptUserApiResponse = (apiUser: UserApiResponse): User => {
+  return {
+    id: apiUser.id,
+    email: apiUser.email,
+    name: apiUser.name,
+    created_at: apiUser.created_at,
+    subscription_tier: (apiUser.subscription_tier as SubscriptionTier) || SubscriptionTier.FREE,
+    total_sessions: apiUser.total_sessions,
+    last_active: apiUser.last_active,
+    // Default learning preferences (will be updated from backend later)
+    learning_preferences: {
+      preferred_subjects: [],
+      learning_style: LearningStyle.VISUAL,
+      difficulty_preference: 'adaptive',
+      session_length_minutes: 30,
+      notifications_enabled: true,
+    },
+    // Default emotional profile (will be updated from backend later)
+    emotional_profile: {
+      baseline_engagement: 0.5,
+      frustration_threshold: 0.7,
+      celebration_responsiveness: 0.5,
+    },
+  };
+};
 
 // ============================================================================
 // SESSION TYPES
