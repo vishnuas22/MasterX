@@ -36,7 +36,8 @@ import type {
   User, 
   LoginCredentials, 
   SignupData, 
-  LoginResponse 
+  LoginResponse,
+  UserApiResponse 
 } from '../../types/user.types';
 
 /**
@@ -176,12 +177,15 @@ export const authAPI = {
    * Returns profile information for authenticated user.
    * Requires valid access token in Authorization header.
    * 
+   * Backend returns UserResponse (id, email, name, subscription_tier, etc.)
+   * Frontend must adapt this to full User type with nested objects.
+   * 
    * Automatically called by authStore to:
    * - Verify token validity on app start
    * - Restore user session from localStorage
    * - Refresh user data after updates
    * 
-   * @returns User profile data
+   * @returns UserApiResponse from backend (to be adapted by authStore)
    * @throws 401 - Unauthorized (invalid or expired token)
    * @throws 404 - User not found (account deleted)
    * @throws 500 - Server error
@@ -189,15 +193,18 @@ export const authAPI = {
    * @example
    * ```typescript
    * // Get current user (token from headers automatically)
-   * const user = await authAPI.getCurrentUser();
+   * const apiUser = await authAPI.getCurrentUser();
+   * 
+   * // Adapt to frontend User type
+   * const user = adaptUserApiResponse(apiUser);
    * 
    * console.log(user.id);     // "user-123"
    * console.log(user.email);  // "john@example.com"
    * console.log(user.name);   // "John Doe"
    * ```
    */
-  getCurrentUser: async (): Promise<User> => {
-    const { data } = await apiClient.get<User>('/api/auth/me');
+  getCurrentUser: async (): Promise<UserApiResponse> => {
+    const { data } = await apiClient.get<UserApiResponse>('/api/auth/me');
     return data;
   },
 
