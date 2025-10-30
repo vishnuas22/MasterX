@@ -136,16 +136,30 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
   
   // Join/leave session for real-time updates
   useEffect(() => {
-    if (!isConnected || !activeSessionId) return;
+    if (!activeSessionId) return;
     
-    // Join session room
-    joinSession(activeSessionId);
-    console.log('✓ Joined chat session:', activeSessionId);
+    // ✅ Try to join if WebSocket connected, but don't block if it fails
+    if (isConnected) {
+      try {
+        joinSession(activeSessionId);
+        console.log('✓ Joined chat session:', activeSessionId);
+      } catch (err) {
+        console.warn('⚠️ Failed to join WebSocket session:', err);
+        // Non-blocking - HTTP chat will still work
+      }
+    }
     
     // Leave session on unmount or session change
     return () => {
-      leaveSession(activeSessionId);
-      console.log('✓ Left chat session:', activeSessionId);
+      if (isConnected) {
+        try {
+          leaveSession(activeSessionId);
+          console.log('✓ Left chat session:', activeSessionId);
+        } catch (err) {
+          console.warn('⚠️ Failed to leave WebSocket session:', err);
+          // Non-blocking
+        }
+      }
     };
   }, [isConnected, activeSessionId]);
   
@@ -216,23 +230,57 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
       await storeSendMessage(content.trim(), user.id);
       
       // WebSocket event for real-time updates (other tabs/devices)
-      if (storeSessionId) {
-        sendEvent({
-          type: 'message_sent',
-          sessionId: storeSessionId,
-          userId: user.id
-        });
+      if (storeSessionId && isConnected) {
+        try {
+          sendEvent({
+            type: 'message_sent',
+            sessionId: storeSessionId,
+            userId: user.id
+          });
+        } catch (wsErr) {
+          console.warn('WebSocket notification failed (non-critical):', wsErr);
+          // Non-blocking - message already sent via HTTP
+        }
       }
       
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to send message:', err);
+      
+      // Determine specific error message
+      let errorTitle = 'Send Failed';
+      let errorMessage = 'Failed to send message. Please try again.';
+      
+      if (err.code === 'ECONNABORTED' || err.code === 'ETIMEDOUT') {
+        errorTitle = 'Request Timeout';
+        errorMessage = 'Request timed out. Check your internet connection and try again.';
+      } else if (err.response?.status === 401) {
+        errorTitle = 'Authentication Required';
+        errorMessage = 'Your session expired. Please log in again.';
+      } else if (err.response?.status === 429) {
+        errorTitle = 'Too Many Requests';
+        errorMessage = 'You\'re sending messages too quickly. Please wait a moment.';
+      } else if (err.response?.status === 500) {
+        errorTitle = 'Server Error';
+        errorMessage = 'Something went wrong on our end. Please try again in a moment.';
+      } else if (err.response?.status === 404) {
+        errorTitle = 'Not Found';
+        errorMessage = 'The chat endpoint is not available. Please contact support.';
+      } else if (!navigator.onLine) {
+        errorTitle = 'No Connection';
+        errorMessage = 'You appear to be offline. Check your network connection.';
+      } else if (err.response?.data?.detail) {
+        errorMessage = err.response.data.detail;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
       toast({
-        title: 'Send Failed',
-        description: 'Failed to send message. Please try again.',
+        title: errorTitle,
+        description: errorMessage,
         variant: 'error'
       });
     }
-  }, [user, storeSendMessage, storeSessionId, sendEvent]);
+  }, [user, storeSendMessage, storeSessionId, isConnected, sendEvent]);
   
   // ============================================================================
   // ERROR HANDLING
@@ -356,15 +404,21 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
             <div className="flex-1">
               <MessageInput
                 onSend={handleSendMessage}
-                disabled={isLoading || !isConnected}
+                disabled={isLoading}
                 placeholder={
-                  !isConnected
-                    ? 'Connecting...'
-                    : isLoading
+                  isLoading
                     ? 'AI is responding...'
                     : 'Ask me anything...'
                 }
               />
+              
+              {/* Connection Warning (non-blocking) */}
+              {!isConnected && (
+                <div className="mt-1 text-xs text-accent-warning flex items-center gap-1">
+                  <WifiOff className="w-3 h-3" />
+                  <span>Real-time updates unavailable. Messages will still send.</span>
+                </div>
+              )}
             </div>
           </div>
           
