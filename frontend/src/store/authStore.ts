@@ -36,6 +36,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { authAPI } from '@/services/api/auth.api';
 import type { User, LoginCredentials, SignupData } from '@/types/user.types';
+import { adaptUserApiResponse } from '@/types/user.types';
 
 // ============================================================================
 // TYPES
@@ -117,32 +118,51 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true, error: null });
         
         try {
-          // Authenticate with backend
-          const response = await authAPI.login(credentials);
+          console.log('🔐 Starting login process...');
           
-          // CRITICAL: Set tokens in state FIRST before making getCurrentUser call
-          // This ensures Axios interceptor has access to the token
+          // Step 1: Authenticate with backend
+          const response = await authAPI.login(credentials);
+          console.log('✓ Login API call successful, tokens received');
+          
+          // Step 2: CRITICAL - Set tokens in state FIRST
+          // This ensures the API interceptor has access when we call getCurrentUser
           set({
             accessToken: response.access_token,
             refreshToken: response.refresh_token,
             isAuthenticated: true,
             lastRefreshTime: Date.now(),
           });
+          console.log('✓ Tokens set in Zustand state');
           
-          // Also store in localStorage for backup
+          // Step 3: Store in localStorage for interceptor fallback and persistence
           localStorage.setItem('jwt_token', response.access_token);
           localStorage.setItem('refresh_token', response.refresh_token);
+          console.log('✓ Tokens stored in localStorage');
           
-          // Now fetch user profile with token attached
-          const user = await authAPI.getCurrentUser();
+          // Step 4: Small delay to ensure Zustand state propagates to interceptors
+          // This prevents race condition where getCurrentUser fires before token is available
+          await new Promise(resolve => setTimeout(resolve, 10));
           
-          // Update state with user info
+          // Step 5: Fetch user profile with token attached
+          console.log('→ Fetching user profile...');
+          const apiUser = await authAPI.getCurrentUser();
+          console.log('✓ User profile fetched:', apiUser);
+          
+          // Step 6: Adapt backend response to frontend User type
+          const user = adaptUserApiResponse(apiUser);
+          console.log('✓ User data adapted for frontend');
+          
+          // Step 7: Update state with user info
           set({
             user,
             isLoading: false,
             error: null,
           });
+          
+          console.log('✅ Login complete! User:', user.name);
         } catch (error: any) {
+          console.error('❌ Login failed:', error);
+          
           // Clear any stored tokens on error
           localStorage.removeItem('jwt_token');
           localStorage.removeItem('refresh_token');
@@ -164,6 +184,8 @@ export const useAuthStore = create<AuthState>()(
             error: errorMessage,
             isLoading: false,
             isAuthenticated: false,
+            accessToken: null,
+            refreshToken: null,
           });
           
           throw new Error(errorMessage);
@@ -188,31 +210,49 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true, error: null });
         
         try {
-          // Register with backend
-          const response = await authAPI.signup(data);
+          console.log('📝 Starting signup process...');
           
-          // CRITICAL: Set tokens in state FIRST before making getCurrentUser call
+          // Step 1: Register with backend
+          const response = await authAPI.signup(data);
+          console.log('✓ Signup API call successful, tokens received');
+          
+          // Step 2: CRITICAL - Set tokens in state FIRST
           set({
             accessToken: response.access_token,
             refreshToken: response.refresh_token,
             isAuthenticated: true,
             lastRefreshTime: Date.now(),
           });
+          console.log('✓ Tokens set in Zustand state');
           
-          // Store tokens in localStorage for backup
+          // Step 3: Store tokens in localStorage for backup and interceptor fallback
           localStorage.setItem('jwt_token', response.access_token);
           localStorage.setItem('refresh_token', response.refresh_token);
+          console.log('✓ Tokens stored in localStorage');
           
-          // Fetch user profile with token attached
-          const user = await authAPI.getCurrentUser();
+          // Step 4: Small delay to ensure state propagates
+          await new Promise(resolve => setTimeout(resolve, 10));
           
-          // Update state with user info
+          // Step 5: Fetch user profile with token attached
+          console.log('→ Fetching user profile...');
+          const apiUser = await authAPI.getCurrentUser();
+          console.log('✓ User profile fetched:', apiUser);
+          
+          // Step 6: Adapt backend response to frontend User type
+          const user = adaptUserApiResponse(apiUser);
+          console.log('✓ User data adapted for frontend');
+          
+          // Step 7: Update state with user info
           set({
             user,
             isLoading: false,
             error: null,
           });
+          
+          console.log('✅ Signup complete! Welcome,', user.name);
         } catch (error: any) {
+          console.error('❌ Signup failed:', error);
+          
           // Clear tokens on error
           localStorage.removeItem('jwt_token');
           localStorage.removeItem('refresh_token');
@@ -236,6 +276,8 @@ export const useAuthStore = create<AuthState>()(
             error: errorMessage,
             isLoading: false,
             isAuthenticated: false,
+            accessToken: null,
+            refreshToken: null,
           });
           
           throw new Error(errorMessage);
@@ -309,7 +351,10 @@ export const useAuthStore = create<AuthState>()(
         
         try {
           // Verify token by fetching user
-          const user = await authAPI.getCurrentUser();
+          const apiUser = await authAPI.getCurrentUser();
+          
+          // Adapt to frontend User type
+          const user = adaptUserApiResponse(apiUser);
           
           set({
             user,
