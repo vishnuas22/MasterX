@@ -99,6 +99,7 @@ export const TypingIndicator: React.FC<TypingIndicatorProps> = ({
     >
       {/* Avatar */}
       <Avatar
+        name={provider || 'AI'}
         size="sm"
         fallback={<Bot className="w-4 h-4" />}
         className="bg-accent-purple text-white flex-shrink-0"
