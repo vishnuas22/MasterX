@@ -127,7 +127,7 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
   // WEBSOCKET CONNECTION - Real-time updates
   // ============================================================================
   
-  const { isConnected, subscribe } = useWebSocket();
+  const { isConnected, subscribe, emit: sendEvent } = useWebSocket();
   
   // Update connection status based on WebSocket state
   useEffect(() => {
