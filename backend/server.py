@@ -1077,6 +1077,20 @@ async def chat(request: ChatRequest):
             "cost": ai_response.cost
         })
         
+        # Send real-time emotion update via WebSocket
+        if ai_response.emotion_state:
+            from services.websocket_service import send_emotion_update
+            try:
+                await send_emotion_update(
+                    user_id=request.user_id,
+                    message_id=user_message_id,
+                    emotion_data=ai_response.emotion_state.model_dump()
+                )
+                logger.info(f"✓ Sent WebSocket emotion update to user {request.user_id}")
+            except Exception as ws_error:
+                # Don't fail the request if WebSocket send fails
+                logger.warning(f"Failed to send WebSocket emotion update: {ws_error}")
+        
         # Update session
         await sessions_collection.update_one(
             {"_id": session_id},
@@ -2294,6 +2308,72 @@ async def check_production_readiness(admin_user: dict = Depends(require_admin)):
     }
 
 
+# ============================================================================
+# WEBSOCKET ENDPOINT - Real-time Communication
+# ============================================================================
+
+from fastapi import WebSocket, WebSocketDisconnect, Query
+from services.websocket_service import (
+    manager,
+    verify_token,
+    handle_websocket_message
+)
+
+
+@app.websocket("/api/ws")
+async def websocket_endpoint(
+    websocket: WebSocket,
+    token: str = Query(...)
+):
+    """
+    WebSocket endpoint for real-time communication
+    
+    Features:
+    - Real-time emotion updates
+    - Typing indicators
+    - Session updates
+    - Notifications
+    
+    Authentication: JWT token via query parameter
+    
+    Message format:
+    {
+        "type": "event_type",
+        "data": { ... }
+    }
+    """
+    # Verify token and extract user_id
+    user_id = verify_token(token)
+    
+    if not user_id:
+        await websocket.close(code=1008, reason="Invalid token")
+        return
+    
+    # Generate connection ID
+    import uuid
+    connection_id = str(uuid.uuid4())
+    
+    # Connect
+    await manager.connect(websocket, user_id, connection_id)
+    
+    try:
+        while True:
+            # Receive message
+            data = await websocket.receive_json()
+            
+            # Handle message based on type
+            await handle_websocket_message(user_id, data)
+            
+    except WebSocketDisconnect:
+        manager.disconnect(user_id, connection_id)
+        logger.info(f"WebSocket disconnected: user={user_id}")
+    
+    except Exception as e:
+        logger.error(f"WebSocket error for user {user_id}: {e}")
+        manager.disconnect(user_id, connection_id)
+        await websocket.close(code=1011, reason="Internal error")
+
+
 # Root endpoint
 @app.get("/")
 async def root():
@@ -2308,6 +2388,7 @@ async def root():
             "health": "/api/health",
             "chat": "/api/v1/chat",
             "providers": "/api/v1/providers",
+            "websocket": "/api/ws",
             "admin": {
                 "costs": "/api/v1/admin/costs",
                 "performance": "/api/v1/admin/performance",
