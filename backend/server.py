@@ -2315,7 +2315,7 @@ async def check_production_readiness(admin_user: dict = Depends(require_admin)):
 from fastapi import WebSocket, WebSocketDisconnect, Query
 from services.websocket_service import (
     manager,
-    verify_token,
+    verify_token as verify_websocket_token,  # Renamed to avoid conflict with auth verify_token
     handle_websocket_message
 )
 
@@ -2343,7 +2343,7 @@ async def websocket_endpoint(
     }
     """
     # Verify token and extract user_id
-    user_id = verify_token(token)
+    user_id = verify_websocket_token(token)
     
     if not user_id:
         await websocket.close(code=1008, reason="Invalid token")
