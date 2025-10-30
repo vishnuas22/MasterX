@@ -37,7 +37,20 @@ class SocketClient {
       return;
     }
 
-    const backendURL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8001';
+    // Smart environment detection (same as API client)
+    let backendURL = import.meta.env.VITE_BACKEND_URL || '';
+    
+    // Auto-detect if not set
+    if (!backendURL) {
+      const hostname = window.location.hostname;
+      if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        backendURL = 'http://localhost:8001';
+      } else {
+        // Use current origin for preview/production
+        backendURL = window.location.origin;
+      }
+    }
+    
     // Remove /api suffix if present for WebSocket connection
     const wsURL = backendURL.replace(/\/api$/, '');
 
