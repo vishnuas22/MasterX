@@ -28,7 +28,7 @@ import {
 import { useAuthStore } from '@/store/authStore';
 import { useUIStore } from '@/store/uiStore';
 import { useEmotionStore } from '@/store/emotionStore';
-// import { useWebSocket } from '@/hooks/useWebSocket'; // TODO: Implement WebSocket hook
+import { useWebSocket } from '@/hooks/useWebSocket';
 import { cn } from '@/utils/cn';
 
 // Lazy load modals (code splitting) - TODO: Implement these pages
@@ -337,8 +337,8 @@ EmotionWidget.displayName = 'EmotionWidget';
 export const AppShell = React.memo<AppShellProps>(({ children }) => {
   const { openModal, closeModal, activeModal } = useUIStore();
   
-  // Initialize WebSocket connection
-  // useWebSocket(); // TODO: Implement WebSocket hook
+  // Initialize WebSocket connection for real-time updates
+  const { isConnected } = useWebSocket();
 
   // Navigation items with modal handlers
   const navItems = getNavigationItems(
