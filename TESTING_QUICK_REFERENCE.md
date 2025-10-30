@@ -9,8 +9,7 @@
 ### Test User Credentials
 ```
 ✅ ACTIVE USER (Created & Verified)
-Email: emma.johnson1506@masterx.ai
-Password: EmmaJohnson@2025!
+Always create new user for tests
 Status: Onboarding incomplete
 ```
 
