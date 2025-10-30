@@ -265,7 +265,7 @@
 
 ---
 
-### User Account Created for Testing:
+### User Account Created for Testing[[Create new user on signup with this examples Login wont work because no user exists]:
 ```
 Email: emma.johnson1506@masterx.ai
 Password: EmmaJohnson@2025!
