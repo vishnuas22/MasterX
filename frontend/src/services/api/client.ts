@@ -25,11 +25,42 @@ interface RetryConfig extends InternalAxiosRequestConfig {
 }
 
 /**
+ * Smart Base URL Detection
+ * 
+ * Automatically detects the environment and uses the correct backend URL:
+ * - Local Development (localhost): http://localhost:8001
+ * - Preview/Production: Relative URL (empty string - uses same domain via Kubernetes ingress)
+ * 
+ * This allows seamless testing in both environments without manual configuration changes.
+ */
+const getBaseURL = (): string => {
+  // If VITE_BACKEND_URL is explicitly set in .env, use it
+  if (import.meta.env.VITE_BACKEND_URL) {
+    return import.meta.env.VITE_BACKEND_URL;
+  }
+  
+  // Auto-detect environment based on hostname
+  const hostname = window.location.hostname;
+  
+  // Local development: use localhost backend
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    return 'http://localhost:8001';
+  }
+  
+  // Preview/Production: use relative URLs (Kubernetes ingress routes /api to backend)
+  return '';
+};
+
+/**
  * Main Axios instance for API communication
  * Automatically configured with base URL and default headers
+ * 
+ * Base URL Configuration:
+ * - Production/Preview: Empty string (uses relative URLs, Kubernetes routes /api to backend)
+ * - Local Development: http://localhost:8001
  */
 export const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_BACKEND_URL || 'http://localhost:8001',
+  baseURL: getBaseURL(),
   timeout: 30000, // 30 seconds
   headers: {
     'Content-Type': 'application/json',
