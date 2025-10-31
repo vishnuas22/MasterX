@@ -28,10 +28,13 @@ from pydantic import BaseModel, Field, ConfigDict, computed_field, field_validat
 
 class EmotionCategory(str, Enum):
     """
-    27 emotion categories from Google's GoEmotions dataset.
+    28 emotion categories from Google's GoEmotions dataset.
     
     Dataset: 58,000 Reddit comments labeled by human annotators.
     Reference: Demszky et al. (2020) - GoEmotions: A Dataset of Fine-Grained Emotions
+    
+    CRITICAL: Order MUST match the model's label order exactly!
+    Model: SamLowe/roberta-base-go_emotions
     
     Categories grouped by valence:
     - Positive emotions (12): joy, amusement, approval, etc.
@@ -40,41 +43,36 @@ class EmotionCategory(str, Enum):
     - Neutral (1): neutral state
     """
     
-    # Positive emotions (12)
-    ADMIRATION = "admiration"
-    AMUSEMENT = "amusement"
-    APPROVAL = "approval"
-    CARING = "caring"
-    DESIRE = "desire"
-    EXCITEMENT = "excitement"
-    GRATITUDE = "gratitude"
-    JOY = "joy"
-    LOVE = "love"
-    OPTIMISM = "optimism"
-    PRIDE = "pride"
-    RELIEF = "relief"
-    
-    # Negative emotions (11)
-    ANGER = "anger"
-    ANNOYANCE = "annoyance"
-    DISAPPOINTMENT = "disappointment"
-    DISAPPROVAL = "disapproval"
-    DISGUST = "disgust"
-    EMBARRASSMENT = "embarrassment"
-    FEAR = "fear"
-    GRIEF = "grief"
-    NERVOUSNESS = "nervousness"
-    REMORSE = "remorse"
-    SADNESS = "sadness"
-    
-    # Ambiguous emotions (4)
-    CONFUSION = "confusion"
-    CURIOSITY = "curiosity"
-    REALIZATION = "realization"
-    SURPRISE = "surprise"
-    
-    # Neutral state (1)
-    NEUTRAL = "neutral"
+    # !!! CRITICAL: This order MUST match model's id2label mapping !!!
+    # Index 0-27 in this exact order
+    ADMIRATION = "admiration"          # 0
+    AMUSEMENT = "amusement"            # 1
+    ANGER = "anger"                    # 2
+    ANNOYANCE = "annoyance"            # 3
+    APPROVAL = "approval"              # 4
+    CARING = "caring"                  # 5
+    CONFUSION = "confusion"            # 6
+    CURIOSITY = "curiosity"            # 7
+    DESIRE = "desire"                  # 8
+    DISAPPOINTMENT = "disappointment"  # 9
+    DISAPPROVAL = "disapproval"        # 10
+    DISGUST = "disgust"                # 11
+    EMBARRASSMENT = "embarrassment"    # 12
+    EXCITEMENT = "excitement"          # 13
+    FEAR = "fear"                      # 14
+    GRATITUDE = "gratitude"            # 15
+    GRIEF = "grief"                    # 16
+    JOY = "joy"                        # 17
+    LOVE = "love"                      # 18
+    NERVOUSNESS = "nervousness"        # 19
+    OPTIMISM = "optimism"              # 20
+    PRIDE = "pride"                    # 21
+    REALIZATION = "realization"        # 22
+    RELIEF = "relief"                  # 23
+    REMORSE = "remorse"                # 24
+    SADNESS = "sadness"                # 25
+    SURPRISE = "surprise"              # 26
+    NEUTRAL = "neutral"                # 27
 
 
 # ============================================================================
@@ -565,37 +563,37 @@ def get_emotion_valence_mapping() -> Dict[EmotionCategory, float]:
     # and psychological research, not arbitrary choices
     return {
         # Positive emotions (0.5 to 1.0)
-        EmotionCategory.JOY: 0.9,
-        EmotionCategory.LOVE: 0.95,
-        EmotionCategory.EXCITEMENT: 0.85,
-        EmotionCategory.GRATITUDE: 0.8,
-        EmotionCategory.OPTIMISM: 0.75,
-        EmotionCategory.AMUSEMENT: 0.8,
         EmotionCategory.ADMIRATION: 0.7,
+        EmotionCategory.AMUSEMENT: 0.8,
         EmotionCategory.APPROVAL: 0.6,
         EmotionCategory.CARING: 0.7,
         EmotionCategory.DESIRE: 0.6,
+        EmotionCategory.EXCITEMENT: 0.85,
+        EmotionCategory.GRATITUDE: 0.8,
+        EmotionCategory.JOY: 0.9,
+        EmotionCategory.LOVE: 0.95,
+        EmotionCategory.OPTIMISM: 0.75,
         EmotionCategory.PRIDE: 0.75,
         EmotionCategory.RELIEF: 0.65,
         
         # Negative emotions (-1.0 to -0.3)
         EmotionCategory.ANGER: -0.9,
+        EmotionCategory.ANNOYANCE: -0.5,
+        EmotionCategory.DISAPPOINTMENT: -0.7,
+        EmotionCategory.DISAPPROVAL: -0.4,
         EmotionCategory.DISGUST: -0.85,
+        EmotionCategory.EMBARRASSMENT: -0.6,
         EmotionCategory.FEAR: -0.8,
         EmotionCategory.GRIEF: -0.95,
-        EmotionCategory.SADNESS: -0.85,
-        EmotionCategory.DISAPPOINTMENT: -0.7,
-        EmotionCategory.EMBARRASSMENT: -0.6,
         EmotionCategory.NERVOUSNESS: -0.5,
         EmotionCategory.REMORSE: -0.65,
-        EmotionCategory.ANNOYANCE: -0.5,
-        EmotionCategory.DISAPPROVAL: -0.4,
+        EmotionCategory.SADNESS: -0.85,
         
-        # Ambiguous emotions (-0.2 to 0.3)
+        # Ambiguous emotions (-0.2 to 0.4)
         EmotionCategory.CONFUSION: -0.2,
-        EmotionCategory.SURPRISE: 0.2,
-        EmotionCategory.REALIZATION: 0.3,
         EmotionCategory.CURIOSITY: 0.4,
+        EmotionCategory.REALIZATION: 0.3,
+        EmotionCategory.SURPRISE: 0.2,
         
         # Neutral
         EmotionCategory.NEUTRAL: 0.0,
@@ -613,39 +611,39 @@ def get_emotion_arousal_mapping() -> Dict[EmotionCategory, float]:
     """
     return {
         # High arousal (0.7 to 1.0)
-        EmotionCategory.EXCITEMENT: 0.95,
         EmotionCategory.ANGER: 0.9,
+        EmotionCategory.EXCITEMENT: 0.95,
         EmotionCategory.FEAR: 0.9,
         EmotionCategory.JOY: 0.8,
-        EmotionCategory.SURPRISE: 0.85,
         EmotionCategory.NERVOUSNESS: 0.8,
+        EmotionCategory.SURPRISE: 0.85,
         
         # Medium-high arousal (0.5 to 0.7)
         EmotionCategory.AMUSEMENT: 0.7,
-        EmotionCategory.CURIOSITY: 0.65,
         EmotionCategory.ANNOYANCE: 0.6,
-        EmotionCategory.DISAPPOINTMENT: 0.55,
         EmotionCategory.CONFUSION: 0.6,
+        EmotionCategory.CURIOSITY: 0.65,
+        EmotionCategory.DESIRE: 0.6,
+        EmotionCategory.DISAPPOINTMENT: 0.55,
+        EmotionCategory.DISGUST: 0.5,
+        EmotionCategory.REALIZATION: 0.55,
+        EmotionCategory.PRIDE: 0.55,
         
         # Medium arousal (0.3 to 0.5)
-        EmotionCategory.OPTIMISM: 0.5,
+        EmotionCategory.ADMIRATION: 0.5,
         EmotionCategory.APPROVAL: 0.4,
         EmotionCategory.CARING: 0.45,
-        EmotionCategory.ADMIRATION: 0.5,
-        EmotionCategory.REALIZATION: 0.55,
-        EmotionCategory.DESIRE: 0.6,
-        
-        # Low arousal (0.0 to 0.3)
-        EmotionCategory.SADNESS: 0.3,
-        EmotionCategory.GRIEF: 0.25,
-        EmotionCategory.RELIEF: 0.3,
-        EmotionCategory.GRATITUDE: 0.4,
-        EmotionCategory.LOVE: 0.5,
+        EmotionCategory.OPTIMISM: 0.5,
+        EmotionCategory.DISAPPROVAL: 0.3,
         EmotionCategory.EMBARRASSMENT: 0.4,
         EmotionCategory.REMORSE: 0.35,
-        EmotionCategory.DISAPPROVAL: 0.3,
-        EmotionCategory.DISGUST: 0.5,
-        EmotionCategory.PRIDE: 0.55,
+        
+        # Low arousal (0.0 to 0.3)
+        EmotionCategory.GRATITUDE: 0.4,
+        EmotionCategory.GRIEF: 0.25,
+        EmotionCategory.LOVE: 0.5,
+        EmotionCategory.RELIEF: 0.3,
+        EmotionCategory.SADNESS: 0.3,
         
         # Neutral
         EmotionCategory.NEUTRAL: 0.5,
@@ -663,40 +661,40 @@ def get_emotion_dominance_mapping() -> Dict[EmotionCategory, float]:
     """
     return {
         # High dominance (0.7 to 1.0)
-        EmotionCategory.PRIDE: 0.9,
-        EmotionCategory.ANGER: 0.85,
         EmotionCategory.ADMIRATION: 0.75,
+        EmotionCategory.ANGER: 0.85,
         EmotionCategory.APPROVAL: 0.7,
+        EmotionCategory.PRIDE: 0.9,
         
         # Medium-high dominance (0.5 to 0.7)
-        EmotionCategory.JOY: 0.7,
-        EmotionCategory.EXCITEMENT: 0.7,
-        EmotionCategory.OPTIMISM: 0.65,
+        EmotionCategory.AMUSEMENT: 0.65,
+        EmotionCategory.CARING: 0.55,
         EmotionCategory.CURIOSITY: 0.6,
         EmotionCategory.DESIRE: 0.6,
-        EmotionCategory.AMUSEMENT: 0.65,
+        EmotionCategory.EXCITEMENT: 0.7,
         EmotionCategory.GRATITUDE: 0.55,
+        EmotionCategory.JOY: 0.7,
         EmotionCategory.LOVE: 0.6,
-        EmotionCategory.CARING: 0.55,
+        EmotionCategory.OPTIMISM: 0.65,
         
         # Medium dominance (0.4 to 0.5)
-        EmotionCategory.SURPRISE: 0.45,
-        EmotionCategory.REALIZATION: 0.5,
-        EmotionCategory.ANNOYANCE: 0.45,
         EmotionCategory.DISAPPROVAL: 0.5,
+        EmotionCategory.DISGUST: 0.4,
+        EmotionCategory.REALIZATION: 0.5,
+        EmotionCategory.RELIEF: 0.45,
+        EmotionCategory.SURPRISE: 0.45,
         EmotionCategory.NEUTRAL: 0.5,
+        EmotionCategory.ANNOYANCE: 0.45,
         
         # Low dominance (0.0 to 0.4)
-        EmotionCategory.FEAR: 0.2,
-        EmotionCategory.NERVOUSNESS: 0.25,
-        EmotionCategory.EMBARRASSMENT: 0.2,
-        EmotionCategory.SADNESS: 0.3,
-        EmotionCategory.GRIEF: 0.15,
         EmotionCategory.CONFUSION: 0.3,
         EmotionCategory.DISAPPOINTMENT: 0.3,
+        EmotionCategory.EMBARRASSMENT: 0.2,
+        EmotionCategory.FEAR: 0.2,
+        EmotionCategory.GRIEF: 0.15,
+        EmotionCategory.NERVOUSNESS: 0.25,
         EmotionCategory.REMORSE: 0.25,
-        EmotionCategory.DISGUST: 0.4,
-        EmotionCategory.RELIEF: 0.45,
+        EmotionCategory.SADNESS: 0.3,
     }
 
 
