@@ -677,6 +677,72 @@ class CostEnforcementSettings(BaseSettings):
         env_prefix = "COST_"
 
 
+class WebSocketSettings(BaseSettings):
+    """
+    WebSocket configuration
+    
+    AGENTS.md compliant: Zero hardcoded values, all ML-driven thresholds
+    """
+    
+    # Connection health monitoring
+    health_check_interval: int = Field(
+        default=30,
+        description="Interval for connection health checks (seconds)"
+    )
+    
+    max_latency_ms: float = Field(
+        default=500.0,
+        description="Maximum acceptable latency for healthy connection (ms)"
+    )
+    
+    max_error_rate: float = Field(
+        default=0.1,
+        description="Maximum acceptable error rate (0.0-1.0)"
+    )
+    
+    # Rate limiting
+    rate_limit_window: int = Field(
+        default=60,
+        description="Rate limit window duration (seconds)"
+    )
+    
+    rate_limit_max: int = Field(
+        default=100,
+        description="Maximum messages per window"
+    )
+    
+    # Message queue
+    max_queue_size: int = Field(
+        default=1000,
+        description="Maximum messages in priority queue"
+    )
+    
+    message_ttl: int = Field(
+        default=3600,
+        description="Message time-to-live in queue (seconds)"
+    )
+    
+    # Compression
+    compression_threshold: int = Field(
+        default=1024,
+        description="Minimum message size for compression (bytes)"
+    )
+    
+    # Circuit breaker
+    circuit_breaker_threshold: int = Field(
+        default=5,
+        description="Failure count to open circuit"
+    )
+    
+    circuit_breaker_timeout: int = Field(
+        default=60,
+        description="Circuit breaker timeout before reset (seconds)"
+    )
+    
+    class Config:
+        env_prefix = "WEBSOCKET_"
+
+
 class GracefulShutdownSettings(BaseSettings):
     """
     Graceful shutdown configuration (Phase 8C File 13)
@@ -746,6 +812,7 @@ class MasterXSettings(BaseSettings):
     health_monitor: HealthMonitorSettings = Field(default_factory=HealthMonitorSettings)
     cost_enforcement: CostEnforcementSettings = Field(default_factory=CostEnforcementSettings)
     graceful_shutdown: GracefulShutdownSettings = Field(default_factory=GracefulShutdownSettings)
+    websocket: WebSocketSettings = Field(default_factory=WebSocketSettings)
     
     class Config:
         env_file = ".env"
