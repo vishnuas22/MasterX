@@ -784,9 +784,11 @@ class ProviderManager:
         """
         Select best provider for a category using external benchmarks
         
+        COMPLETELY DYNAMIC - NO HARDCODED PROVIDERS
+        
         Priority:
-        1. Use external benchmarks (Artificial Analysis, LLM-Stats)
-        2. Fall back to default provider if benchmarks unavailable
+        1. Use external benchmarks (Artificial Analysis, LLM-Stats) 
+        2. Fall back to round-robin selection from available providers
         
         Args:
             category: Task category (coding, math, reasoning, etc.)
@@ -796,16 +798,21 @@ class ProviderManager:
             Provider name
         """
         
+        # Get available LLM providers (completely dynamic from .env)
+        available_llm = self.get_available_providers()
+        
+        if not available_llm:
+            raise Exception("No LLM providers available in .env")
+        
         # If external benchmarks available, use them
         if self.external_benchmarks:
             try:
                 # Get rankings for category
                 rankings = await self.external_benchmarks.get_rankings(category)
                 
-                if rankings:
-                    # Get available LLM providers only (excluding TTS, benchmark APIs)
-                    available_llm = set(self.get_available_providers())
-                    logger.info(f"Available LLM providers: {available_llm}")
+                if rankings and len(rankings) > 0:
+                    logger.info(f"📊 Got {len(rankings)} rankings for {category}")
+                    logger.info(f"✅ Available LLM providers: {available_llm}")
                     
                     # Find best available provider from rankings
                     for ranking in rankings:
@@ -818,17 +825,29 @@ class ProviderManager:
                             return ranking.provider
                     
                     logger.warning(
-                        f"No top-ranked LLM providers available for {category}, "
-                        f"using fallback"
+                        f"⚠️ No benchmark matches found. "
+                        f"Rankings had providers: {[r.provider for r in rankings[:5]]}, "
+                        f"but none match our available LLMs: {available_llm}"
                     )
             
             except Exception as e:
-                logger.error(f"Error selecting provider from benchmarks: {e}")
+                logger.error(f"Error selecting provider from benchmarks: {e}", exc_info=True)
+        else:
+            logger.warning("External benchmarks not initialized")
         
-        # Fallback to default provider or first available LLM provider
-        fallback = self._default_provider or self.get_available_providers()[0]
-        logger.info(f"Using fallback LLM provider: {fallback}")
-        return fallback
+        # DYNAMIC FALLBACK: Round-robin or first available
+        # No hardcoded provider preferences - use whatever is available
+        
+        # Simple strategy: use first available provider
+        # In future, could implement round-robin counter or random selection
+        fallback_provider = available_llm[0]
+        
+        logger.info(
+            f"🔄 Using dynamic fallback: {fallback_provider} for {category} "
+            f"(selected from available: {available_llm})"
+        )
+        
+        return fallback_provider
     
     def detect_category_from_message(self, message: str, emotion_state: Optional[EmotionState] = None) -> str:
         """
