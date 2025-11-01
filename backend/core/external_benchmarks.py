@@ -220,16 +220,28 @@ class ExternalBenchmarkIntegration:
         try:
             async with aiohttp.ClientSession() as session:
                 # Correct endpoint as per API documentation (v2)
+                url = f"{self.ARTIFICIAL_ANALYSIS_API_URL}/data/llms/models"
+                logger.info(f"Fetching from Artificial Analysis: {url}")
+                
                 async with session.get(
-                    f"{self.ARTIFICIAL_ANALYSIS_API_URL}/data/llms/models",
+                    url,
                     headers=headers,
                     timeout=timeout
                 ) as response:
                     
-                    if response.status != 200:
-                        raise Exception(f"API returned status {response.status}")
+                    response_text = await response.text()
+                    logger.info(f"AA API Response Status: {response.status}")
                     
-                    data = await response.json()
+                    if response.status != 200:
+                        logger.error(f"AA API Error Response: {response_text[:500]}")
+                        raise Exception(f"API returned status {response.status}: {response_text[:200]}")
+                    
+                    try:
+                        data = await response.json()
+                        logger.info(f"AA API Data Structure: {list(data.keys()) if isinstance(data, dict) else type(data)}")
+                    except Exception as json_err:
+                        logger.error(f"Failed to parse JSON: {json_err}, Response: {response_text[:500]}")
+                        raise Exception(f"Invalid JSON response: {json_err}")
                     
                     # Parse and organize rankings
                     rankings = self._parse_aa_rankings(data, category)
@@ -241,8 +253,10 @@ class ExternalBenchmarkIntegration:
                     return rankings
                     
         except aiohttp.ClientError as e:
+            logger.error(f"HTTP error fetching from Artificial Analysis: {str(e)}")
             raise Exception(f"HTTP error: {str(e)}")
         except Exception as e:
+            logger.error(f"Failed to fetch from Artificial Analysis: {str(e)}", exc_info=True)
             raise Exception(f"Failed to fetch from Artificial Analysis: {str(e)}")
     
     def _parse_aa_rankings(self, data: dict, category: str) -> List[ModelRanking]:
@@ -284,8 +298,13 @@ class ExternalBenchmarkIntegration:
         }
         
         eval_key = eval_key_mapping.get(category, "artificial_analysis_intelligence_index")
+        logger.info(f"Parsing AA rankings for category '{category}' using eval key '{eval_key}'")
         
-        for model_data in data.get("data", []):
+        models_data = data.get("data", [])
+        logger.info(f"Processing {len(models_data)} models from Artificial Analysis API")
+        
+        matched_count = 0
+        for model_data in models_data:
             model_name = model_data.get("name", "").lower()
             model_slug = model_data.get("slug", "")
             
@@ -294,15 +313,20 @@ class ExternalBenchmarkIntegration:
             creator_name = creator.get("name", "")
             
             # Normalize model name to get provider
-            provider = self._normalize_model_name(f"{creator_name} {model_name}")
-            if not provider:
-                provider = creator.get("slug", "unknown")
+            external_model_full = f"{creator_name} {model_name}"
+            provider = self._normalize_model_name(external_model_full)
             
             # Extract score for this category
             evaluations = model_data.get("evaluations", {})
             score = evaluations.get(eval_key)
             
-            if score is not None and score > 0:
+            # Skip if no score or score is None/0
+            if score is None or score <= 0:
+                continue
+            
+            # Only include if we matched to a provider
+            if provider:
+                matched_count += 1
                 rankings.append(ModelRanking(
                     model_name=model_slug or model_name,
                     provider=provider,
@@ -311,20 +335,33 @@ class ExternalBenchmarkIntegration:
                     category=category,
                     source="artificial_analysis",
                     metadata={
-                        "speed": model_data.get("speed_tokens_per_sec"),
-                        "latency_ms": model_data.get("latency_ms"),
-                        "cost_per_token": model_data.get("cost_per_token"),
-                        "context_window": model_data.get("context_window")
+                        "external_name": model_data.get("name"),
+                        "creator": creator_name,
+                        "speed": model_data.get("median_output_tokens_per_second"),
+                        "latency_ms": model_data.get("median_latency_ms"),
                     },
                     timestamp=datetime.utcnow()
                 ))
+                
+                logger.debug(
+                    f"Matched model: {model_data.get('name')} -> provider '{provider}' (score: {score})"
+                )
         
         # Sort by score and assign ranks
         rankings.sort(key=lambda x: x.score, reverse=True)
         for idx, ranking in enumerate(rankings, 1):
             ranking.rank = idx
         
-        logger.info(f"Parsed {len(rankings)} rankings for {category} from Artificial Analysis")
+        logger.info(
+            f"✅ Parsed {len(rankings)} rankings for {category} from Artificial Analysis "
+            f"({matched_count} matched to available providers)"
+        )
+        
+        if len(rankings) > 0:
+            logger.info(f"Top 3 rankings for {category}:")
+            for r in rankings[:3]:
+                logger.info(f"  #{r.rank}: {r.provider} (score: {r.score:.1f})")
+        
         return rankings
     
     async def _fetch_llm_stats(self, category: str) -> List[ModelRanking]:
@@ -401,13 +438,15 @@ class ExternalBenchmarkIntegration:
         
         test_prompt = MINIMAL_TESTS.get(category, MINIMAL_TESTS["general"])[0]
         
-        # Get available providers
+        # Get available LLM providers only (exclude TTS, benchmark APIs, etc.)
         provider_manager = ProviderManager()
-        available = list(provider_manager.registry.providers.keys())
+        available_llm_providers = list(provider_manager.registry.get_llm_providers().keys())
+        
+        logger.info(f"Testing {len(available_llm_providers)} LLM providers: {available_llm_providers}")
         
         rankings = []
         
-        for provider in available:
+        for provider in available_llm_providers:
             try:
                 response = await provider_manager.universal_provider.generate(
                     provider_name=provider,
@@ -424,8 +463,12 @@ class ExternalBenchmarkIntegration:
                     if response.response_time_ms > 5000:
                         score *= 0.8
                 
+                # FIX: Access dict properly
+                provider_config = provider_manager.registry.providers[provider]
+                model_name = provider_config.get('model_name', 'default')
+                
                 rankings.append(ModelRanking(
-                    model_name=provider_manager.registry.providers[provider].model_name,
+                    model_name=model_name,
                     provider=provider,
                     score=score,
                     rank=0,
@@ -435,6 +478,8 @@ class ExternalBenchmarkIntegration:
                     timestamp=datetime.utcnow()
                 ))
                 
+                logger.info(f"✅ Manual test passed for {provider}: score={score:.1f}")
+                
             except Exception as e:
                 logger.error(f"Manual test failed for {provider}: {e}")
         
@@ -443,14 +488,15 @@ class ExternalBenchmarkIntegration:
         for idx, ranking in enumerate(rankings, 1):
             ranking.rank = idx
         
+        logger.info(f"Manual tests complete: {len(rankings)} providers ranked")
         return rankings
     
     def _normalize_model_name(self, external_name: str) -> Optional[str]:
         """
-        Map external model name to our internal provider (ENHANCED - Dynamic)
+        Map external model name to our internal provider (DYNAMIC)
         
-        Uses pattern matching instead of hardcoded dictionary.
-        More flexible and adapts to new models automatically.
+        Uses pattern matching that adapts to available providers.
+        Completely dynamic - no hardcoded provider list.
         
         Args:
             external_name: Model name from external API
@@ -461,24 +507,32 @@ class ExternalBenchmarkIntegration:
         
         external_lower = external_name.lower()
         
-        # Get available providers from .env
+        # Get available providers dynamically from .env
         from core.ai_providers import ProviderRegistry
         registry = ProviderRegistry()
-        available_providers = list(registry.get_all_providers().keys())
+        available_llm_providers = list(registry.get_llm_providers().keys())
         
-        # Pattern-based matching (ML approach, not hardcoded)
-        # Only consider available providers
-        for provider in available_providers:
+        logger.debug(f"Normalizing '{external_name}' against available LLMs: {available_llm_providers}")
+        
+        # Pattern-based matching (adapts to whatever providers exist)
+        # Check each available provider
+        for provider in available_llm_providers:
+            # Get patterns for this provider (or use provider name itself)
             patterns = self.PROVIDER_PATTERNS.get(provider, [provider])
+            
             for pattern in patterns:
                 if pattern in external_lower:
+                    logger.debug(f"Matched '{external_name}' to provider '{provider}' via pattern '{pattern}'")
                     return provider
         
-        # Fallback: check if external name contains provider name
-        for provider in available_providers:
+        # Fallback: check if provider name is contained in external name
+        for provider in available_llm_providers:
             if provider in external_lower or external_lower in provider:
+                logger.debug(f"Matched '{external_name}' to provider '{provider}' via substring")
                 return provider
         
+        # No match found
+        logger.debug(f"Could not match '{external_name}' to any available provider")
         return None
     
     async def _save_rankings_to_db(
