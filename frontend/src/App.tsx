@@ -116,29 +116,51 @@ const ErrorFallback: React.FC<{ error: Error; resetErrorBoundary: () => void }> 
 /**
  * Protected route wrapper for authenticated pages
  * 
- * Redirects to login if not authenticated
- * Checks localStorage for accessToken
+ * UPDATED: Now handles async auth checking properly
+ * 
+ * Flow:
+ * 1. Check if auth is still being verified (isAuthLoading)
+ * 2. If loading → Show loading skeleton
+ * 3. If authenticated → Render children
+ * 4. If not authenticated → Redirect to login
  * 
  * Following AGENTS_FRONTEND.md:
  * - Type-safe props
  * - Automatic redirect
- * - Preserves intended destination (via state)
+ * - Loading states
+ * - No flash of unauthorized content
+ * - Accessible with ARIA attributes
  */
 interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, isAuthLoading } = useAuthStore();
   
-  // Check if user is authenticated via store or token
-  // Note: authStore saves tokens as 'jwt_token' in localStorage
-  const hasToken = localStorage.getItem('jwt_token');
+  // CRITICAL: Wait for auth check to complete
+  if (isAuthLoading) {
+    return (
+      <div 
+        className="flex items-center justify-center min-h-screen bg-dark-900"
+        role="status"
+        aria-label="Verifying authentication"
+      >
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-gray-400 text-sm">Loading your session...</p>
+        </div>
+      </div>
+    );
+  }
   
-  if (!isAuthenticated && !hasToken) {
+  // Auth check complete - make decision
+  if (!isAuthenticated) {
+    console.log('🚫 Not authenticated, redirecting to login');
     return <Navigate to="/login" replace />;
   }
   
+  console.log('✅ Authenticated, rendering protected content');
   return <>{children}</>;
 };
 
