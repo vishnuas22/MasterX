@@ -56,6 +56,13 @@ export interface HeaderProps {
   showNotifications?: boolean;
   
   /**
+   * Modal handlers
+   */
+  onOpenDashboard?: () => void;
+  onOpenSettings?: () => void;
+  onOpenProfile?: () => void;
+  
+  /**
    * Additional CSS classes
    */
   className?: string;
