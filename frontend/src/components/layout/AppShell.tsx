@@ -42,6 +42,9 @@ import { cn } from '@/utils/cn';
 
 export interface AppShellProps {
   children: React.ReactNode;
+  onOpenDashboard?: () => void;
+  onOpenSettings?: () => void;
+  onOpenProfile?: () => void;
 }
 
 interface NavItem {
@@ -334,7 +337,12 @@ EmotionWidget.displayName = 'EmotionWidget';
 // MAIN APPSHELL COMPONENT
 // ============================================================================
 
-export const AppShell = React.memo<AppShellProps>(({ children }) => {
+export const AppShell = React.memo<AppShellProps>(({ 
+  children,
+  onOpenDashboard,
+  onOpenSettings,
+  onOpenProfile
+}) => {
   const { openModal, closeModal, activeModal } = useUIStore();
   
   // Initialize WebSocket connection for real-time updates
@@ -342,8 +350,8 @@ export const AppShell = React.memo<AppShellProps>(({ children }) => {
 
   // Navigation items with modal handlers
   const navItems = getNavigationItems(
-    () => openModal('dashboard'),
-    () => openModal('settings')
+    onOpenDashboard || (() => openModal('dashboard')),
+    onOpenSettings || (() => openModal('settings'))
   );
 
   // Keyboard shortcuts
