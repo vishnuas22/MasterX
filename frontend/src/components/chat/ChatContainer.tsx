@@ -198,10 +198,8 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
         setIsInitialized(true);
       } catch (err) {
         console.error('Failed to initialize session:', err);
-        toast({
-          title: 'Session Error',
-          description: 'Failed to load chat session. Please try again.',
-          variant: 'error'
+        toast.error('Session Error', {
+          description: 'Failed to load chat session. Please try again.'
         });
       }
     };
@@ -274,10 +272,8 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
         errorMessage = err.message;
       }
       
-      toast({
-        title: errorTitle,
-        description: errorMessage,
-        variant: 'error'
+      toast.error(errorTitle, {
+        description: errorMessage
       });
     }
   }, [user, storeSendMessage, storeSessionId, isConnected, sendEvent]);
@@ -288,10 +284,8 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
   
   useEffect(() => {
     if (error) {
-      toast({
-        title: 'Error',
-        description: error,
-        variant: 'error'
+      toast.error('Error', {
+        description: error
       });
     }
   }, [error]);
