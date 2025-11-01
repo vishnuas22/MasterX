@@ -38,6 +38,8 @@ import { cn } from '@/utils/cn';
 const Dashboard = lazy(() => import('@/pages/Dashboard'));
 const Settings = lazy(() => import('@/pages/Settings'));
 const Profile = lazy(() => import('@/pages/Profile'));
+const Analytics = lazy(() => import('@/pages/Analytics'));
+const Achievements = lazy(() => import('@/pages/Achievements'));
 
 // ============================================================================
 // TYPES
@@ -51,7 +53,7 @@ export interface MainAppProps {
   initialView?: 'chat' | 'dashboard' | 'settings' | 'profile';
 }
 
-type ModalType = 'dashboard' | 'settings' | 'profile' | null;
+type ModalType = 'dashboard' | 'settings' | 'profile' | 'analytics' | 'achievements' | null;
 
 // ============================================================================
 // COMPONENT
@@ -179,6 +181,8 @@ export const MainApp: React.FC<MainAppProps> = ({
         onOpenDashboard={() => handleOpenModal('dashboard')}
         onOpenSettings={() => handleOpenModal('settings')}
         onOpenProfile={() => handleOpenModal('profile')}
+        onOpenAnalytics={() => handleOpenModal('analytics')}
+        onOpenAchievements={() => handleOpenModal('achievements')}
       >
         {/* Main Content */}
         <div className="flex-1 flex overflow-hidden">
@@ -227,6 +231,12 @@ export const MainApp: React.FC<MainAppProps> = ({
           )}
           {activeModal === 'profile' && (
             <Profile onClose={handleCloseModal} />
+          )}
+          {activeModal === 'analytics' && (
+            <Analytics onClose={handleCloseModal} />
+          )}
+          {activeModal === 'achievements' && (
+            <Achievements onClose={handleCloseModal} />
           )}
         </Suspense>
       </AppShell>
