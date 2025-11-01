@@ -49,6 +49,7 @@ interface AuthState {
   refreshToken: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isAuthLoading: boolean; // NEW: Separate loading state for auth check on mount
   error: string | null;
   lastRefreshTime: number | null;
   
@@ -97,6 +98,7 @@ export const useAuthStore = create<AuthState>()(
       refreshToken: null,
       isAuthenticated: false,
       isLoading: false,
+      isAuthLoading: true, // NEW: Start as true (checking auth on mount)
       error: null,
       lastRefreshTime: null,
       
@@ -325,46 +327,73 @@ export const useAuthStore = create<AuthState>()(
       /**
        * Check authentication on app load
        * 
+       * CRITICAL: This runs on every page load
+       * - Sets isAuthLoading = true at start
        * - Verifies stored tokens
        * - Fetches user profile if valid
        * - Refreshes token if needed
-       * - Logs out if invalid
+       * - Sets isAuthLoading = false when done
+       * 
+       * This prevents the race condition where ProtectedRoute
+       * redirects before auth check completes.
        */
       checkAuth: async () => {
+        set({ isAuthLoading: true }); // NEW: Set loading
+        
         const token = localStorage.getItem('jwt_token');
         const refreshToken = localStorage.getItem('refresh_token');
         
+        // No token found - not authenticated
         if (!token) {
-          set({ isAuthenticated: false });
+          console.log('🔍 No token found in localStorage');
+          set({ 
+            isAuthenticated: false,
+            isAuthLoading: false, // NEW: Done checking
+          });
           return;
         }
+        
+        console.log('🔍 Found tokens in localStorage, verifying...');
         
         // Check if token is expiring soon
         if (isTokenExpiringSoon(token) && refreshToken) {
           try {
+            console.log('🔄 Token expiring soon, refreshing...');
             await get().refreshAccessToken();
+            set({ isAuthLoading: false }); // NEW: Done checking
             return;
           } catch {
             // If refresh fails, try to get user with current token
+            console.log('⚠️ Token refresh failed, trying current token...');
           }
         }
         
         try {
           // Verify token by fetching user
+          console.log('📡 Verifying token with /api/auth/me...');
           const apiUser = await authAPI.getCurrentUser();
           
           // Adapt to frontend User type
           const user = adaptUserApiResponse(apiUser);
+          
+          console.log('✅ Auth check complete: User authenticated -', user.name);
           
           set({
             user,
             accessToken: token,
             refreshToken,
             isAuthenticated: true,
+            isAuthLoading: false, // NEW: Done checking
           });
         } catch (error) {
+          console.error('❌ Auth check failed:', error);
+          
           // Token invalid or expired, logout
           await get().logout();
+          
+          set({
+            isAuthLoading: false, // NEW: Done checking
+          });
         }
       },
       
@@ -449,12 +478,14 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'auth-storage',
-      // Only persist these fields (don't persist loading/error states)
+      // IMPORTANT: Persist tokens for restoration on page load
+      // This works alongside localStorage as a backup
       partialize: (state) => ({
         user: state.user,
-        accessToken: state.accessToken,
-        refreshToken: state.refreshToken,
+        accessToken: state.accessToken, // NEW: Persist access token
+        refreshToken: state.refreshToken, // NEW: Persist refresh token
         lastRefreshTime: state.lastRefreshTime,
+        // Don't persist loading states or errors
       }),
     }
   )
