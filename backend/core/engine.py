@@ -237,10 +237,14 @@ class MasterXEngine:
                 ability=ability
             )
             
+            # Dynamic token allocation based on context
+            # Simple queries: 1500, Complex topics: 2500, Detailed explanations: 3000
+            token_limit = self._calculate_token_limit(message, emotion_result)
+            
             response = await self.provider_manager.generate(
                 prompt=enhanced_prompt,
                 provider_name=selected_provider,
-                max_tokens=1000
+                max_tokens=token_limit
             )
             
             ai_time_ms = (time.time() - ai_start) * 1000
@@ -430,11 +434,14 @@ class MasterXEngine:
         # Basic prompt enhancement
         enhanced_prompt = self._enhance_prompt_with_emotion(message, emotion_result)
         
+        # Dynamic token allocation
+        token_limit = self._calculate_token_limit(message, emotion_result)
+        
         # Generate response
         response = await self.provider_manager.generate(
             prompt=enhanced_prompt,
             provider_name=selected_provider,
-            max_tokens=1000
+            max_tokens=token_limit
         )
         
         response.emotion_state = emotion_state
@@ -624,3 +631,187 @@ Provide a response that:
     def get_available_providers(self):
         """Get list of available AI providers"""
         return self.provider_manager.get_available_providers()
+
+    
+    
+    # Response size categories (model-independent)
+    RESPONSE_SIZES = {
+        'minimal': 400,          # Very quick answers
+        'concise': 800,          # Short answers
+        'standard': 1500,        # Normal responses
+        'detailed': 2500,        # Explanations with examples
+        'comprehensive': 3500,   # Complex topics, multiple examples
+        'extensive': 4500        # Maximum detail for struggling students
+    }
+    
+    def __init__(self, model_max_tokens: int = 4096):
+        """
+        Initialize with the model's maximum output token limit.
+        
+        Args:
+            model_max_tokens: Maximum tokens your model can generate.
+                            Check your model's documentation for this value.
+        """
+        self.model_max_tokens = model_max_tokens
+        # Use 90% of max as safe upper limit
+        self.safe_max = int(model_max_tokens * 0.90)
+    
+    def calculate_token_limit(
+        self, 
+        message: str, 
+        emotion_result,
+        complexity_boost: float = 1.0
+    ) -> int:
+        """
+        Dynamically calculate token limit based on message and emotional state.
+        
+        Args:
+            message: User's input message
+            emotion_result: Object with learning_readiness attribute
+            complexity_boost: Multiplier for domain complexity (default 1.0)
+                            Use 1.2 for math/science, 0.8 for casual chat
+        
+        Returns:
+            Token limit (int) suitable for the model and context
+        """
+        message_lower = message.lower()
+        word_count = len(message.split())
+        
+        # === STEP 1: BASE SIZE FROM MESSAGE LENGTH ===
+        base_tokens = self._get_base_from_length(word_count)
+        
+        # === STEP 2: ADJUST FOR QUESTION TYPE ===
+        base_tokens = self._adjust_for_question_type(message_lower, base_tokens)
+        
+        # === STEP 3: ADJUST FOR LEARNING READINESS ===
+        base_tokens = self._adjust_for_readiness(
+            emotion_result.learning_readiness, 
+            base_tokens
+        )
+        
+        # === STEP 4: ADJUST FOR STRUGGLE INDICATORS ===
+        base_tokens = self._adjust_for_struggle(message_lower, base_tokens)
+        
+        # === STEP 5: APPLY COMPLEXITY BOOST ===
+        base_tokens = int(base_tokens * complexity_boost)
+        
+        # === STEP 6: ENSURE WITHIN MODEL LIMITS ===
+        final_tokens = self._apply_model_constraints(base_tokens)
+        
+        return final_tokens
+    
+    def _get_base_from_length(self, word_count: int) -> int:
+        """Determine base token allocation from message length"""
+        if word_count < 5:
+            return self.RESPONSE_SIZES['minimal']
+        elif word_count < 15:
+            return self.RESPONSE_SIZES['concise']
+        elif word_count < 30:
+            return self.RESPONSE_SIZES['standard']
+        elif word_count < 60:
+            return self.RESPONSE_SIZES['detailed']
+        else:
+            return self.RESPONSE_SIZES['comprehensive']
+    
+    def _adjust_for_question_type(self, message_lower: str, base: int) -> int:
+        """Adjust tokens based on question type patterns"""
+        
+        # Explanation requests need more space
+        explanation_keywords = [
+            'explain', 'how does', 'how do', 'why', 'what is', 'what are',
+            'tell me about', 'describe', 'teach me', 'help me understand',
+            'learn about', 'walk me through', 'show me', 'demonstrate',
+            'tutorial', 'guide me', 'break down'
+        ]
+        
+        if any(keyword in message_lower for keyword in explanation_keywords):
+            base = max(base, self.RESPONSE_SIZES['detailed'])
+        
+        # Multiple questions need more space
+        question_count = message_lower.count('?')
+        if question_count > 2:
+            base = max(base, self.RESPONSE_SIZES['comprehensive'])
+        
+        # Step-by-step requests
+        step_keywords = ['step by step', 'steps to', 'walkthrough', 'process']
+        if any(keyword in message_lower for keyword in step_keywords):
+            base = max(base, self.RESPONSE_SIZES['detailed'])
+        
+        # Code/technical requests
+        code_keywords = ['code', 'function', 'implement', 'algorithm', 'debug']
+        if any(keyword in message_lower for keyword in code_keywords):
+            base = max(base, self.RESPONSE_SIZES['detailed'])
+        
+        # Comparison questions
+        comparison_keywords = ['compare', 'difference between', 'vs', 'versus']
+        if any(keyword in message_lower for keyword in comparison_keywords):
+            base = max(base, self.RESPONSE_SIZES['detailed'])
+        
+        return base
+    
+    def _adjust_for_readiness(self, readiness: str, base: int) -> int:
+        """Adjust based on student's emotional/learning state"""
+        
+        if readiness == 'blocked':
+            # Maximum support - needs extensive help
+            return max(base, self.RESPONSE_SIZES['extensive'])
+        
+        elif readiness in ['not_ready', 'low_readiness']:
+            # Struggling - needs comprehensive explanations
+            return max(base, self.RESPONSE_SIZES['comprehensive'])
+        
+        elif readiness == 'moderate_readiness':
+            # Normal learning - standard to detailed
+            return max(base, self.RESPONSE_SIZES['detailed'])
+        
+        elif readiness == 'optimal_readiness':
+            # Doing well - can be efficient but still thorough
+            return min(base, self.RESPONSE_SIZES['comprehensive'])
+        
+        else:
+            # Unknown readiness - err on side of being helpful
+            return max(base, self.RESPONSE_SIZES['standard'])
+    
+    def _adjust_for_struggle(self, message_lower: str, base: int) -> int:
+        """Boost tokens if explicit struggle indicators present"""
+        
+        struggle_indicators = [
+            'confused', "don't understand", "can't understand",
+            "doesn't make sense", "can't figure out", 'lost', 'stuck',
+            'help', 'struggling', 'difficult', 'hard to understand',
+            'not getting', "can't get", 'keep failing', 'tried multiple times',
+            'frustrated', "still don't get", 'really need help'
+        ]
+        
+        if any(indicator in message_lower for indicator in struggle_indicators):
+            return max(base, self.RESPONSE_SIZES['extensive'])
+        
+        return base
+    
+    def _apply_model_constraints(self, tokens: int) -> int:
+        """Ensure token count is within model's safe operating range"""
+        
+        # Never exceed model's safe maximum
+        tokens = min(tokens, self.safe_max)
+        
+        # Ensure minimum quality threshold (never too short)
+        tokens = max(tokens, self.RESPONSE_SIZES['minimal'])
+        
+        return tokens
+    
+    def get_recommended_limit_for_scenario(self, scenario: str) -> int:
+        """
+        Get pre-calculated token limits for common scenarios.
+        Useful for quick testing or default values.
+        """
+        scenarios = {
+            'quick_fact': self.RESPONSE_SIZES['minimal'],
+            'simple_answer': self.RESPONSE_SIZES['concise'],
+            'normal_question': self.RESPONSE_SIZES['standard'],
+            'explanation': self.RESPONSE_SIZES['detailed'],
+            'complex_topic': self.RESPONSE_SIZES['comprehensive'],
+            'struggling_student': self.RESPONSE_SIZES['extensive']
+        }
+        
+        limit = scenarios.get(scenario, self.RESPONSE_SIZES['standard'])
+        return min(limit, self.safe_max)
