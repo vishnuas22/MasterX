@@ -132,7 +132,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { isAuthenticated } = useAuthStore();
   
   // Check if user is authenticated via store or token
-  const hasToken = localStorage.getItem('accessToken');
+  // Note: authStore saves tokens as 'jwt_token' in localStorage
+  const hasToken = localStorage.getItem('jwt_token');
   
   if (!isAuthenticated && !hasToken) {
     return <Navigate to="/login" replace />;
