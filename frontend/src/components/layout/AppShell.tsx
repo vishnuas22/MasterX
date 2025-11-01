@@ -45,6 +45,8 @@ export interface AppShellProps {
   onOpenDashboard?: () => void;
   onOpenSettings?: () => void;
   onOpenProfile?: () => void;
+  onOpenAnalytics?: () => void;
+  onOpenAchievements?: () => void;
 }
 
 interface NavItem {
@@ -62,7 +64,9 @@ interface NavItem {
 
 const getNavigationItems = (
   openDashboard: () => void,
-  openSettings: () => void
+  openSettings: () => void,
+  openAnalytics: () => void,
+  openAchievements: () => void
 ): NavItem[] => [
   {
     id: 'chat',
@@ -80,13 +84,13 @@ const getNavigationItems = (
     id: 'analytics',
     label: 'Analytics',
     icon: BarChart3,
-    onClick: () => console.log('Analytics'), // TODO: Implement
+    onClick: openAnalytics,
   },
   {
     id: 'achievements',
     label: 'Achievements',
     icon: Trophy,
-    onClick: () => console.log('Achievements'), // TODO: Implement
+    onClick: openAchievements,
   },
   {
     id: 'settings',
@@ -341,7 +345,9 @@ export const AppShell = React.memo<AppShellProps>(({
   children,
   onOpenDashboard,
   onOpenSettings,
-  onOpenProfile
+  onOpenProfile,
+  onOpenAnalytics,
+  onOpenAchievements
 }) => {
   const { openModal, closeModal, activeModal } = useUIStore();
   
@@ -351,7 +357,9 @@ export const AppShell = React.memo<AppShellProps>(({
   // Navigation items with modal handlers
   const navItems = getNavigationItems(
     onOpenDashboard || (() => openModal('dashboard')),
-    onOpenSettings || (() => openModal('settings'))
+    onOpenSettings || (() => openModal('settings')),
+    onOpenAnalytics || (() => openModal('analytics')),
+    onOpenAchievements || (() => openModal('achievements'))
   );
 
   // Keyboard shortcuts
