@@ -208,14 +208,22 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
   }, [activeSessionId, user, navigate, loadHistory]);
   
   // ============================================================================
-  // AUTO-SCROLL TO BOTTOM
+  // AUTO-SCROLL TO BOTTOM (Optimized to prevent excessive re-renders)
   // ============================================================================
   
+  const scrollToBottom = useCallback(() => {
+    messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, []);
+  
   useEffect(() => {
+    // Only scroll when new messages are added, not on every render
     if (messages.length > 0) {
-      messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      // Use requestAnimationFrame to prevent layout thrashing
+      requestAnimationFrame(() => {
+        scrollToBottom();
+      });
     }
-  }, [messages]);
+  }, [messages.length, scrollToBottom]); // Only trigger on message count change
   
   // ============================================================================
   // MESSAGE SENDING HANDLER
