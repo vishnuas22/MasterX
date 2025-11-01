@@ -18,7 +18,7 @@
  */
 
 import React, { useEffect } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   MessageSquare, Home, BarChart3, Trophy, BookOpen,
@@ -48,6 +48,13 @@ export interface SidebarProps {
    * @default false
    */
   isCollapsed?: boolean;
+  
+  /**
+   * Modal handlers
+   */
+  onOpenDashboard?: () => void;
+  onOpenSettings?: () => void;
+  onOpenProfile?: () => void;
   
   /**
    * Additional CSS classes
@@ -87,7 +94,6 @@ const navigationSections: NavSection[] = [
         id: 'dashboard',
         label: 'Dashboard',
         icon: Home,
-        href: '/app/dashboard',
         description: 'Your learning overview',
       },
     ],
@@ -99,14 +105,12 @@ const navigationSections: NavSection[] = [
         id: 'analytics',
         label: 'Progress',
         icon: BarChart3,
-        href: '/app/analytics',
         description: 'Track your learning progress',
       },
       {
         id: 'achievements',
         label: 'Achievements',
         icon: Trophy,
-        href: '/app/achievements',
         badge: 2, // New achievements
         description: 'View your achievements',
       },
@@ -119,21 +123,18 @@ const navigationSections: NavSection[] = [
         id: 'courses',
         label: 'Courses',
         icon: BookOpen,
-        href: '/app/courses',
         description: 'Browse learning paths',
       },
       {
         id: 'explore',
         label: 'Explore',
         icon: Compass,
-        href: '/app/explore',
         description: 'Discover new topics',
       },
       {
         id: 'collaboration',
         label: 'Collaboration',
         icon: Users,
-        href: '/app/collaboration',
         description: 'Study with peers',
       },
     ],
@@ -144,7 +145,6 @@ const navigationSections: NavSection[] = [
         id: 'settings',
         label: 'Settings',
         icon: Settings,
-        href: '/app/settings',
         description: 'Customize your experience',
       },
     ],
@@ -159,26 +159,50 @@ interface NavItemProps {
   item: NavItem;
   isCollapsed: boolean;
   onClick?: () => void;
+  onOpenDashboard?: () => void;
+  onOpenSettings?: () => void;
 }
 
-const NavItemComponent = React.memo<NavItemProps>(({ item, isCollapsed, onClick }) => {
+const NavItemComponent = React.memo<NavItemProps>(({ 
+  item, 
+  isCollapsed, 
+  onClick,
+  onOpenDashboard,
+  onOpenSettings
+}) => {
   const location = useLocation();
-  const isActive = location.pathname === item.href || 
-                   location.pathname.startsWith(item.href + '/');
+  const navigate = useNavigate();
+  
+  const isActive = item.href 
+    ? (location.pathname === item.href || location.pathname.startsWith(item.href + '/'))
+    : false;
+
+  const handleClick = () => {
+    // Handle specific navigation cases
+    if (item.id === 'dashboard' && onOpenDashboard) {
+      onOpenDashboard();
+    } else if (item.id === 'settings' && onOpenSettings) {
+      onOpenSettings();
+    } else if (item.id === 'chat' && item.href) {
+      navigate(item.href);
+    } else {
+      // For unimplemented features, show toast
+      console.log(`${item.label} feature coming soon!`);
+    }
+    
+    onClick?.(); // Close sidebar on mobile
+  };
 
   const content = (
-    <NavLink
-      to={item.href}
-      onClick={onClick}
-      className={({ isActive: active }) =>
-        cn(
-          'group relative flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all',
-          'hover:bg-bg-secondary',
-          'focus-ring',
-          active && 'bg-accent-primary/10 text-accent-primary',
-          isCollapsed && 'justify-center px-2'
-        )
-      }
+    <button
+      onClick={handleClick}
+      className={cn(
+        'group relative flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all w-full',
+        'hover:bg-bg-secondary',
+        'focus-ring',
+        isActive && 'bg-accent-primary/10 text-accent-primary',
+        isCollapsed && 'justify-center px-2'
+      )}
     >
       {/* Active indicator */}
       {isActive && (
@@ -200,7 +224,7 @@ const NavItemComponent = React.memo<NavItemProps>(({ item, isCollapsed, onClick 
       {/* Label (hidden when collapsed) */}
       {!isCollapsed && (
         <>
-          <span className="text-sm font-medium flex-1">{item.label}</span>
+          <span className="text-sm font-medium flex-1 text-left">{item.label}</span>
           
           {/* Badge */}
           {item.badge && (
@@ -215,7 +239,7 @@ const NavItemComponent = React.memo<NavItemProps>(({ item, isCollapsed, onClick 
           )}
         </>
       )}
-    </NavLink>
+    </button>
   );
 
   // Wrap with tooltip when collapsed
@@ -240,6 +264,9 @@ export const Sidebar = React.memo<SidebarProps>(({
   isOpen,
   onClose,
   isCollapsed = false,
+  onOpenDashboard,
+  onOpenSettings,
+  onOpenProfile,
   className,
 }: SidebarProps) => {
   const sidebarRef = React.useRef<HTMLElement>(null);
@@ -314,23 +341,14 @@ export const Sidebar = React.memo<SidebarProps>(({
                     item={item}
                     isCollapsed={isCollapsed}
                     onClick={onClose} // Close sidebar on mobile
+                    onOpenDashboard={onOpenDashboard}
+                    onOpenSettings={onOpenSettings}
                   />
                 ))}
               </div>
             </div>
           ))}
         </nav>
-
-        {/* Collapse toggle (desktop only) - TODO: Implement toggle state */}
-        {/* <button
-          onClick={() => toggleCollapse()}
-          className="hidden lg:flex absolute -right-3 top-6 w-6 h-6 bg-bg-secondary border border-white/10 rounded-full items-center justify-center hover:bg-bg-tertiary transition-colors"
-          aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-        >
-          <ChevronRight
-            className={cn('w-4 h-4 transition-transform', isCollapsed && 'rotate-180')}
-          />
-        </button> */}
       </motion.aside>
     </>
   );
