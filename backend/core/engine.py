@@ -44,8 +44,23 @@ class MasterXEngine:
     - Performance tracking (ability estimation, velocity)
     """
     
-    def __init__(self):
-        """Initialize MasterX engine with all intelligence components"""
+    # Response size categories (model-independent)
+    RESPONSE_SIZES = {
+        'minimal': 400,          # Very quick answers
+        'concise': 800,          # Short answers
+        'standard': 1500,        # Normal responses
+        'detailed': 2500,        # Explanations with examples
+        'comprehensive': 3500,   # Complex topics, multiple examples
+        'extensive': 4500        # Maximum detail for struggling students
+    }
+    
+    def __init__(self, model_max_tokens: int = 4096):
+        """
+        Initialize MasterX engine with all intelligence components
+        
+        Args:
+            model_max_tokens: Maximum tokens your model can generate (default: 4096)
+        """
         self.provider_manager = ProviderManager()
         self.emotion_engine = EmotionEngine(config=EmotionEngineConfig())
         
@@ -54,6 +69,11 @@ class MasterXEngine:
         self.context_manager = None
         self.adaptive_engine = None
         self._db_initialized = False
+        
+        # Token management
+        self.model_max_tokens = model_max_tokens
+        # Use 90% of max as safe upper limit
+        self.safe_max = int(model_max_tokens * 0.90)
         
         logger.info("✅ MasterXEngine initialized (Phase 3: Full Intelligence)")
     
@@ -238,7 +258,7 @@ class MasterXEngine:
             )
             
             # Dynamic token allocation based on context
-            token_limit = self._calculate_token_limit(message, emotion_result)
+            token_limit = self.calculate_token_limit(message, emotion_result)
             
             response = await self.provider_manager.generate(
                 prompt=enhanced_prompt,
@@ -434,7 +454,7 @@ class MasterXEngine:
         enhanced_prompt = self._enhance_prompt_with_emotion(message, emotion_result)
         
         # Dynamic token allocation
-        token_limit = self._calculate_token_limit(message, emotion_result)
+        token_limit = self.calculate_token_limit(message, emotion_result)
         
         # Generate response
         response = await self.provider_manager.generate(
@@ -633,27 +653,6 @@ Provide a response that:
 
     
     
-    # Response size categories (model-independent)
-    RESPONSE_SIZES = {
-        'minimal': 400,          # Very quick answers
-        'concise': 800,          # Short answers
-        'standard': 1500,        # Normal responses
-        'detailed': 2500,        # Explanations with examples
-        'comprehensive': 3500,   # Complex topics, multiple examples
-        'extensive': 4500        # Maximum detail for struggling students
-    }
-    
-    def __init__(self, model_max_tokens: int = 4096):
-        """
-        Initialize with the model's maximum output token limit.
-        
-        Args:
-            model_max_tokens: Maximum tokens your model can generate.
-                            Check your model's documentation for this value.
-        """
-        self.model_max_tokens = model_max_tokens
-        # Use 90% of max as safe upper limit
-        self.safe_max = int(model_max_tokens * 0.90)
     
     def calculate_token_limit(
         self, 
