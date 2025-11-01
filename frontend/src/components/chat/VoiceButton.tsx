@@ -128,18 +128,14 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({
     onTranscription: useCallback((text: string) => {
       if (text.trim()) {
         onTranscription(text);
-        toast({
-          title: 'Transcription Complete',
-          description: text.slice(0, 50) + (text.length > 50 ? '...' : ''),
-          variant: 'success'
+        toast.success('Transcription Complete', {
+          description: text.slice(0, 50) + (text.length > 50 ? '...' : '')
         });
       }
     }, [onTranscription]),
     onError: useCallback((err: Error) => {
-      toast({
-        title: 'Voice Input Error',
-        description: err.message,
-        variant: 'error'
+      toast.error('Voice Input Error', {
+        description: err.message
       });
     }, [])
   });
