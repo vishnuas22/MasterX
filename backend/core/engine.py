@@ -238,7 +238,6 @@ class MasterXEngine:
             )
             
             # Dynamic token allocation based on context
-            # Simple queries: 1500, Complex topics: 2500, Detailed explanations: 3000
             token_limit = self._calculate_token_limit(message, emotion_result)
             
             response = await self.provider_manager.generate(
