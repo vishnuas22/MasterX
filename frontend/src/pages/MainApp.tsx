@@ -24,7 +24,6 @@ import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom';
 import { AppShell } from '@/components/layout/AppShell';
-import { Header } from '@/components/layout/Header';
 import { ChatContainer } from '@/components/chat/ChatContainer';
 import { EmotionWidget } from '@/components/emotion/EmotionWidget';
 import { Skeleton } from '@/components/ui/Skeleton';
@@ -73,6 +72,9 @@ export const MainApp: React.FC<MainAppProps> = ({
 
   // Notification state
   const [notifications, setNotifications] = useState<any[]>([]);
+
+  // Sidebar state
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // -------------------------------------------------------------------------
   // Effects
@@ -173,10 +175,11 @@ export const MainApp: React.FC<MainAppProps> = ({
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
 
-      <AppShell>
-        {/* Header */}
-        <Header />
-
+      <AppShell
+        onOpenDashboard={() => handleOpenModal('dashboard')}
+        onOpenSettings={() => handleOpenModal('settings')}
+        onOpenProfile={() => handleOpenModal('profile')}
+      >
         {/* Main Content */}
         <div className="flex-1 flex overflow-hidden">
           {/* Chat Container (Primary Focus) */}
