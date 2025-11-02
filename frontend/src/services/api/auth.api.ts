@@ -242,20 +242,61 @@ export const authAPI = {
   /**
    * Update user profile
    * 
-   * NOTE: This endpoint is not yet implemented in the backend.
+   * Updates the authenticated user's profile information.
+   * Only provided fields will be updated (partial updates supported).
    * 
-   * Future implementation will support:
-   * - PATCH /api/auth/profile
-   * - Update name, avatar, preferences
-   * - Returns updated user object
+   * Updatable Fields:
+   * - name: string (1-100 characters)
+   * - learning_preferences: LearningPreferences object
+   * - emotional_profile: EmotionalProfile object
    * 
-   * @throws 501 - Not Implemented
+   * Backend Endpoint: PATCH /api/auth/profile
+   * Auth Required: Yes (JWT token)
+   * 
+   * @param updates - Partial user data to update
+   * @returns Updated user profile
+   * @throws 400 - Invalid input data
+   * @throws 401 - Unauthorized (invalid or missing token)
+   * @throws 404 - User not found
+   * @throws 500 - Update failed
+   * 
+   * @example
+   * ```typescript
+   * const updatedUser = await authAPI.updateProfile({
+   *   name: 'Jane Smith',
+   *   learning_preferences: {
+   *     preferred_subjects: ['math', 'science'],
+   *     learning_style: 'visual',
+   *     difficulty_preference: 'adaptive'
+   *   }
+   * });
+   * ```
    */
-  updateProfile: async (_userId: string, _updates: Partial<User>): Promise<User> => {
-    throw new Error(
-      'Profile update endpoint not yet implemented. ' +
-      'Future feature: PATCH /api/auth/profile'
+  updateProfile: async (updates: Partial<User>): Promise<UserApiResponse> => {
+    // Build request payload matching backend UpdateProfileRequest model
+    const payload: {
+      name?: string;
+      learning_preferences?: typeof updates.learning_preferences;
+      emotional_profile?: typeof updates.emotional_profile;
+    } = {};
+
+    // Only include fields that are actually being updated
+    if (updates.name !== undefined) {
+      payload.name = updates.name;
+    }
+    if (updates.learning_preferences !== undefined) {
+      payload.learning_preferences = updates.learning_preferences;
+    }
+    if (updates.emotional_profile !== undefined) {
+      payload.emotional_profile = updates.emotional_profile;
+    }
+
+    const { data } = await apiClient.patch<UserApiResponse>(
+      '/api/auth/profile',
+      payload
     );
+    
+    return data;
   },
 
   /**
