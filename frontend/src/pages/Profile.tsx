@@ -76,10 +76,19 @@ const mockAchievements = [
 ];
 
 export const Profile: React.FC<ProfileProps> = ({ onClose }) => {
-  const { user } = useAuth();
+  const { user, updateProfile } = useAuth();
   const [activeTab, setActiveTab] = useState<ProfileTab>('overview');
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  
+  // Form state for editable fields
+  const [formData, setFormData] = useState({
+    name: user?.name || '',
+    bio: '',
+    location: '',
+  });
 
   const tabs: { id: ProfileTab; label: string; icon: string }[] = [
     { id: 'overview', label: 'Overview', icon: '👤' },
@@ -87,15 +96,59 @@ export const Profile: React.FC<ProfileProps> = ({ onClose }) => {
     { id: 'achievements', label: 'Achievements', icon: '🏆' }
   ];
 
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    // Clear error when user starts typing
+    if (error) setError(null);
+  };
+
   const handleSave = async () => {
     setIsSaving(true);
+    setError(null);
+    setSuccessMessage(null);
+    
     try {
-      // TODO: Save profile to backend
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Validate name
+      if (!formData.name.trim()) {
+        setError('Name cannot be empty');
+        return;
+      }
+
+      // Call updateProfile from auth store (which calls backend API)
+      await updateProfile({
+        name: formData.name.trim(),
+      });
+
+      // Show success message
+      setSuccessMessage('Profile updated successfully!');
       setIsEditing(false);
+
+      // Clear success message after 3 seconds
+      setTimeout(() => setSuccessMessage(null), 3000);
+
+    } catch (err: any) {
+      console.error('Profile update failed:', err);
+      
+      // Extract error message from API response
+      const errorMessage = err.response?.data?.detail || 
+                          err.message || 
+                          'Failed to update profile. Please try again.';
+      setError(errorMessage);
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleCancel = () => {
+    // Reset form data to original user data
+    setFormData({
+      name: user?.name || '',
+      bio: '',
+      location: '',
+    });
+    setError(null);
+    setSuccessMessage(null);
+    setIsEditing(false);
   };
 
   return (
@@ -152,6 +205,25 @@ export const Profile: React.FC<ProfileProps> = ({ onClose }) => {
           </div>
         </div>
 
+        {/* Success/Error Messages */}
+        {successMessage && (
+          <div className="p-4 bg-green-500/10 border border-green-500/50 rounded-lg">
+            <p className="text-green-400 text-sm flex items-center">
+              <span className="mr-2">✓</span>
+              {successMessage}
+            </p>
+          </div>
+        )}
+        
+        {error && (
+          <div className="p-4 bg-red-500/10 border border-red-500/50 rounded-lg">
+            <p className="text-red-400 text-sm flex items-center">
+              <span className="mr-2">⚠</span>
+              {error}
+            </p>
+          </div>
+        )}
+
         {/* Content */}
         <div>
           {activeTab === 'overview' && (
@@ -159,41 +231,71 @@ export const Profile: React.FC<ProfileProps> = ({ onClose }) => {
               {isEditing ? (
                 <>
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Full Name
+                    <label 
+                      htmlFor="profile-name" 
+                      className="block text-sm font-medium text-gray-300 mb-2"
+                    >
+                      Full Name <span className="text-red-400">*</span>
                     </label>
                     <Input
+                      id="profile-name"
                       type="text"
-                      defaultValue={user?.name || ''}
+                      value={formData.name}
+                      onChange={(e) => handleInputChange('name', e.target.value)}
                       placeholder="Enter your name"
+                      data-testid="profile-name-input"
+                      required
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label 
+                      htmlFor="profile-bio" 
+                      className="block text-sm font-medium text-gray-300 mb-2"
+                    >
                       Bio
                     </label>
                     <textarea
-                      className="w-full px-4 py-2 bg-dark-700 border border-dark-600 rounded-lg text-white resize-none"
+                      id="profile-bio"
+                      className="w-full px-4 py-2 bg-dark-700 border border-dark-600 rounded-lg text-white resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       rows={4}
                       placeholder="Tell us about yourself..."
-                      defaultValue="Passionate learner exploring AI and technology"
+                      value={formData.bio}
+                      onChange={(e) => handleInputChange('bio', e.target.value)}
+                      data-testid="profile-bio-input"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label 
+                      htmlFor="profile-location" 
+                      className="block text-sm font-medium text-gray-300 mb-2"
+                    >
                       Location
                     </label>
                     <Input
+                      id="profile-location"
                       type="text"
-                      defaultValue="San Francisco, CA"
+                      value={formData.location}
+                      onChange={(e) => handleInputChange('location', e.target.value)}
                       placeholder="Enter your location"
+                      data-testid="profile-location-input"
                     />
                   </div>
                   <div className="flex space-x-3">
-                    <Button variant="primary" onClick={handleSave} loading={isSaving}>
-                      Save Changes
+                    <Button 
+                      variant="primary" 
+                      onClick={handleSave} 
+                      loading={isSaving}
+                      disabled={isSaving || !formData.name.trim()}
+                      data-testid="profile-save-button"
+                    >
+                      {isSaving ? 'Saving...' : 'Save Changes'}
                     </Button>
-                    <Button variant="ghost" onClick={() => setIsEditing(false)}>
+                    <Button 
+                      variant="ghost" 
+                      onClick={handleCancel}
+                      disabled={isSaving}
+                      data-testid="profile-cancel-button"
+                    >
                       Cancel
                     </Button>
                   </div>
