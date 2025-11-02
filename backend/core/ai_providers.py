@@ -535,14 +535,24 @@ class ProviderManager:
             model_name = provider_config.get('model_name', 'default')
             
             # Get quality score from benchmarks
+            # IMPORTANT: Take the BEST (highest scoring) model for this provider
             quality_score = 70.0  # Default baseline
             speed_score = 50.0  # Default speed
+            best_ranking = None
             
             for ranking in rankings:
                 if ranking.provider == provider_name:
-                    quality_score = ranking.score
-                    speed_score = ranking.metadata.get('speed', 50.0) or 50.0
-                    break
+                    # Take the best ranking (highest score) for this provider
+                    if best_ranking is None or ranking.score > best_ranking.score:
+                        best_ranking = ranking
+            
+            if best_ranking:
+                quality_score = best_ranking.score
+                speed_score = best_ranking.metadata.get('speed', 50.0) or 50.0
+                logger.debug(
+                    f"Provider '{provider_name}' quality from benchmarks: {quality_score:.1f} "
+                    f"(best model: {best_ranking.model_name})"
+                )
             
             # Skip if below minimum quality
             if quality_score < min_quality_score:
@@ -594,6 +604,12 @@ class ProviderManager:
                 'cost_score': cost_score,
                 'speed_score': speed_score
             })
+            
+            # Log scoring details for debugging
+            logger.debug(
+                f"Candidate {provider_name}: overall={overall_score:.3f} "
+                f"(quality={quality_score:.1f}, cost={cost_score:.3f}, speed={speed_score:.1f})"
+            )
         
         if not candidates:
             raise ProviderError(f"No suitable models for category {category}")
@@ -601,6 +617,14 @@ class ProviderManager:
         # Sort by overall score
         candidates.sort(key=lambda x: x['overall_score'], reverse=True)
         best = candidates[0]
+        
+        # Log all candidates for transparency
+        logger.info(f"Provider selection for category '{category}':")
+        for i, cand in enumerate(candidates, 1):
+            logger.info(
+                f"  #{i}: {cand['provider']} - overall={cand['overall_score']:.3f} "
+                f"(Q:{cand['quality_score']:.1f}, C:{cand['cost_score']:.2f}, S:{cand['speed_score']:.1f})"
+            )
         
         logger.info(
             f"✅ Selected {best['provider']}:{best['model_name']} "
