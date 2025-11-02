@@ -444,6 +444,55 @@ class UserResponse(BaseModel):
     last_active: datetime
 
 
+class UpdateProfileRequest(BaseModel):
+    """
+    Update user profile request
+    All fields are optional - only provided fields will be updated
+    """
+    name: Optional[str] = Field(None, min_length=1, max_length=100)
+    learning_preferences: Optional[LearningPreferences] = None
+    emotional_profile: Optional[EmotionalProfile] = None
+    
+    @field_validator('name')
+    @classmethod
+    def validate_name(cls, v):
+        if v is not None:
+            # Strip whitespace
+            v = v.strip()
+            if not v:
+                raise ValueError("Name cannot be empty or just whitespace")
+        return v
+
+
+
+class PasswordResetRequest(BaseModel):
+    """Request password reset (send reset token via email)"""
+    email: EmailStr
+
+
+class PasswordResetConfirm(BaseModel):
+    """Confirm password reset with token and new password"""
+    token: str = Field(..., min_length=1)
+    new_password: str = Field(..., min_length=8, max_length=128)
+    
+    @field_validator('new_password')
+    @classmethod
+    def validate_password_strength(cls, v):
+        """Validate password strength"""
+        if len(v) < 8:
+            raise ValueError("Password must be at least 8 characters long")
+        
+        # Check for at least one uppercase, one lowercase, and one number
+        has_upper = any(c.isupper() for c in v)
+        has_lower = any(c.islower() for c in v)
+        has_digit = any(c.isdigit() for c in v)
+        
+        if not (has_upper and has_lower and has_digit):
+            raise ValueError("Password must contain at least one uppercase letter, one lowercase letter, and one number")
+        
+        return v
+
+
 # ============================================================================
 # DATABASE INDEXES CONFIGURATION
 # ============================================================================
