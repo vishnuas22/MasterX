@@ -448,21 +448,44 @@ export const useAuthStore = create<AuthState>()(
        * 
        * @param updates - Partial user data to update
        */
+      /**
+       * Update user profile
+       * 
+       * Updates user profile on backend and syncs with local state.
+       * Supports partial updates (only provided fields are updated).
+       * 
+       * @param updates - Partial user data to update
+       * @throws Error if update fails
+       */
       updateProfile: async (updates) => {
         const { user } = get();
-        if (!user) return;
+        if (!user) {
+          throw new Error('No authenticated user');
+        }
+        
+        set({ isLoading: true, error: null });
         
         try {
-          // TODO: Implement backend profile update when available
-          // const updatedUser = await authAPI.updateProfile(user.id, updates);
+          // Call backend API to update profile
+          const updatedUserData = await authAPI.updateProfile(updates);
           
-          // For now, update local state
+          // Convert backend response to full User type
+          const updatedUser = adaptUserApiResponse(updatedUserData);
+          
+          // Update local state with backend response
           set({ 
-            user: { ...user, ...updates },
+            user: updatedUser,
+            isLoading: false,
             error: null,
           });
         } catch (error: any) {
-          set({ error: error.message || 'Failed to update profile' });
+          const errorMessage = error.response?.data?.detail || 
+                              error.message || 
+                              'Failed to update profile';
+          set({ 
+            isLoading: false,
+            error: errorMessage 
+          });
           throw error;
         }
       },
