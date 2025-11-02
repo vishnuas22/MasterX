@@ -495,11 +495,18 @@ class ExternalBenchmarkIntegration:
         """
         Map external model name to our internal provider (DYNAMIC)
         
-        Uses pattern matching that adapts to available providers.
-        Completely dynamic - no hardcoded provider list.
+        INTELLIGENT MATCHING STRATEGY:
+        1. Match based on the ACTUAL model each provider is using
+        2. Use provider patterns as secondary matching
+        3. Completely dynamic - adapts to .env configuration
+        
+        Example:
+        - If emergent uses "claude-sonnet-4-5" → match "Claude" models
+        - If groq uses "llama-3.3" → match "Llama" models
+        - If gemini uses "gemini-2.5" → match "Gemini" models
         
         Args:
-            external_name: Model name from external API
+            external_name: Model name from external API (e.g., "OpenAI GPT-5", "Anthropic Claude 4.5")
         
         Returns:
             Provider name or None
@@ -510,29 +517,76 @@ class ExternalBenchmarkIntegration:
         # Get available providers dynamically from .env
         from core.ai_providers import ProviderRegistry
         registry = ProviderRegistry()
-        available_llm_providers = list(registry.get_llm_providers().keys())
+        available_llm_providers = registry.get_llm_providers()
         
-        logger.debug(f"Normalizing '{external_name}' against available LLMs: {available_llm_providers}")
+        if not available_llm_providers:
+            logger.warning("No LLM providers available for matching")
+            return None
         
-        # Pattern-based matching (adapts to whatever providers exist)
-        # Check each available provider
-        for provider in available_llm_providers:
-            # Get patterns for this provider (or use provider name itself)
-            patterns = self.PROVIDER_PATTERNS.get(provider, [provider])
+        logger.debug(f"Normalizing '{external_name}' against {len(available_llm_providers)} LLM providers")
+        
+        # STRATEGY 1: Match based on the MODEL_NAME each provider is using
+        # This is the PRIMARY matching strategy for intelligent provider selection
+        for provider_name, provider_config in available_llm_providers.items():
+            model_name = provider_config.get('model_name', '').lower()
+            
+            if not model_name:
+                continue
+            
+            # Extract model family keywords from the configured model
+            # E.g., "claude-sonnet-4-5" → ["claude", "sonnet"]
+            # E.g., "llama-3.3-70b-versatile" → ["llama"]
+            # E.g., "gemini-2.5-flash" → ["gemini", "flash"]
+            
+            model_keywords = []
+            
+            # Common model family identifiers
+            if 'claude' in model_name:
+                model_keywords.extend(['claude', 'anthropic'])
+            if 'llama' in model_name:
+                model_keywords.extend(['llama', 'meta'])
+            if 'gemini' in model_name:
+                model_keywords.extend(['gemini', 'google'])
+            if 'gpt' in model_name or 'chatgpt' in model_name:
+                model_keywords.extend(['gpt', 'openai', 'chatgpt'])
+            if 'mistral' in model_name or 'mixtral' in model_name:
+                model_keywords.extend(['mistral', 'mixtral'])
+            if 'qwen' in model_name:
+                model_keywords.extend(['qwen', 'alibaba'])
+            if 'deepseek' in model_name:
+                model_keywords.extend(['deepseek'])
+            
+            # Check if any keyword matches the external name
+            for keyword in model_keywords:
+                if keyword in external_lower:
+                    logger.debug(
+                        f"Matched '{external_name}' to provider '{provider_name}' "
+                        f"via model family '{keyword}' (provider uses: {model_name})"
+                    )
+                    return provider_name
+        
+        # STRATEGY 2: Pattern-based matching using PROVIDER_PATTERNS
+        # This is the SECONDARY matching strategy for edge cases
+        for provider_name in available_llm_providers.keys():
+            patterns = self.PROVIDER_PATTERNS.get(provider_name, [provider_name])
             
             for pattern in patterns:
                 if pattern in external_lower:
-                    logger.debug(f"Matched '{external_name}' to provider '{provider}' via pattern '{pattern}'")
-                    return provider
+                    logger.debug(
+                        f"Matched '{external_name}' to provider '{provider_name}' via pattern '{pattern}'"
+                    )
+                    return provider_name
         
-        # Fallback: check if provider name is contained in external name
-        for provider in available_llm_providers:
-            if provider in external_lower or external_lower in provider:
-                logger.debug(f"Matched '{external_name}' to provider '{provider}' via substring")
-                return provider
+        # STRATEGY 3: Direct substring matching (last resort)
+        for provider_name in available_llm_providers.keys():
+            if provider_name in external_lower:
+                logger.debug(
+                    f"Matched '{external_name}' to provider '{provider_name}' via direct substring"
+                )
+                return provider_name
         
-        # No match found
-        logger.debug(f"Could not match '{external_name}' to any available provider")
+        # No match found - this is expected for models we don't have access to
+        logger.debug(f"No match found for '{external_name}' (model not available in our configuration)")
         return None
     
     async def _save_rankings_to_db(
