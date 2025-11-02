@@ -617,7 +617,7 @@ async def get_model_status():
 from fastapi import Depends, status as http_status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from utils.security import auth_manager, verify_token
-from core.models import RegisterRequest, LoginRequest, TokenResponse, RefreshRequest, UserResponse, UserDocument
+from core.models import RegisterRequest, LoginRequest, TokenResponse, RefreshRequest, UserResponse, UserDocument, UpdateProfileRequest, PasswordResetRequest, PasswordResetConfirm
 from utils.validators import validate_email, validate_message
 import hashlib
 
@@ -992,6 +992,226 @@ async def get_current_user_info(user_id: str = Depends(get_current_user)):
         raise HTTPException(
             status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to retrieve user information"
+        )
+
+
+
+@app.patch("/api/auth/profile", response_model=UserResponse)
+async def update_user_profile(
+    request: UpdateProfileRequest,
+    user_id: str = Depends(get_current_user)
+):
+    """
+    Update current user profile
+    
+    Allows authenticated users to update their profile information.
+    Only provided fields will be updated (partial updates supported).
+    """
+    logger.info(f"📝 Profile update request from user: {user_id}")
+    
+    try:
+        from utils.database import get_database
+        db = get_database()
+        
+        # Fetch current user
+        user = await db["users"].find_one({"_id": user_id})
+        
+        if not user:
+            raise HTTPException(
+                status_code=http_status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
+        
+        # Build update dictionary (only include fields that were provided)
+        update_data = {}
+        
+        if request.name is not None:
+            update_data["name"] = request.name.strip()
+            logger.info(f"📝 Updating name for user {user_id}")
+        
+        if request.learning_preferences is not None:
+            update_data["learning_preferences"] = request.learning_preferences.model_dump()
+            logger.info(f"📝 Updating learning preferences for user {user_id}")
+        
+        if request.emotional_profile is not None:
+            update_data["emotional_profile"] = request.emotional_profile.model_dump()
+            logger.info(f"📝 Updating emotional profile for user {user_id}")
+        
+        # If no fields to update, return current profile
+        if not update_data:
+            logger.warning(f"⚠️ No fields provided for update by user {user_id}")
+            return UserResponse(
+                id=user["_id"],
+                email=user["email"],
+                name=user["name"],
+                subscription_tier=user.get("subscription_tier", "free"),
+                total_sessions=user.get("total_sessions", 0),
+                created_at=user["created_at"],
+                last_active=user.get("last_active", user["created_at"])
+            )
+        
+        # Update last_active timestamp
+        update_data["last_active"] = datetime.utcnow()
+        
+        # Perform the update
+        result = await db["users"].update_one(
+            {"_id": user_id},
+            {"$set": update_data}
+        )
+        
+        if result.modified_count == 0 and result.matched_count == 0:
+            raise HTTPException(
+                status_code=http_status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
+        
+        # Fetch updated user
+        updated_user = await db["users"].find_one({"_id": user_id})
+        
+        logger.info(f"✅ Profile updated successfully for user {user_id}")
+        
+        return UserResponse(
+            id=updated_user["_id"],
+            email=updated_user["email"],
+            name=updated_user["name"],
+            subscription_tier=updated_user.get("subscription_tier", "free"),
+            total_sessions=updated_user.get("total_sessions", 0),
+            created_at=updated_user["created_at"],
+            last_active=updated_user.get("last_active", updated_user["created_at"])
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Profile update failed for user {user_id}: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to update profile"
+        )
+
+
+
+@app.post("/api/auth/password-reset-request", status_code=http_status.HTTP_200_OK)
+async def request_password_reset(request: PasswordResetRequest):
+    """
+    Request password reset
+    
+    Generates a reset token and saves it to the user's account.
+    In a production system, this would send an email with the reset link.
+    
+    NOTE: For security, this endpoint always returns success even if email doesn't exist.
+    """
+    logger.info(f"📧 Password reset requested for email: {request.email}")
+    
+    try:
+        from utils.database import get_database
+        import secrets
+        from datetime import timedelta
+        
+        db = get_database()
+        
+        # Find user by email
+        user = await db["users"].find_one({"email": request.email.lower()})
+        
+        if user:
+            # Generate secure reset token (32 bytes = 64 hex characters)
+            reset_token = secrets.token_urlsafe(32)
+            reset_token_expires = datetime.utcnow() + timedelta(hours=1)  # 1 hour expiry
+            
+            # Save token to user account
+            await db["users"].update_one(
+                {"_id": user["_id"]},
+                {
+                    "$set": {
+                        "reset_token": reset_token,
+                        "reset_token_expires": reset_token_expires
+                    }
+                }
+            )
+            
+            logger.info(f"✅ Password reset token generated for user: {user['_id']}")
+            logger.info(f"🔑 Reset Token (for testing): {reset_token}")
+            
+            # TODO: In production, send email with reset link
+            # Example: send_email(
+            #     to=request.email,
+            #     subject="Password Reset Request",
+            #     body=f"Click here to reset: {FRONTEND_URL}/reset-password?token={reset_token}"
+            # )
+        else:
+            logger.warning(f"⚠️ Password reset requested for non-existent email: {request.email}")
+            # For security, don't reveal if email exists
+        
+        # Always return success to prevent email enumeration
+        return {
+            "message": "If the email exists, a password reset link has been sent",
+            "note": "For development: Check server logs for reset token"
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ Password reset request failed: {e}", exc_info=True)
+        # Still return success for security
+        return {
+            "message": "If the email exists, a password reset link has been sent"
+        }
+
+
+@app.post("/api/auth/password-reset-confirm", status_code=http_status.HTTP_200_OK)
+async def confirm_password_reset(request: PasswordResetConfirm):
+    """
+    Confirm password reset with token
+    
+    Validates the reset token and updates the user's password.
+    """
+    logger.info(f"🔐 Password reset confirmation attempt")
+    
+    try:
+        from utils.database import get_database
+        from utils.security import auth_manager
+        
+        db = get_database()
+        
+        # Find user with valid reset token
+        user = await db["users"].find_one({
+            "reset_token": request.token,
+            "reset_token_expires": {"$gt": datetime.utcnow()}  # Token not expired
+        })
+        
+        if not user:
+            logger.warning(f"❌ Invalid or expired reset token")
+            raise HTTPException(
+                status_code=http_status.HTTP_400_BAD_REQUEST,
+                detail="Invalid or expired reset token"
+            )
+        
+        # Hash new password
+        new_password_hash = auth_manager.password_manager.hash_password(request.new_password)
+        
+        # Update password and clear reset token
+        await db["users"].update_one(
+            {"_id": user["_id"]},
+            {
+                "$set": {
+                    "password_hash": new_password_hash,
+                    "reset_token": None,
+                    "reset_token_expires": None
+                }
+            }
+        )
+        
+        logger.info(f"✅ Password reset successful for user: {user['_id']}")
+        
+        return {
+            "message": "Password reset successful. You can now login with your new password."
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Password reset confirmation failed: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to reset password"
         )
 
 
