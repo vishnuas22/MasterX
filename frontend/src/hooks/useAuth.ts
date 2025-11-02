@@ -47,7 +47,7 @@ import { useCallback } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import { useNavigate } from 'react-router-dom';
 import { useUIStore } from '@/store/uiStore';
-import type { LoginCredentials, SignupData } from '@/types/user.types';
+import type { LoginCredentials, SignupData, User } from '@/types/user.types';
 
 // ============================================================================
 // TYPES
@@ -64,6 +64,7 @@ interface UseAuthReturn {
   login: (credentials: LoginCredentials) => Promise<boolean>;
   signup: (data: SignupData) => Promise<boolean>;
   logout: () => Promise<void>;
+  updateProfile: (updates: Partial<User>) => Promise<void>;
   clearError: () => void;
 }
 
@@ -82,6 +83,7 @@ export const useAuth = (): UseAuthReturn => {
     login: storeLogin,
     signup: storeSignup,
     logout: storeLogout,
+    updateProfile: storeUpdateProfile,
     clearError,
   } = useAuthStore();
 
@@ -228,6 +230,32 @@ export const useAuth = (): UseAuthReturn => {
   }, [storeLogout, showToast, navigate]);
 
   // -------------------------------------------------------------------------
+  // UPDATE PROFILE
+  // -------------------------------------------------------------------------
+  
+  /**
+   * Update user profile
+   * 
+   * - Calls backend API to update profile
+   * - Updates local state with new data
+   * - Shows success/error toast
+   * 
+   * @param updates - Partial user data to update
+   */
+  const updateProfile = async (updates: Partial<User>) => {
+    try {
+      await storeUpdateProfile(updates);
+      showToast('Profile updated successfully', 'success');
+    } catch (err) {
+      const errorMessage = (err as any)?.response?.data?.detail || 
+                          (err as Error).message || 
+                          'Failed to update profile';
+      showToast(errorMessage, 'error');
+      throw err;
+    }
+  };
+
+  // -------------------------------------------------------------------------
   // RETURN
   // -------------------------------------------------------------------------
   
@@ -242,6 +270,7 @@ export const useAuth = (): UseAuthReturn => {
     login,
     signup,
     logout,
+    updateProfile,
     clearError,
   };
 };
