@@ -302,42 +302,64 @@ export const authAPI = {
   /**
    * Request password reset
    * 
-   * NOTE: This endpoint is not yet implemented in the backend.
+   * Generates a reset token and saves it to the user's account.
+   * Token is valid for 1 hour.
    * 
-   * Future implementation will:
-   * - Send password reset email with secure token
-   * - Token valid for 1 hour
-   * - POST /api/auth/password-reset
+   * Security: Always returns success (even if email doesn't exist)
+   * to prevent email enumeration attacks.
    * 
-   * @throws 501 - Not Implemented
+   * Backend: POST /api/auth/password-reset-request
+   * 
+   * @param email - User's email address
+   * @returns Success message
+   * 
+   * @example
+   * ```typescript
+   * const result = await authAPI.requestPasswordReset('user@example.com');
+   * // result: { message: "If the email exists, a password reset link has been sent" }
+   * ```
    */
-  requestPasswordReset: async (_email: string): Promise<{ message: string }> => {
-    throw new Error(
-      'Password reset not yet implemented. ' +
-      'Future feature: POST /api/auth/password-reset'
+  requestPasswordReset: async (email: string): Promise<{ message: string; note?: string }> => {
+    const { data } = await apiClient.post<{ message: string; note?: string }>(
+      '/api/auth/password-reset-request',
+      { email: email.toLowerCase().trim() }
     );
+    
+    return data;
   },
 
   /**
    * Reset password with token
    * 
-   * NOTE: This endpoint is not yet implemented in the backend.
+   * Validates the reset token and updates the user's password.
+   * Token must be valid and not expired.
    * 
-   * Future implementation will:
-   * - Verify reset token
-   * - Update password
-   * - Invalidate all existing tokens
-   * - POST /api/auth/password-reset/confirm
+   * Backend: POST /api/auth/password-reset-confirm
    * 
-   * @throws 501 - Not Implemented
+   * @param token - Reset token from email link
+   * @param newPassword - New password (min 8 characters)
+   * @returns Success message
+   * @throws 400 - Invalid or expired token
+   * @throws 500 - Server error
+   * 
+   * @example
+   * ```typescript
+   * const result = await authAPI.resetPassword('token-from-email', 'NewPass123!');
+   * // result: { message: "Password reset successful. You can now login with your new password." }
+   * ```
    */
   resetPassword: async (
-    _token: string,
-    _newPassword: string
+    token: string,
+    newPassword: string
   ): Promise<{ message: string }> => {
-    throw new Error(
-      'Password reset confirmation not yet implemented. ' +
-      'Future feature: POST /api/auth/password-reset/confirm'
+    const { data } = await apiClient.post<{ message: string }>(
+      '/api/auth/password-reset-confirm',
+      {
+        token: token.trim(),
+        new_password: newPassword
+      }
     );
+    
+    return data;
   },
 };
