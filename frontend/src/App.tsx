@@ -44,6 +44,7 @@ const Login = lazy(() => import('@/pages/Login'));
 const Signup = lazy(() => import('@/pages/Signup'));
 const ForgotPassword = lazy(() => import('@/pages/ForgotPassword'));
 const ResetPassword = lazy(() => import('@/pages/ResetPassword'));
+const VerifyEmail = lazy(() => import('@/pages/VerifyEmail'));
 
 // Protected pages
 const Onboarding = lazy(() => import('@/pages/Onboarding'));
@@ -260,6 +261,7 @@ const App: React.FC = () => {
             <Route path="/signup" element={<Signup />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/verify-email" element={<VerifyEmail />} />
             
             {/* Protected routes */}
             <Route
