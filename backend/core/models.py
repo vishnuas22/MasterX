@@ -117,6 +117,8 @@ class UserDocument(BaseModel):
     is_active: bool = True
     is_verified: bool = False
     verification_token: Optional[str] = None
+    verification_token_expires: Optional[datetime] = None
+    verified_at: Optional[datetime] = None
     reset_token: Optional[str] = None
     reset_token_expires: Optional[datetime] = None
     
@@ -491,6 +493,11 @@ class PasswordResetConfirm(BaseModel):
             raise ValueError("Password must contain at least one uppercase letter, one lowercase letter, and one number")
         
         return v
+
+
+class EmailRequest(BaseModel):
+    """Request model for email-based operations (verification resend, etc.)"""
+    email: EmailStr
 
 
 # ============================================================================
