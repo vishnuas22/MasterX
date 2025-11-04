@@ -643,7 +643,7 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
         )
 
 
-@app.post("/api/auth/register", response_model=TokenResponse, status_code=http_status.HTTP_201_CREATED)
+@app.post("/api/auth/register", status_code=http_status.HTTP_201_CREATED)
 async def register(request: RegisterRequest):
     """
     Register new user
@@ -711,9 +711,6 @@ async def register(request: RegisterRequest):
         if not email_sent:
             logger.warning(f"⚠️ Verification email failed to send to {request.email}")
         
-        # Create tokens
-        tokens = auth_manager.create_session(user_id, request.email.lower())
-        
         # Log successful registration
         login_attempts = db["login_attempts"]
         await login_attempts.insert_one({
@@ -727,17 +724,12 @@ async def register(request: RegisterRequest):
         
         logger.info(f"✅ User registered: {request.email} (verification email sent: {email_sent})")
         
-        return TokenResponse(
-            access_token=tokens.access_token,
-            refresh_token=tokens.refresh_token,
-            token_type=tokens.token_type,
-            expires_in=tokens.expires_in,
-            user={
-                "id": user_id,
-                "email": request.email.lower(),
-                "name": request.name
-            }
-        )
+        # Return success without tokens - user must verify email first
+        return {
+            "message": "Registration successful! Please check your email to verify your account.",
+            "email": request.email.lower(),
+            "requires_verification": True
+        }
         
     except HTTPException:
         raise
@@ -823,6 +815,9 @@ async def verify_email(token: str):
             name=user["name"]
         )
         
+        # Create login tokens for immediate access
+        tokens = auth_manager.create_session(user["_id"], user["email"])
+        
         logger.info(f"✅ Email verified successfully: {user['email']}")
         
         return {
@@ -832,7 +827,11 @@ async def verify_email(token: str):
                 "email": user["email"],
                 "name": user["name"],
                 "is_verified": True
-            }
+            },
+            "access_token": tokens.access_token,
+            "refresh_token": tokens.refresh_token,
+            "token_type": tokens.token_type,
+            "expires_in": tokens.expires_in
         }
         
     except HTTPException:
@@ -866,7 +865,7 @@ async def resend_verification(credentials: HTTPAuthorizationCredentials = Depend
     try:
         # Verify JWT token
         token_payload = verify_token(credentials.credentials)
-        user_id = token_payload["sub"]
+        user_id = token_payload.user_id
         
         from utils.database import get_database
         db = get_database()
@@ -983,6 +982,13 @@ async def login(request: LoginRequest, fastapi_request: Request = None):
             raise HTTPException(
                 status_code=http_status.HTTP_423_LOCKED,
                 detail="Account temporarily locked. Please try again later."
+            )
+        
+        # Check if email is verified
+        if not user.get("is_verified", False):
+            raise HTTPException(
+                status_code=http_status.HTTP_403_FORBIDDEN,
+                detail="Email not verified. Please check your email and click the verification link."
             )
         
         # Verify password
