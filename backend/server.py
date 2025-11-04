@@ -617,7 +617,7 @@ async def get_model_status():
 from fastapi import Depends, status as http_status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from utils.security import auth_manager, verify_token
-from core.models import RegisterRequest, LoginRequest, TokenResponse, RefreshRequest, UserResponse, UserDocument, UpdateProfileRequest, PasswordResetRequest, PasswordResetConfirm
+from core.models import RegisterRequest, LoginRequest, TokenResponse, RefreshRequest, UserResponse, UserDocument, UpdateProfileRequest, PasswordResetRequest, PasswordResetConfirm, EmailRequest
 from utils.validators import validate_email, validate_message
 import hashlib
 
@@ -678,6 +678,12 @@ async def register(request: RegisterRequest):
         # Hash password
         password_hash = auth_manager.register_user(request.email, request.password, request.name)
         
+        # Generate email verification token
+        import secrets
+        from datetime import timedelta
+        verification_token = secrets.token_urlsafe(32)
+        verification_token_expires = datetime.utcnow() + timedelta(hours=24)  # 24 hour expiry
+        
         # Create user document
         user_id = str(uuid.uuid4())
         user_doc = UserDocument(
@@ -691,8 +697,13 @@ async def register(request: RegisterRequest):
             is_verified=False
         )
         
+        # Add verification token fields to user document
+        user_dict = user_doc.model_dump(by_alias=True)
+        user_dict["verification_token"] = verification_token
+        user_dict["verification_token_expires"] = verification_token_expires
+        
         # Insert into database
-        await users_collection.insert_one(user_doc.model_dump(by_alias=True))
+        await users_collection.insert_one(user_dict)
         
         # Create tokens
         tokens = auth_manager.create_session(user_id, request.email.lower())
@@ -709,6 +720,14 @@ async def register(request: RegisterRequest):
         })
         
         logger.info(f"✅ User registered: {request.email}")
+        logger.info(f"🔑 Verification Token (for testing): {verification_token}")
+        
+        # TODO: In production, send verification email
+        # Example: send_email(
+        #     to=request.email,
+        #     subject="Verify Your Email - MasterX",
+        #     body=f"Click here to verify: {FRONTEND_URL}/verify-email?token={verification_token}"
+        # )
         
         return TokenResponse(
             access_token=tokens.access_token,
@@ -1213,6 +1232,134 @@ async def confirm_password_reset(request: PasswordResetConfirm):
             status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to reset password"
         )
+
+
+@app.post("/api/auth/verify-email", status_code=http_status.HTTP_200_OK)
+async def verify_email(token: str):
+    """
+    Verify user email with verification token
+    
+    Validates the verification token and marks the user's email as verified.
+    """
+    logger.info(f"📧 Email verification attempt")
+    
+    try:
+        from utils.database import get_database
+        
+        db = get_database()
+        
+        # Find user with valid verification token
+        user = await db["users"].find_one({
+            "verification_token": token,
+            "verification_token_expires": {"$gt": datetime.utcnow()}  # Token not expired
+        })
+        
+        if not user:
+            logger.warning(f"❌ Invalid or expired verification token")
+            raise HTTPException(
+                status_code=http_status.HTTP_400_BAD_REQUEST,
+                detail="Invalid or expired verification token"
+            )
+        
+        # Update user - mark as verified and clear token
+        await db["users"].update_one(
+            {"_id": user["_id"]},
+            {
+                "$set": {
+                    "is_verified": True,
+                    "verification_token": None,
+                    "verification_token_expires": None,
+                    "verified_at": datetime.utcnow()
+                }
+            }
+        )
+        
+        logger.info(f"✅ Email verified successfully for user: {user['_id']}")
+        
+        return {
+            "message": "Email verified successfully. You can now use all platform features.",
+            "user_id": user["_id"],
+            "email": user["email"]
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Email verification failed: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to verify email"
+        )
+
+
+@app.post("/api/auth/resend-verification", status_code=http_status.HTTP_200_OK)
+async def resend_verification_email(request: EmailRequest):
+    """
+    Resend email verification link
+    
+    Generates a new verification token and sends verification email.
+    For security, always returns success even if email doesn't exist.
+    """
+    logger.info(f"📧 Verification email resend requested for: {request.email}")
+    
+    try:
+        from utils.database import get_database
+        import secrets
+        from datetime import timedelta
+        
+        db = get_database()
+        
+        # Find user by email
+        user = await db["users"].find_one({"email": request.email.lower()})
+        
+        if user:
+            # Check if already verified
+            if user.get("is_verified", False):
+                logger.info(f"ℹ️ User {user['_id']} already verified")
+                return {
+                    "message": "If the email exists and is not verified, a verification link has been sent"
+                }
+            
+            # Generate secure verification token (32 bytes = 64 hex characters)
+            verification_token = secrets.token_urlsafe(32)
+            verification_token_expires = datetime.utcnow() + timedelta(hours=24)  # 24 hour expiry
+            
+            # Save token to user account
+            await db["users"].update_one(
+                {"_id": user["_id"]},
+                {
+                    "$set": {
+                        "verification_token": verification_token,
+                        "verification_token_expires": verification_token_expires
+                    }
+                }
+            )
+            
+            logger.info(f"✅ Verification token generated for user: {user['_id']}")
+            logger.info(f"🔑 Verification Token (for testing): {verification_token}")
+            
+            # TODO: In production, send email with verification link
+            # Example: send_email(
+            #     to=request.email,
+            #     subject="Verify Your Email - MasterX",
+            #     body=f"Click here to verify: {FRONTEND_URL}/verify-email?token={verification_token}"
+            # )
+        else:
+            logger.warning(f"⚠️ Verification resend requested for non-existent email: {request.email}")
+            # For security, don't reveal if email exists
+        
+        # Always return success to prevent email enumeration
+        return {
+            "message": "If the email exists and is not verified, a verification link has been sent",
+            "note": "For development: Check server logs for verification token"
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ Verification resend failed: {e}", exc_info=True)
+        # Still return success for security
+        return {
+            "message": "If the email exists and is not verified, a verification link has been sent"
+        }
 
 
 # ============================================================================
