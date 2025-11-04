@@ -99,6 +99,29 @@ export interface TokenVerifyResponse {
 }
 
 /**
+ * Email Verification Response
+ * Response from email verification endpoint
+ */
+export interface EmailVerificationResponse {
+  message: string;
+  user: {
+    id: string;
+    email: string;
+    name: string;
+    is_verified: boolean;
+  };
+}
+
+/**
+ * Resend Verification Response
+ * Response from resend verification email endpoint
+ */
+export interface ResendVerificationResponse {
+  message: string;
+  email: string;
+}
+
+/**
  * User API Response from Backend
  * Matches backend UserResponse model exactly (models.py lines 436-445)
  */
