@@ -26,6 +26,7 @@ import { useNavigate } from 'react-router-dom';
 import { AppShell } from '@/components/layout/AppShell';
 import { ChatContainer } from '@/components/chat/ChatContainer';
 import { EmotionWidget } from '@/components/emotion/EmotionWidget';
+import { AchievementNotificationManager } from '@/components/gamification/AchievementNotificationManager';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { useAuth } from '@/hooks/useAuth';
 import { useChat } from '@/hooks/useChat';
@@ -239,6 +240,9 @@ export const MainApp: React.FC<MainAppProps> = ({
             <Achievements onClose={handleCloseModal} />
           )}
         </Suspense>
+
+        {/* Global Achievement Notifications */}
+        <AchievementNotificationManager />
       </AppShell>
     </>
   );
