@@ -37,7 +37,9 @@ import type {
   LoginCredentials, 
   SignupData, 
   LoginResponse,
-  UserApiResponse 
+  UserApiResponse,
+  EmailVerificationResponse,
+  ResendVerificationResponse
 } from '../../types/user.types';
 
 /**
@@ -358,6 +360,63 @@ export const authAPI = {
         token: token.trim(),
         new_password: newPassword
       }
+    );
+    
+    return data;
+  },
+
+  /**
+   * Verify email with token
+   * 
+   * Verifies user's email address using the token from the verification email.
+   * Marks the user as verified in the database.
+   * 
+   * Backend: GET /api/auth/verify-email/{token}
+   * Auth Required: No (token is in URL)
+   * 
+   * @param token - Email verification token from URL
+   * @returns Verification response with user data
+   * @throws 400 - Invalid or expired token
+   * @throws 404 - User not found
+   * @throws 500 - Server error
+   * 
+   * @example
+   * ```typescript
+   * const result = await authAPI.verifyEmail('token-from-email');
+   * // result: { message: "Email verified successfully!", user: {...} }
+   * ```
+   */
+  verifyEmail: async (token: string): Promise<EmailVerificationResponse> => {
+    const { data } = await apiClient.get<EmailVerificationResponse>(
+      `/api/auth/verify-email/${token.trim()}`
+    );
+    
+    return data;
+  },
+
+  /**
+   * Resend verification email
+   * 
+   * Generates a new verification token and sends a new verification email
+   * to the currently logged-in user.
+   * 
+   * Backend: POST /api/auth/resend-verification
+   * Auth Required: Yes (JWT token)
+   * 
+   * @returns Success message with email address
+   * @throws 400 - Email already verified
+   * @throws 401 - Not authenticated
+   * @throws 500 - Server error
+   * 
+   * @example
+   * ```typescript
+   * const result = await authAPI.resendVerification();
+   * // result: { message: "Verification email sent successfully...", email: "user@example.com" }
+   * ```
+   */
+  resendVerification: async (): Promise<ResendVerificationResponse> => {
+    const { data } = await apiClient.post<ResendVerificationResponse>(
+      '/api/auth/resend-verification'
     );
     
     return data;
