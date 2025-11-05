@@ -216,9 +216,28 @@ export const useAuthStore = create<AuthState>()(
           
           // Step 1: Register with backend
           const response = await authAPI.signup(data);
-          console.log('✓ Signup API call successful, tokens received');
+          console.log('✓ Signup API call successful');
           
-          // Step 2: CRITICAL - Set tokens in state FIRST
+          // Step 2: Check if email verification is required
+          if (response.requires_verification) {
+            console.log('📧 Email verification required');
+            set({
+              isLoading: false,
+              error: null,
+            });
+            // Store email for verification page
+            localStorage.setItem('pending_verification_email', response.email || data.email);
+            return; // Don't authenticate yet - user must verify email
+          }
+          
+          // Step 3: If no verification required, proceed with immediate login
+          if (!response.access_token || !response.refresh_token) {
+            throw new Error('Invalid registration response');
+          }
+          
+          console.log('✓ Registration successful with immediate login');
+          
+          // Step 4: CRITICAL - Set tokens in state FIRST
           set({
             accessToken: response.access_token,
             refreshToken: response.refresh_token,
@@ -227,24 +246,24 @@ export const useAuthStore = create<AuthState>()(
           });
           console.log('✓ Tokens set in Zustand state');
           
-          // Step 3: Store tokens in localStorage for backup and interceptor fallback
+          // Step 5: Store tokens in localStorage for backup and interceptor fallback
           localStorage.setItem('jwt_token', response.access_token);
           localStorage.setItem('refresh_token', response.refresh_token);
           console.log('✓ Tokens stored in localStorage');
           
-          // Step 4: Small delay to ensure state propagates
+          // Step 6: Small delay to ensure state propagates
           await new Promise(resolve => setTimeout(resolve, 10));
           
-          // Step 5: Fetch user profile with token attached
+          // Step 7: Fetch user profile with token attached
           console.log('→ Fetching user profile...');
           const apiUser = await authAPI.getCurrentUser();
           console.log('✓ User profile fetched:', apiUser);
           
-          // Step 6: Adapt backend response to frontend User type
+          // Step 8: Adapt backend response to frontend User type
           const user = adaptUserApiResponse(apiUser);
           console.log('✓ User data adapted for frontend');
           
-          // Step 7: Update state with user info
+          // Step 9: Update state with user info
           set({
             user,
             isLoading: false,
