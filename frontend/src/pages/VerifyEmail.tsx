@@ -82,12 +82,21 @@ export const VerifyEmail: React.FC = () => {
             userEmail: response.user.email
           });
 
-          // Refresh auth state to update user's verified status
-          await checkAuth();
+          // Store tokens if provided (for immediate login)
+          if (response.access_token && response.refresh_token) {
+            localStorage.setItem('jwt_token', response.access_token);
+            localStorage.setItem('refresh_token', response.refresh_token);
+            
+            // Refresh auth state to update user's verified status
+            await checkAuth();
+          }
+          
+          // Clear pending verification email
+          localStorage.removeItem('pending_verification_email');
 
           // Redirect to dashboard after 3 seconds
           setTimeout(() => {
-            navigate('/dashboard', { replace: true });
+            navigate('/app', { replace: true });
           }, 3000);
         }
       } catch (error: any) {
