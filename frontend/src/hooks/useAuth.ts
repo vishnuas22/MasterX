@@ -168,7 +168,23 @@ export const useAuth = (): UseAuthReturn => {
     try {
       await storeSignup(data);
       
-      // Show success message
+      // Check if email verification is required
+      const pendingEmail = localStorage.getItem('pending_verification_email');
+      if (pendingEmail) {
+        // Show info message about email verification
+        showToast({
+          type: 'info',
+          message: `Registration successful! Please check ${pendingEmail} to verify your account.`,
+          duration: 6000,
+        });
+        
+        // Navigate to email sent page
+        navigate('/email-sent', { state: { email: pendingEmail } });
+        
+        return true;
+      }
+      
+      // If no verification required, show success and go to onboarding
       showToast({
         type: 'success',
         message: `Welcome to MasterX, ${data.name}! 🎉`,
