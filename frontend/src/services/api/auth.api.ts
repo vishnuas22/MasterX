@@ -37,6 +37,7 @@ import type {
   LoginCredentials, 
   SignupData, 
   LoginResponse,
+  RegistrationResponse,
   UserApiResponse,
   EmailVerificationResponse,
   ResendVerificationResponse
@@ -82,8 +83,8 @@ export const authAPI = {
    * console.log(response.user.name); // "John Doe"
    * ```
    */
-  signup: async (data: SignupData): Promise<LoginResponse> => {
-    const { data: response } = await apiClient.post<LoginResponse>(
+  signup: async (data: SignupData): Promise<RegistrationResponse> => {
+    const { data: response } = await apiClient.post<RegistrationResponse>(
       '/api/auth/register',
       {
         email: data.email,
