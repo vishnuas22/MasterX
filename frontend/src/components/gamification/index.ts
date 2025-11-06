@@ -26,3 +26,9 @@ export type { LevelProgressProps } from './LevelProgress';
 
 export { Leaderboard } from './Leaderboard';
 export type { LeaderboardEntry, LeaderboardProps } from './Leaderboard';
+
+export { XPGainAnimation } from './XPGainAnimation';
+export type { XPGainAnimationProps } from './XPGainAnimation';
+
+export { AchievementGallery } from './AchievementGallery';
+export type { AchievementGalleryProps } from './AchievementGallery';
