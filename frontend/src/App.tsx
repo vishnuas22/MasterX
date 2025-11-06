@@ -51,8 +51,12 @@ const MainApp = lazy(() => import('@/pages/MainApp'));
 
 // Test/Debug pages (for development)
 const ComponentShowcase = lazy(() => import('./pages/ComponentShowcase'));
-const GamificationShowcase = lazy(() => import('./pages/GamificationShowcase'));
 const TestLogin = lazy(() => import('./pages/TestLogin'));
+
+// Feature pages
+const GamificationDashboard = lazy(() => import('./pages/GamificationDashboard'));
+const Analytics = lazy(() => import('./pages/Analytics'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
 
 // ============================================================================
 // LOADING SCREEN
@@ -278,12 +282,35 @@ const App: React.FC = () => {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/gamification"
+              element={
+                <ProtectedRoute>
+                  <GamificationDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/analytics"
+              element={
+                <ProtectedRoute>
+                  <Analytics />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              }
+            />
             
             {/* Test/Debug routes (for development) */}
             {import.meta.env.DEV && (
               <>
                 <Route path="/showcase" element={<ComponentShowcase />} />
-                <Route path="/gamification" element={<GamificationShowcase />} />
                 <Route path="/test-login" element={<TestLogin />} />
               </>
             )}
