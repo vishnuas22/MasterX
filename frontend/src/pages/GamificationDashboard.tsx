@@ -31,7 +31,7 @@ import { Button } from '@/components/ui/Button';
 import { Leaderboard } from '@/components/gamification/Leaderboard';
 import { LevelProgress } from '@/components/gamification/LevelProgress';
 import { StreakCounter } from '@/components/gamification/StreakCounter';
-import { AchievementBadge } from '@/components/gamification/AchievementBadge';
+import { AchievementBadge, AchievementGallery } from '@/components/gamification';
 import { useAuth } from '@/hooks/useAuth';
 import { useGamificationStore, useGamificationStats, useAchievements, useLeaderboard } from '@/store/gamificationStore';
 import { cn } from '@/utils/cn';
@@ -377,93 +377,21 @@ export const GamificationDashboard: React.FC = () => {
 
           {/* Achievements Tab */}
           {activeTab === 'achievements' && (
-            <div>
-              {isLoadingAchievements ? (
-                <div className="text-center py-12">
-                  <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-                  <p className="text-gray-400">Loading achievements...</p>
-                </div>
-              ) : achievementsError ? (
-                <Card className="p-8">
-                  <div className="text-center">
-                    <div className="text-6xl mb-4">⚠️</div>
-                    <h3 className="text-xl font-bold text-white mb-2">
-                      Failed to Load Achievements
-                    </h3>
-                    <p className="text-gray-400 mb-4">{achievementsError}</p>
-                    <Button onClick={fetchAchievements}>Retry</Button>
-                  </div>
-                </Card>
-              ) : (
-                <div className="space-y-8">
-                  {/* Unlocked Achievements */}
-                  <div>
-                    <h3 className="text-xl font-bold text-white mb-4">
-                      Unlocked ({achievements.filter(a => a.unlocked).length})
-                    </h3>
-                    {achievements.filter(a => a.unlocked).length === 0 ? (
-                      <Card className="p-8">
-                        <div className="text-center">
-                          <div className="text-4xl mb-2">🎯</div>
-                          <p className="text-gray-400">
-                            No achievements unlocked yet. Keep learning!
-                          </p>
-                        </div>
-                      </Card>
-                    ) : (
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
-                        {achievements
-                          .filter(a => a.unlocked)
-                          .map(achievement => (
-                            <AchievementBadge
-                              key={achievement.id}
-                              achievement={{
-                                id: achievement.id,
-                                name: achievement.name,
-                                description: achievement.description,
-                                icon: achievement.icon,
-                                rarity: achievement.rarity as any,
-                                xpReward: achievement.xp_reward,
-                                unlockedAt: achievement.unlockedAt,
-                                progress: achievement.progress
-                              }}
-                              size="lg"
-                              showDetails
-                            />
-                          ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Locked Achievements */}
-                  <div>
-                    <h3 className="text-xl font-bold text-white mb-4">
-                      Locked ({achievements.filter(a => !a.unlocked).length})
-                    </h3>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
-                      {achievements
-                        .filter(a => !a.unlocked)
-                        .map(achievement => (
-                          <AchievementBadge
-                            key={achievement.id}
-                            achievement={{
-                              id: achievement.id,
-                              name: achievement.name,
-                              description: achievement.description,
-                              icon: achievement.icon,
-                              rarity: achievement.rarity as any,
-                              xpReward: achievement.xp_reward,
-                              progress: achievement.progress
-                            }}
-                            size="lg"
-                            showDetails
-                          />
-                        ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
+            <AchievementGallery
+              achievements={achievements.map(a => ({
+                id: a.id,
+                name: a.name,
+                description: a.description,
+                icon: a.icon,
+                rarity: a.rarity as 'common' | 'rare' | 'epic' | 'legendary',
+                xpReward: a.xp_reward,
+                unlockedAt: a.unlockedAt,
+                progress: a.progress
+              }))}
+              isLoading={isLoadingAchievements}
+              error={achievementsError}
+              onRetry={fetchAchievements}
+            />
           )}
 
           {/* Leaderboard Tab */}
