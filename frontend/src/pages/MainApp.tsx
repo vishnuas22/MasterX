@@ -27,7 +27,6 @@ import { AppShell } from '@/components/layout/AppShell';
 import { ChatContainer } from '@/components/chat/ChatContainer';
 import { EmotionWidget } from '@/components/emotion/EmotionWidget';
 import { AchievementNotificationManager } from '@/components/gamification/AchievementNotificationManager';
-import { EmailVerificationBanner } from '@/components/auth/EmailVerificationBanner';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { useAuth } from '@/hooks/useAuth';
 import { useChat } from '@/hooks/useChat';
@@ -186,12 +185,6 @@ export const MainApp: React.FC<MainAppProps> = ({
         onOpenAnalytics={() => handleOpenModal('analytics')}
         onOpenAchievements={() => handleOpenModal('achievements')}
       >
-        {/* Email Verification Banner */}
-        <EmailVerificationBanner
-          userEmail={user.email}
-          isVerified={(user as any).is_verified || false}
-        />
-
         {/* Main Content */}
         <div className="flex-1 flex overflow-hidden">
           {/* Chat Container (Primary Focus) */}
