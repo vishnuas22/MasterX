@@ -643,7 +643,7 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
         )
 
 
-@app.post("/api/auth/register", status_code=http_status.HTTP_201_CREATED)
+@app.post("/api/auth/register", response_model=TokenResponse, status_code=http_status.HTTP_201_CREATED)
 async def register(request: RegisterRequest):
     """
     Register new user
@@ -691,25 +691,11 @@ async def register(request: RegisterRequest):
             is_verified=False
         )
         
-        # Generate verification token
-        import secrets
-        verification_token = secrets.token_urlsafe(32)
-        user_doc.verification_token = verification_token
-        
         # Insert into database
         await users_collection.insert_one(user_doc.model_dump(by_alias=True))
         
-        # Send verification email
-        from utils.email_service import get_email_service
-        email_service = get_email_service()
-        email_sent = await email_service.send_verification_email(
-            email=request.email.lower(),
-            name=request.name,
-            verification_token=verification_token
-        )
-        
-        if not email_sent:
-            logger.warning(f"⚠️ Verification email failed to send to {request.email}")
+        # Create tokens
+        tokens = auth_manager.create_session(user_id, request.email.lower())
         
         # Log successful registration
         login_attempts = db["login_attempts"]
@@ -722,14 +708,19 @@ async def register(request: RegisterRequest):
             "timestamp": datetime.utcnow()
         })
         
-        logger.info(f"✅ User registered: {request.email} (verification email sent: {email_sent})")
+        logger.info(f"✅ User registered: {request.email}")
         
-        # Return success without tokens - user must verify email first
-        return {
-            "message": "Registration successful! Please check your email to verify your account.",
-            "email": request.email.lower(),
-            "requires_verification": True
-        }
+        return TokenResponse(
+            access_token=tokens.access_token,
+            refresh_token=tokens.refresh_token,
+            token_type=tokens.token_type,
+            expires_in=tokens.expires_in,
+            user={
+                "id": user_id,
+                "email": request.email.lower(),
+                "name": request.name
+            }
+        )
         
     except HTTPException:
         raise
@@ -744,189 +735,6 @@ async def register(request: RegisterRequest):
         raise HTTPException(
             status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Registration failed"
-        )
-
-
-@app.get("/api/auth/verify-email/{token}", status_code=http_status.HTTP_200_OK)
-async def verify_email(token: str):
-    """
-    Verify user email with token
-    
-    Verifies the user's email address using the token sent via email.
-    Marks the user as verified and optionally sends a welcome email.
-    
-    Args:
-        token: Email verification token from URL
-    
-    Returns:
-        Success message with user information
-    
-    Raises:
-        400: Invalid or expired token
-        404: User not found
-        500: Verification failed
-    """
-    logger.info(f"📧 Email verification attempt with token: {token[:10]}...")
-    
-    try:
-        from utils.database import get_database
-        db = get_database()
-        users_collection = db["users"]
-        
-        # Find user with this verification token
-        user = await users_collection.find_one({"verification_token": token})
-        
-        if not user:
-            logger.warning(f"⚠️ Invalid verification token: {token[:10]}...")
-            raise HTTPException(
-                status_code=http_status.HTTP_400_BAD_REQUEST,
-                detail="Invalid or expired verification token"
-            )
-        
-        # Check if already verified
-        if user.get("is_verified", False):
-            logger.info(f"ℹ️ User already verified: {user['email']}")
-            return {
-                "message": "Email already verified",
-                "user": {
-                    "id": user["_id"],
-                    "email": user["email"],
-                    "name": user["name"],
-                    "is_verified": True
-                }
-            }
-        
-        # Update user as verified and clear token
-        await users_collection.update_one(
-            {"_id": user["_id"]},
-            {
-                "$set": {
-                    "is_verified": True,
-                    "verification_token": None
-                }
-            }
-        )
-        
-        # Send welcome email
-        from utils.email_service import get_email_service
-        email_service = get_email_service()
-        await email_service.send_welcome_email(
-            email=user["email"],
-            name=user["name"]
-        )
-        
-        # Create login tokens for immediate access
-        tokens = auth_manager.create_session(user["_id"], user["email"])
-        
-        logger.info(f"✅ Email verified successfully: {user['email']}")
-        
-        return {
-            "message": "Email verified successfully! Welcome to MasterX.",
-            "user": {
-                "id": user["_id"],
-                "email": user["email"],
-                "name": user["name"],
-                "is_verified": True
-            },
-            "access_token": tokens.access_token,
-            "refresh_token": tokens.refresh_token,
-            "token_type": tokens.token_type,
-            "expires_in": tokens.expires_in
-        }
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"❌ Email verification failed: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Email verification failed"
-        )
-
-
-@app.post("/api/auth/resend-verification", status_code=http_status.HTTP_200_OK)
-async def resend_verification(credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer())):
-    """
-    Resend verification email to current user
-    
-    Generates a new verification token and sends a new verification email.
-    Requires authentication (user must be logged in).
-    
-    Returns:
-        Success message
-    
-    Raises:
-        401: Not authenticated
-        400: Email already verified
-        500: Resend failed
-    """
-    logger.info(f"📧 Verification email resend requested")
-    
-    try:
-        # Verify JWT token
-        token_payload = verify_token(credentials.credentials)
-        user_id = token_payload.user_id
-        
-        from utils.database import get_database
-        db = get_database()
-        users_collection = db["users"]
-        
-        # Get user
-        user = await users_collection.find_one({"_id": user_id})
-        if not user:
-            raise HTTPException(
-                status_code=http_status.HTTP_404_NOT_FOUND,
-                detail="User not found"
-            )
-        
-        # Check if already verified
-        if user.get("is_verified", False):
-            logger.info(f"ℹ️ Verification email requested for already verified user: {user['email']}")
-            raise HTTPException(
-                status_code=http_status.HTTP_400_BAD_REQUEST,
-                detail="Email already verified"
-            )
-        
-        # Generate new verification token
-        import secrets
-        verification_token = secrets.token_urlsafe(32)
-        
-        # Update user with new token
-        await users_collection.update_one(
-            {"_id": user_id},
-            {"$set": {"verification_token": verification_token}}
-        )
-        
-        # Send verification email
-        from utils.email_service import get_email_service
-        email_service = get_email_service()
-        email_sent = await email_service.send_verification_email(
-            email=user["email"],
-            name=user["name"],
-            verification_token=verification_token
-        )
-        
-        if not email_sent:
-            logger.error(f"❌ Failed to send verification email to {user['email']}")
-            raise HTTPException(
-                status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to send verification email"
-            )
-        
-        logger.info(f"✅ Verification email resent to {user['email']}")
-        
-        return {
-            "message": "Verification email sent successfully. Please check your inbox.",
-            "email": user["email"]
-        }
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"❌ Resend verification failed: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to resend verification email"
         )
 
 
@@ -982,13 +790,6 @@ async def login(request: LoginRequest, fastapi_request: Request = None):
             raise HTTPException(
                 status_code=http_status.HTTP_423_LOCKED,
                 detail="Account temporarily locked. Please try again later."
-            )
-        
-        # Check if email is verified
-        if not user.get("is_verified", False):
-            raise HTTPException(
-                status_code=http_status.HTTP_403_FORBIDDEN,
-                detail="Email not verified. Please check your email and click the verification link."
             )
         
         # Verify password
