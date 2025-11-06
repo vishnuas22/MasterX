@@ -92,61 +92,10 @@ export interface LoginResponse {
   };
 }
 
-/**
- * Registration Response
- * Can be either immediate login OR email verification required
- */
-export interface RegistrationResponse {
-  // Email verification flow
-  message?: string;
-  email?: string;
-  requires_verification?: boolean;
-  
-  // Immediate login flow (if email verification disabled)
-  access_token?: string;
-  refresh_token?: string;
-  token_type?: 'Bearer';
-  expires_in?: number;
-  user?: {
-    id: string;
-    email: string;
-    name: string;
-  };
-}
-
 export interface TokenVerifyResponse {
   user_id: string;
   email: string;
   exp: number; // Unix timestamp
-}
-
-/**
- * Email Verification Response
- * Response from email verification endpoint
- * Includes tokens for immediate login after successful verification
- */
-export interface EmailVerificationResponse {
-  message: string;
-  user: {
-    id: string;
-    email: string;
-    name: string;
-    is_verified: boolean;
-  };
-  // Tokens for immediate login (only present on successful verification)
-  access_token?: string;
-  refresh_token?: string;
-  token_type?: 'Bearer';
-  expires_in?: number;
-}
-
-/**
- * Resend Verification Response
- * Response from resend verification email endpoint
- */
-export interface ResendVerificationResponse {
-  message: string;
-  email: string;
 }
 
 /**
