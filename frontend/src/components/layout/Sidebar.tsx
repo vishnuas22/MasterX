@@ -94,6 +94,7 @@ const navigationSections: NavSection[] = [
         id: 'dashboard',
         label: 'Dashboard',
         icon: Home,
+        href: '/dashboard',
         description: 'Your learning overview',
       },
     ],
@@ -105,14 +106,15 @@ const navigationSections: NavSection[] = [
         id: 'analytics',
         label: 'Progress',
         icon: BarChart3,
+        href: '/analytics',
         description: 'Track your learning progress',
       },
       {
-        id: 'achievements',
-        label: 'Achievements',
+        id: 'gamification',
+        label: 'Gamification',
         icon: Trophy,
-        badge: 2, // New achievements
-        description: 'View your achievements',
+        href: '/gamification',
+        description: 'Achievements, streaks & leaderboard',
       },
     ],
   },
@@ -123,18 +125,21 @@ const navigationSections: NavSection[] = [
         id: 'courses',
         label: 'Courses',
         icon: BookOpen,
+        href: '/courses',
         description: 'Browse learning paths',
       },
       {
         id: 'explore',
         label: 'Explore',
         icon: Compass,
+        href: '/explore',
         description: 'Discover new topics',
       },
       {
         id: 'collaboration',
         label: 'Collaboration',
         icon: Users,
+        href: '/collaboration',
         description: 'Study with peers',
       },
     ],
@@ -145,6 +150,7 @@ const navigationSections: NavSection[] = [
         id: 'settings',
         label: 'Settings',
         icon: Settings,
+        href: '/settings',
         description: 'Customize your experience',
       },
     ],
@@ -179,12 +185,13 @@ const NavItemComponent = React.memo<NavItemProps>(({
 
   const handleClick = () => {
     // Handle specific navigation cases
-    if (item.id === 'dashboard' && onOpenDashboard) {
+    if (item.href) {
+      // Navigate to the specified route
+      navigate(item.href);
+    } else if (item.id === 'dashboard' && onOpenDashboard) {
       onOpenDashboard();
     } else if (item.id === 'settings' && onOpenSettings) {
       onOpenSettings();
-    } else if (item.id === 'chat' && item.href) {
-      navigate(item.href);
     } else {
       // For unimplemented features, show toast
       console.log(`${item.label} feature coming soon!`);
