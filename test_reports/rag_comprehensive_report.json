@@ -1,0 +1,1910 @@
+{
+  "summary": {
+    "total_tests": 30,
+    "passed": 3,
+    "partial": 0,
+    "failed": 0,
+    "success_rate": 10.0,
+    "total_time_seconds": 33.96207928657532
+  },
+  "test_results": [
+    {
+      "category": "Basic Queries",
+      "test_name": "Simple Factual Query",
+      "query": "What is machine learning?",
+      "query_length": 25,
+      "rag_enabled": true,
+      "expected_rag": true,
+      "rag_decision_correct": true,
+      "elapsed_time_ms": 509.29975509643555,
+      "timestamp": "2025-11-07T13:38:38.408952",
+      "sources_count": 5,
+      "provider_used": "serper",
+      "search_time_ms": 509.25660133361816,
+      "total_results": 10,
+      "filtered_results": 10,
+      "citations_count": 5,
+      "sources": [
+        {
+          "title": "Machine learning, explained | MIT Sloan",
+          "url": "https://mitsloan.mit.edu/ideas-made-to-matter/machine-learning-explained",
+          "source_type": "educational",
+          "credibility": 0.95,
+          "difficulty": 0.45,
+          "relevance": 0.85
+        },
+        {
+          "title": "Machine learning - Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Machine_learning",
+          "source_type": "general",
+          "credibility": 0.8,
+          "difficulty": 0.58,
+          "relevance": 0.9
+        },
+        {
+          "title": "What Is Machine Learning? Definition, Types, and Examples",
+          "url": "https://www.coursera.org/articles/what-is-machine-learning",
+          "source_type": "educational",
+          "credibility": 0.9,
+          "difficulty": 0.58,
+          "relevance": 0.8
+        },
+        {
+          "title": "What is Machine Learning? | IBM",
+          "url": "https://www.ibm.com/think/topics/machine-learning",
+          "source_type": "general",
+          "credibility": 0.6,
+          "difficulty": 0.58,
+          "relevance": 0.95
+        },
+        {
+          "title": "DOE Explains...Machine Learning - Department of Energy",
+          "url": "https://www.energy.gov/science/doe-explainsmachine-learning",
+          "source_type": "general",
+          "credibility": 0.85,
+          "difficulty": 0.5,
+          "relevance": 0.65
+        }
+      ],
+      "avg_credibility": 0.82,
+      "avg_difficulty": 0.538,
+      "status": "PASS"
+    },
+    {
+      "category": "Basic Queries",
+      "test_name": "Current Events",
+      "query": "What are the latest developments in quantum computing in 2025?",
+      "query_length": 62,
+      "rag_enabled": true,
+      "expected_rag": true,
+      "rag_decision_correct": true,
+      "elapsed_time_ms": 670.4108715057373,
+      "timestamp": "2025-11-07T13:38:39.579975",
+      "sources_count": 5,
+      "provider_used": "serper",
+      "search_time_ms": 670.358419418335,
+      "total_results": 8,
+      "filtered_results": 8,
+      "citations_count": 5,
+      "sources": [
+        {
+          "title": "New MIT report captures state of quantum computing",
+          "url": "https://mitsloan.mit.edu/ideas-made-to-matter/new-mit-report-captures-state-quantum-computing",
+          "source_type": "educational",
+          "credibility": 0.95,
+          "difficulty": 0.5,
+          "relevance": 0.85
+        },
+        {
+          "title": "Princeton puts quantum computing on the fast track with new qubit",
+          "url": "https://www.princeton.edu/news/2025/11/05/princeton-puts-quantum-computing-fast-track-new-qubit",
+          "source_type": "educational",
+          "credibility": 0.95,
+          "difficulty": 0.5,
+          "relevance": 0.75
+        },
+        {
+          "title": "The Year of Quantum: From concept to reality in 2025 - McKinsey",
+          "url": "https://www.mckinsey.com/capabilities/tech-and-ai/our-insights/the-year-of-quantum-from-concept-to-reality-in-2025",
+          "source_type": "general",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.95
+        },
+        {
+          "title": "Quantum computing's six most important trends for 2025 - Moody's",
+          "url": "https://www.moodys.com/web/en/us/insights/quantum/quantum-computings-six-most-important-trends-for-2025.html",
+          "source_type": "general",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.9
+        },
+        {
+          "title": "2025 is the year of quantum computing | Constellation Research Inc.",
+          "url": "https://www.constellationr.com/blog-news/insights/2025-year-quantum-computing",
+          "source_type": "news",
+          "credibility": 0.6,
+          "difficulty": 0.58,
+          "relevance": 0.8
+        }
+      ],
+      "avg_credibility": 0.74,
+      "avg_difficulty": 0.516,
+      "status": "PASS"
+    },
+    {
+      "category": "Basic Queries",
+      "test_name": "Documentation Query",
+      "query": "How to use Python asyncio for concurrent programming",
+      "query_length": 52,
+      "rag_enabled": true,
+      "expected_rag": true,
+      "rag_decision_correct": true,
+      "elapsed_time_ms": 756.9789886474609,
+      "timestamp": "2025-11-07T13:38:40.837675",
+      "sources_count": 5,
+      "provider_used": "serper",
+      "search_time_ms": 756.9386959075928,
+      "total_results": 10,
+      "filtered_results": 10,
+      "citations_count": 5,
+      "sources": [
+        {
+          "title": "asyncio \u2014 Asynchronous I/O \u2014 Python 3.14.0 documentation",
+          "url": "https://docs.python.org/3/library/asyncio.html",
+          "source_type": "documentation",
+          "credibility": 0.95,
+          "difficulty": 0.53,
+          "relevance": 0.85
+        },
+        {
+          "title": "How to properly create and run concurrent tasks using python's ...",
+          "url": "https://stackoverflow.com/questions/29269370/how-to-properly-create-and-run-concurrent-tasks-using-pythons-asyncio-module",
+          "source_type": "forum",
+          "credibility": 0.85,
+          "difficulty": 0.5,
+          "relevance": 0.8
+        },
+        {
+          "title": "High-Performance Python: Asyncio. Concurrency programming is a\u2026",
+          "url": "https://leapcell.medium.com/high-performance-python-asyncio-7a0d70e1be46",
+          "source_type": "blog",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.95
+        },
+        {
+          "title": "Python's asyncio: A Hands-On Walkthrough - Real Python",
+          "url": "https://realpython.com/async-io-python/",
+          "source_type": "general",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.9
+        },
+        {
+          "title": "Coroutines and Tasks \u2014 Python 3.14.0 documentation",
+          "url": "https://docs.python.org/3/library/asyncio-task.html",
+          "source_type": "documentation",
+          "credibility": 0.95,
+          "difficulty": 0.5,
+          "relevance": 0.55
+        }
+      ],
+      "avg_credibility": 0.79,
+      "avg_difficulty": 0.506,
+      "status": "PASS"
+    },
+    {
+      "category": "Basic Queries",
+      "test_name": "Math Problem",
+      "query": "Solve this equation: 2x + 5 = 15",
+      "query_length": 32,
+      "rag_enabled": false,
+      "expected_rag": false,
+      "rag_decision_correct": true,
+      "elapsed_time_ms": 0.013113021850585938,
+      "timestamp": "2025-11-07T13:38:41.338393",
+      "status": "PASS"
+    },
+    {
+      "category": "Basic Queries",
+      "test_name": "Tutorial Request",
+      "query": "Show me a tutorial on React hooks useState and useEffect",
+      "query_length": 56,
+      "rag_enabled": true,
+      "expected_rag": true,
+      "rag_decision_correct": true,
+      "elapsed_time_ms": 545.626163482666,
+      "timestamp": "2025-11-07T13:38:42.384209",
+      "sources_count": 5,
+      "provider_used": "serper",
+      "search_time_ms": 545.5825328826904,
+      "total_results": 10,
+      "filtered_results": 10,
+      "citations_count": 5,
+      "sources": [
+        {
+          "title": "Intro to React Hooks with useState and useEffect - YouTube",
+          "url": "https://www.youtube.com/watch?v=P5p3vMeJ6LQ",
+          "source_type": "video",
+          "credibility": 0.6,
+          "difficulty": 0.4,
+          "relevance": 0.95
+        },
+        {
+          "title": "Learn React useState and useEffect Hook in Depth ft ... - YouTube",
+          "url": "https://www.youtube.com/watch?v=1JodudDUx_8",
+          "source_type": "video",
+          "credibility": 0.6,
+          "difficulty": 0.4,
+          "relevance": 0.9
+        },
+        {
+          "title": "React Hooks \u2013 How to Use the useState & useEffect Hooks in Your ...",
+          "url": "https://www.freecodecamp.org/news/how-to-use-the-usestate-and-useeffect-hooks-in-your-project/",
+          "source_type": "news",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.85
+        },
+        {
+          "title": "All React Hooks Tutorial 2025 ( +Building Custom Hooks ) - YouTube",
+          "url": "https://www.youtube.com/watch?v=4Ak2jFEIr9o",
+          "source_type": "video",
+          "credibility": 0.6,
+          "difficulty": 0.45,
+          "relevance": 0.8
+        },
+        {
+          "title": "React useEffect Hooks - W3Schools",
+          "url": "https://www.w3schools.com/react/react_useeffect.asp",
+          "source_type": "general",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.75
+        }
+      ],
+      "avg_credibility": 0.6,
+      "avg_difficulty": 0.45,
+      "status": "PASS"
+    },
+    {
+      "category": "Complex Queries",
+      "test_name": "Multi-Concept Query",
+      "query": "Explain the differences between supervised learning, unsupervised learning, and reinforcement learning, with real-world applications for each",
+      "query_length": 141,
+      "rag_enabled": true,
+      "expected_rag": true,
+      "rag_decision_correct": true,
+      "elapsed_time_ms": 877.4571418762207,
+      "timestamp": "2025-11-07T13:38:43.762381",
+      "sources_count": 5,
+      "provider_used": "serper",
+      "search_time_ms": 877.4123191833496,
+      "total_results": 9,
+      "filtered_results": 9,
+      "citations_count": 5,
+      "sources": [
+        {
+          "title": "Supervised vs Unsupervised vs Reinforcement Learning",
+          "url": "https://www.geeksforgeeks.org/machine-learning/supervised-vs-reinforcement-vs-unsupervised/",
+          "source_type": "general",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.95
+        },
+        {
+          "title": "Supervised Learning vs. Unsupervised Learning vs. Reinforcement ...",
+          "url": "https://medium.com/@hassaanidrees7/supervised-learning-vs-unsupervised-learning-vs-reinforcement-learning-key-differences-explained-a80a8780aae0",
+          "source_type": "blog",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.9
+        },
+        {
+          "title": "Supervised vs Unsupervised vs Reinforcement - AITUDE",
+          "url": "https://www.aitude.com/supervised-vs-unsupervised-vs-reinforcement/",
+          "source_type": "general",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.85
+        },
+        {
+          "title": "What is the difference among supervised learning, unsupervised ...",
+          "url": "https://www.quora.com/What-is-the-difference-among-supervised-learning-unsupervised-learning-and-reinforcement-learning-in-ML-terms",
+          "source_type": "general",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.8
+        },
+        {
+          "title": "Supervised vs. Unsupervised Learning: What's the Difference? - IBM",
+          "url": "https://www.ibm.com/think/topics/supervised-vs-unsupervised-learning",
+          "source_type": "general",
+          "credibility": 0.6,
+          "difficulty": 0.58,
+          "relevance": 0.75
+        }
+      ],
+      "avg_credibility": 0.6,
+      "avg_difficulty": 0.516,
+      "status": "PASS"
+    },
+    {
+      "category": "Complex Queries",
+      "test_name": "Comparative Analysis",
+      "query": "Compare the latest features of React 19 versus Vue 3 versus Angular 17 for enterprise applications",
+      "query_length": 98,
+      "rag_enabled": true,
+      "expected_rag": true,
+      "rag_decision_correct": true,
+      "elapsed_time_ms": 722.7778434753418,
+      "timestamp": "2025-11-07T13:38:44.985879",
+      "sources_count": 5,
+      "provider_used": "serper",
+      "search_time_ms": 722.7382659912109,
+      "total_results": 10,
+      "filtered_results": 10,
+      "citations_count": 5,
+      "sources": [
+        {
+          "title": "Angular vs React vs Vue: Core Differences | BrowserStack",
+          "url": "https://www.browserstack.com/guide/angular-vs-react-vs-vue",
+          "source_type": "general",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.95
+        },
+        {
+          "title": "React vs. Vue vs. Angular for Enterprise Architects: Signals, Server ...",
+          "url": "https://developersvoice.com/blog/frontend/react-vue-angular-enterprise/",
+          "source_type": "blog",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.9
+        },
+        {
+          "title": "Angular vs React vs Vue in 2024 Comparison Decoded - F22 Labs",
+          "url": "https://www.f22labs.com/blogs/angular-vs-react-vs-vue-in-2023/",
+          "source_type": "blog",
+          "credibility": 0.6,
+          "difficulty": 0.53,
+          "relevance": 0.85
+        },
+        {
+          "title": "React vs Vue vs Angular: Which One to Choose in 2025? - Medium",
+          "url": "https://medium.com/javaguides/react-vs-vue-vs-angular-which-one-to-choose-in-2025-ac03ef568b9c",
+          "source_type": "blog",
+          "credibility": 0.6,
+          "difficulty": 0.45,
+          "relevance": 0.8
+        },
+        {
+          "title": "Angular vs React - Reddit",
+          "url": "https://www.reddit.com/r/angular/comments/1b4a3gk/angular_vs_react/",
+          "source_type": "forum",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.75
+        }
+      ],
+      "avg_credibility": 0.6,
+      "avg_difficulty": 0.496,
+      "status": "PASS"
+    },
+    {
+      "category": "Complex Queries",
+      "test_name": "Historical + Current",
+      "query": "How has artificial intelligence evolved from the 1950s to 2025, and what are the current breakthrough technologies?",
+      "query_length": 115,
+      "rag_enabled": true,
+      "expected_rag": true,
+      "rag_decision_correct": true,
+      "elapsed_time_ms": 584.3462944030762,
+      "timestamp": "2025-11-07T13:38:46.070929",
+      "sources_count": 5,
+      "provider_used": "serper",
+      "search_time_ms": 584.3071937561035,
+      "total_results": 10,
+      "filtered_results": 10,
+      "citations_count": 5,
+      "sources": [
+        {
+          "title": "The History of AI: A Timeline of Artificial Intelligence - Coursera",
+          "url": "https://www.coursera.org/articles/history-of-ai",
+          "source_type": "educational",
+          "credibility": 0.9,
+          "difficulty": 0.5,
+          "relevance": 0.95
+        },
+        {
+          "title": "The Evolution and Future of Artificial Intelligence: A Student's Guide",
+          "url": "https://www.calmu.edu/news/future-of-artificial-intelligence",
+          "source_type": "educational",
+          "credibility": 0.95,
+          "difficulty": 0.45,
+          "relevance": 0.9
+        },
+        {
+          "title": "The AI Evolution: Past, Present & Future [2025 Update] - Timspark",
+          "url": "https://timspark.com/blog/the-journey-of-ai-evolution/",
+          "source_type": "blog",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.85
+        },
+        {
+          "title": "The Evolution of Artificial Intelligence: From Theory to 2025 Reality",
+          "url": "https://www.ucertify.com/blog/spotlight/the-evolution-of-artificial-intelligence-from-theory-to-2025-reality/?srsltid=AfmBOookejw17LgOzmh6ZeQuXwkoxIJeUunVupx8Hqe7KHjCoDYk5ApC",
+          "source_type": "blog",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.8
+        },
+        {
+          "title": "The History of Artificial Intelligence - IBM",
+          "url": "https://www.ibm.com/think/topics/history-of-artificial-intelligence",
+          "source_type": "general",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.75
+        }
+      ],
+      "avg_credibility": 0.7300000000000001,
+      "avg_difficulty": 0.49000000000000005,
+      "status": "PASS"
+    },
+    {
+      "category": "Complex Queries",
+      "test_name": "Technical Deep Dive",
+      "query": "What is the architecture of transformer models in NLP, specifically focusing on attention mechanisms, and what are the latest improvements in 2025?",
+      "query_length": 147,
+      "rag_enabled": true,
+      "expected_rag": true,
+      "rag_decision_correct": true,
+      "elapsed_time_ms": 704.5457363128662,
+      "timestamp": "2025-11-07T13:38:47.276189",
+      "sources_count": 5,
+      "provider_used": "serper",
+      "search_time_ms": 704.5044898986816,
+      "total_results": 10,
+      "filtered_results": 10,
+      "citations_count": 5,
+      "sources": [
+        {
+          "title": "Transformer Models Explained: Architecture & Attention Guide (2025)",
+          "url": "https://langcopilot.com/posts/2025-08-04-what-is-a-transformer-model-in-depth",
+          "source_type": "general",
+          "credibility": 0.6,
+          "difficulty": 0.43000000000000005,
+          "relevance": 0.95
+        },
+        {
+          "title": "What is a Transformer Model? | IBM",
+          "url": "https://www.ibm.com/think/topics/transformer-model",
+          "source_type": "general",
+          "credibility": 0.6,
+          "difficulty": 0.53,
+          "relevance": 0.9
+        },
+        {
+          "title": "The Evolution of Transformer Architecture: From 2017 to 2024",
+          "url": "https://medium.com/@arghya05/the-evolution-of-transformer-architecture-from-2017-to-2024-5a967488e63b",
+          "source_type": "blog",
+          "credibility": 0.6,
+          "difficulty": 0.53,
+          "relevance": 0.85
+        },
+        {
+          "title": "Transformer Models in Natural Language Processing - Netguru",
+          "url": "https://www.netguru.com/blog/transformer-models-in-nlp",
+          "source_type": "blog",
+          "credibility": 0.6,
+          "difficulty": 0.53,
+          "relevance": 0.8
+        },
+        {
+          "title": "Transformers in Machine Learning - GeeksforGeeks",
+          "url": "https://www.geeksforgeeks.org/machine-learning/getting-started-with-transformers/",
+          "source_type": "general",
+          "credibility": 0.6,
+          "difficulty": 0.53,
+          "relevance": 0.75
+        }
+      ],
+      "avg_credibility": 0.6,
+      "avg_difficulty": 0.5100000000000001,
+      "status": "PASS"
+    },
+    {
+      "category": "Domain-Specific",
+      "test_name": "Science - Physics",
+      "query": "What are the latest discoveries in quantum entanglement research and their implications for quantum computing?",
+      "query_length": 110,
+      "rag_enabled": true,
+      "expected_rag": true,
+      "rag_decision_correct": true,
+      "elapsed_time_ms": 832.4668407440186,
+      "timestamp": "2025-11-07T13:38:48.609370",
+      "sources_count": 5,
+      "provider_used": "serper",
+      "search_time_ms": 832.4244022369385,
+      "total_results": 10,
+      "filtered_results": 10,
+      "citations_count": 5,
+      "sources": [
+        {
+          "title": "The Year of Quantum: From concept to reality in 2025 - McKinsey",
+          "url": "https://www.mckinsey.com/capabilities/tech-and-ai/our-insights/the-year-of-quantum-from-concept-to-reality-in-2025",
+          "source_type": "general",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.95
+        },
+        {
+          "title": "Researchers discover a new type of quantum entanglement - Phys.org",
+          "url": "https://phys.org/news/2025-04-quantum-entanglement.html",
+          "source_type": "news",
+          "credibility": 0.6,
+          "difficulty": 0.58,
+          "relevance": 0.9
+        },
+        {
+          "title": "Entangled atoms found to supercharge light emission | ScienceDaily",
+          "url": "https://www.sciencedaily.com/releases/2025/11/251103093009.htm",
+          "source_type": "general",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.85
+        },
+        {
+          "title": "Scientists unveil Helios, a record-breaking quantum system",
+          "url": "https://www.livescience.com/technology/computing/this-is-easily-the-most-powerful-quantum-computer-on-earth-scientists-unveil-helios-a-record-breaking-quantum-system",
+          "source_type": "general",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.8
+        },
+        {
+          "title": "Discovery of new class of particles could take quantum mechanics ...",
+          "url": "https://www.brown.edu/news/2025-01-08/new-quantum-particles",
+          "source_type": "educational",
+          "credibility": 0.95,
+          "difficulty": 0.5,
+          "relevance": 0.55
+        }
+      ],
+      "avg_credibility": 0.6699999999999999,
+      "avg_difficulty": 0.516,
+      "status": "PASS"
+    },
+    {
+      "category": "Domain-Specific",
+      "test_name": "Technology - AI",
+      "query": "What are the new capabilities of GPT-5 and Claude Opus 4 released in 2025?",
+      "query_length": 74,
+      "rag_enabled": true,
+      "expected_rag": true,
+      "rag_decision_correct": true,
+      "elapsed_time_ms": 663.5379791259766,
+      "timestamp": "2025-11-07T13:38:49.773618",
+      "sources_count": 5,
+      "provider_used": "serper",
+      "search_time_ms": 663.4905338287354,
+      "total_results": 9,
+      "filtered_results": 9,
+      "citations_count": 5,
+      "sources": [
+        {
+          "title": "How GPT-5 compares to Claude Opus 4.1 - Medium",
+          "url": "https://medium.com/@leucopsis/how-gpt-5-compares-to-claude-opus-4-1-fd10af78ef90",
+          "source_type": "blog",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.95
+        },
+        {
+          "title": "Introducing Claude Sonnet 4.5 - Anthropic",
+          "url": "https://www.anthropic.com/news/claude-sonnet-4-5",
+          "source_type": "news",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.9
+        },
+        {
+          "title": "ChatGPT-5 vs Claude Opus 4.1: AI Battle for 2025 - Kanerika",
+          "url": "https://kanerika.com/blogs/chatgpt-5-vs-claude-opus-4-1/",
+          "source_type": "blog",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.85
+        },
+        {
+          "title": "Claude Opus 4.1 vs GPT 5.0 - The Winner Will SHOCK You!",
+          "url": "https://www.youtube.com/watch?v=SCAJA6kHgqY",
+          "source_type": "video",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.8
+        },
+        {
+          "title": "Ultimate Comparison of GPT-5 vs Grok 4 vs Claude Opus ... - Fello AI",
+          "url": "https://felloai.com/2025/08/ultimate-comparison-of-gpt-5-vs-grok-4-vs-claude-opus-4-1-vs-gemini-2-5-pro-august-2025/",
+          "source_type": "general",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.75
+        }
+      ],
+      "avg_credibility": 0.6,
+      "avg_difficulty": 0.5,
+      "status": "PASS"
+    },
+    {
+      "category": "Domain-Specific",
+      "test_name": "Medicine - Health",
+      "query": "What are the latest FDA-approved treatments for Alzheimer's disease in 2025?",
+      "query_length": 76,
+      "rag_enabled": true,
+      "expected_rag": true,
+      "rag_decision_correct": true,
+      "elapsed_time_ms": 757.1651935577393,
+      "timestamp": "2025-11-07T13:38:51.031503",
+      "sources_count": 5,
+      "provider_used": "serper",
+      "search_time_ms": 757.1237087249756,
+      "total_results": 9,
+      "filtered_results": 9,
+      "citations_count": 5,
+      "sources": [
+        {
+          "title": "Controversial New Alzheimer's Drugs Offer Hope\u2014But at a High Cost",
+          "url": "https://www.nature.com/articles/d41586-025-02927-7",
+          "source_type": "general",
+          "credibility": 0.95,
+          "difficulty": 0.5,
+          "relevance": 0.95
+        },
+        {
+          "title": "FDA to recommend additional, earlier MRI monitoring for patients",
+          "url": "https://www.fda.gov/drugs/drug-safety-and-availability/fda-recommend-additional-earlier-mri-monitoring-patients-alzheimers-disease-taking-leqembi-lecanemab",
+          "source_type": "general",
+          "credibility": 0.85,
+          "difficulty": 0.5,
+          "relevance": 0.8
+        },
+        {
+          "title": "Alzheimer's treatments: What's on the horizon? - Mayo Clinic",
+          "url": "https://www.mayoclinic.org/diseases-conditions/alzheimers-disease/in-depth/alzheimers-treatments/art-20047780",
+          "source_type": "general",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.9
+        },
+        {
+          "title": "FDA Approves At-Home Injectable Leqembi for Alzheimer's",
+          "url": "https://www.brightfocus.org/news/fda-approves-at-home-injectable-leqembi-for-alzheimers/",
+          "source_type": "news",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.85
+        },
+        {
+          "title": "Healthcast Episode 6: New FDA-Approved Infusion Drugs for Early ...",
+          "url": "https://health.stonybrookmedicine.edu/healthcast-episode-6-new-fda-approved-infusion-drugs-for-early-stage-alzheimers/",
+          "source_type": "educational",
+          "credibility": 0.95,
+          "difficulty": 0.5,
+          "relevance": 0.6
+        }
+      ],
+      "avg_credibility": 0.79,
+      "avg_difficulty": 0.5,
+      "status": "PASS"
+    },
+    {
+      "category": "Domain-Specific",
+      "test_name": "Business - Markets",
+      "query": "What are the current trends in cryptocurrency regulation across major economies in 2025?",
+      "query_length": 88,
+      "rag_enabled": true,
+      "expected_rag": true,
+      "rag_decision_correct": true,
+      "elapsed_time_ms": 733.1035137176514,
+      "timestamp": "2025-11-07T13:38:52.264926",
+      "sources_count": 5,
+      "provider_used": "serper",
+      "search_time_ms": 733.0620288848877,
+      "total_results": 9,
+      "filtered_results": 9,
+      "citations_count": 5,
+      "sources": [
+        {
+          "title": "State of Crypto 2025: The year crypto went mainstream",
+          "url": "https://a16zcrypto.com/posts/article/state-of-crypto-report-2025/",
+          "source_type": "general",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.95
+        },
+        {
+          "title": "Trends in Crypto Policy and Compliance | Loeb & Loeb LLP",
+          "url": "https://www.loeb.com/en/insights/publications/2025/07/trends-in-crypto-policy-and-compliance",
+          "source_type": "general",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.9
+        },
+        {
+          "title": "The 2025 Global Adoption Index - Chainalysis",
+          "url": "https://www.chainalysis.com/blog/2025-global-crypto-adoption-index/",
+          "source_type": "blog",
+          "credibility": 0.6,
+          "difficulty": 0.53,
+          "relevance": 0.85
+        },
+        {
+          "title": "Global Crypto Policy Review & Outlook 2024/2025 Report - TRM Labs",
+          "url": "https://www.trmlabs.com/reports-and-whitepapers/global-crypto-policy-review-outlook-2024-25-report",
+          "source_type": "academic",
+          "credibility": 0.6,
+          "difficulty": 0.53,
+          "relevance": 0.8
+        },
+        {
+          "title": "Davos 2025: Is the cryptocurrency era about to begin?",
+          "url": "https://www.weforum.org/stories/2025/01/cryptocurrency-regulations-era-experts-digital-finance/",
+          "source_type": "forum",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.75
+        }
+      ],
+      "avg_credibility": 0.6,
+      "avg_difficulty": 0.512,
+      "status": "PASS"
+    },
+    {
+      "category": "Domain-Specific",
+      "test_name": "Environment - Climate",
+      "query": "What are the latest climate change statistics and carbon emission trends as of 2025?",
+      "query_length": 84,
+      "rag_enabled": true,
+      "expected_rag": true,
+      "rag_decision_correct": true,
+      "elapsed_time_ms": 844.4738388061523,
+      "timestamp": "2025-11-07T13:38:53.610096",
+      "sources_count": 5,
+      "provider_used": "serper",
+      "search_time_ms": 844.430685043335,
+      "total_results": 9,
+      "filtered_results": 9,
+      "citations_count": 5,
+      "sources": [
+        {
+          "title": "Carbon Dioxide - Earth Indicator - NASA Science",
+          "url": "https://science.nasa.gov/earth/explore/earth-indicators/carbon-dioxide/",
+          "source_type": "general",
+          "credibility": 0.85,
+          "difficulty": 0.5,
+          "relevance": 0.8
+        },
+        {
+          "title": "CO2 Emissions \u2013 Global Energy Review 2025 \u2013 Analysis - IEA",
+          "url": "https://www.iea.org/reports/global-energy-review-2025/co2-emissions",
+          "source_type": "general",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.95
+        },
+        {
+          "title": "GHG emissions of all world countries - 2025 Report",
+          "url": "https://edgar.jrc.ec.europa.eu/report_2025",
+          "source_type": "general",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.9
+        },
+        {
+          "title": "Emissions Gap Report 2025 | UNEP - UN Environment Programme",
+          "url": "https://www.unep.org/resources/emissions-gap-report-2025",
+          "source_type": "general",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.85
+        },
+        {
+          "title": "Climate change: atmospheric carbon dioxide",
+          "url": "https://www.climate.gov/news-features/understanding-climate/climate-change-atmospheric-carbon-dioxide",
+          "source_type": "news",
+          "credibility": 0.85,
+          "difficulty": 0.5,
+          "relevance": 0.65
+        }
+      ],
+      "avg_credibility": 0.7,
+      "avg_difficulty": 0.5,
+      "status": "PASS"
+    },
+    {
+      "category": "Emotion-Aware",
+      "test_name": "Struggling Student (Frustrated)",
+      "query": "Explain quantum mechanics and wave-particle duality",
+      "query_length": 51,
+      "rag_enabled": true,
+      "expected_rag": true,
+      "rag_decision_correct": true,
+      "elapsed_time_ms": 552.5527000427246,
+      "timestamp": "2025-11-07T13:38:54.663389",
+      "sources_count": 1,
+      "provider_used": "serper",
+      "search_time_ms": 552.5109767913818,
+      "total_results": 9,
+      "filtered_results": 1,
+      "citations_count": 1,
+      "sources": [
+        {
+          "title": "Wave\u2013particle duality - Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Wave%E2%80%93particle_duality",
+          "source_type": "general",
+          "credibility": 0.8,
+          "difficulty": 0.5,
+          "relevance": 0.95
+        }
+      ],
+      "avg_credibility": 0.8,
+      "avg_difficulty": 0.5,
+      "status": "PASS"
+    },
+    {
+      "category": "Emotion-Aware",
+      "test_name": "Confident Student (Curious)",
+      "query": "Explain quantum mechanics and wave-particle duality",
+      "query_length": 51,
+      "rag_enabled": true,
+      "expected_rag": true,
+      "rag_decision_correct": true,
+      "elapsed_time_ms": 1569.183349609375,
+      "timestamp": "2025-11-07T13:38:56.733299",
+      "sources_count": 5,
+      "provider_used": "serper",
+      "search_time_ms": 1569.1392421722412,
+      "total_results": 9,
+      "filtered_results": 9,
+      "citations_count": 5,
+      "sources": [
+        {
+          "title": "DOE Explains...Quantum Mechanics - Department of Energy",
+          "url": "https://www.energy.gov/science/doe-explainsquantum-mechanics",
+          "source_type": "general",
+          "credibility": 0.85,
+          "difficulty": 0.5,
+          "relevance": 0.8
+        },
+        {
+          "title": "Wave Particle Duality Explained | Perimeter Institute for Theoretical ...",
+          "url": "https://www.youtube.com/watch?v=DfQH3o6dKss",
+          "source_type": "video",
+          "credibility": 0.6,
+          "difficulty": 0.48,
+          "relevance": 0.95
+        },
+        {
+          "title": "Wave-Particle Duality - Chemistry LibreTexts",
+          "url": "https://chem.libretexts.org/Bookshelves/Physical_and_Theoretical_Chemistry_Textbook_Maps/Supplemental_Modules_(Physical_and_Theoretical_Chemistry)/Quantum_Mechanics/02._Fundamental_Concepts_of_Quantum_Mechanics/Wave-Particle_Duality",
+          "source_type": "general",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.9
+        },
+        {
+          "title": "Do most physicists actually believe in wave-particle duality? - Reddit",
+          "url": "https://www.reddit.com/r/AskPhysics/comments/139pur3/do_most_physicists_actually_believe_in/",
+          "source_type": "forum",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.85
+        },
+        {
+          "title": "What is the mechanism behind the wave - particle duality",
+          "url": "https://physics.stackexchange.com/questions/172510/what-is-the-mechanism-behind-the-wave-particle-duality",
+          "source_type": "general",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.75
+        }
+      ],
+      "avg_credibility": 0.65,
+      "avg_difficulty": 0.496,
+      "status": "PASS"
+    },
+    {
+      "category": "Emotion-Aware",
+      "test_name": "Confused Student",
+      "query": "Explain quantum mechanics and wave-particle duality",
+      "query_length": 51,
+      "rag_enabled": true,
+      "expected_rag": true,
+      "rag_decision_correct": true,
+      "elapsed_time_ms": 694.7433948516846,
+      "timestamp": "2025-11-07T13:38:57.928309",
+      "sources_count": 1,
+      "provider_used": "serper",
+      "search_time_ms": 694.7028636932373,
+      "total_results": 9,
+      "filtered_results": 1,
+      "citations_count": 1,
+      "sources": [
+        {
+          "title": "Wave\u2013particle duality - Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Wave%E2%80%93particle_duality",
+          "source_type": "general",
+          "credibility": 0.8,
+          "difficulty": 0.5,
+          "relevance": 0.95
+        }
+      ],
+      "avg_credibility": 0.8,
+      "avg_difficulty": 0.5,
+      "status": "PASS"
+    },
+    {
+      "category": "Edge Cases",
+      "test_name": "Very Short Query",
+      "query": "Python",
+      "query_length": 6,
+      "rag_enabled": true,
+      "expected_rag": false,
+      "rag_decision_correct": false,
+      "elapsed_time_ms": 575.5832195281982,
+      "timestamp": "2025-11-07T13:38:58.503975",
+      "sources_count": 5,
+      "provider_used": "serper",
+      "search_time_ms": 575.5445957183838,
+      "total_results": 7,
+      "filtered_results": 7,
+      "citations_count": 5,
+      "sources": [
+        {
+          "title": "Python for Everybody Specialization - Coursera",
+          "url": "https://www.coursera.org/specializations/python",
+          "source_type": "educational",
+          "credibility": 0.9,
+          "difficulty": 0.5,
+          "relevance": 0.8
+        },
+        {
+          "title": "Welcome to Python.org",
+          "url": "https://www.python.org/",
+          "source_type": "general",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.95
+        },
+        {
+          "title": "Python Tutorial - W3Schools",
+          "url": "https://www.w3schools.com/python/",
+          "source_type": "general",
+          "credibility": 0.6,
+          "difficulty": 0.45,
+          "relevance": 0.9
+        },
+        {
+          "title": "Learn Python 2 - Codecademy",
+          "url": "https://www.codecademy.com/learn/learn-python",
+          "source_type": "general",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.85
+        },
+        {
+          "title": "Python (programming language) - Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Python_(programming_language)",
+          "source_type": "general",
+          "credibility": 0.8,
+          "difficulty": 0.5,
+          "relevance": 0.7
+        }
+      ],
+      "avg_credibility": 0.7,
+      "avg_difficulty": 0.49000000000000005,
+      "status": "PASS"
+    },
+    {
+      "category": "Edge Cases",
+      "test_name": "Very Long Query",
+      "query": "I'm trying to understand how neural networks work specifically the backpropagation algorithm and gradient descent optimization techniques and how they relate to deep learning architectures like convolutional neural networks transformers and recurrent neural networks and what are the latest research papers on these topics published in 2025",
+      "query_length": 340,
+      "rag_enabled": true,
+      "expected_rag": true,
+      "rag_decision_correct": true,
+      "elapsed_time_ms": 846.8112945556641,
+      "timestamp": "2025-11-07T13:38:59.851366",
+      "sources_count": 5,
+      "provider_used": "serper",
+      "search_time_ms": 846.7683792114258,
+      "total_results": 10,
+      "filtered_results": 10,
+      "citations_count": 5,
+      "sources": [
+        {
+          "title": "Deep Learning: Basics and Convolutional Neural Networks (CNNs)",
+          "url": "https://www.ncbi.nlm.nih.gov/books/NBK597497/",
+          "source_type": "general",
+          "credibility": 0.85,
+          "difficulty": 0.53,
+          "relevance": 0.9
+        },
+        {
+          "title": "Comprehensive Guide to Deep Learning \u2014 Neural Networks",
+          "url": "https://medium.com/data-science-collective/comprehensive-guide-to-deep-learning-neural-networks-6b729dc24402",
+          "source_type": "blog",
+          "credibility": 0.6,
+          "difficulty": 0.45,
+          "relevance": 0.95
+        },
+        {
+          "title": "Backpropagation in Neural Network - GeeksforGeeks",
+          "url": "https://www.geeksforgeeks.org/machine-learning/backpropagation-in-neural-network/",
+          "source_type": "general",
+          "credibility": 0.6,
+          "difficulty": 0.58,
+          "relevance": 0.85
+        },
+        {
+          "title": "Gradient descent, how neural networks learn - YouTube",
+          "url": "https://www.youtube.com/watch?v=IHZwWFHWa-w",
+          "source_type": "video",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.8
+        },
+        {
+          "title": "What should I do to understand the maths and algorithms behind ...",
+          "url": "https://www.quora.com/What-should-I-do-to-understand-the-maths-and-algorithms-behind-back-propagation-CNN-and-RNN",
+          "source_type": "news",
+          "credibility": 0.6,
+          "difficulty": 0.58,
+          "relevance": 0.75
+        }
+      ],
+      "avg_credibility": 0.65,
+      "avg_difficulty": 0.528,
+      "status": "PASS"
+    },
+    {
+      "category": "Edge Cases",
+      "test_name": "Ambiguous Query",
+      "query": "Tell me about Python",
+      "query_length": 20,
+      "rag_enabled": true,
+      "expected_rag": true,
+      "rag_decision_correct": true,
+      "elapsed_time_ms": 906.8775177001953,
+      "timestamp": "2025-11-07T13:39:01.258964",
+      "sources_count": 5,
+      "provider_used": "serper",
+      "search_time_ms": 906.836748123169,
+      "total_results": 10,
+      "filtered_results": 10,
+      "citations_count": 5,
+      "sources": [
+        {
+          "title": "Python (programming language) - Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Python_(programming_language)",
+          "source_type": "general",
+          "credibility": 0.8,
+          "difficulty": 0.5,
+          "relevance": 0.9
+        },
+        {
+          "title": "What Is Python Used For? A Beginner's Guide - Coursera",
+          "url": "https://www.coursera.org/articles/what-is-python-used-for-a-beginners-guide-to-using-python",
+          "source_type": "educational",
+          "credibility": 0.9,
+          "difficulty": 0.4,
+          "relevance": 0.75
+        },
+        {
+          "title": "What is Python? Executive Summary",
+          "url": "https://www.python.org/doc/essays/blurb/",
+          "source_type": "general",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.95
+        },
+        {
+          "title": "What is Python? - Python Language Explained - Amazon AWS",
+          "url": "https://aws.amazon.com/what-is/python/",
+          "source_type": "general",
+          "credibility": 0.6,
+          "difficulty": 0.45,
+          "relevance": 0.85
+        },
+        {
+          "title": "Introduction to Python - W3Schools",
+          "url": "https://www.w3schools.com/python/python_intro.asp",
+          "source_type": "general",
+          "credibility": 0.6,
+          "difficulty": 0.45,
+          "relevance": 0.8
+        }
+      ],
+      "avg_credibility": 0.7000000000000001,
+      "avg_difficulty": 0.45999999999999996,
+      "status": "PASS"
+    },
+    {
+      "category": "Edge Cases",
+      "test_name": "Conversational Query",
+      "query": "Hey, can you help me understand what's going on with AI these days?",
+      "query_length": 67,
+      "rag_enabled": true,
+      "expected_rag": true,
+      "rag_decision_correct": true,
+      "elapsed_time_ms": 726.4153957366943,
+      "timestamp": "2025-11-07T13:39:02.485674",
+      "sources_count": 5,
+      "provider_used": "serper",
+      "search_time_ms": 726.3672351837158,
+      "total_results": 10,
+      "filtered_results": 10,
+      "citations_count": 5,
+      "sources": [
+        {
+          "title": "Is the AI boom another Dot-Com bubble about to burst? - YouTube",
+          "url": "https://www.youtube.com/watch?v=ZIbEn5oH4jA",
+          "source_type": "video",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.95
+        },
+        {
+          "title": "Veritasium: What Everyone Gets Wrong About AI and Learning",
+          "url": "https://www.youtube.com/watch?v=0xS68sl2D70",
+          "source_type": "video",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.9
+        },
+        {
+          "title": "What's actually going on with AI? : r/ArtificialInteligence - Reddit",
+          "url": "https://www.reddit.com/r/ArtificialInteligence/comments/1ontnb6/whats_actually_going_on_with_ai/",
+          "source_type": "forum",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.85
+        },
+        {
+          "title": "24 NEW Things You Should Be Using AI For... - YouTube",
+          "url": "https://www.youtube.com/watch?v=xEnSm9rPHc4",
+          "source_type": "video",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.8
+        },
+        {
+          "title": "AI is ruining the internet : r/singularity - Reddit",
+          "url": "https://www.reddit.com/r/singularity/comments/1dsmfv1/ai_is_ruining_the_internet/",
+          "source_type": "forum",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.75
+        }
+      ],
+      "avg_credibility": 0.6,
+      "avg_difficulty": 0.5,
+      "status": "PASS"
+    },
+    {
+      "category": "Edge Cases",
+      "test_name": "Question with Typo",
+      "query": "Wht are the latset developmants in machne lerning?",
+      "query_length": 50,
+      "rag_enabled": true,
+      "expected_rag": true,
+      "rag_decision_correct": true,
+      "elapsed_time_ms": 694.2157745361328,
+      "timestamp": "2025-11-07T13:39:03.680593",
+      "sources_count": 5,
+      "provider_used": "serper",
+      "search_time_ms": 694.1735744476318,
+      "total_results": 10,
+      "filtered_results": 10,
+      "citations_count": 5,
+      "sources": [
+        {
+          "title": "Advancements in AI and Machine Learning",
+          "url": "https://ep.jhu.edu/news/advancements-in-ai-and-machine-learning/",
+          "source_type": "educational",
+          "credibility": 0.95,
+          "difficulty": 0.58,
+          "relevance": 0.85
+        },
+        {
+          "title": "Top 13 Machine Learning Trends CTOs Need to Know in 2025",
+          "url": "https://mobidev.biz/blog/future-machine-learning-trends-impact-business",
+          "source_type": "blog",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.95
+        },
+        {
+          "title": "Machine learning and generative AI: What are they good for in 2025?",
+          "url": "https://mitsloan.mit.edu/ideas-made-to-matter/machine-learning-and-generative-ai-what-are-they-good-for",
+          "source_type": "educational",
+          "credibility": 0.95,
+          "difficulty": 0.5,
+          "relevance": 0.7
+        },
+        {
+          "title": "8 AI and machine learning trends to watch in 2025 | TechTarget",
+          "url": "https://www.techtarget.com/searchenterpriseai/tip/9-top-AI-and-machine-learning-trends",
+          "source_type": "general",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.9
+        },
+        {
+          "title": "Top Machine Learning Trends in 2025 - GeeksforGeeks",
+          "url": "https://www.geeksforgeeks.org/machine-learning/top-machine-learning-trends/",
+          "source_type": "general",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.8
+        }
+      ],
+      "avg_credibility": 0.74,
+      "avg_difficulty": 0.516,
+      "status": "PASS"
+    },
+    {
+      "category": "Performance Stress",
+      "test_name": "Rapid Query 1",
+      "query": "What is TypeScript?",
+      "query_length": 19,
+      "rag_enabled": true,
+      "expected_rag": true,
+      "rag_decision_correct": true,
+      "elapsed_time_ms": 397.7856636047363,
+      "timestamp": "2025-11-07T13:39:04.579101",
+      "sources_count": 5,
+      "provider_used": "serper",
+      "search_time_ms": 397.74584770202637,
+      "total_results": 10,
+      "filtered_results": 10,
+      "citations_count": 5,
+      "sources": [
+        {
+          "title": "TypeScript: JavaScript With Syntax For Types.",
+          "url": "https://www.typescriptlang.org/",
+          "source_type": "general",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.95
+        },
+        {
+          "title": "TypeScript - Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/TypeScript",
+          "source_type": "general",
+          "credibility": 0.8,
+          "difficulty": 0.5,
+          "relevance": 0.8
+        },
+        {
+          "title": "[AskJS] what IS typescript though? : r/javascript - Reddit",
+          "url": "https://www.reddit.com/r/javascript/comments/1f0ee5i/askjs_what_is_typescript_though/",
+          "source_type": "forum",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.9
+        },
+        {
+          "title": "TypeScript Introduction - W3Schools",
+          "url": "https://www.w3schools.com/typescript/typescript_intro.php",
+          "source_type": "general",
+          "credibility": 0.6,
+          "difficulty": 0.45,
+          "relevance": 0.85
+        },
+        {
+          "title": "What is TypeScript? - The freeCodeCamp Forum",
+          "url": "https://forum.freecodecamp.org/t/what-is-typescript/142681",
+          "source_type": "forum",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.75
+        }
+      ],
+      "avg_credibility": 0.64,
+      "avg_difficulty": 0.49000000000000005,
+      "status": "PASS"
+    },
+    {
+      "category": "Performance Stress",
+      "test_name": "Rapid Query 2",
+      "query": "Latest React features 2025",
+      "query_length": 26,
+      "rag_enabled": true,
+      "expected_rag": true,
+      "rag_decision_correct": true,
+      "elapsed_time_ms": 764.4984722137451,
+      "timestamp": "2025-11-07T13:39:05.343698",
+      "sources_count": 5,
+      "provider_used": "serper",
+      "search_time_ms": 764.441728591919,
+      "total_results": 9,
+      "filtered_results": 9,
+      "citations_count": 5,
+      "sources": [
+        {
+          "title": "React 19.2",
+          "url": "https://react.dev/blog/2025/10/01/react-19-2",
+          "source_type": "blog",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.95
+        },
+        {
+          "title": "React 19 Features Developers Should Know for 2025 - ColorWhistle",
+          "url": "https://colorwhistle.com/latest-react-features/",
+          "source_type": "general",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.9
+        },
+        {
+          "title": "Top 10 ReactJS Features You Should Know in 2025 - Medium",
+          "url": "https://medium.com/@abhijeetguptaa/top-10-reactjs-features-you-should-know-in-2025-39690df98cd2",
+          "source_type": "blog",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.85
+        },
+        {
+          "title": "The State of React and the Community in 2025 - Mark's Dev Blog",
+          "url": "https://blog.isquaredsoftware.com/2025/06/react-community-2025/",
+          "source_type": "blog",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.8
+        },
+        {
+          "title": "The Future of React JS in 2025 [Top Trends and Predictions]",
+          "url": "https://www.geeksforgeeks.org/blogs/future-of-react/",
+          "source_type": "blog",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.75
+        }
+      ],
+      "avg_credibility": 0.6,
+      "avg_difficulty": 0.5,
+      "status": "PASS"
+    },
+    {
+      "category": "Performance Stress",
+      "test_name": "Rapid Query 3",
+      "query": "Python vs JavaScript",
+      "query_length": 20,
+      "rag_enabled": true,
+      "expected_rag": true,
+      "rag_decision_correct": true,
+      "elapsed_time_ms": 479.9480438232422,
+      "timestamp": "2025-11-07T13:39:05.823761",
+      "sources_count": 5,
+      "provider_used": "serper",
+      "search_time_ms": 479.90989685058594,
+      "total_results": 10,
+      "filtered_results": 10,
+      "citations_count": 5,
+      "sources": [
+        {
+          "title": "JavaScript or Python : r/learnpython - Reddit",
+          "url": "https://www.reddit.com/r/learnpython/comments/1dzk7mk/javascript_or_python/",
+          "source_type": "forum",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.95
+        },
+        {
+          "title": "JavaScript vs Python: Understand the Key Differences | Simplilearn",
+          "url": "https://www.simplilearn.com/tutorials/programming-tutorial/javascript-vs-python",
+          "source_type": "general",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.9
+        },
+        {
+          "title": "Python and JavaScript: Choosing Your First Language - Daily.dev",
+          "url": "https://daily.dev/blog/python-and-javascript-choosing-your-first-language",
+          "source_type": "blog",
+          "credibility": 0.6,
+          "difficulty": 0.4,
+          "relevance": 0.85
+        },
+        {
+          "title": "Python vs JavaScript: The Ultimate Language Comparison",
+          "url": "https://www.bacancytechnology.com/blog/python-vs-javascript",
+          "source_type": "blog",
+          "credibility": 0.6,
+          "difficulty": 0.45,
+          "relevance": 0.8
+        },
+        {
+          "title": "Python or JavaScript - Which One Should YOU Learn? - YouTube",
+          "url": "https://www.youtube.com/watch?v=t9CAFYn7YgY",
+          "source_type": "video",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.75
+        }
+      ],
+      "avg_credibility": 0.6,
+      "avg_difficulty": 0.4699999999999999,
+      "status": "PASS"
+    },
+    {
+      "category": "Performance Stress",
+      "test_name": "Rapid Query 4",
+      "query": "Node.js best practices",
+      "query_length": 22,
+      "rag_enabled": true,
+      "expected_rag": true,
+      "rag_decision_correct": true,
+      "elapsed_time_ms": 556.7004680633545,
+      "timestamp": "2025-11-07T13:39:06.380568",
+      "sources_count": 5,
+      "provider_used": "serper",
+      "search_time_ms": 556.6635131835938,
+      "total_results": 10,
+      "filtered_results": 10,
+      "citations_count": 5,
+      "sources": [
+        {
+          "title": "white_check_mark: The Node.js best practices list (July 2024) - GitHub",
+          "url": "https://github.com/goldbergyoni/nodebestpractices",
+          "source_type": "general",
+          "credibility": 0.6,
+          "difficulty": 0.53,
+          "relevance": 0.95
+        },
+        {
+          "title": "Node.js \u2014 Security Best Practices",
+          "url": "https://nodejs.org/en/learn/getting-started/security-best-practices",
+          "source_type": "general",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.9
+        },
+        {
+          "title": "Best Practice of NodeJS Application Structure - Stack Overflow",
+          "url": "https://stackoverflow.com/questions/70324059/best-practice-of-nodejs-application-structure",
+          "source_type": "forum",
+          "credibility": 0.85,
+          "difficulty": 0.5,
+          "relevance": 0.7
+        },
+        {
+          "title": "Best Practices in Node - Reddit",
+          "url": "https://www.reddit.com/r/node/comments/1m2d5aa/best_practices_in_node/",
+          "source_type": "forum",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.85
+        },
+        {
+          "title": "Node.js best practices along with sample code | by Parmar shyamsinh",
+          "url": "https://medium.com/@parmarshyamsinh/node-js-best-practices-along-with-sample-code-de1728a4ad99",
+          "source_type": "blog",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.8
+        }
+      ],
+      "avg_credibility": 0.65,
+      "avg_difficulty": 0.506,
+      "status": "PASS"
+    },
+    {
+      "category": "Performance Stress",
+      "test_name": "Rapid Query 5",
+      "query": "Docker containers tutorial",
+      "query_length": 26,
+      "rag_enabled": true,
+      "expected_rag": true,
+      "rag_decision_correct": true,
+      "elapsed_time_ms": 535.607099533081,
+      "timestamp": "2025-11-07T13:39:06.916290",
+      "sources_count": 5,
+      "provider_used": "serper",
+      "search_time_ms": 535.5710983276367,
+      "total_results": 10,
+      "filtered_results": 10,
+      "citations_count": 5,
+      "sources": [
+        {
+          "title": "Docker 101 Tutorial",
+          "url": "https://www.docker.com/101-tutorial/",
+          "source_type": "general",
+          "credibility": 0.6,
+          "difficulty": 0.4,
+          "relevance": 0.95
+        },
+        {
+          "title": "A Docker Tutorial for Beginners",
+          "url": "https://docker-curriculum.com/",
+          "source_type": "general",
+          "credibility": 0.6,
+          "difficulty": 0.35000000000000003,
+          "relevance": 0.9
+        },
+        {
+          "title": "Docker Tutorial for Beginners - YouTube",
+          "url": "https://www.youtube.com/watch?v=b0HMimUb4f0",
+          "source_type": "video",
+          "credibility": 0.6,
+          "difficulty": 0.35000000000000003,
+          "relevance": 0.85
+        },
+        {
+          "title": "Docker Tutorial - GeeksforGeeks",
+          "url": "https://www.geeksforgeeks.org/devops/docker-tutorial/",
+          "source_type": "general",
+          "credibility": 0.6,
+          "difficulty": 0.4,
+          "relevance": 0.8
+        },
+        {
+          "title": "The Only Docker Tutorial You Need To Get Started - YouTube",
+          "url": "https://www.youtube.com/watch?v=DQdB7wFEygo",
+          "source_type": "video",
+          "credibility": 0.6,
+          "difficulty": 0.45,
+          "relevance": 0.75
+        }
+      ],
+      "avg_credibility": 0.6,
+      "avg_difficulty": 0.39,
+      "status": "PASS"
+    },
+    {
+      "category": "Source Quality",
+      "test_name": "Academic Query (High Credibility Expected)",
+      "query": "Latest peer-reviewed research on CRISPR gene editing efficacy",
+      "query_length": 61,
+      "rag_enabled": true,
+      "expected_rag": true,
+      "rag_decision_correct": true,
+      "elapsed_time_ms": 575.1557350158691,
+      "timestamp": "2025-11-07T13:39:07.491566",
+      "sources_count": 5,
+      "provider_used": "serper",
+      "search_time_ms": 575.1194953918457,
+      "total_results": 10,
+      "filtered_results": 10,
+      "citations_count": 5,
+      "sources": [
+        {
+          "title": "The hidden risks of CRISPR/Cas: structural variations and genome ...",
+          "url": "https://www.nature.com/articles/s41467-025-62606-z",
+          "source_type": "general",
+          "credibility": 0.95,
+          "difficulty": 0.5,
+          "relevance": 0.95
+        },
+        {
+          "title": "Challenges and Opportunities in the Application of CRISPR-Cas9",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12503735/",
+          "source_type": "general",
+          "credibility": 0.85,
+          "difficulty": 0.58,
+          "relevance": 0.85
+        },
+        {
+          "title": "Advancements in CRISPR/Cas systems for disease treatment",
+          "url": "https://www.sciencedirect.com/science/article/pii/S2211383525003132",
+          "source_type": "general",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.9
+        },
+        {
+          "title": "Advancing CRISPR genome editing into gene therapy clinical trials",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12094669/",
+          "source_type": "general",
+          "credibility": 0.85,
+          "difficulty": 0.58,
+          "relevance": 0.7
+        },
+        {
+          "title": "CRISPR/Cas9 Delivery Systems to Enhance Gene Editing Efficiency",
+          "url": "https://www.mdpi.com/1422-0067/26/9/4420",
+          "source_type": "general",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.8
+        }
+      ],
+      "avg_credibility": 0.77,
+      "avg_difficulty": 0.532,
+      "status": "PASS"
+    },
+    {
+      "category": "Source Quality",
+      "test_name": "Technical Documentation",
+      "query": "PostgreSQL query optimization techniques official documentation",
+      "query_length": 63,
+      "rag_enabled": true,
+      "expected_rag": true,
+      "rag_decision_correct": true,
+      "elapsed_time_ms": 1598.7727642059326,
+      "timestamp": "2025-11-07T13:39:09.591058",
+      "sources_count": 5,
+      "provider_used": "serper",
+      "search_time_ms": 1598.7303256988525,
+      "total_results": 10,
+      "filtered_results": 10,
+      "citations_count": 5,
+      "sources": [
+        {
+          "title": "Documentation: 18: Chapter 14. Performance Tips - PostgreSQL",
+          "url": "https://www.postgresql.org/docs/current/performance-tips.html",
+          "source_type": "general",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.95
+        },
+        {
+          "title": "Documentation: 18: 51.5. Planner/Optimizer - PostgreSQL",
+          "url": "https://www.postgresql.org/docs/current/planner-optimizer.html",
+          "source_type": "general",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.9
+        },
+        {
+          "title": "Documentation: 18: 19.7. Query Planning - PostgreSQL",
+          "url": "https://www.postgresql.org/docs/current/runtime-config-query.html",
+          "source_type": "general",
+          "credibility": 0.6,
+          "difficulty": 0.58,
+          "relevance": 0.85
+        },
+        {
+          "title": "Optimizing PostgreSQL query performance - AWS Documentation",
+          "url": "https://docs.aws.amazon.com/prescriptive-guidance/latest/postgresql-query-tuning/introduction.html",
+          "source_type": "documentation",
+          "credibility": 0.6,
+          "difficulty": 0.45,
+          "relevance": 0.8
+        },
+        {
+          "title": "PostgreSQL query tuning checklist - EDB",
+          "url": "https://www.enterprisedb.com/postgres-tutorials/postgresql-query-tuning-checklist",
+          "source_type": "general",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.75
+        }
+      ],
+      "avg_credibility": 0.6,
+      "avg_difficulty": 0.506,
+      "status": "PASS"
+    },
+    {
+      "category": "Source Quality",
+      "test_name": "News Query (Freshness Priority)",
+      "query": "What happened in tech news today?",
+      "query_length": 33,
+      "rag_enabled": true,
+      "expected_rag": true,
+      "rag_decision_correct": true,
+      "elapsed_time_ms": 716.0184383392334,
+      "timestamp": "2025-11-07T13:39:10.807787",
+      "sources_count": 5,
+      "provider_used": "serper",
+      "search_time_ms": 715.9795761108398,
+      "total_results": 10,
+      "filtered_results": 10,
+      "citations_count": 5,
+      "sources": [
+        {
+          "title": "Tech News | Today's Latest Technology News | Reuters",
+          "url": "https://www.reuters.com/technology/",
+          "source_type": "news",
+          "credibility": 0.9,
+          "difficulty": 0.5,
+          "relevance": 0.95
+        },
+        {
+          "title": "Technology: Latest Tech News Articles Today",
+          "url": "https://apnews.com/technology",
+          "source_type": "news",
+          "credibility": 0.9,
+          "difficulty": 0.5,
+          "relevance": 0.75
+        },
+        {
+          "title": "Tech - CNBC",
+          "url": "https://www.cnbc.com/technology/",
+          "source_type": "general",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.9
+        },
+        {
+          "title": "Tech | CNN Business",
+          "url": "https://www.cnn.com/business/tech",
+          "source_type": "news",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.85
+        },
+        {
+          "title": "WIRED - The Latest in Technology, Science, Culture and Business ...",
+          "url": "https://www.wired.com/",
+          "source_type": "general",
+          "credibility": 0.6,
+          "difficulty": 0.5,
+          "relevance": 0.8
+        }
+      ],
+      "avg_credibility": 0.72,
+      "avg_difficulty": 0.5,
+      "status": "PASS"
+    }
+  ],
+  "performance_metrics": [
+    {
+      "query_length": 25,
+      "elapsed_time_ms": 509.29975509643555,
+      "sources_count": 5
+    },
+    {
+      "query_length": 62,
+      "elapsed_time_ms": 670.4108715057373,
+      "sources_count": 5
+    },
+    {
+      "query_length": 52,
+      "elapsed_time_ms": 756.9789886474609,
+      "sources_count": 5
+    },
+    {
+      "query_length": 32,
+      "elapsed_time_ms": 0.013113021850585938,
+      "sources_count": 0
+    },
+    {
+      "query_length": 56,
+      "elapsed_time_ms": 545.626163482666,
+      "sources_count": 5
+    },
+    {
+      "query_length": 141,
+      "elapsed_time_ms": 877.4571418762207,
+      "sources_count": 5
+    },
+    {
+      "query_length": 98,
+      "elapsed_time_ms": 722.7778434753418,
+      "sources_count": 5
+    },
+    {
+      "query_length": 115,
+      "elapsed_time_ms": 584.3462944030762,
+      "sources_count": 5
+    },
+    {
+      "query_length": 147,
+      "elapsed_time_ms": 704.5457363128662,
+      "sources_count": 5
+    },
+    {
+      "query_length": 110,
+      "elapsed_time_ms": 832.4668407440186,
+      "sources_count": 5
+    },
+    {
+      "query_length": 74,
+      "elapsed_time_ms": 663.5379791259766,
+      "sources_count": 5
+    },
+    {
+      "query_length": 76,
+      "elapsed_time_ms": 757.1651935577393,
+      "sources_count": 5
+    },
+    {
+      "query_length": 88,
+      "elapsed_time_ms": 733.1035137176514,
+      "sources_count": 5
+    },
+    {
+      "query_length": 84,
+      "elapsed_time_ms": 844.4738388061523,
+      "sources_count": 5
+    },
+    {
+      "query_length": 51,
+      "elapsed_time_ms": 552.5527000427246,
+      "sources_count": 1
+    },
+    {
+      "query_length": 51,
+      "elapsed_time_ms": 1569.183349609375,
+      "sources_count": 5
+    },
+    {
+      "query_length": 51,
+      "elapsed_time_ms": 694.7433948516846,
+      "sources_count": 1
+    },
+    {
+      "query_length": 6,
+      "elapsed_time_ms": 575.5832195281982,
+      "sources_count": 5
+    },
+    {
+      "query_length": 340,
+      "elapsed_time_ms": 846.8112945556641,
+      "sources_count": 5
+    },
+    {
+      "query_length": 20,
+      "elapsed_time_ms": 906.8775177001953,
+      "sources_count": 5
+    },
+    {
+      "query_length": 67,
+      "elapsed_time_ms": 726.4153957366943,
+      "sources_count": 5
+    },
+    {
+      "query_length": 50,
+      "elapsed_time_ms": 694.2157745361328,
+      "sources_count": 5
+    },
+    {
+      "query_length": 19,
+      "elapsed_time_ms": 397.7856636047363,
+      "sources_count": 5
+    },
+    {
+      "query_length": 26,
+      "elapsed_time_ms": 764.4984722137451,
+      "sources_count": 5
+    },
+    {
+      "query_length": 20,
+      "elapsed_time_ms": 479.9480438232422,
+      "sources_count": 5
+    },
+    {
+      "query_length": 22,
+      "elapsed_time_ms": 556.7004680633545,
+      "sources_count": 5
+    },
+    {
+      "query_length": 26,
+      "elapsed_time_ms": 535.607099533081,
+      "sources_count": 5
+    },
+    {
+      "query_length": 61,
+      "elapsed_time_ms": 575.1557350158691,
+      "sources_count": 5
+    },
+    {
+      "query_length": 63,
+      "elapsed_time_ms": 1598.7727642059326,
+      "sources_count": 5
+    },
+    {
+      "query_length": 33,
+      "elapsed_time_ms": 716.0184383392334,
+      "sources_count": 5
+    }
+  ]
+}
