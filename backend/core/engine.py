@@ -231,6 +231,15 @@ class MasterXEngine:
             )
             
             # ====================================================================
+            # PHASE 3 STEP 3.5: DETECT CATEGORY (needed for RAG decision)
+            # ====================================================================
+            category = self.provider_manager.detect_category_from_message(
+                message, 
+                emotion_state
+            )
+            logger.info(f"📂 Detected category: {category}")
+            
+            # ====================================================================
             # PHASE 3.5: RAG - REAL-TIME WEB KNOWLEDGE (Perplexity-Inspired)
             # ====================================================================
             rag_context = None
@@ -270,13 +279,6 @@ class MasterXEngine:
             # ====================================================================
             logger.info(f"🤖 Selecting best AI provider...")
             ai_start = time.time()
-            
-            # Detect category from message
-            category = self.provider_manager.detect_category_from_message(
-                message, 
-                emotion_state
-            )
-            logger.info(f"📂 Detected category: {category}")
             
             # Select best provider for this category
             selected_provider = await self.provider_manager.select_best_provider_for_category(
