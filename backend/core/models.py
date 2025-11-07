@@ -364,6 +364,12 @@ class AIResponse(BaseModel):
     ability_info: Optional[AbilityInfo] = None
     ability_updated: bool = False
     processing_breakdown: Optional[Dict[str, float]] = None
+    
+    # RAG metadata (Perplexity-inspired)
+    rag_enabled: bool = False
+    citations: Optional[List[str]] = None
+    sources_count: Optional[int] = None
+    search_provider: Optional[str] = None
 
 
 # ============================================================================
