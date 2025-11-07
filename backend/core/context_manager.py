@@ -269,6 +269,12 @@ class MemoryRetriever:
         """
         Find relevant messages from past conversations
         
+        CRITICAL FIXES (Perplexity Enhancement Plan):
+        - Ensure session_id type consistency
+        - Proper error handling for embeddings
+        - Enhanced logging for debugging
+        - Graceful degradation on errors
+        
         Args:
             query: Query text to search for
             session_id: Current session ID
@@ -280,14 +286,20 @@ class MemoryRetriever:
             List of (Message, similarity_score) tuples
         """
         try:
+            # CRITICAL: Ensure session_id is string
+            session_id_str = str(session_id)
+            
+            logger.debug(f"🔎 Semantic search for session {session_id_str}: '{query[:50]}...'")
+            
             # Generate query embedding
             query_embedding = await self.embedding_engine.embed_text(query)
+            logger.debug(f"✅ Query embedding generated: dimension={len(query_embedding)}")
             
             # Get recent messages from database (with embeddings)
             cutoff_date = datetime.utcnow() - timedelta(days=time_window_days)
             
             cursor = self.messages_collection.find({
-                'session_id': session_id,
+                'session_id': session_id_str,  # CRITICAL: Use string type
                 'timestamp': {'$gte': cutoff_date},
                 'embedding': {'$exists': True, '$ne': None}
             }).sort('timestamp', -1).limit(100)  # Limit search space
@@ -295,8 +307,10 @@ class MemoryRetriever:
             messages = await cursor.to_list(length=100)
             
             if not messages:
-                logger.debug(f"No messages with embeddings found for session {session_id}")
+                logger.debug(f"No messages with embeddings found for session {session_id_str}")
                 return []
+            
+            logger.debug(f"📊 Found {len(messages)} messages with embeddings to search")
             
             # Calculate similarities
             results = []
@@ -305,42 +319,46 @@ class MemoryRetriever:
                 if 'embedding' not in msg_doc or not msg_doc['embedding']:
                     continue
                 
-                msg_embedding = np.array(msg_doc['embedding'])
-                similarity = self.embedding_engine.cosine_similarity(
-                    query_embedding,
-                    msg_embedding
-                )
-                
-                if similarity >= min_similarity:
-                    # Convert document to Message object
-                    message = Message(
-                        id=msg_doc['_id'],
-                        session_id=msg_doc['session_id'],
-                        user_id=msg_doc['user_id'],
-                        role=MessageRole(msg_doc['role']),
-                        content=msg_doc['content'],
-                        timestamp=msg_doc['timestamp'],
-                        emotion_state=EmotionState(**msg_doc['emotion_state']) if msg_doc.get('emotion_state') else None,
-                        provider_used=msg_doc.get('provider_used'),
-                        response_time_ms=msg_doc.get('response_time_ms'),
-                        tokens_used=msg_doc.get('tokens_used'),
-                        cost=msg_doc.get('cost')
+                try:
+                    msg_embedding = np.array(msg_doc['embedding'])
+                    similarity = self.embedding_engine.cosine_similarity(
+                        query_embedding,
+                        msg_embedding
                     )
-                    results.append((message, similarity))
+                    
+                    if similarity >= min_similarity:
+                        # Convert document to Message object
+                        message = Message(
+                            id=msg_doc['_id'],
+                            session_id=msg_doc['session_id'],
+                            user_id=msg_doc['user_id'],
+                            role=MessageRole(msg_doc['role']),
+                            content=msg_doc['content'],
+                            timestamp=msg_doc['timestamp'],
+                            emotion_state=EmotionState(**msg_doc['emotion_state']) if msg_doc.get('emotion_state') else None,
+                            provider_used=msg_doc.get('provider_used'),
+                            response_time_ms=msg_doc.get('response_time_ms'),
+                            tokens_used=msg_doc.get('tokens_used'),
+                            cost=msg_doc.get('cost')
+                        )
+                        results.append((message, similarity))
+                except Exception as e:
+                    logger.warning(f"⚠️  Failed to process message for similarity: {e}")
+                    continue
             
             # Sort by similarity (descending) and return top_k
             results.sort(key=lambda x: x[1], reverse=True)
             results = results[:top_k]
             
             logger.debug(
-                f"Found {len(results)} relevant messages "
+                f"✅ Semantic search complete: found {len(results)} relevant messages "
                 f"(similarity >= {min_similarity})"
             )
             
             return results
         
         except Exception as e:
-            logger.error(f"Error finding relevant messages: {e}")
+            logger.error(f"❌ Semantic search failed: {e}")
             return []
 
 
@@ -400,6 +418,13 @@ class ContextManager:
         """
         Add message to context and database
         
+        CRITICAL FIXES (Perplexity Enhancement Plan):
+        - Ensure embedding is generated and stored properly
+        - Verify MongoDB insert is awaited
+        - Add comprehensive logging for debugging
+        - Type consistency (session_id as string)
+        - Don't fail entire request if embedding fails
+        
         Args:
             session_id: Session ID
             message: Message to add
@@ -409,6 +434,12 @@ class ContextManager:
             Message ID
         """
         try:
+            # CRITICAL: Ensure session_id is string for consistency
+            session_id_str = str(session_id)
+            
+            # DEBUG: Log what we're storing
+            logger.info(f"📝 Storing message for session {session_id_str} (role: {message.role.value})")
+            
             # Generate embedding if requested
             embedding = None
             if generate_embedding:
@@ -416,19 +447,25 @@ class ContextManager:
                     embedding_vector = await self.embedding_engine.embed_text(
                         message.content
                     )
+                    # CRITICAL: Convert numpy array to list for MongoDB
                     embedding = embedding_vector.tolist()
+                    
+                    # DEBUG: Verify embedding generated
+                    logger.info(f"✅ Embedding generated: dimension={len(embedding)}")
                 except Exception as e:
-                    logger.warning(f"Failed to generate embedding: {e}")
+                    logger.error(f"❌ Failed to generate embedding: {e}")
+                    # Don't fail the whole request, but log prominently
+                    embedding = None
             
             # Prepare message document
             message_doc = {
                 '_id': message.id,
-                'session_id': session_id,
+                'session_id': session_id_str,  # CRITICAL: Use string type
                 'user_id': message.user_id,
                 'role': message.role.value,
                 'content': message.content,
                 'timestamp': message.timestamp,
-                'embedding': embedding,
+                'embedding': embedding,  # CRITICAL: Store embedding
                 'emotion_state': message.emotion_state.model_dump() if message.emotion_state else None,
                 'provider_used': message.provider_used,
                 'response_time_ms': message.response_time_ms,
@@ -437,19 +474,20 @@ class ContextManager:
                 'quality_rating': message.quality_rating
             }
             
-            # Insert into database
-            await self.messages_collection.insert_one(message_doc)
+            # CRITICAL: Insert into MongoDB (must await)
+            result = await self.messages_collection.insert_one(message_doc)
             
-            logger.debug(f"Message added to context (id: {message.id}, embedding: {embedding is not None})")
+            # DEBUG: Verify insertion
+            logger.info(f"✅ Message stored: id={result.inserted_id}, has_embedding={embedding is not None}")
             
             return message.id
         
         except Exception as e:
-            logger.error(f"Error adding message to context: {e}")
-            raise MasterXError(
-                f"Failed to add message: {str(e)}",
-                details={'session_id': session_id, 'message_id': message.id}
-            )
+            logger.error(f"❌ Failed to store message: {e}")
+            # Don't fail the whole request if context storage fails
+            # This allows the chat to continue even if context system has issues
+            logger.warning("⚠️  Context storage failed, but continuing request")
+            return message.id  # Return ID anyway to not break flow
     
     async def get_context(
         self,
@@ -459,6 +497,13 @@ class ContextManager:
     ) -> Dict[str, Any]:
         """
         Get conversation context for session
+        
+        CRITICAL FIXES (Perplexity Enhancement Plan):
+        - Verify messages exist before semantic search
+        - Handle empty results gracefully
+        - Add extensive logging for debugging
+        - Type consistency (session_id as string)
+        - Don't fail on errors, return empty context
         
         Args:
             session_id: Session ID
@@ -473,30 +518,71 @@ class ContextManager:
             - compressed: Whether context was compressed
         """
         try:
-            # Get recent messages (short-term memory)
+            import time
+            start_time = time.time()
+            
+            # CRITICAL: Convert session_id to string for consistency
+            session_id_str = str(session_id)
+            
+            logger.info(f"🔍 Retrieving context for session: {session_id_str}")
+            
+            # STEP 1: Check if messages exist (DEBUG)
+            message_count = await self.messages_collection.count_documents({
+                'session_id': session_id_str
+            })
+            logger.info(f"📊 Found {message_count} total messages in session")
+            
+            if message_count == 0:
+                logger.warning(f"⚠️  No messages found for session {session_id_str}")
+                return {
+                    'recent_messages': [],
+                    'relevant_messages': [],
+                    'total_tokens': 0,
+                    'compressed': False,
+                    'compression_ratio': 1.0
+                }
+            
+            # STEP 2: Check if embeddings exist (DEBUG)
+            embedded_count = await self.messages_collection.count_documents({
+                'session_id': session_id_str,
+                'embedding': {'$exists': True, '$ne': None}
+            })
+            logger.info(f"📊 Found {embedded_count} messages with embeddings")
+            
+            if embedded_count == 0:
+                logger.warning(f"⚠️  No embeddings found! Messages stored without embeddings!")
+            
+            # STEP 3: Get recent messages (short-term memory)
             cursor = self.messages_collection.find({
-                'session_id': session_id
+                'session_id': session_id_str
             }).sort('timestamp', -1).limit(self.short_term_memory_size)
             
             recent_docs = await cursor.to_list(length=self.short_term_memory_size)
+            logger.info(f"📥 Retrieved {len(recent_docs)} recent messages from DB")
             
             # Convert to Message objects
             recent_messages = []
             for doc in reversed(recent_docs):  # Reverse to chronological order
-                message = Message(
-                    id=doc['_id'],
-                    session_id=doc['session_id'],
-                    user_id=doc['user_id'],
-                    role=MessageRole(doc['role']),
-                    content=doc['content'],
-                    timestamp=doc['timestamp'],
-                    emotion_state=EmotionState(**doc['emotion_state']) if doc.get('emotion_state') else None,
-                    provider_used=doc.get('provider_used'),
-                    response_time_ms=doc.get('response_time_ms'),
-                    tokens_used=doc.get('tokens_used'),
-                    cost=doc.get('cost')
-                )
-                recent_messages.append(message)
+                try:
+                    message = Message(
+                        id=doc['_id'],
+                        session_id=doc['session_id'],
+                        user_id=doc['user_id'],
+                        role=MessageRole(doc['role']),
+                        content=doc['content'],
+                        timestamp=doc['timestamp'],
+                        emotion_state=EmotionState(**doc['emotion_state']) if doc.get('emotion_state') else None,
+                        provider_used=doc.get('provider_used'),
+                        response_time_ms=doc.get('response_time_ms'),
+                        tokens_used=doc.get('tokens_used'),
+                        cost=doc.get('cost')
+                    )
+                    recent_messages.append(message)
+                except Exception as e:
+                    logger.warning(f"⚠️  Failed to parse message: {e}")
+                    continue
+            
+            logger.info(f"✅ Parsed {len(recent_messages)} recent messages")
             
             # Fit to token budget
             fitted_messages = self.token_manager.fit_messages_to_budget(
@@ -504,22 +590,33 @@ class ContextManager:
                 self.token_manager.context_budget
             )
             
-            # Get semantically relevant messages if requested
+            logger.info(f"📏 Fitted {len(fitted_messages)} messages to token budget")
+            
+            # STEP 4: Get semantically relevant messages if requested
             relevant_messages = []
-            if include_semantic and semantic_query:
-                relevant_with_scores = await self.memory_retriever.find_relevant(
-                    query=semantic_query,
-                    session_id=session_id,
-                    top_k=3,
-                    min_similarity=0.7
-                )
-                relevant_messages = [msg for msg, score in relevant_with_scores]
+            if include_semantic and semantic_query and embedded_count > 0:
+                try:
+                    logger.info(f"🔎 Performing semantic search...")
+                    relevant_with_scores = await self.memory_retriever.find_relevant(
+                        query=semantic_query,
+                        session_id=session_id_str,
+                        top_k=3,
+                        min_similarity=0.7
+                    )
+                    relevant_messages = [msg for msg, score in relevant_with_scores]
+                    logger.info(f"✅ Found {len(relevant_messages)} relevant messages")
+                except Exception as e:
+                    logger.error(f"❌ Semantic search failed: {e}")
+                    relevant_messages = []
             
             # Calculate total tokens
             total_tokens = sum(
                 self.token_manager.estimate_tokens(msg.content)
                 for msg in fitted_messages
             )
+            
+            # STEP 5: Assemble context
+            retrieval_time_ms = (time.time() - start_time) * 1000
             
             context = {
                 'recent_messages': fitted_messages,
@@ -529,21 +626,27 @@ class ContextManager:
                 'compression_ratio': len(fitted_messages) / len(recent_messages) if recent_messages else 1.0
             }
             
-            logger.debug(
-                f"Context retrieved: "
-                f"{len(fitted_messages)} recent, "
-                f"{len(relevant_messages)} relevant, "
-                f"{total_tokens} tokens"
+            logger.info(
+                f"✅ Context retrieved successfully: "
+                f"recent={len(fitted_messages)}, "
+                f"relevant={len(relevant_messages)}, "
+                f"tokens={total_tokens}, "
+                f"time={retrieval_time_ms:.1f}ms"
             )
             
             return context
         
         except Exception as e:
-            logger.error(f"Error getting context: {e}")
-            raise MasterXError(
-                f"Failed to get context: {str(e)}",
-                details={'session_id': session_id}
-            )
+            logger.error(f"❌ Context retrieval failed: {e}")
+            # Return empty context instead of failing
+            logger.warning("⚠️  Returning empty context due to error")
+            return {
+                'recent_messages': [],
+                'relevant_messages': [],
+                'total_tokens': 0,
+                'compressed': False,
+                'compression_ratio': 1.0
+            }
     
     async def compress_context(
         self,
