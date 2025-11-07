@@ -493,6 +493,11 @@ Provide a helpful, clear, and supportive response."""
         """
         Phase 3: Advanced prompt enhancement with context and difficulty
         
+        ENHANCED (Perplexity-Inspired):
+        - Explicit continuity instructions
+        - Context-aware response requirements
+        - Building on previous conversation
+        
         Args:
             message: Current user message
             emotion_result: Emotion analysis result
@@ -505,53 +510,90 @@ Provide a helpful, clear, and supportive response."""
             Enhanced prompt with full context
         """
         
-        # Build conversation history
+        # Build conversation history with FULL context (not truncated)
         history_text = ""
-        if recent_messages:
-            history_text = "Recent conversation:\n"
-            for msg in recent_messages[-5:]:  # Last 5 messages
-                role_label = "User" if msg.role == MessageRole.USER else "Assistant"
-                history_text += f"{role_label}: {msg.content[:100]}...\n"
+        continuity_instruction = ""
         
-        # Build relevant context
+        if recent_messages:
+            history_text = "\n🗨️ CONVERSATION HISTORY (Your memory of this session):\n"
+            history_text += "=" * 60 + "\n"
+            
+            # Show more context for continuity (last 8 messages or all if less)
+            context_messages = recent_messages[-8:] if len(recent_messages) > 8 else recent_messages
+            
+            for idx, msg in enumerate(context_messages, 1):
+                role_label = "Student" if msg.role == MessageRole.USER else "You (AI Tutor)"
+                # Show full content for recent messages (don't truncate)
+                content = msg.content if len(msg.content) < 300 else msg.content[:300] + "..."
+                history_text += f"\n[Message {idx}] {role_label}:\n{content}\n"
+            
+            history_text += "=" * 60 + "\n"
+            
+            # CRITICAL: Add explicit continuity instruction
+            continuity_instruction = f"""
+🔗 CONTINUITY REQUIREMENT (CRITICAL):
+You MUST explicitly acknowledge and build upon the conversation above.
+- Start your response by REFERENCING something specific from the conversation
+- Use phrases like "Building on what we discussed...", "Following up on...", "As we covered earlier..."
+- Show that you REMEMBER and are CONTINUING the conversation, not starting fresh
+- If the student asks for clarification, reference the SPECIFIC thing you explained before
+- Create a SEAMLESS flow from previous messages to your current response
+
+{
+    "⚠️ SPECIAL NOTE: The student seems to be asking for MORE DETAIL or CLARIFICATION about what you just explained. Make sure to EXPLICITLY reference your previous explanation and expand on it."
+    if any(word in message.lower() for word in ['more', 'explain', 'clarify', 'again', 'slowly', 'confused', 'understand', 'what do you mean'])
+    else ""
+}
+"""
+        
+        # Build relevant context from past sessions
         relevant_text = ""
         if relevant_messages:
-            relevant_text = "\nRelevant past context:\n"
+            relevant_text = "\n📚 RELEVANT PAST CONTEXT (from earlier in this learning journey):\n"
             for msg in relevant_messages[:2]:  # Top 2 relevant
-                relevant_text += f"- {msg.content[:80]}...\n"
+                role_label = "Student" if msg.role == MessageRole.USER else "You"
+                relevant_text += f"- {role_label}: {msg.content[:150]}...\n"
+            relevant_text += "\n"
         
         # Get emotion guidance
         emotion_guidance = self._get_emotion_guidance(emotion_result)
         
         # Build difficulty guidance
         difficulty_guidance = f"""
-Learner ability level: {ability:.2f} (0.0=beginner, 1.0=expert)
-Recommended difficulty: {difficulty_level.label} ({difficulty_level.value:.2f})
-{difficulty_level.explanation}
+📊 LEARNER PROFILE:
+- Current Ability: {ability:.2f} (scale: -3.0=beginner to +3.0=expert, 0.0=average)
+- Target Difficulty: {difficulty_level.label} ({difficulty_level.value:.2f})
+- Guidance: {difficulty_level.explanation}
 
-Adapt your response to match this difficulty level."""
+⚙️ ADAPTATION REQUIREMENT:
+Calibrate your response complexity to match the target difficulty level above.
+"""
         
-        # Combine everything
-        enhanced_prompt = f"""You are an adaptive AI tutor. Consider the following:
+        # Combine everything with clear structure
+        enhanced_prompt = f"""You are an adaptive AI tutor having an ONGOING conversation with a student.
 
-EMOTIONAL STATE:
+{continuity_instruction}
+
+EMOTIONAL STATE & TEACHING STRATEGY:
 {emotion_guidance}
 
-LEARNER ABILITY:
 {difficulty_guidance}
-
 {history_text}
-
 {relevant_text}
 
-CURRENT QUESTION:
-{message}
+CURRENT STUDENT MESSAGE:
+"{message}"
 
-Provide a response that:
-1. Matches the learner's ability level
-2. Addresses their emotional state appropriately
-3. Builds on previous conversation context
-4. Is clear, supportive, and educational"""
+📝 RESPONSE REQUIREMENTS:
+✅ EXPLICITLY reference the conversation history above (use "Building on...", "As we discussed...")
+✅ Show continuity - you're continuing a conversation, not answering in isolation
+✅ Match the student's current emotional state (see guidance above)
+✅ Calibrate difficulty to their ability level ({difficulty_level.label})
+✅ Use clear structure (headings, bullet points) if it helps understanding
+✅ Check for understanding before advancing to new concepts
+✅ Be supportive, patient, and educational
+
+Remember: This is a CONTINUING conversation. Build on what came before."""
         
         return enhanced_prompt
     
@@ -610,42 +652,101 @@ Provide a response that:
             return emotion_state.valence >= 0.5
     
     def _get_emotion_guidance(self, emotion_result) -> str:
-        """Get guidance for AI based on detected emotion"""
+        """
+        Get guidance for AI based on detected emotion
+        
+        ENHANCED (Perplexity-Inspired):
+        - More specific teaching strategies
+        - Emotional intelligence in response
+        - Clear action items for AI
+        """
         
         emotion = emotion_result.primary_emotion
         readiness = emotion_result.learning_readiness
+        confidence = getattr(emotion_result, 'confidence', 0.0)
         
-        # Emotion-specific guidance
+        # Build comprehensive guidance
+        guidance = f"""
+😊 DETECTED EMOTION: {emotion} (confidence: {confidence:.0%})
+📊 LEARNING READINESS: {readiness}
+"""
+        
+        # Emotion-specific teaching strategies
         if emotion in ['frustration', 'anxiety', 'overwhelmed']:
-            return """The learner is experiencing some frustration or anxiety. Please:
-- Be extra patient and encouraging
-- Break down concepts into smaller steps
-- Validate their feelings
-- Offer alternative explanations if needed"""
+            guidance += """
+🎯 TEACHING STRATEGY - Student is STRUGGLING:
+- Primary Emotion: Frustration/Anxiety (they're feeling stuck or worried)
+- ⚠️ CRITICAL: Be EXTRA patient and encouraging
+- ⚠️ CRITICAL: Provide DETAILED, step-by-step explanations (300+ words minimum)
+- Validate their feelings: "I can see this is challenging..."
+- Break down into MICRO-steps (smaller than usual)
+- Use multiple examples and analogies
+- Offer: "Would you like me to explain this differently?"
+- Reassure: "This is a difficult concept - you're doing great by asking!"
+- Check understanding FREQUENTLY at each step"""
         
         elif emotion in ['confusion', 'uncertainty']:
-            return """The learner seems confused. Please:
-- Clarify concepts with clear examples
-- Use analogies to explain difficult ideas
-- Check for understanding
-- Offer to explain differently"""
+            guidance += """
+🎯 TEACHING STRATEGY - Student is CONFUSED:
+- Primary Emotion: Confusion (they don't understand something)
+- ⚠️ IMPORTANT: Clarify with CONCRETE examples
+- Use analogies related to everyday experiences
+- Ask: "What specific part is confusing?" (help them pinpoint)
+- Rephrase explanations in different ways
+- Use visual descriptions when possible
+- Check: "Does this make sense so far?"
+- Offer alternative approaches: "Another way to think about it..."
+"""
         
-        elif emotion in ['joy', 'achievement', 'flow_state']:
-            return """The learner is engaged and doing well! Please:
-- Reinforce their progress
-- Challenge them appropriately
-- Maintain the momentum
-- Celebrate their understanding"""
+        elif emotion in ['joy', 'achievement', 'flow_state', 'admiration']:
+            guidance += """
+🎯 TEACHING STRATEGY - Student is ENGAGED and POSITIVE:
+- Primary Emotion: Joy/Achievement (they're excited or feeling successful)
+- 🚀 OPPORTUNITY: Build on this momentum!
+- Celebrate their understanding: "Great insight!"
+- Challenge them appropriately (can push slightly harder)
+- Maintain flow state - keep them engaged
+- Ask thought-provoking questions
+- Introduce next-level concepts: "Ready to explore...?"
+- Encourage curiosity: "What do you think happens if..."
+"""
         
         elif emotion in ['boredom', 'disengagement']:
-            return """The learner might be disengaged. Please:
-- Make the content more interesting
-- Use engaging examples
-- Connect to real-world applications
-- Increase the challenge slightly"""
+            guidance += """
+🎯 TEACHING STRATEGY - Student seems BORED:
+- Primary Emotion: Boredom (content may be too easy or uninteresting)
+- ⚡ SPARK INTEREST: Make it engaging and relevant
+- Use FASCINATING examples or surprising facts
+- Connect to real-world applications they care about
+- Ask: "Have you ever wondered why...?"
+- Increase challenge slightly (may be too easy)
+- Use storytelling: "Imagine you're..."
+- Make it interactive: "What would you do if..."
+"""
+        
+        elif emotion in ['curiosity', 'interest']:
+            guidance += """
+🎯 TEACHING STRATEGY - Student is CURIOUS:
+- Primary Emotion: Curiosity (they want to learn more!)
+- 🌟 PERFECT STATE: Feed their curiosity!
+- Provide rich, detailed explanations
+- Add interesting insights and connections
+- Encourage exploration: "Great question! This relates to..."
+- Share fascinating details
+- Suggest follow-up investigations
+"""
         
         else:
-            return """Provide a clear, helpful, and encouraging response."""
+            guidance += """
+🎯 TEACHING STRATEGY - Student is NEUTRAL/READY:
+- Primary Emotion: Neutral or Moderate engagement
+- Provide clear, structured explanations
+- Balance detail with conciseness
+- Check engagement: "Is this making sense?"
+- Adjust based on their responses
+"""
+        
+        return guidance
     
     def get_available_providers(self):
         """Get list of available AI providers"""
@@ -748,21 +849,31 @@ Provide a response that:
         return base
     
     def _adjust_for_readiness(self, readiness: str, base: int) -> int:
-        """Adjust based on student's emotional/learning state"""
+        """
+        Adjust based on student's emotional/learning state
+        
+        ENHANCED (Perplexity-Inspired):
+        - More aggressive token allocation for struggling students
+        - Ensure minimum response length requirements
+        - Prioritize student support over efficiency
+        """
         
         if readiness == 'blocked':
             # Maximum support - needs extensive help
+            # ENHANCED: Force extensive responses (4500+ tokens = ~350+ words)
             return max(base, self.RESPONSE_SIZES['extensive'])
         
-        elif readiness in ['not_ready', 'low_readiness']:
-            # Struggling - needs comprehensive explanations
-            return max(base, self.RESPONSE_SIZES['comprehensive'])
+        elif readiness in ['not_ready', 'low_readiness', 'low']:
+            # Struggling - needs comprehensive, detailed explanations
+            # ENHANCED: Ensure at least comprehensive (3500+ tokens = ~270+ words)
+            # This ensures struggling students get 300+ word responses
+            return max(base, self.RESPONSE_SIZES['extensive'])  # INCREASED from comprehensive
         
-        elif readiness == 'moderate_readiness':
+        elif readiness in ['moderate_readiness', 'moderate']:
             # Normal learning - standard to detailed
             return max(base, self.RESPONSE_SIZES['detailed'])
         
-        elif readiness == 'optimal_readiness':
+        elif readiness in ['optimal_readiness', 'optimal', 'good']:
             # Doing well - can be efficient but still thorough
             return min(base, self.RESPONSE_SIZES['comprehensive'])
         
