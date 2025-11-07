@@ -400,6 +400,12 @@ class ChatResponse(BaseModel):
     # Phase 4 metadata
     cached: bool = False
     processing_breakdown: Optional[Dict[str, float]] = None
+    
+    # RAG metadata (Perplexity-inspired)
+    rag_enabled: bool = False
+    citations: Optional[List[str]] = None
+    sources_count: Optional[int] = None
+    search_provider: Optional[str] = None
 
 
 # ============================================================================
