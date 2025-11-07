@@ -1344,7 +1344,12 @@ async def chat(request: ChatRequest):
             ability_updated=ai_response.ability_updated,
             # Phase 4 metadata
             cached=False,  # Will be set by caching layer
-            processing_breakdown=ai_response.processing_breakdown
+            processing_breakdown=ai_response.processing_breakdown,
+            # RAG metadata (Perplexity-inspired)
+            rag_enabled=ai_response.rag_enabled,
+            citations=ai_response.citations,
+            sources_count=ai_response.sources_count,
+            search_provider=ai_response.search_provider
         )
         
         logger.info(f"✅ Chat response generated successfully (session: {session_id})")
