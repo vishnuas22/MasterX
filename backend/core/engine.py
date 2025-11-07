@@ -25,6 +25,7 @@ from core.ai_providers import ProviderManager
 from core.context_manager import ContextManager
 from core.adaptive_learning import AdaptiveLearningEngine, PerformanceMetrics as AdaptivePerformanceMetrics
 from services.emotion.emotion_engine import EmotionEngine, EmotionEngineConfig
+from services.rag_engine import RAGEngine, create_rag_engine
 from utils.errors import MasterXError
 from utils.cost_tracker import cost_tracker
 from utils.database import get_database
@@ -68,6 +69,7 @@ class MasterXEngine:
         # Database will be set during server startup
         self.context_manager = None
         self.adaptive_engine = None
+        self.rag_engine = None  # RAG engine for real-time knowledge
         self._db_initialized = False
         
         # Token management
@@ -77,7 +79,7 @@ class MasterXEngine:
         
         logger.info("✅ MasterXEngine initialized (Phase 3: Full Intelligence)")
     
-    def initialize_intelligence_layer(self, db):
+    async def initialize_intelligence_layer(self, db):
         """
         Initialize Phase 3 intelligence components with database
         
@@ -96,8 +98,11 @@ class MasterXEngine:
                 # Initialize adaptive learning engine
                 self.adaptive_engine = AdaptiveLearningEngine(db=db)
                 
+                # Initialize RAG engine (Perplexity-inspired)
+                self.rag_engine = await create_rag_engine()
+                
                 self._db_initialized = True
-                logger.info("✅ Intelligence layer initialized (context + adaptive learning)")
+                logger.info("✅ Intelligence layer initialized (context + adaptive learning + RAG)")
             except Exception as e:
                 logger.error(f"Failed to initialize intelligence layer: {e}")
                 raise
@@ -226,6 +231,41 @@ class MasterXEngine:
             )
             
             # ====================================================================
+            # PHASE 3.5: RAG - REAL-TIME WEB KNOWLEDGE (Perplexity-Inspired)
+            # ====================================================================
+            rag_context = None
+            rag_time_ms = 0.0
+            
+            # Determine if RAG should be enabled for this query
+            enable_rag = self._should_enable_rag(message, category)
+            
+            if enable_rag and self.rag_engine:
+                logger.info(f"🌐 Augmenting with real-time web knowledge...")
+                rag_start = time.time()
+                
+                try:
+                    rag_context = await self.rag_engine.augment_query(
+                        query=message,
+                        emotion_state=emotion_state,
+                        ability_level=ability,
+                        enable_search=True
+                    )
+                    
+                    rag_time_ms = (time.time() - rag_start) * 1000
+                    
+                    if rag_context:
+                        logger.info(
+                            f"✅ RAG complete: {len(rag_context.sources)} sources, "
+                            f"{rag_context.provider_used.value} provider "
+                            f"({rag_time_ms:.0f}ms)"
+                        )
+                    else:
+                        logger.info("⚠️  RAG returned no results, proceeding without")
+                except Exception as e:
+                    logger.warning(f"⚠️  RAG failed (non-critical): {e}")
+                    rag_context = None
+            
+            # ====================================================================
             # PHASE 3 STEP 4: INTELLIGENT PROVIDER SELECTION
             # ====================================================================
             logger.info(f"🤖 Selecting best AI provider...")
@@ -245,16 +285,17 @@ class MasterXEngine:
             )
             
             # ====================================================================
-            # PHASE 3 STEP 5: GENERATE CONTEXT-AWARE RESPONSE
+            # PHASE 3 STEP 5: GENERATE CONTEXT-AWARE RESPONSE (with RAG)
             # ====================================================================
-            # Enhance prompt with emotion, context, and difficulty
+            # Enhance prompt with emotion, context, difficulty, and RAG
             enhanced_prompt = self._enhance_prompt_phase3(
                 message=message,
                 emotion_result=emotion_result,
                 recent_messages=recent_messages,
                 relevant_messages=relevant_messages,
                 difficulty_level=difficulty_level,
-                ability=ability
+                ability=ability,
+                rag_context=rag_context  # Add RAG sources to prompt
             )
             
             # Dynamic token allocation based on context
@@ -376,10 +417,24 @@ class MasterXEngine:
                 "context_retrieval_ms": context_time_ms,
                 "emotion_detection_ms": emotion_time_ms,
                 "difficulty_calculation_ms": difficulty_time_ms,
+                "rag_search_ms": rag_time_ms,  # RAG timing
                 "ai_generation_ms": ai_time_ms,
                 "storage_ms": storage_time_ms,
                 "total_ms": (time.time() - start_time) * 1000
             }
+            
+            # Add RAG metadata (Perplexity-inspired)
+            # Store as custom attributes for server to access
+            if rag_context:
+                response.rag_enabled = True
+                response.citations = rag_context.citations
+                response.sources_count = len(rag_context.sources)
+                response.search_provider = rag_context.provider_used.value
+            else:
+                response.rag_enabled = False
+                response.citations = None
+                response.sources_count = 0
+                response.search_provider = None
             
             total_time_ms = (time.time() - start_time) * 1000
             logger.info(
@@ -488,7 +543,8 @@ Provide a helpful, clear, and supportive response."""
         recent_messages: List[Message],
         relevant_messages: List[Message],
         difficulty_level,
-        ability: float
+        ability: float,
+        rag_context = None
     ) -> str:
         """
         Phase 3: Advanced prompt enhancement with context and difficulty
@@ -497,6 +553,7 @@ Provide a helpful, clear, and supportive response."""
         - Explicit continuity instructions
         - Context-aware response requirements
         - Building on previous conversation
+        - Real-time web knowledge (RAG)
         
         Args:
             message: Current user message
@@ -505,9 +562,10 @@ Provide a helpful, clear, and supportive response."""
             relevant_messages: Semantically relevant past messages
             difficulty_level: Recommended difficulty level
             ability: Current ability estimate
+            rag_context: RAG context with real-time web sources (optional)
         
         Returns:
-            Enhanced prompt with full context
+            Enhanced prompt with full context and RAG sources
         """
         
         # Build conversation history with FULL context (not truncated)
@@ -555,6 +613,20 @@ You MUST explicitly acknowledge and build upon the conversation above.
                 relevant_text += f"- {role_label}: {msg.content[:150]}...\n"
             relevant_text += "\n"
         
+        # Build RAG context (real-time web knowledge)
+        rag_text = ""
+        citation_instruction = ""
+        if rag_context and rag_context.sources:
+            rag_text = f"\n🌐 {rag_context.context_text}\n"
+            citation_instruction = """
+📎 CITATION REQUIREMENT:
+When using information from the web sources above:
+1. Include inline citations like [1], [2], [3]
+2. Be specific about which source supports which claim
+3. Combine your knowledge with these current sources
+4. If sources conflict with your training, prioritize recent sources and note the update
+"""
+        
         # Get emotion guidance
         emotion_guidance = self._get_emotion_guidance(emotion_result)
         
@@ -580,6 +652,8 @@ EMOTIONAL STATE & TEACHING STRATEGY:
 {difficulty_guidance}
 {history_text}
 {relevant_text}
+{rag_text}
+{citation_instruction}
 
 CURRENT STUDENT MESSAGE:
 "{message}"
@@ -592,11 +666,83 @@ CURRENT STUDENT MESSAGE:
 ✅ Use clear structure (headings, bullet points) if it helps understanding
 ✅ Check for understanding before advancing to new concepts
 ✅ Be supportive, patient, and educational
+{("✅ Include citations [1], [2], etc. when using web sources" if rag_context else "")}
 
 Remember: This is a CONTINUING conversation. Build on what came before."""
         
         return enhanced_prompt
     
+    
+    def _should_enable_rag(self, message: str, category: str) -> bool:
+        """
+        Determine if RAG (real-time web search) should be enabled for this query
+        
+        RAG is beneficial for:
+        - Current events, news, recent developments
+        - Specific facts, data, statistics
+        - Technology documentation, tutorials
+        - Research topics requiring latest information
+        
+        RAG is NOT needed for:
+        - Math problems (unless asking about new methods)
+        - General concept explanations
+        - Practice/homework help
+        - Emotional support conversations
+        
+        Args:
+            message: User message
+            query: User query text
+            category: Detected category
+        
+        Returns:
+            True if RAG should be enabled
+        """
+        message_lower = message.lower()
+        
+        # Strong indicators FOR RAG
+        rag_keywords = [
+            'current', 'latest', 'recent', 'new', 'today', 'this year',
+            'update', 'news', 'what happened', '2024', '2025',
+            'documentation', 'tutorial', 'guide', 'how to',
+            'research', 'study', 'paper', 'article',
+            'statistics', 'data', 'facts about'
+        ]
+        
+        for keyword in rag_keywords:
+            if keyword in message_lower:
+                logger.debug(f"RAG enabled: found keyword '{keyword}'")
+                return True
+        
+        # Strong indicators AGAINST RAG
+        no_rag_keywords = [
+            'solve this', 'calculate', 'what is the result',
+            'homework', 'practice problem', 'exercise',
+            'feeling', 'emotion', 'support', 'help me understand my'
+        ]
+        
+        for keyword in no_rag_keywords:
+            if keyword in message_lower:
+                logger.debug(f"RAG disabled: found keyword '{keyword}'")
+                return False
+        
+        # Category-based decision
+        # Enable for research-heavy categories
+        if category in ['research', 'general']:
+            return True
+        
+        # Disable for math-heavy (usually doesn't need current info)
+        if category == 'math':
+            return False
+        
+        # Default: enable for medium+ length queries (indicates depth)
+        # Short queries like "hi" or "thanks" don't need RAG
+        if len(message.split()) >= 8:
+            logger.debug("RAG enabled: query length >= 8 words")
+            return True
+        
+        logger.debug("RAG disabled: default (short query, no indicators)")
+        return False
+
     def _infer_success_from_emotion(self, emotion_state: EmotionState) -> bool:
         """
         Infer interaction success from emotional state
