@@ -202,10 +202,10 @@ async def lifespan(app: FastAPI):
         )
         logger.info("✅ Background pricing updates scheduled (12h)")
         
-        # Initialize intelligence layer (Phase 3: context + adaptive learning)
-        app.state.engine.initialize_intelligence_layer(db)
+        # Initialize intelligence layer (Phase 3: context + adaptive learning + RAG)
+        await app.state.engine.initialize_intelligence_layer(db)
         
-        logger.info("✅ Phase 3 intelligence layer initialized (context + adaptive)")
+        logger.info("✅ Phase 3 intelligence layer initialized (context + adaptive + RAG)")
         
         # Phase 4: Initialize optimization layer
         from optimization.caching import init_cache_manager
