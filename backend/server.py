@@ -1349,7 +1349,9 @@ async def chat(request: ChatRequest):
             rag_enabled=ai_response.rag_enabled,
             citations=ai_response.citations,
             sources_count=ai_response.sources_count,
-            search_provider=ai_response.search_provider
+            search_provider=ai_response.search_provider,
+            # ML Follow-up Questions (Perplexity-inspired)
+            suggested_questions=ai_response.suggested_questions
         )
         
         logger.info(f"✅ Chat response generated successfully (session: {session_id})")
@@ -1408,6 +1410,89 @@ async def get_chat_history(session_id: str):
     except Exception as e:
         logger.error(f"Error fetching chat history: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
+
+
+
+# ============================================================================
+# FOLLOW-UP QUESTIONS API (ML-Based Question Generator)
+# ============================================================================
+
+class QuestionInteractionRequest(BaseModel):
+    """Request to record a question interaction for RL"""
+    user_id: str
+    session_id: str
+    question: str
+    clicked: bool
+
+
+@app.post("/api/v1/questions/interaction", status_code=201)
+async def record_question_interaction(request: QuestionInteractionRequest):
+    """
+    Record user interaction with suggested follow-up questions
+    
+    This endpoint is used for Reinforcement Learning to improve
+    question suggestions over time using Thompson Sampling.
+    """
+    try:
+        # Get ML question generator from engine
+        if not app.state.engine or not app.state.engine.ml_question_generator:
+            raise HTTPException(
+                status_code=503,
+                detail="ML question generator not available"
+            )
+        
+        # Get current emotion state and ability level from most recent message
+        messages_collection = get_messages_collection()
+        last_message = await messages_collection.find_one(
+            {"session_id": request.session_id, "role": "assistant"},
+            sort=[("timestamp", -1)]
+        )
+        
+        # Extract emotion state and ability
+        emotion_state = None
+        ability_level = 0.0
+        
+        if last_message and last_message.get("emotion_state"):
+            from core.models import EmotionState
+            emotion_data = last_message["emotion_state"]
+            emotion_state = EmotionState(**emotion_data)
+            ability_level = emotion_data.get("ability_level", 0.0)
+        else:
+            # Create default emotion state if not available
+            from core.models import EmotionState, LearningReadiness
+            emotion_state = EmotionState(
+                primary_emotion="neutral",
+                learning_readiness=LearningReadiness.OPTIMAL_READINESS,
+                emotional_intensity=0.5
+            )
+        
+        # Record interaction with ML question generator
+        await app.state.engine.ml_question_generator.record_interaction(
+            question=request.question,
+            clicked=request.clicked,
+            user_id=request.user_id,
+            session_id=request.session_id,
+            emotion_state=emotion_state,
+            ability_level=ability_level
+        )
+        
+        logger.info(
+            f"✅ Recorded question interaction: "
+            f"user={request.user_id}, clicked={request.clicked}"
+        )
+        
+        return {
+            "status": "recorded",
+            "question_hash": hash(request.question[:50]) % (10 ** 8),
+            "clicked": request.clicked
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Error recording question interaction: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 
 # Cost dashboard endpoint (admin)
