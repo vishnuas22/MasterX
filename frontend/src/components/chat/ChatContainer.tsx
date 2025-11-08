@@ -32,6 +32,7 @@ import { MessageInput } from './MessageInput';
 import { EmotionIndicator } from './EmotionIndicator';
 import { TypingIndicator } from './TypingIndicator';
 import { VoiceButton } from './VoiceButton';
+import { SuggestedQuestions } from './SuggestedQuestions';
 import { cn } from '@/utils/cn';
 import { toast } from '@/components/ui/Toast';
 import { AlertCircle, Wifi, WifiOff } from 'lucide-react';
@@ -100,7 +101,9 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
     sendMessage: storeSendMessage,
     loadHistory,
     clearError,
-    setTyping
+    setTyping,
+    suggestedQuestions,
+    clearSuggestedQuestions
   } = useChatStore();
   
   const {
@@ -287,6 +290,18 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
   }, [user, storeSendMessage, storeSessionId, isConnected, sendEvent]);
   
   // ============================================================================
+  // SUGGESTED QUESTIONS HANDLER
+  // ============================================================================
+  
+  const handleSuggestedQuestionClick = useCallback(async (question: string, questionData: any) => {
+    // Clear suggested questions when user clicks one
+    clearSuggestedQuestions();
+    
+    // Send the question as a regular message
+    await handleSendMessage(question);
+  }, [handleSendMessage, clearSuggestedQuestions]);
+  
+  // ============================================================================
   // ERROR HANDLING
   // ============================================================================
   
@@ -423,6 +438,17 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
               )}
             </div>
           </div>
+          
+          {/* Suggested Questions */}
+          {suggestedQuestions.length > 0 && !isLoading && (
+            <div className="mt-3">
+              <SuggestedQuestions
+                questions={suggestedQuestions}
+                onQuestionClick={handleSuggestedQuestionClick}
+                visible={true}
+              />
+            </div>
+          )}
           
           {/* Status indicators */}
           <div className="mt-2 flex items-center justify-between text-xs text-text-tertiary">
