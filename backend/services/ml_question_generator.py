@@ -303,8 +303,8 @@ Generate the questions now:"""
             response = await self.provider_manager.generate(
                 prompt=prompt,
                 provider_name=None,  # Auto-select best provider
-                max_tokens=800,
-                temperature=0.8  # Higher temperature for diversity
+                max_tokens=800
+                # Note: Temperature not supported in current provider manager
             )
             
             # Parse JSON response
@@ -505,8 +505,10 @@ Generate the questions now:"""
             )
             
             # 3. Diversity Bonus (0.0-0.2)
+            # Extract already selected types from scored questions (which are tuples of (score, SuggestedQuestion))
+            already_selected_types = [sq.rationale for score, sq in scored_questions]
             diversity_bonus = self._calculate_diversity_bonus(
-                q_type, [q['type'] for q in scored_questions]
+                q_type, already_selected_types
             )
             
             # 4. Historical Performance (RL component, 0.0-1.0)
