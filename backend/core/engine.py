@@ -26,6 +26,7 @@ from core.context_manager import ContextManager
 from core.adaptive_learning import AdaptiveLearningEngine, PerformanceMetrics as AdaptivePerformanceMetrics
 from services.emotion.emotion_engine import EmotionEngine, EmotionEngineConfig
 from services.rag_engine import RAGEngine, create_rag_engine
+from services.ml_question_generator import MLQuestionGenerator, create_ml_question_generator
 from utils.errors import MasterXError
 from utils.cost_tracker import cost_tracker
 from utils.database import get_database
@@ -70,6 +71,7 @@ class MasterXEngine:
         self.context_manager = None
         self.adaptive_engine = None
         self.rag_engine = None  # RAG engine for real-time knowledge
+        self.ml_question_generator = None  # ML-based question generator (Perplexity-grade)
         self._db_initialized = False
         
         # Token management
@@ -101,8 +103,19 @@ class MasterXEngine:
                 # Initialize RAG engine (Perplexity-inspired)
                 self.rag_engine = await create_rag_engine()
                 
+                # Initialize ML-based question generator (Perplexity-grade)
+                self.ml_question_generator = await create_ml_question_generator(
+                    provider_manager=self.provider_manager,
+                    db=db
+                )
+                
+                # Ensure question_interactions collection exists
+                await db.create_collection("question_interactions", check_exists=False)
+                await db.question_interactions.create_index("question_hash")
+                await db.question_interactions.create_index("timestamp")
+                
                 self._db_initialized = True
-                logger.info("✅ Intelligence layer initialized (context + adaptive learning + RAG)")
+                logger.info("✅ Intelligence layer initialized (context + adaptive + RAG + ML questions)")
             except Exception as e:
                 logger.error(f"Failed to initialize intelligence layer: {e}")
                 raise
@@ -439,24 +452,29 @@ class MasterXEngine:
                 response.search_provider = None
             
             # ====================================================================
-            # GENERATE FOLLOW-UP QUESTIONS (Perplexity-inspired)
+            # GENERATE FOLLOW-UP QUESTIONS (Perplexity-inspired ML)
             # ====================================================================
-            logger.info(f"💡 Generating follow-up questions...")
+            logger.info(f"💡 Generating ML-based follow-up questions...")
             followup_start = time.time()
             
             try:
-                response.suggested_questions = self.generate_follow_up_questions(
-                    user_message=message,
-                    ai_response=response.content,
-                    emotion_state=emotion_state,
-                    ability_level=ability,
-                    category=category,
-                    recent_messages=recent_messages
-                )
+                if self.ml_question_generator:
+                    response.suggested_questions = await self.ml_question_generator.generate_follow_ups(
+                        user_message=message,
+                        ai_response=response.content,
+                        emotion_state=emotion_state,
+                        ability_level=ability,
+                        category=category,
+                        recent_messages=recent_messages,
+                        max_questions=5
+                    )
+                else:
+                    logger.warning("⚠️  ML question generator not initialized")
+                    response.suggested_questions = []
                 
                 followup_time_ms = (time.time() - followup_start) * 1000
                 logger.info(
-                    f"✅ Generated {len(response.suggested_questions)} follow-up questions "
+                    f"✅ Generated {len(response.suggested_questions)} ML-based follow-up questions "
                     f"({followup_time_ms:.0f}ms)"
                 )
             except Exception as e:
