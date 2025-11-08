@@ -467,7 +467,7 @@ class CostEnforcer:
         Returns:
             UserTier enum
         """
-        if not self.db:
+        if self.db is None:
             return UserTier.FREE
         
         users_collection = self.db["users"]
@@ -499,7 +499,7 @@ class CostEnforcer:
         Returns:
             Daily budget limit in USD
         """
-        if not self.db:
+        if self.db is None:
             return self.tier_limits[UserTier.FREE]
         
         # Check for custom user limit
@@ -523,7 +523,7 @@ class CostEnforcer:
         Returns:
             Total spent today in USD
         """
-        if not self.db:
+        if self.db is None:
             return 0.0
         
         cost_collection = self.db["cost_tracking"]
