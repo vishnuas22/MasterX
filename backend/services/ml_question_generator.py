@@ -81,7 +81,7 @@ class MLQuestionGenerator:
     
     def _load_historical_performance(self):
         """Load historical question performance from database (RL component)"""
-        if not self.db:
+        if self.db is None:
             return
         
         try:
@@ -646,7 +646,7 @@ Generate the questions now:"""
         
         This is the RL training data collection component.
         """
-        if not self.db:
+        if self.db is None:
             return
         
         try:
