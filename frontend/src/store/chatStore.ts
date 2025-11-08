@@ -12,7 +12,7 @@
 import { create } from 'zustand';
 import { chatAPI } from '@/services/api/chat.api';
 import { MessageRole } from '@/types/chat.types';
-import type { Message, ChatRequest, ChatResponse } from '@/types/chat.types';
+import type { Message, ChatRequest, ChatResponse, SuggestedQuestion } from '@/types/chat.types';
 import type { EmotionState } from '@/types/emotion.types';
 
 interface ChatState {
@@ -23,6 +23,7 @@ interface ChatState {
   currentEmotion: EmotionState | null;
   sessionId: string | null;
   error: string | null;
+  suggestedQuestions: SuggestedQuestion[]; // ML-generated follow-up questions
   
   // Actions
   sendMessage: (content: string, userId: string) => Promise<void>;
@@ -33,6 +34,8 @@ interface ChatState {
   loadHistory: (sessionId: string) => Promise<void>;
   setTyping: (isTyping: boolean) => void;
   setCurrentEmotion: (emotion: EmotionState | null) => void;
+  setSuggestedQuestions: (questions: SuggestedQuestion[]) => void; // Set ML questions
+  clearSuggestedQuestions: () => void; // Clear questions when new message sent
 }
 
 export const useChatStore = create<ChatState>((set, get) => ({
@@ -43,6 +46,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   currentEmotion: null,
   sessionId: null,
   error: null,
+  suggestedQuestions: [], // ML-generated questions
   
   // Send message action
   sendMessage: async (content: string, userId: string) => {
@@ -64,6 +68,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       isLoading: true,
       isTyping: true,
       error: null,
+      suggestedQuestions: [], // Clear previous questions when sending new message
     }));
     
     try {
@@ -107,6 +112,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         isTyping: false,
         currentEmotion: response.emotion_state || null,
         sessionId: response.session_id,
+        suggestedQuestions: response.suggested_questions || [], // Set ML-generated questions
       }));
     } catch (error: any) {
       // Remove optimistic message on error
@@ -188,6 +194,12 @@ export const useChatStore = create<ChatState>((set, get) => ({
   
   // Set current emotion
   setCurrentEmotion: (emotion) => set({ currentEmotion: emotion }),
+  
+  // Set ML-generated suggested questions
+  setSuggestedQuestions: (questions) => set({ suggestedQuestions: questions }),
+  
+  // Clear suggested questions (e.g., when starting new topic)
+  clearSuggestedQuestions: () => set({ suggestedQuestions: [] }),
 }));
 
 
