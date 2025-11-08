@@ -347,6 +347,19 @@ class AbilityInfo(BaseModel):
     flow_state_score: Optional[float] = None
 
 
+class SuggestedQuestion(BaseModel):
+    """
+    Perplexity-inspired suggested follow-up question
+    
+    Generated using ML-based context analysis to provide
+    thought-provoking, contextually relevant questions.
+    """
+    question: str = Field(..., description="The follow-up question text")
+    rationale: str = Field(..., description="Why this question is suggested (e.g., 'building_on_success', 'connecting_concepts')")
+    difficulty_delta: float = Field(default=0.0, description="Change in difficulty (-1.0 to +1.0, where 0 = same level)")
+    category: str = Field(default="exploration", description="Question type: 'exploration', 'application', 'challenge', 'clarification'")
+
+
 class AIResponse(BaseModel):
     """AI provider response with comprehensive metadata"""
     content: str
@@ -370,6 +383,9 @@ class AIResponse(BaseModel):
     citations: Optional[List[str]] = None
     sources_count: Optional[int] = None
     search_provider: Optional[str] = None
+    
+    # Follow-up questions (Perplexity-inspired)
+    suggested_questions: Optional[List[SuggestedQuestion]] = None
 
 
 # ============================================================================
@@ -412,6 +428,9 @@ class ChatResponse(BaseModel):
     citations: Optional[List[str]] = None
     sources_count: Optional[int] = None
     search_provider: Optional[str] = None
+    
+    # Follow-up questions (Perplexity-inspired)
+    suggested_questions: Optional[List[SuggestedQuestion]] = None
 
 
 # ============================================================================
