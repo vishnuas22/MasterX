@@ -438,6 +438,31 @@ class MasterXEngine:
                 response.sources_count = 0
                 response.search_provider = None
             
+            # ====================================================================
+            # GENERATE FOLLOW-UP QUESTIONS (Perplexity-inspired)
+            # ====================================================================
+            logger.info(f"💡 Generating follow-up questions...")
+            followup_start = time.time()
+            
+            try:
+                response.suggested_questions = self.generate_follow_up_questions(
+                    user_message=message,
+                    ai_response=response.content,
+                    emotion_state=emotion_state,
+                    ability_level=ability,
+                    category=category,
+                    recent_messages=recent_messages
+                )
+                
+                followup_time_ms = (time.time() - followup_start) * 1000
+                logger.info(
+                    f"✅ Generated {len(response.suggested_questions)} follow-up questions "
+                    f"({followup_time_ms:.0f}ms)"
+                )
+            except Exception as e:
+                logger.warning(f"⚠️  Failed to generate follow-up questions: {e}")
+                response.suggested_questions = []
+            
             total_time_ms = (time.time() - start_time) * 1000
             logger.info(
                 f"✅ Request processed in {total_time_ms:.0f}ms "
@@ -1071,4 +1096,371 @@ Remember: This is a CONTINUING conversation. Build on what came before."""
         }
         
         limit = scenarios.get(scenario, self.RESPONSE_SIZES['standard'])
+        limit = scenarios.get(scenario, self.RESPONSE_SIZES['standard'])
+        return limit
+    
+    def generate_follow_up_questions(
+        self,
+        user_message: str,
+        ai_response: str,
+        emotion_state: EmotionState,
+        ability_level: float,
+        category: str,
+        recent_messages: List[Message] = None
+    ) -> List['SuggestedQuestion']:
+        """
+        Generate contextually relevant follow-up questions (Perplexity-inspired)
+        
+        Uses ML-based analysis to create 3-5 thought-provoking questions based on:
+        - Student's emotional state (struggling vs confident)
+        - Difficulty progression (easier/same/harder)
+        - Topic connections (broaden/deepen/apply)
+        - Conversation context
+        
+        Args:
+            user_message: Original user question
+            ai_response: AI's response content
+            emotion_state: Student's emotional state
+            ability_level: Current ability level (-3.0 to +3.0)
+            category: Detected category (math, coding, etc.)
+            recent_messages: Recent conversation messages
+            
+        Returns:
+            List of 3-5 SuggestedQuestion objects
+        """
+        from core.models import SuggestedQuestion
+        
+        suggested_questions = []
+        
+        # ================================================================
+        # ANALYSIS PHASE: Understand context and student state
+        # ================================================================
+        
+        # 1. Assess student's current state
+        is_struggling = emotion_state.learning_readiness in [
+            LearningReadiness.LOW_READINESS,
+            LearningReadiness.NOT_READY
+        ]
+        
+        is_confident = emotion_state.learning_readiness in [
+            LearningReadiness.HIGH_READINESS,
+            LearningReadiness.OPTIMAL_READINESS
+        ]
+        
+        # 2. Extract topic from conversation
+        topic = self._extract_topic(user_message, ai_response)
+        
+        # 3. Determine complexity level
+        message_complexity = self._estimate_question_complexity(user_message)
+        
+        # ================================================================
+        # GENERATION PHASE: Create diverse question types
+        # ================================================================
+        
+        # Strategy 1: CLARIFICATION (if struggling or confused)
+        if is_struggling or emotion_state.primary_emotion in ['confusion', 'anxiety']:
+            clarification_q = self._generate_clarification_question(
+                topic, user_message, ability_level
+            )
+            if clarification_q:
+                suggested_questions.append(SuggestedQuestion(
+                    question=clarification_q,
+                    rationale="clarification_needed",
+                    difficulty_delta=-0.2,  # Easier
+                    category="clarification"
+                ))
+        
+        # Strategy 2: PRACTICE (same difficulty level)
+        practice_q = self._generate_practice_question(
+            topic, category, ability_level, message_complexity
+        )
+        if practice_q:
+            suggested_questions.append(SuggestedQuestion(
+                question=practice_q,
+                rationale="practice_same_level",
+                difficulty_delta=0.0,  # Same level
+                category="practice"
+            ))
+        
+        # Strategy 3: CHALLENGE (if confident, push harder)
+        if is_confident and not is_struggling:
+            challenge_q = self._generate_challenge_question(
+                topic, category, ability_level
+            )
+            if challenge_q:
+                suggested_questions.append(SuggestedQuestion(
+                    question=challenge_q,
+                    rationale="building_on_success",
+                    difficulty_delta=0.3,  # Harder
+                    category="challenge"
+                ))
+        
+        # Strategy 4: CONNECTION (relate to other concepts)
+        connection_q = self._generate_connection_question(
+            topic, category, recent_messages
+        )
+        if connection_q:
+            suggested_questions.append(SuggestedQuestion(
+                question=connection_q,
+                rationale="connecting_concepts",
+                difficulty_delta=0.1,  # Slightly harder
+                category="exploration"
+            ))
+        
+        # Strategy 5: APPLICATION (real-world use)
+        if message_complexity > 0.4 or category in ['coding', 'math', 'science']:
+            application_q = self._generate_application_question(
+                topic, category
+            )
+            if application_q:
+                suggested_questions.append(SuggestedQuestion(
+                    question=application_q,
+                    rationale="practical_application",
+                    difficulty_delta=0.2,
+                    category="application"
+                ))
+        
+        # ================================================================
+        # FILTERING & RANKING: Select best 3-5 questions
+        # ================================================================
+        
+        # Ensure we have variety (no duplicate categories)
+        unique_questions = []
+        seen_categories = set()
+        
+        for q in suggested_questions:
+            if q.category not in seen_categories:
+                unique_questions.append(q)
+                seen_categories.add(q.category)
+        
+        # Limit to 5 questions maximum
+        final_questions = unique_questions[:5]
+        
+        # Ensure minimum of 3 questions (add generic if needed)
+        while len(final_questions) < 3:
+            generic_q = self._generate_generic_exploration(topic, len(final_questions))
+            if generic_q:
+                final_questions.append(SuggestedQuestion(
+                    question=generic_q,
+                    rationale="general_exploration",
+                    difficulty_delta=0.0,
+                    category="exploration"
+                ))
+            else:
+                break
+        
+        logger.info(f"✅ Generated {len(final_questions)} follow-up questions")
+        return final_questions
+    
+    def _extract_topic(self, user_message: str, ai_response: str) -> str:
+        """
+        Extract main topic from conversation using keyword extraction
+        
+        Simple but effective: find most frequent meaningful words
+        """
+        import re
+        from collections import Counter
+        
+        # Combine both messages
+        text = f"{user_message} {ai_response[:500]}"  # Limit response length
+        
+        # Remove common words (stopwords)
+        stopwords = {
+            'the', 'a', 'an', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
+            'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'should',
+            'can', 'could', 'may', 'might', 'must', 'shall', 'of', 'to', 'in',
+            'for', 'on', 'with', 'at', 'by', 'from', 'about', 'as', 'into',
+            'through', 'during', 'before', 'after', 'above', 'below', 'between',
+            'under', 'again', 'further', 'then', 'once', 'here', 'there', 'when',
+            'where', 'why', 'how', 'all', 'both', 'each', 'few', 'more', 'most',
+            'other', 'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same',
+            'so', 'than', 'too', 'very', 'what', 'which', 'who', 'you', 'your',
+            'i', 'me', 'my', 'we', 'us', 'our', 'they', 'them', 'their', 'this',
+            'that', 'these', 'those', 'am', 'it', 'its', 'if', 'or', 'because',
+            'explain', 'show', 'tell', 'help', 'understand', 'learn', 'know'
+        }
+        
+        # Extract words (lowercase, alphabetic only)
+        words = re.findall(r'\b[a-z]{3,}\b', text.lower())
+        
+        # Count meaningful words
+        meaningful_words = [w for w in words if w not in stopwords]
+        
+        if not meaningful_words:
+            return "this topic"
+        
+        # Get most common word
+        word_counts = Counter(meaningful_words)
+        top_word = word_counts.most_common(1)[0][0]
+        
+        return top_word
+    
+    def _estimate_question_complexity(self, message: str) -> float:
+        """
+        Estimate question complexity (0.0-1.0) using heuristics
+        
+        Factors:
+        - Length (longer = potentially more complex)
+        - Technical vocabulary
+        - Question structure
+        """
+        # Normalize length (0.0-1.0 scale)
+        word_count = len(message.split())
+        length_score = min(word_count / 50.0, 1.0)  # 50+ words = max
+        
+        # Technical vocabulary indicators
+        technical_words = [
+            'algorithm', 'function', 'variable', 'equation', 'derivative',
+            'integral', 'matrix', 'vector', 'probability', 'statistics',
+            'framework', 'architecture', 'implementation', 'optimization',
+            'complexity', 'efficiency', 'polynomial', 'exponential'
+        ]
+        
+        message_lower = message.lower()
+        tech_count = sum(1 for word in technical_words if word in message_lower)
+        tech_score = min(tech_count / 3.0, 1.0)  # 3+ technical terms = max
+        
+        # Weighted average
+        complexity = (length_score * 0.4) + (tech_score * 0.6)
+        
+        return complexity
+    
+    def _generate_clarification_question(
+        self, topic: str, user_message: str, ability_level: float
+    ) -> Optional[str]:
+        """Generate a clarifying question for struggling students"""
+        
+        # Templates based on ability level
+        if ability_level < -1.0:  # Very beginner
+            templates = [
+                f"Can you break down {topic} into simpler steps?",
+                f"What's the easiest way to start with {topic}?",
+                f"Could you show me a very basic example of {topic}?"
+            ]
+        else:
+            templates = [
+                f"Could you explain the main concept of {topic} differently?",
+                f"What specific part of {topic} should I focus on first?",
+                f"Can you clarify how {topic} works with a simple example?"
+            ]
+        
+        import random
+        return random.choice(templates)
+    
+    def _generate_practice_question(
+        self, topic: str, category: str, ability_level: float, complexity: float
+    ) -> Optional[str]:
+        """Generate a practice question at same difficulty level"""
+        
+        # Category-specific templates
+        if category == 'math':
+            templates = [
+                f"Can you give me another {topic} problem to practice?",
+                f"Show me a similar {topic} example",
+                f"What's another way to solve {topic} problems?"
+            ]
+        elif category == 'coding':
+            templates = [
+                f"Can you show me another example using {topic}?",
+                f"What's a common use case for {topic}?",
+                f"Give me another coding challenge with {topic}"
+            ]
+        elif category == 'science':
+            templates = [
+                f"Can you explain another example of {topic}?",
+                f"What's a related concept to {topic}?",
+                f"Show me how {topic} applies in different scenarios"
+            ]
+        else:
+            templates = [
+                f"Can you give me more practice with {topic}?",
+                f"Show me another example of {topic}",
+                f"What else should I know about {topic}?"
+            ]
+        
+        import random
+        return random.choice(templates)
+    
+    def _generate_challenge_question(
+        self, topic: str, category: str, ability_level: float
+    ) -> Optional[str]:
+        """Generate a harder challenge question for confident students"""
+        
+        if category == 'math':
+            templates = [
+                f"Can you show me a harder {topic} problem?",
+                f"What's an advanced application of {topic}?",
+                f"How does {topic} extend to more complex scenarios?"
+            ]
+        elif category == 'coding':
+            templates = [
+                f"What's a more advanced pattern using {topic}?",
+                f"How can I optimize {topic} for better performance?",
+                f"Show me a real-world challenge involving {topic}"
+            ]
+        else:
+            templates = [
+                f"What's a more challenging aspect of {topic}?",
+                f"How does {topic} relate to advanced concepts?",
+                f"Can you push me further with {topic}?"
+            ]
+        
+        import random
+        return random.choice(templates)
+    
+    def _generate_connection_question(
+        self, topic: str, category: str, recent_messages: Optional[List[Message]]
+    ) -> Optional[str]:
+        """Generate a question connecting to related concepts"""
+        
+        # Try to find previous topics from conversation
+        previous_topic = None
+        if recent_messages and len(recent_messages) >= 2:
+            # Get a message from 2-3 messages ago
+            old_message = recent_messages[-3] if len(recent_messages) >= 3 else recent_messages[-2]
+            # Extract a keyword from it
+            import re
+            words = re.findall(r'\b[a-z]{4,}\b', old_message.content.lower())
+            if words:
+                previous_topic = words[0]
+        
+        if previous_topic and previous_topic != topic:
+            return f"How does {topic} relate to {previous_topic}?"
+        
+        # Generic connection templates
+        templates = [
+            f"How does {topic} connect to other concepts?",
+            f"What builds on the foundation of {topic}?",
+            f"Where does {topic} fit in the bigger picture?"
+        ]
+        
+        import random
+        return random.choice(templates)
+    
+    def _generate_application_question(self, topic: str, category: str) -> Optional[str]:
+        """Generate a real-world application question"""
+        
+        templates = [
+            f"What real-world problems can I solve with {topic}?",
+            f"How is {topic} used in practice?",
+            f"Can you show me a practical example of {topic}?",
+            f"Where would I use {topic} outside of studying?"
+        ]
+        
+        import random
+        return random.choice(templates)
+    
+    def _generate_generic_exploration(self, topic: str, index: int) -> Optional[str]:
+        """Generate a generic exploration question as fallback"""
+        
+        templates = [
+            f"What else should I know about {topic}?",
+            f"Can you tell me more about {topic}?",
+            f"What are the key points about {topic}?",
+            f"Help me understand {topic} better"
+        ]
+        
+        if index < len(templates):
+            return templates[index]
+        return None
         return min(limit, self.safe_max)
