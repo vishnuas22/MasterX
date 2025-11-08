@@ -73,6 +73,42 @@ export interface AbilityInfo {
   flow_state_score?: number;
 }
 
+/**
+ * ML-Generated Follow-Up Question (Perplexity-inspired)
+ * 
+ * Matches backend models.py SuggestedQuestion (lines 350-361)
+ * Generated using ML-based question generator with:
+ * - LLM generation (contextual candidates)
+ * - Semantic diversity filtering (sentence transformers)
+ * - ML ranking (emotion + ability + RL)
+ * - Reinforcement learning from user clicks
+ */
+export interface SuggestedQuestion {
+  /**
+   * The follow-up question text
+   */
+  question: string;
+  
+  /**
+   * Why this question is suggested
+   * @example "building_on_success", "connecting_concepts", "addressing_confusion"
+   */
+  rationale: string;
+  
+  /**
+   * Change in difficulty relative to current level
+   * @range -1.0 (easier) to +1.0 (harder)
+   * @default 0.0 (same difficulty)
+   */
+  difficulty_delta: number;
+  
+  /**
+   * Question type/category
+   * @default "exploration"
+   */
+  category: 'exploration' | 'application' | 'challenge' | 'clarification' | string;
+}
+
 export interface ChatResponse {
   session_id: string;
   message: string;
@@ -94,6 +130,15 @@ export interface ChatResponse {
   // Phase 4 metadata
   cached?: boolean;
   processing_breakdown?: Record<string, number>;
+  
+  // RAG metadata (Perplexity-inspired)
+  rag_enabled?: boolean;
+  citations?: string[];
+  sources_count?: number;
+  search_provider?: string;
+  
+  // Follow-up questions (Perplexity-inspired ML)
+  suggested_questions?: SuggestedQuestion[];
 }
 
 /**
@@ -172,6 +217,16 @@ export const isChatResponse = (obj: unknown): obj is ChatResponse => {
     'session_id' in obj &&
     'message' in obj &&
     'provider_used' in obj
+  );
+};
+
+export const isSuggestedQuestion = (obj: unknown): obj is SuggestedQuestion => {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    'question' in obj &&
+    'rationale' in obj &&
+    typeof (obj as SuggestedQuestion).question === 'string'
   );
 };
 
