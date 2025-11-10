@@ -297,6 +297,151 @@ const Highlighter = ({
   );
 };
 
+/**
+ * Smooth Cursor Component - Custom animated cursor
+ */
+const SmoothCursor = () => {
+  const cursorRef = useRef(null);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      setPosition({ x: e.clientX, y: e.clientY });
+      if (!isVisible) setIsVisible(true);
+    };
+
+    const handleMouseLeave = () => setIsVisible(false);
+
+    window.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseleave', handleMouseLeave);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseleave', handleMouseLeave);
+    };
+  }, [isVisible]);
+
+  if (!isVisible) return null;
+
+  return (
+    <div
+      ref={cursorRef}
+      className="pointer-events-none fixed z-50 h-8 w-8 rounded-full border-2 border-purple-500 transition-transform duration-100 ease-out hidden md:block"
+      style={{
+        left: `${position.x}px`,
+        top: `${position.y}px`,
+        transform: 'translate(-50%, -50%)',
+      }}
+    >
+      <div className="h-full w-full rounded-full bg-purple-500/20 animate-pulse" />
+    </div>
+  );
+};
+
+/**
+ * Icon Cloud Component - 3D rotating icon cloud
+ */
+const IconCloud = ({ images }: { images: string[] }) => {
+  const cloudRef = useRef<HTMLDivElement>(null);
+  
+  useEffect(() => {
+    if (typeof window === 'undefined' || !cloudRef.current) return;
+    
+    // Create cloud element
+    const container = cloudRef.current;
+    const radius = 250;
+    const tags: HTMLElement[] = [];
+    
+    // Create tags - FIXED: Removed grayscale filter for colorful icons
+    images.forEach((imgSrc) => {
+      const tag = document.createElement('img');
+      tag.src = imgSrc;
+      tag.style.width = '40px';  // Slightly larger for better visibility
+      tag.style.height = '40px';
+      tag.style.position = 'absolute';
+      tag.style.transition = 'all 0.3s ease-out';
+      tag.style.cursor = 'pointer';
+      tag.style.filter = 'drop-shadow(0 0 8px rgba(168, 85, 247, 0.4))';  // Purple glow for depth
+      tag.style.opacity = '0.85';  // Slightly transparent for layering effect
+      tag.setAttribute('loading', 'lazy');
+      tag.setAttribute('alt', 'Tech stack icon');
+      container.appendChild(tag);
+      tags.push(tag);
+    });
+    
+    // Calculate initial 3D positions
+    const positions = tags.map((_, index) => {
+      const phi = Math.acos(-1 + (2 * index) / tags.length);
+      const theta = Math.sqrt(tags.length * Math.PI) * phi;
+      return {
+        x: radius * Math.cos(theta) * Math.sin(phi),
+        y: radius * Math.sin(theta) * Math.sin(phi),
+        z: radius * Math.cos(phi)
+      };
+    });
+    
+    let angleX = 0;
+    let angleY = 0;
+    let mouseX = 0;
+    let mouseY = 0;
+    
+    const handleMouseMove = (e: MouseEvent) => {
+      const rect = container.getBoundingClientRect();
+      mouseX = (e.clientX - rect.left - rect.width / 2) * 0.001;
+      mouseY = (e.clientY - rect.top - rect.height / 2) * 0.001;
+    };
+    
+    container.addEventListener('mousemove', handleMouseMove);
+    
+    const update = () => {
+      angleX += mouseY * 0.5;
+      angleY += mouseX * 0.5;
+      
+      // Slow rotation when not hovering
+      angleY += 0.002;
+      
+      positions.forEach((pos, index) => {
+        // Rotate around Y axis
+        let x = pos.x * Math.cos(angleY) - pos.z * Math.sin(angleY);
+        let z = pos.z * Math.cos(angleY) + pos.x * Math.sin(angleY);
+        
+        // Rotate around X axis  
+        let y = pos.y * Math.cos(angleX) - z * Math.sin(angleX);
+        z = z * Math.cos(angleX) + pos.y * Math.sin(angleX);
+        
+        const scale = (z + radius * 2) / (radius * 3);
+        const alpha = (z + radius) / (radius * 2);
+        
+        const tag = tags[index];
+        tag.style.transform = `translate(-50%, -50%) translate(${x}px, ${y}px) scale(${scale})`;
+        tag.style.opacity = String(Math.max(0.4, Math.min(0.95, alpha)));  // Better opacity range
+        tag.style.zIndex = String(Math.round(z));
+        tag.style.left = '50%';
+        tag.style.top = '50%';
+        
+        // Add slight glow effect to icons closer to viewer
+        if (alpha > 0.7) {
+          tag.style.filter = 'drop-shadow(0 0 12px rgba(168, 85, 247, 0.6))';
+        } else {
+          tag.style.filter = 'drop-shadow(0 0 8px rgba(168, 85, 247, 0.3))';
+        }
+      });
+      
+      requestAnimationFrame(update);
+    };
+    
+    update();
+    
+    return () => {
+      container.removeEventListener('mousemove', handleMouseMove);
+      tags.forEach(tag => tag.remove());
+    };
+  }, [images]);
+  
+  return <div ref={cloudRef} className="relative w-full h-full" />;
+};
+
 // ============================================================================
 // CONSTANTS
 // ============================================================================
@@ -539,6 +684,81 @@ const PRICING_PLANS = [
   }
 ];
 
+/**
+ * Tech stack icons for Icon Cloud - MasterX Complete Stack
+ * Comprehensive list of all technologies used in the MasterX platform
+ */
+const TECH_SLUGS = [
+  // Core Languages
+  "typescript",
+  "javascript", 
+  "python",
+  "html5",
+  "css3",
+  
+  // Frontend Stack
+  "react",
+  "vite",
+  "tailwindcss",
+  "redux",
+  "reactrouter",
+  
+  // Backend Stack
+  "fastapi",
+  "nodedotjs",
+  "express",
+  "uvicorn",
+  
+  // Databases
+  "mongodb",
+  "redis",
+  "postgresql",
+  
+  // AI/ML Libraries
+  "pytorch",
+  "tensorflow",
+  "scikitlearn",
+  "numpy",
+  "pandas",
+  "huggingface",
+  
+  // AI Providers (MasterX uses these!)
+  "openai",
+  "anthropic",
+  "googlegemini",
+  
+  // DevOps & Infrastructure
+  "docker",
+  "kubernetes",
+  "nginx",
+  "amazonaws",
+  "vercel",
+  
+  // Testing & Quality
+  "pytest",
+  "playwright",
+  "vitest",
+  "eslint",
+  "prettier",
+  
+  // Version Control & Tools
+  "git",
+  "github",
+  "visualstudiocode",
+  "postman",
+  "figma",
+  "notion",
+  
+  // Additional Tools
+  "jwt",
+  "socketdotio",
+  "stripe",
+];
+
+const TECH_IMAGES = TECH_SLUGS.map(
+  (slug) => `https://cdn.simpleicons.org/${slug}`  // White icons for visibility on dark background
+);
+
 // ============================================================================
 // MAIN COMPONENT
 // ============================================================================
@@ -639,6 +859,9 @@ export const Landing: React.FC<LandingProps> = ({
       </Helmet>
 
       <div className="min-h-screen bg-black text-white scroll-smooth">
+        {/* Smooth Custom Cursor */}
+        <SmoothCursor />
+
         {/* Scroll Progress */}
         <ScrollProgress />
 
@@ -836,20 +1059,24 @@ export const Landing: React.FC<LandingProps> = ({
                 </div>
               </div>
 
-              {/* Hero Image with Gradient Glow */}
+              {/* Hero Image - FIXED: Removed purple gradient overlay */}
               <div className="relative mx-auto max-w-5xl">
-                {/* Gradient Glow Effect */}
-                <div className="absolute -inset-6 bg-gradient-to-r from-purple-600/30 via-pink-600/30 to-blue-600/30 blur-3xl opacity-60" />
+                {/* Subtle Glow Effect - Positioned BEHIND image, not overlapping */}
+                <div 
+                  className="absolute -inset-8 bg-gradient-to-r from-purple-600/20 via-pink-600/15 to-blue-600/20 blur-3xl opacity-50 -z-10" 
+                  style={{ filter: 'blur(80px)' }}
+                />
                 
-                <div className="relative overflow-hidden rounded-2xl border border-zinc-700/50 shadow-2xl">
+                <div className="relative overflow-hidden rounded-2xl border border-zinc-700/50 shadow-2xl bg-zinc-950">
                   <img 
                     src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1200&h=750&fit=crop&q=80" 
                     alt="Students collaborating with AI learning technology"
-                    className="w-full h-auto object-cover"
+                    className="w-full h-auto object-cover relative z-10"
                     loading="eager"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-                  <div className="absolute bottom-8 left-8 right-8 text-left">
+                  {/* Dark gradient at bottom for text readability only */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
+                  <div className="absolute bottom-8 left-8 right-8 text-left z-20">
                     <h3 className="text-2xl font-bold mb-2">Learn Smarter, Not Harder</h3>
                     <p className="text-zinc-200">AI-powered education tailored to your emotional state</p>
                   </div>
@@ -1065,6 +1292,25 @@ export const Landing: React.FC<LandingProps> = ({
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+          </section>
+
+          {/* Tech Stack Icon Cloud */}
+          <section className="relative px-6 py-20 sm:py-32 lg:px-8 overflow-hidden">
+            <div className="mx-auto max-w-7xl">
+              <div className="mb-12 text-center relative z-10">
+                <h2 className="mb-4 text-4xl font-bold sm:text-5xl">Built with Modern Tech</h2>
+                <p className="text-xl text-zinc-400">Powered by industry-leading technologies</p>
+              </div>
+              
+              {/* Icon Cloud - 3D rotating tech stack */}
+              <div className="relative h-[600px] w-full">
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <IconCloud images={TECH_IMAGES} />
+                </div>
+                {/* Subtle radial gradient for depth */}
+                <div className="absolute inset-0 bg-gradient-radial from-transparent via-transparent to-black pointer-events-none" />
               </div>
             </div>
           </section>
