@@ -1,0 +1,1187 @@
+import { useState, useEffect, useRef } from 'react';
+import { Sparkles, Check, ArrowRight, Menu, X } from 'lucide-react';
+
+// Utility function
+const cn = (...classes: (string | undefined | null | false)[]): string => classes.filter(Boolean).join(' ');
+
+// Animated Grid Pattern Component
+const AnimatedGridPattern = ({ className = '' }: { className?: string }) => {
+  return (
+    <div className={`pointer-events-none absolute inset-0 ${className}`}>
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#4f4f4f0a_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f0a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000,transparent)]">
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-blue-500/5 animate-grid-flow" />
+      </div>
+    </div>
+  );
+};
+
+// Scroll Progress Component
+const ScrollProgress = () => {
+  const [progress, setProgress] = useState(0);
+  
+  useEffect(() => {
+    const handleScroll = () => {
+      const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const scrollProgress = (window.scrollY / totalHeight) * 100;
+      setProgress(scrollProgress);
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+  
+  return (
+    <div className="fixed top-0 left-0 right-0 h-1 bg-zinc-900 z-50">
+      <div 
+        className="h-full bg-gradient-to-r from-purple-500 to-pink-500 transition-all duration-150"
+        style={{ width: `${progress}%` }}
+      />
+    </div>
+  );
+};
+
+// Number Ticker Component
+const NumberTicker = ({ value, suffix = '' }: { value: number; suffix?: string }) => {
+  const [count, setCount] = useState(0);
+  const ref = useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
+  
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+        }
+      },
+      { threshold: 0.1 }
+    );
+    
+    if (ref.current) {
+      observer.observe(ref.current);
+    }
+    
+    return () => observer.disconnect();
+  }, []);
+  
+  useEffect(() => {
+    if (!isVisible) return;
+    
+    const duration = 2000;
+    const steps = 60;
+    const increment = value / steps;
+    let current = 0;
+    
+    const timer = setInterval(() => {
+      current += increment;
+      if (current >= value) {
+        setCount(value);
+        clearInterval(timer);
+      } else {
+        setCount(Math.floor(current));
+      }
+    }, duration / steps);
+    
+    return () => clearInterval(timer);
+  }, [isVisible, value]);
+  
+  return (
+    <div ref={ref} className="text-5xl font-bold">
+      {count.toLocaleString()}{suffix}
+    </div>
+  );
+};
+
+// Animated Shiny Text Component
+const AnimatedShinyText = ({ children, className }: { children: React.ReactNode; className?: string }) => {
+  return (
+    <p
+      className={cn(
+        "inline-flex animate-shiny-text bg-[linear-gradient(110deg,#000,45%,#fff,55%,#000)] bg-[length:250%_100%] bg-clip-text text-transparent",
+        className
+      )}
+      style={{
+        '--shiny-width': '100px'
+      } as React.CSSProperties}
+    >
+      {children}
+    </p>
+  );
+};
+
+// Dot Pattern Component
+const DotPattern = ({ className = '' }: { className?: string }) => {
+  return (
+    <div className={`pointer-events-none absolute inset-0 ${className}`}>
+      <svg className="h-full w-full">
+        <defs>
+          <pattern id="dotPattern" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+            <circle cx="1.5" cy="1.5" r="1" fill="currentColor" />
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#dotPattern)" />
+      </svg>
+    </div>
+  );
+};
+
+// Marquee Component
+const Marquee = ({ children, className = '', reverse = false, pauseOnHover = false }: { children: React.ReactNode; className?: string; reverse?: boolean; pauseOnHover?: boolean }) => {
+  return (
+    <div className={`group flex overflow-hidden [--duration:40s] [gap:1rem] ${className}`}>
+      <div
+        className={`flex shrink-0 justify-around [gap:1rem] ${
+          reverse ? 'animate-marquee-reverse' : 'animate-marquee'
+        } ${pauseOnHover ? 'group-hover:[animation-play-state:paused]' : ''}`}
+      >
+        {children}
+      </div>
+      <div
+        className={`flex shrink-0 justify-around [gap:1rem] ${
+          reverse ? 'animate-marquee-reverse' : 'animate-marquee'
+        } ${pauseOnHover ? 'group-hover:[animation-play-state:paused]' : ''}`}
+        aria-hidden="true"
+      >
+        {children}
+      </div>
+    </div>
+  );
+};
+
+// Safari Browser Mockup
+const Safari = ({ url, children, className = '' }: { url: string; children: React.ReactNode; className?: string }) => {
+  return (
+    <div className={`relative w-full overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950 shadow-2xl ${className}`}>
+      {/* Browser Chrome */}
+      <div className="flex h-9 items-center gap-2 border-b border-zinc-800 bg-zinc-900 px-3">
+        <div className="flex gap-1.5">
+          <div className="h-2.5 w-2.5 rounded-full bg-zinc-700"></div>
+          <div className="h-2.5 w-2.5 rounded-full bg-zinc-700"></div>
+          <div className="h-2.5 w-2.5 rounded-full bg-zinc-700"></div>
+        </div>
+        <div className="flex-1 mx-3 flex h-6 items-center rounded bg-zinc-800 px-2.5">
+          <span className="text-[11px] text-zinc-500">{url}</span>
+        </div>
+      </div>
+      {/* Content Area */}
+      <div className="relative aspect-[16/10]">
+        {children}
+      </div>
+    </div>
+  );
+};
+
+// Border Beam Component
+const BorderBeam = ({ className = '', size = 200, duration = 15, delay = 0 }: { className?: string; size?: number; duration?: number; delay?: number }) => {
+  return (
+    <div
+      className={`pointer-events-none absolute inset-0 rounded-xl ${className}`}
+      style={{
+        '--size': `${size}px`,
+        '--duration': `${duration}s`,
+        '--delay': `${delay}s`,
+      } as React.CSSProperties}
+    >
+      <div className="absolute inset-0 rounded-xl border-2 border-transparent [background:linear-gradient(90deg,transparent,#a855f7,transparent)_border-box] [mask:linear-gradient(#fff_0_0)_padding-box,linear-gradient(#fff_0_0)] [-webkit-mask-composite:xor] [mask-composite:exclude] animate-border-beam" />
+    </div>
+  );
+};
+
+// Interactive Hover Button
+const InteractiveHoverButton = ({ children, className = '' }: { children: React.ReactNode; className?: string }) => {
+  return (
+    <button
+      className={cn(
+        "group relative inline-flex items-center justify-center overflow-hidden rounded-lg bg-white px-6 py-3 font-medium text-black transition-all duration-300 hover:scale-105",
+        className
+      )}
+    >
+      <span className="relative z-10">{children}</span>
+      <div className="absolute inset-0 -z-10 bg-gradient-to-br from-purple-500 to-pink-500 opacity-0 transition-opacity duration-300 group-hover:opacity-20" />
+    </button>
+  );
+};
+
+// Smooth Cursor Component
+const SmoothCursor = () => {
+  const cursorRef = useRef(null);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      setPosition({ x: e.clientX, y: e.clientY });
+      if (!isVisible) setIsVisible(true);
+    };
+
+    const handleMouseLeave = () => setIsVisible(false);
+
+    window.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseleave', handleMouseLeave);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseleave', handleMouseLeave);
+    };
+  }, [isVisible]);
+
+  if (!isVisible) return null;
+
+  return (
+    <div
+      ref={cursorRef}
+      className="pointer-events-none fixed z-50 h-8 w-8 rounded-full border-2 border-purple-500 transition-transform duration-100 ease-out"
+      style={{
+        left: `${position.x}px`,
+        top: `${position.y}px`,
+        transform: 'translate(-50%, -50%)',
+      }}
+    >
+      <div className="h-full w-full rounded-full bg-purple-500/20 animate-pulse" />
+    </div>
+  );
+};
+
+// Highlighter Component
+const Highlighter = ({ children, action = "highlight", color = "#FFEB3B" }: { children: React.ReactNode; action?: "highlight" | "underline"; color?: string }) => {
+  if (action === "underline") {
+    return (
+      <span className="relative inline-block">
+        <span className="relative z-10">{children}</span>
+        <span 
+          className="absolute bottom-0 left-0 h-[3px] w-full animate-expand-underline"
+          style={{ backgroundColor: color }}
+        />
+      </span>
+    );
+  }
+  
+  return (
+    <span className="relative inline-block">
+      <span className="relative z-10">{children}</span>
+      <span 
+        className="absolute inset-0 -z-10 animate-expand-highlight opacity-30"
+        style={{ backgroundColor: color }}
+      />
+    </span>
+  );
+};
+
+// Icon Cloud Component (using TagCloud approach)
+const IconCloud = ({ images }: { images: string[] }) => {
+  const cloudRef = useRef<HTMLDivElement>(null);
+  
+  useEffect(() => {
+    if (typeof window === 'undefined' || !cloudRef.current) return;
+    
+    // Create cloud element
+    const container = cloudRef.current;
+    const radius = 250;
+    const tags: HTMLElement[] = [];
+    
+    // Create tags
+    images.forEach((imgSrc, index) => {
+      const tag = document.createElement('img');
+      tag.src = imgSrc;
+      tag.style.width = '48px';
+      tag.style.height = '48px';
+      tag.style.position = 'absolute';
+      tag.style.transition = 'all 0.3s';
+      tag.style.cursor = 'pointer';
+      container.appendChild(tag);
+      tags.push(tag);
+    });
+    
+    // Calculate initial 3D positions
+    const positions = tags.map((_, index) => {
+      const phi = Math.acos(-1 + (2 * index) / tags.length);
+      const theta = Math.sqrt(tags.length * Math.PI) * phi;
+      return {
+        x: radius * Math.cos(theta) * Math.sin(phi),
+        y: radius * Math.sin(theta) * Math.sin(phi),
+        z: radius * Math.cos(phi)
+      };
+    });
+    
+    let angleX = 0;
+    let angleY = 0;
+    let mouseX = 0;
+    let mouseY = 0;
+    
+    const handleMouseMove = (e: MouseEvent) => {
+      const rect = container.getBoundingClientRect();
+      mouseX = (e.clientX - rect.left - rect.width / 2) * 0.001;
+      mouseY = (e.clientY - rect.top - rect.height / 2) * 0.001;
+    };
+    
+    container.addEventListener('mousemove', handleMouseMove);
+    
+    const update = () => {
+      angleX += mouseY * 0.5;
+      angleY += mouseX * 0.5;
+      
+      // Slow rotation when not hovering
+      angleY += 0.002;
+      
+      positions.forEach((pos, index) => {
+        // Rotate around Y axis
+        let x = pos.x * Math.cos(angleY) - pos.z * Math.sin(angleY);
+        let z = pos.z * Math.cos(angleY) + pos.x * Math.sin(angleY);
+        
+        // Rotate around X axis  
+        let y = pos.y * Math.cos(angleX) - z * Math.sin(angleX);
+        z = z * Math.cos(angleX) + pos.y * Math.sin(angleX);
+        
+        const scale = (z + radius * 2) / (radius * 3);
+        const alpha = (z + radius) / (radius * 2);
+        
+        const tag = tags[index];
+        tag.style.transform = `translate(-50%, -50%) translate(${x}px, ${y}px) scale(${scale})`;
+        tag.style.opacity = String(Math.max(0.3, Math.min(1, alpha)));
+        tag.style.zIndex = String(Math.round(z));
+        tag.style.left = '50%';
+        tag.style.top = '50%';
+      });
+      
+      requestAnimationFrame(update);
+    };
+    
+    update();
+    
+    return () => {
+      container.removeEventListener('mousemove', handleMouseMove);
+      tags.forEach(tag => tag.remove());
+    };
+  }, [images]);
+  
+  return <div ref={cloudRef} className="relative w-full h-full" />;
+};
+
+// Main Startup Template
+const StartupTemplate = () => {
+  const [billingCycle, setBillingCycle] = useState('monthly');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const companies = ['OpenAI', 'Anthropic', 'Mistral', 'Apple', 'Notion'];
+
+  const reviews = [
+    {
+      name: "Jack",
+      username: "@jack",
+      body: "I've never seen anything like this before. It's amazing. I love it.",
+      img: "https://avatar.vercel.sh/jack",
+    },
+    {
+      name: "Jill",
+      username: "@jill",
+      body: "I don't know what to say. I'm speechless. This is amazing.",
+      img: "https://avatar.vercel.sh/jill",
+    },
+    {
+      name: "John",
+      username: "@john",
+      body: "I'm at a loss for words. This is amazing. I love it.",
+      img: "https://avatar.vercel.sh/john",
+    },
+    {
+      name: "Jane",
+      username: "@jane",
+      body: "I'm at a loss for words. This is amazing. I love it.",
+      img: "https://avatar.vercel.sh/jane",
+    },
+    {
+      name: "Jenny",
+      username: "@jenny",
+      body: "I'm at a loss for words. This is amazing. I love it.",
+      img: "https://avatar.vercel.sh/jenny",
+    },
+    {
+      name: "James",
+      username: "@james",
+      body: "I'm at a loss for words. This is amazing. I love it.",
+      img: "https://avatar.vercel.sh/james",
+    },
+  ];
+
+  const firstRow = reviews.slice(0, Math.floor(reviews.length / 2));
+  const secondRow = reviews.slice(Math.floor(reviews.length / 2));
+
+  const techSlugs = [
+    "typescript",
+    "javascript",
+    "dart",
+    "java",
+    "react",
+    "flutter",
+    "android",
+    "html5",
+    "css3",
+    "nodedotjs",
+    "express",
+    "nextdotjs",
+    "prisma",
+    "amazonaws",
+    "postgresql",
+    "firebase",
+    "nginx",
+    "vercel",
+    "testinglibrary",
+    "jest",
+    "cypress",
+    "docker",
+    "git",
+    "jira",
+    "github",
+    "gitlab",
+    "visualstudiocode",
+    "androidstudio",
+    "sonarqube",
+    "figma",
+  ];
+
+  const techImages = techSlugs.map(
+    (slug) => `https://cdn.simpleicons.org/${slug}/${slug}`
+  );
+
+  const features = [
+    {
+      title: "AI-Powered Personalization",
+      description: "Adaptive learning paths that evolve with your progress and learning style.",
+      icon: (
+        <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M12 2L2 7l10 5 10-5-10-5z" />
+          <path d="M2 17l10 5 10-5" />
+          <path d="M2 12l10 5 10-5" />
+        </svg>
+      )
+    },
+    {
+      title: "Real-Time Feedback",
+      description: "Instant corrections and explanations to accelerate your learning journey.",
+      icon: (
+        <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+        </svg>
+      )
+    },
+    {
+      title: "Progress Tracking",
+      description: "Comprehensive analytics to visualize your improvement over time.",
+      icon: (
+        <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <line x1="18" y1="20" x2="18" y2="10" />
+          <line x1="12" y1="20" x2="12" y2="4" />
+          <line x1="6" y1="20" x2="6" y2="14" />
+        </svg>
+      )
+    },
+    {
+      title: "Expert Curriculum",
+      description: "Content designed by industry professionals and educators.",
+      icon: (
+        <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+          <path d="M6 12v5c3 3 9 3 12 0v-5" />
+        </svg>
+      )
+    },
+    {
+      title: "24/7 Availability",
+      description: "Learn at your own pace, anytime, anywhere with AI assistance.",
+      icon: (
+        <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <circle cx="12" cy="12" r="10" />
+          <polyline points="12 6 12 12 16 14" />
+        </svg>
+      )
+    },
+    {
+      title: "Interactive Exercises",
+      description: "Hands-on practice with immediate feedback and guidance.",
+      icon: (
+        <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+        </svg>
+      )
+    }
+  ];
+
+  const stats = [
+    { value: 10000, suffix: '+', label: 'Active Learners' },
+    { value: 35, suffix: '%', label: 'Faster Improvement' },
+    { value: 50000, suffix: '+', label: 'Lessons Completed' },
+    { value: 95, suffix: '%', label: 'Satisfaction Rate' }
+  ];
+
+  const faqs = [
+    {
+      question: "How does MasterX personalize learning?",
+      answer: "MasterX uses advanced AI algorithms to analyze your learning patterns, strengths, and areas for improvement. It adapts content difficulty, pacing, and teaching methods to match your unique learning style."
+    },
+    {
+      question: "What subjects does MasterX cover?",
+      answer: "MasterX offers comprehensive courses in programming, mathematics, languages, business, and more. Our AI tutors are trained across multiple domains to provide expert guidance."
+    },
+    {
+      question: "Can I try MasterX before subscribing?",
+      answer: "Yes! We offer a 7-day free trial with full access to all features. No credit card required to start learning."
+    },
+    {
+      question: "How is MasterX different from traditional online courses?",
+      answer: "Unlike pre-recorded courses, MasterX provides real-time AI interaction, personalized feedback, and adaptive learning paths. It's like having a private tutor available 24/7."
+    },
+    {
+      question: "What if I'm not satisfied with my progress?",
+      answer: "We offer a 30-day money-back guarantee. If you're not seeing results, we'll refund your subscription—no questions asked."
+    }
+  ];
+
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
+
+  const testimonials = [
+    {
+      name: "Sarah Chen",
+      role: "Software Developer",
+      video: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=300&fit=crop",
+      quote: "MasterX helped me land my dream job in just 3 months!"
+    },
+    {
+      name: "Marcus Johnson", 
+      role: "Data Scientist",
+      video: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop",
+      quote: "The AI tutor understands exactly where I struggle and helps me improve."
+    },
+    {
+      name: "Emily Rodriguez",
+      role: "Student",
+      video: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=300&fit=crop",
+      quote: "My grades improved by 40% since using MasterX. It's incredible!"
+    }
+  ];
+
+  const pricingPlans = [
+    {
+      name: 'Basic',
+      description: 'A basic plan for startups and individual users',
+      monthlyPrice: '$5',
+      annualPrice: '$50',
+      features: [
+        'AI-powered analytics',
+        'Basic support',
+        '5 projects limit',
+        'Access to basic AI tools'
+      ]
+    },
+    {
+      name: 'Premium',
+      description: 'A premium plan for growing businesses',
+      monthlyPrice: '$20',
+      annualPrice: '$200',
+      popular: true,
+      features: [
+        'Advanced AI insights',
+        'Priority support',
+        'Unlimited projects',
+        'Access to all AI tools',
+        'Custom integrations'
+      ]
+    },
+    {
+      name: 'Enterprise',
+      description: 'An enterprise plan with advanced features for large organizations',
+      monthlyPrice: '$50',
+      annualPrice: '$450',
+      features: [
+        'Custom AI solutions',
+        '24/7 dedicated support',
+        'Unlimited projects',
+        'Access to all AI tools',
+        'Custom integrations',
+        'Data security and compliance'
+      ]
+    }
+  ];
+
+  return (
+    <div className="min-h-screen bg-black text-white scroll-smooth">
+      {/* Smooth Custom Cursor */}
+      <SmoothCursor />
+
+      {/* Scroll Progress */}
+      <ScrollProgress />
+
+      {/* Dot Pattern Background */}
+      <DotPattern className="text-zinc-800/40 [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
+      
+      {/* Animated Grid Pattern */}
+      <AnimatedGridPattern />
+
+      <div className="relative z-10">
+        {/* Header */}
+        <header className="border-b border-zinc-800/50 backdrop-blur-xl sticky top-0 z-40 bg-black/80">
+          <div className="mx-auto max-w-7xl px-6 lg:px-8">
+            <div className="flex h-16 items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5" />
+                <span className="text-base font-medium">MasterX</span>
+              </div>
+              
+              {/* Desktop Navigation */}
+              <nav className="hidden items-center gap-6 md:flex">
+                <a href="#features" className="text-sm text-zinc-400 transition-colors hover:text-white">
+                  Features
+                </a>
+                <a href="#pricing" className="text-sm text-zinc-400 transition-colors hover:text-white">
+                  Pricing
+                </a>
+                <a href="#testimonials" className="text-sm text-zinc-400 transition-colors hover:text-white">
+                  Testimonials
+                </a>
+                <button className="px-4 py-1.5 text-sm text-zinc-400 transition-colors hover:text-white">
+                  Log in
+                </button>
+                <button className="rounded-md bg-white px-4 py-1.5 text-sm text-black transition-colors hover:bg-zinc-200">
+                  Sign up
+                </button>
+              </nav>
+
+              {/* Mobile Menu Button */}
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="md:hidden text-zinc-400 hover:text-white transition-colors"
+              >
+                {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              </button>
+            </div>
+
+            {/* Mobile Navigation */}
+            {mobileMenuOpen && (
+              <div className="md:hidden py-4 border-t border-zinc-800">
+                <nav className="flex flex-col gap-4">
+                  <a 
+                    href="#features" 
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="text-sm text-zinc-400 transition-colors hover:text-white"
+                  >
+                    Features
+                  </a>
+                  <a 
+                    href="#pricing" 
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="text-sm text-zinc-400 transition-colors hover:text-white"
+                  >
+                    Pricing
+                  </a>
+                  <a 
+                    href="#testimonials" 
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="text-sm text-zinc-400 transition-colors hover:text-white"
+                  >
+                    Testimonials
+                  </a>
+                  <button className="text-left text-sm text-zinc-400 transition-colors hover:text-white">
+                    Log in
+                  </button>
+                  <button className="text-left rounded-md bg-white px-4 py-2 text-sm text-black transition-colors hover:bg-zinc-200 w-full">
+                    Sign up
+                  </button>
+                </nav>
+              </div>
+            )}
+          </div>
+        </header>
+
+        {/* Hero Section */}
+        <section className="relative px-6 pt-20 pb-16 sm:pt-32 sm:pb-24 lg:px-8">
+          <div className="mx-auto max-w-6xl">
+            {/* Animated Badge */}
+            <div className="mb-6 flex justify-center">
+              <div className={cn(
+                "group rounded-full border border-black/5 bg-neutral-100 text-base text-white transition-all ease-in hover:cursor-pointer hover:bg-neutral-200 dark:border-white/5 dark:bg-neutral-900 dark:hover:bg-neutral-800"
+              )}>
+                <AnimatedShinyText className="inline-flex items-center justify-center px-4 py-1 transition ease-out hover:text-neutral-600 hover:duration-300 hover:dark:text-neutral-400">
+                  <span>✨ Introducing MasterX</span>
+                  <ArrowRight className="ml-1 h-3 w-3 transition-transform duration-300 ease-in-out group-hover:translate-x-0.5" />
+                </AnimatedShinyText>
+              </div>
+            </div>
+
+            {/* Heading */}
+            <h1 className="mb-6 text-center text-[2.75rem] font-bold leading-[1.1] tracking-tight sm:text-6xl lg:text-7xl">
+              MasterX 
+              <br />
+              Intelligent AI Agent               
+              <br />
+              which can understand you
+            </h1>
+
+            {/* Description */}
+            <p className="mx-auto mb-10 max-w-2xl text-center text-lg text-zinc-400 sm:text-xl">
+              <span className="leading-relaxed">
+                Join{" "}
+                <Highlighter action="underline" color="#FF9800">
+                  10,000+ learners
+                </Highlighter>{" "}
+                experiencing 35% faster improvement with{" "}
+                <Highlighter action="highlight" color="#87CEFA">
+                  personalized AI
+                </Highlighter>
+                {" "}effortlessly.
+              </span>
+            </p>
+
+            {/* CTA Button */}
+            <div className="mb-16 flex justify-center sm:mb-20">
+              <InteractiveHoverButton>
+                Get Started for free
+              </InteractiveHoverButton>
+            </div>
+
+            {/* Hero Image with Gradient Glow - FIXED VISIBILITY */}
+            <div className="relative mx-auto max-w-5xl">
+              {/* Gradient Glow Effect - Outside only */}
+              <div className="absolute -inset-6 bg-gradient-to-r from-purple-600/30 via-pink-600/30 to-blue-600/30 blur-3xl opacity-60" />
+              
+              <div className="relative overflow-hidden rounded-2xl border border-zinc-700/50 shadow-2xl">
+                <img 
+                  src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1200&h=750&fit=crop&q=80" 
+                  alt="Students collaborating with AI learning technology"
+                  className="w-full h-auto object-cover"
+                  loading="lazy"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                <div className="absolute bottom-8 left-8 right-8 text-left">
+                  <h3 className="text-2xl font-bold mb-2">Learn Smarter, Not Harder</h3>
+                  <p className="text-zinc-200">AI-powered education tailored to your goals</p>
+                </div>
+                <BorderBeam size={300} duration={15} delay={0} />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Trusted By */}
+        <section className="border-y border-zinc-800/50 bg-zinc-950/50 py-12 px-6 sm:py-16 lg:px-8 backdrop-blur-sm">
+          <div className="mx-auto max-w-6xl">
+            <p className="mb-10 text-center text-xs font-semibold tracking-[0.2em] text-zinc-600 uppercase">
+              TRUSTED BY TEAMS FROM AROUND THE WORLD
+            </p>
+            <Marquee>
+              {companies.map((company, idx) => (
+                <div key={idx} className="px-8 text-lg font-semibold text-zinc-500">
+                  {company}
+                </div>
+              ))}
+            </Marquee>
+          </div>
+        </section>
+
+        {/* Stats Section with Number Tickers */}
+        <section className="px-6 py-20 sm:py-32 lg:px-8" id="features">
+          <div className="mx-auto max-w-7xl">
+            <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
+              {stats.map((stat, idx) => (
+                <div key={idx} className="text-center">
+                  <div className="mb-2 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+                    <NumberTicker value={stat.value} suffix={stat.suffix} />
+                  </div>
+                  <p className="text-sm text-zinc-400">{stat.label}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Bento Grid Features Section */}
+        <section className="px-6 py-20 sm:py-32 lg:px-8">
+          <div className="mx-auto max-w-7xl">
+            <div className="mb-12 text-center">
+              <h2 className="mb-4 text-4xl font-bold sm:text-5xl">Why Choose MasterX?</h2>
+              <p className="text-xl text-zinc-400">Everything you need to accelerate your learning</p>
+            </div>
+            
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {features.map((feature, idx) => (
+                <div
+                  key={idx}
+                  className="group relative overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950 p-6 transition-all hover:border-zinc-700 hover:bg-zinc-900"
+                >
+                  <div className="mb-4 text-purple-400">
+                    {feature.icon}
+                  </div>
+                  <h3 className="mb-2 text-xl font-semibold">{feature.title}</h3>
+                  <p className="text-sm text-zinc-400">{feature.description}</p>
+                  <div className="absolute inset-0 -z-10 bg-gradient-to-br from-purple-500/5 to-pink-500/5 opacity-0 transition-opacity group-hover:opacity-100" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Reviews Section */}
+        <section className="px-6 py-20 sm:py-32 lg:px-8">
+          <div className="mx-auto max-w-7xl">
+            <div className="mb-12 text-center">
+              <h2 className="mb-4 text-4xl font-bold sm:text-5xl">What Our Users Say</h2>
+              <p className="text-xl text-zinc-400">Don't just take our word for it</p>
+            </div>
+            
+            <div className="relative flex w-full flex-col items-center justify-center overflow-hidden">
+              <Marquee pauseOnHover className="[--duration:20s]">
+                {firstRow.map((review) => (
+                  <figure
+                    key={review.username}
+                    className={cn(
+                      "relative h-full w-64 cursor-pointer overflow-hidden rounded-xl border p-4",
+                      "border-zinc-800 bg-zinc-950 hover:bg-zinc-900"
+                    )}
+                  >
+                    <div className="flex flex-row items-center gap-2">
+                      <img className="rounded-full" width="32" height="32" alt="" src={review.img} />
+                      <div className="flex flex-col">
+                        <figcaption className="text-sm font-medium text-white">
+                          {review.name}
+                        </figcaption>
+                        <p className="text-xs font-medium text-zinc-400">{review.username}</p>
+                      </div>
+                    </div>
+                    <blockquote className="mt-2 text-sm text-zinc-400">{review.body}</blockquote>
+                  </figure>
+                ))}
+              </Marquee>
+              <Marquee reverse pauseOnHover className="[--duration:20s]">
+                {secondRow.map((review) => (
+                  <figure
+                    key={review.username}
+                    className={cn(
+                      "relative h-full w-64 cursor-pointer overflow-hidden rounded-xl border p-4",
+                      "border-zinc-800 bg-zinc-950 hover:bg-zinc-900"
+                    )}
+                  >
+                    <div className="flex flex-row items-center gap-2">
+                      <img className="rounded-full" width="32" height="32" alt="" src={review.img} />
+                      <div className="flex flex-col">
+                        <figcaption className="text-sm font-medium text-white">
+                          {review.name}
+                        </figcaption>
+                        <p className="text-xs font-medium text-zinc-400">{review.username}</p>
+                      </div>
+                    </div>
+                    <blockquote className="mt-2 text-sm text-zinc-400">{review.body}</blockquote>
+                  </figure>
+                ))}
+              </Marquee>
+              <div className="pointer-events-none absolute inset-y-0 left-0 w-1/4 bg-gradient-to-r from-black"></div>
+              <div className="pointer-events-none absolute inset-y-0 right-0 w-1/4 bg-gradient-to-l from-black"></div>
+            </div>
+          </div>
+        </section>
+
+        {/* Pricing */}
+        <section className="px-6 py-20 sm:py-32 lg:px-8" id="pricing">
+          <div className="mx-auto max-w-7xl">
+            <div className="mb-12 text-center sm:mb-16">
+              <h2 className="mb-4 text-4xl font-bold sm:text-5xl">Pricing</h2>
+              <p className="mb-2 text-xl text-zinc-400">Simple pricing for everyone.</p>
+              <p className="mx-auto mb-8 max-w-2xl text-base text-zinc-500">
+                Choose an affordable plan that's packed with the best features for engaging your audience, creating customer loyalty, and driving sales.
+              </p>
+
+              {/* Toggle */}
+              <div className="inline-flex items-center gap-0.5 rounded-lg border border-zinc-800 bg-zinc-900 p-0.5">
+                <button
+                  onClick={() => setBillingCycle('monthly')}
+                  className={`rounded-md px-5 py-2 text-sm font-medium transition-all ${
+                    billingCycle === 'monthly'
+                      ? 'bg-white text-black'
+                      : 'text-zinc-400 hover:text-white'
+                  }`}
+                >
+                  Monthly
+                </button>
+                <button
+                  onClick={() => setBillingCycle('annual')}
+                  className={`rounded-md px-5 py-2 text-sm font-medium transition-all ${
+                    billingCycle === 'annual'
+                      ? 'bg-white text-black'
+                      : 'text-zinc-400 hover:text-white'
+                  }`}
+                >
+                  Annual
+                </button>
+              </div>
+            </div>
+
+            {/* Cards */}
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {pricingPlans.map((plan, idx) => (
+                <div
+                  key={idx}
+                  className={`relative rounded-xl border p-6 transition-all hover:border-zinc-700 ${
+                    plan.popular
+                      ? 'border-zinc-700 bg-zinc-900'
+                      : 'border-zinc-800 bg-zinc-950'
+                  }`}
+                >
+                  {plan.popular && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                      <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-black">
+                        Most Popular
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="mb-6">
+                    <h3 className="mb-2 text-lg font-semibold">{plan.name}</h3>
+                    <p className="mb-6 min-h-[2.5rem] text-sm text-zinc-500">{plan.description}</p>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-4xl font-bold">
+                        {billingCycle === 'monthly' ? plan.monthlyPrice : plan.annualPrice}
+                      </span>
+                      <span className="text-sm text-zinc-500">
+                        /{billingCycle === 'monthly' ? 'month' : 'year'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <button
+                    className={`mb-6 w-full rounded-lg px-4 py-2.5 text-sm font-medium transition-all ${
+                      plan.popular
+                        ? 'bg-white text-black hover:bg-zinc-200'
+                        : 'bg-zinc-800 text-white hover:bg-zinc-700'
+                    }`}
+                  >
+                    Get Started
+                  </button>
+
+                  <div className="space-y-3">
+                    {plan.features.map((feature, i) => (
+                      <div key={i} className="flex items-start gap-3">
+                        <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-zinc-400" />
+                        <span className="text-sm text-zinc-400">{feature}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Tech Stack Icon Cloud - FRAMELESS */}
+        <section className="relative px-6 py-20 sm:py-32 lg:px-8 overflow-hidden">
+          <div className="mx-auto max-w-7xl">
+            <div className="mb-12 text-center relative z-10">
+              <h2 className="mb-4 text-4xl font-bold sm:text-5xl">Built with Modern Tech</h2>
+              <p className="text-xl text-zinc-400">Powered by industry-leading technologies</p>
+            </div>
+            
+            {/* Icon Cloud without frame - blends with background */}
+            <div className="relative h-[600px] w-full">
+              <div className="absolute inset-0 flex items-center justify-center">
+                <IconCloud images={techImages} />
+              </div>
+              {/* Subtle radial gradient for depth */}
+              <div className="absolute inset-0 bg-radial-gradient from-transparent via-transparent to-black pointer-events-none" />
+            </div>
+          </div>
+        </section>
+
+        {/* Video Testimonials - FRAMELESS */}
+        <section className="px-6 py-20 sm:py-32 lg:px-8" id="testimonials">
+          <div className="mx-auto max-w-7xl">
+            <div className="mb-12 text-center">
+              <h2 className="mb-4 text-4xl font-bold sm:text-5xl">Success Stories</h2>
+              <p className="text-xl text-zinc-400">Hear from learners who transformed their careers</p>
+            </div>
+            
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+              {testimonials.map((testimonial, idx) => (
+                <div
+                  key={idx}
+                  className="group relative overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950 hover:border-zinc-700 transition-all"
+                >
+                  <div className="relative aspect-video overflow-hidden">
+                    <img 
+                      src={testimonial.video} 
+                      alt={testimonial.name}
+                      className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/90 backdrop-blur-sm transition-transform group-hover:scale-110">
+                        <div className="h-0 w-0 border-l-[16px] border-l-black border-y-[10px] border-y-transparent ml-1" />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="p-6">
+                    <p className="mb-4 text-sm text-zinc-300 italic">"{testimonial.quote}"</p>
+                    <div>
+                      <p className="font-semibold">{testimonial.name}</p>
+                      <p className="text-sm text-zinc-500">{testimonial.role}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* FAQ Section */}
+        <section className="px-6 py-20 sm:py-32 lg:px-8 bg-zinc-950/50">
+          <div className="mx-auto max-w-3xl">
+            <div className="mb-12 text-center">
+              <h2 className="mb-4 text-4xl font-bold sm:text-5xl">Frequently Asked Questions</h2>
+              <p className="text-xl text-zinc-400">Everything you need to know about MasterX</p>
+            </div>
+            
+            <div className="space-y-4">
+              {faqs.map((faq, idx) => (
+                <div
+                  key={idx}
+                  className="overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950"
+                >
+                  <button
+                    onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
+                    className="flex w-full items-center justify-between p-6 text-left transition-colors hover:bg-zinc-900"
+                  >
+                    <span className="font-semibold">{faq.question}</span>
+                    <span className={`text-2xl transition-transform ${openFaq === idx ? 'rotate-45' : ''}`}>
+                      +
+                    </span>
+                  </button>
+                  <div
+                    className={`overflow-hidden transition-all duration-300 ${
+                      openFaq === idx ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+                    }`}
+                  >
+                    <div className="border-t border-zinc-800 p-6 pt-4 text-zinc-400">
+                      {faq.answer}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Final CTA Section */}
+        <section className="relative px-6 py-20 sm:py-32 lg:px-8 overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-900/20 via-black to-pink-900/20" />
+          <AnimatedGridPattern className="opacity-50" />
+          
+          <div className="relative mx-auto max-w-4xl text-center">
+            <h2 className="mb-6 text-4xl font-bold sm:text-6xl">
+              Ready to Transform Your Learning?
+            </h2>
+            <p className="mb-10 text-xl text-zinc-400">
+              Join thousands of learners achieving their goals with AI-powered education
+            </p>
+            <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
+              <InteractiveHoverButton className="text-lg px-8 py-4">
+                Start Free Trial
+              </InteractiveHoverButton>
+              <button className="rounded-lg border border-zinc-700 bg-zinc-900 px-8 py-4 text-lg font-medium transition-colors hover:bg-zinc-800">
+                Schedule a Demo
+              </button>
+            </div>
+            <p className="mt-6 text-sm text-zinc-500">
+              No credit card required • 7-day free trial • Cancel anytime
+            </p>
+          </div>
+        </section>
+
+        {/* Footer */}
+        <footer className="border-t border-zinc-800/50 px-6 py-8 lg:px-8">
+          <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 md:flex-row">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5" />
+              <span className="text-base font-medium">MasterX</span>
+            </div>
+            <p className="text-sm text-zinc-500">© 2025 MasterX. All rights reserved.</p>
+            <div className="flex items-center gap-6 text-sm text-zinc-400">
+              <a href="#" className="transition-colors hover:text-white">Privacy</a>
+              <a href="#" className="transition-colors hover:text-white">Terms</a>
+              <a href="#" className="transition-colors hover:text-white">Contact</a>
+            </div>
+          </div>
+        </footer>
+      </div>
+
+      <style>{`
+        html {
+          scroll-behavior: smooth;
+        }
+        @keyframes marquee {
+          from { transform: translateX(0); }
+          to { transform: translateX(calc(-50% - 0.5rem)); }
+        }
+        @keyframes marquee-reverse {
+          from { transform: translateX(calc(-50% - 0.5rem)); }
+          to { transform: translateX(0); }
+        }
+        @keyframes border-beam {
+          0% { offset-distance: 0%; }
+          100% { offset-distance: 100%; }
+        }
+        .animate-marquee {
+          animation: marquee 40s linear infinite;
+        }
+        .animate-marquee-reverse {
+          animation: marquee-reverse 40s linear infinite;
+        }
+        .animate-border-beam {
+          animation: border-beam 15s linear infinite;
+        }
+        .group:hover .pause {
+          animation-play-state: paused;
+        }
+        @keyframes shiny-text {
+          0%, 90%, 100% {
+            background-position: calc(-100% - var(--shiny-width)) 0;
+          }
+          30%, 60% {
+            background-position: calc(100% + var(--shiny-width)) 0;
+          }
+        }
+        .animate-shiny-text {
+          animation: shiny-text 8s infinite;
+        }
+        @keyframes expand-underline {
+          from {
+            width: 0;
+          }
+          to {
+            width: 100%;
+          }
+        }
+        @keyframes expand-highlight {
+          from {
+            transform: scaleX(0);
+          }
+          to {
+            transform: scaleX(1);
+          }
+        }
+        .animate-expand-underline {
+          animation: expand-underline 1s ease-out forwards;
+        }
+        .animate-expand-highlight {
+          animation: expand-highlight 1s ease-out forwards;
+        }
+        @keyframes grid-flow {
+          0%, 100% {
+            opacity: 0.3;
+          }
+          50% {
+            opacity: 0.6;
+          }
+        }
+        .animate-grid-flow {
+          animation: grid-flow 8s ease-in-out infinite;
+        }
+      `}</style>
+    </div>
+  );
+};
+
+export default StartupTemplate;
