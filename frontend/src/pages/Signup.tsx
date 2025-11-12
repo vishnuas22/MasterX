@@ -23,19 +23,26 @@
  * - Auto-login after signup
  * - Redirect to onboarding
  * 
+ * Design:
+ * - Modern white card with BorderBeam animation effect
+ * - Clean gray color scheme
+ * - Password requirements checklist
+ * - Responsive layout
+ * 
  * @module pages/Signup
  */
 
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, Eye, EyeOff, Check, X } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/utils/cn';
+import { BorderBeam } from '@/components/ui/BorderBeam';
 
 // ============================================================================
 // VALIDATION SCHEMA
@@ -119,10 +126,23 @@ function calculatePasswordStrength(password: string): number {
  * Get password strength label and color
  */
 function getPasswordStrengthInfo(strength: number) {
-  if (strength < 30) return { label: 'Weak', color: 'red', bgColor: 'bg-red-500' };
-  if (strength < 60) return { label: 'Fair', color: 'orange', bgColor: 'bg-orange-500' };
-  if (strength < 80) return { label: 'Good', color: 'yellow', bgColor: 'bg-yellow-500' };
-  return { label: 'Strong', color: 'green', bgColor: 'bg-green-500' };
+  if (strength < 30) return { label: 'Weak', color: 'red', bgColor: 'bg-red-500', textColor: 'text-red-600' };
+  if (strength < 60) return { label: 'Fair', color: 'orange', bgColor: 'bg-orange-500', textColor: 'text-orange-600' };
+  if (strength < 80) return { label: 'Good', color: 'yellow', bgColor: 'bg-yellow-500', textColor: 'text-yellow-600' };
+  return { label: 'Strong', color: 'green', bgColor: 'bg-green-500', textColor: 'text-green-600' };
+}
+
+/**
+ * Get password requirements validation status
+ */
+function validatePasswordRequirements(password: string) {
+  return {
+    length: password.length >= 8,
+    uppercase: /[A-Z]/.test(password),
+    lowercase: /[a-z]/.test(password),
+    number: /[0-9]/.test(password),
+    special: /[^A-Za-z0-9]/.test(password),
+  };
 }
 
 // ============================================================================
@@ -130,6 +150,7 @@ function getPasswordStrengthInfo(strength: number) {
 // ============================================================================
 
 export const Signup: React.FC = () => {
+  const navigate = useNavigate();
   const { signup, isLoading } = useAuth();
 
   // Form state
@@ -154,6 +175,7 @@ export const Signup: React.FC = () => {
   const password = watch('password');
   const passwordStrength = calculatePasswordStrength(password);
   const strengthInfo = getPasswordStrengthInfo(passwordStrength);
+  const passwordChecks = validatePasswordRequirements(password);
 
   // Password visibility
   const [showPassword, setShowPassword] = useState(false);
@@ -198,145 +220,107 @@ export const Signup: React.FC = () => {
         <meta name="robots" content="index, follow" />
       </Helmet>
 
-      <div className="min-h-screen bg-bg-primary flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12 relative overflow-hidden">
-        {/* Background gradient */}
-        <div className="absolute inset-0 bg-gradient-to-br from-accent-primary/5 via-accent-purple/5 to-accent-pink/5 pointer-events-none" />
-        
-        {/* Animated background shapes */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <motion.div
-            animate={{
-              scale: [1, 1.2, 1],
-              rotate: [0, 90, 0],
-            }}
-            transition={{
-              duration: 20,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-            className="absolute -top-1/2 -right-1/2 w-full h-full bg-gradient-to-bl from-accent-purple/10 to-transparent rounded-full blur-3xl"
-          />
-          <motion.div
-            animate={{
-              scale: [1, 1.3, 1],
-              rotate: [0, -90, 0],
-            }}
-            transition={{
-              duration: 25,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-            className="absolute -bottom-1/2 -left-1/2 w-full h-full bg-gradient-to-tr from-accent-pink/10 to-transparent rounded-full blur-3xl"
-          />
-        </div>
-
-        <div className="relative w-full max-w-md z-10">
-          {/* Back to home button */}
-          <Link
-            to="/"
-            className="inline-flex items-center gap-2 text-sm text-text-secondary hover:text-text-primary transition-colors mb-8 group"
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-12">
+        <div className="w-full max-w-md">
+          {/* Back button */}
+          <button
+            onClick={() => navigate('/')}
+            className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 transition-colors mb-6 group"
+            data-testid="back-to-home-btn"
           >
             <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
             Back to home
-          </Link>
+          </button>
 
-          {/* Logo and title */}
-          <div className="text-center mb-8">
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ type: "spring", stiffness: 200, damping: 15 }}
-            >
-              <Link 
-                to="/" 
-                className="inline-flex items-center gap-3 group mb-6"
-              >
-                <div className="w-12 h-12 bg-gradient-to-br from-accent-primary to-accent-purple rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow">
-                  <span className="text-2xl font-bold text-white">M</span>
-                </div>
-                <span className="text-2xl font-bold text-text-primary">MasterX</span>
-              </Link>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-            >
-              <h1 className="text-3xl font-bold text-text-primary mb-2">
-                Create your account
-              </h1>
-              <p className="text-text-secondary">
-                Start learning with emotion-aware AI
-              </p>
-            </motion.div>
-          </div>
-
-          {/* Signup form */}
+          {/* Main Card with BorderBeam effect */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="bg-bg-secondary/50 backdrop-blur-xl rounded-2xl border border-white/10 p-8 shadow-xl"
+            transition={{ duration: 0.4 }}
+            className="relative bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden"
           >
-            <form onSubmit={handleSubmit(onSubmit)} noValidate>
+            {/* Header */}
+            <div className="p-6 space-y-1.5">
+              <h2 className="text-2xl font-semibold leading-none tracking-tight text-gray-900">
+                Create Account
+              </h2>
+              <p className="text-sm text-gray-500">
+                Enter your information to create your account.
+              </p>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleSubmit(onSubmit)} noValidate className="p-6 pt-0 space-y-4">
               {/* Full Name */}
-              <div className="mb-4">
-                <label htmlFor="full_name" className="block text-sm font-medium text-text-secondary mb-2">
-                  Full name
+              <div className="flex flex-col space-y-1.5">
+                <label 
+                  htmlFor="full_name" 
+                  className="text-sm font-medium leading-none text-gray-900"
+                >
+                  Full Name
                 </label>
                 <input
                   id="full_name"
                   type="text"
                   autoComplete="name"
                   placeholder="John Doe"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || isLoading}
+                  data-testid="signup-fullname-input"
                   className={cn(
-                    "w-full px-4 py-3 bg-bg-primary/50 border rounded-xl",
-                    "text-text-primary placeholder:text-text-tertiary",
-                    "focus:outline-none focus:ring-2 focus:ring-accent-primary/50 focus:border-accent-primary",
+                    "flex h-10 w-full rounded-md border bg-white px-3 py-2 text-sm text-gray-900",
+                    "ring-offset-white placeholder:text-gray-500",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2",
+                    "disabled:cursor-not-allowed disabled:opacity-50",
                     "transition-all duration-200",
-                    errors.full_name ? "border-red-500" : "border-white/10"
+                    errors.full_name ? "border-red-500" : "border-gray-300"
                   )}
                   {...register('full_name')}
                 />
                 {errors.full_name && (
-                  <p className="mt-1 text-sm text-red-400" role="alert">
+                  <p className="text-xs text-red-600" role="alert">
                     {errors.full_name.message}
                   </p>
                 )}
               </div>
 
               {/* Email */}
-              <div className="mb-4">
-                <label htmlFor="email" className="block text-sm font-medium text-text-secondary mb-2">
-                  Email address
+              <div className="flex flex-col space-y-1.5">
+                <label 
+                  htmlFor="email" 
+                  className="text-sm font-medium leading-none text-gray-900"
+                >
+                  Email
                 </label>
                 <input
                   id="email"
                   type="email"
                   autoComplete="email"
                   placeholder="you@example.com"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || isLoading}
+                  data-testid="signup-email-input"
                   className={cn(
-                    "w-full px-4 py-3 bg-bg-primary/50 border rounded-xl",
-                    "text-text-primary placeholder:text-text-tertiary",
-                    "focus:outline-none focus:ring-2 focus:ring-accent-primary/50 focus:border-accent-primary",
+                    "flex h-10 w-full rounded-md border bg-white px-3 py-2 text-sm text-gray-900",
+                    "ring-offset-white placeholder:text-gray-500",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2",
+                    "disabled:cursor-not-allowed disabled:opacity-50",
                     "transition-all duration-200",
-                    errors.email ? "border-red-500" : "border-white/10"
+                    errors.email ? "border-red-500" : "border-gray-300"
                   )}
                   {...register('email')}
                 />
                 {errors.email && (
-                  <p className="mt-1 text-sm text-red-400" role="alert">
+                  <p className="text-xs text-red-600" role="alert">
                     {errors.email.message}
                   </p>
                 )}
               </div>
 
               {/* Password */}
-              <div className="mb-4">
-                <label htmlFor="password" className="block text-sm font-medium text-text-secondary mb-2">
+              <div className="flex flex-col space-y-1.5">
+                <label 
+                  htmlFor="password" 
+                  className="text-sm font-medium leading-none text-gray-900"
+                >
                   Password
                 </label>
                 <div className="relative">
@@ -345,65 +329,89 @@ export const Signup: React.FC = () => {
                     type={showPassword ? 'text' : 'password'}
                     autoComplete="new-password"
                     placeholder="Create a strong password"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || isLoading}
+                    data-testid="signup-password-input"
                     className={cn(
-                      "w-full px-4 py-3 pr-12 bg-bg-primary/50 border rounded-xl",
-                      "text-text-primary placeholder:text-text-tertiary",
-                      "focus:outline-none focus:ring-2 focus:ring-accent-primary/50 focus:border-accent-primary",
+                      "flex h-10 w-full rounded-md border bg-white px-3 py-2 pr-10 text-sm text-gray-900",
+                      "ring-offset-white placeholder:text-gray-500",
+                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2",
+                      "disabled:cursor-not-allowed disabled:opacity-50",
                       "transition-all duration-200",
-                      errors.password ? "border-red-500" : "border-white/10"
+                      errors.password ? "border-red-500" : "border-gray-300"
                     )}
                     {...register('password')}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-primary transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
                   >
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
 
-                {/* Password Strength Indicator */}
+                {/* Password Strength Indicator & Requirements */}
                 {password && (
-                  <div className="mt-2">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs text-text-tertiary">
-                        Password strength:
-                      </span>
-                      <span className={cn(
-                        "text-xs font-medium px-2 py-0.5 rounded",
-                        strengthInfo.color === 'red' && "bg-red-500/20 text-red-400",
-                        strengthInfo.color === 'orange' && "bg-orange-500/20 text-orange-400",
-                        strengthInfo.color === 'yellow' && "bg-yellow-500/20 text-yellow-400",
-                        strengthInfo.color === 'green' && "bg-green-500/20 text-green-400"
-                      )}>
+                  <div className="mt-2 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-gray-600">Password strength:</span>
+                      <span className={cn("text-xs font-medium", strengthInfo.textColor)}>
                         {strengthInfo.label}
                       </span>
                     </div>
-                    <div className="h-2 bg-bg-primary/50 rounded-full overflow-hidden">
-                      <div 
-                        className={cn(
-                          "h-full transition-all duration-300",
-                          strengthInfo.bgColor
-                        )}
+                    <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                      <div
+                        className={cn("h-full transition-all duration-300", strengthInfo.bgColor)}
                         style={{ width: `${passwordStrength}%` }}
                       />
+                    </div>
+
+                    {/* Password Requirements Checklist */}
+                    <div className="grid grid-cols-2 gap-2 mt-3">
+                      {[
+                        { key: 'length', label: '8+ characters' },
+                        { key: 'uppercase', label: 'Uppercase' },
+                        { key: 'lowercase', label: 'Lowercase' },
+                        { key: 'number', label: 'Number' },
+                        { key: 'special', label: 'Special char' },
+                      ].map(({ key, label }) => (
+                        <div key={key} className="flex items-center gap-1.5">
+                          {passwordChecks[key as keyof typeof passwordChecks] ? (
+                            <Check className="w-3.5 h-3.5 text-green-600" />
+                          ) : (
+                            <X className="w-3.5 h-3.5 text-gray-400" />
+                          )}
+                          <span 
+                            className={cn(
+                              "text-xs",
+                              passwordChecks[key as keyof typeof passwordChecks] 
+                                ? 'text-green-600' 
+                                : 'text-gray-500'
+                            )}
+                          >
+                            {label}
+                          </span>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}
 
                 {errors.password && (
-                  <p className="mt-1 text-sm text-red-400" role="alert">
+                  <p className="text-xs text-red-600" role="alert">
                     {errors.password.message}
                   </p>
                 )}
               </div>
 
               {/* Confirm Password */}
-              <div className="mb-4">
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-text-secondary mb-2">
-                  Confirm password
+              <div className="flex flex-col space-y-1.5">
+                <label 
+                  htmlFor="confirmPassword" 
+                  className="text-sm font-medium leading-none text-gray-900"
+                >
+                  Confirm Password
                 </label>
                 <div className="relative">
                   <input
@@ -411,110 +419,103 @@ export const Signup: React.FC = () => {
                     type={showConfirmPassword ? 'text' : 'password'}
                     autoComplete="new-password"
                     placeholder="Re-enter your password"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || isLoading}
+                    data-testid="signup-confirm-password-input"
                     className={cn(
-                      "w-full px-4 py-3 pr-12 bg-bg-primary/50 border rounded-xl",
-                      "text-text-primary placeholder:text-text-tertiary",
-                      "focus:outline-none focus:ring-2 focus:ring-accent-primary/50 focus:border-accent-primary",
+                      "flex h-10 w-full rounded-md border bg-white px-3 py-2 pr-10 text-sm text-gray-900",
+                      "ring-offset-white placeholder:text-gray-500",
+                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2",
+                      "disabled:cursor-not-allowed disabled:opacity-50",
                       "transition-all duration-200",
-                      errors.confirmPassword ? "border-red-500" : "border-white/10"
+                      errors.confirmPassword ? "border-red-500" : "border-gray-300"
                     )}
                     {...register('confirmPassword')}
                   />
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-primary transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                    aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
                   >
-                    {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
                 {errors.confirmPassword && (
-                  <p className="mt-1 text-sm text-red-400" role="alert">
+                  <p className="text-xs text-red-600" role="alert">
                     {errors.confirmPassword.message}
                   </p>
                 )}
               </div>
 
               {/* Terms & Conditions */}
-              <div className="mb-6">
-                <div className="flex items-start">
-                  <input
-                    id="acceptTerms"
-                    type="checkbox"
-                    className="mt-1 h-4 w-4 rounded border-white/20 bg-bg-primary/50 text-accent-primary focus:ring-2 focus:ring-accent-primary/50"
-                    {...register('acceptTerms')}
-                  />
-                  <label htmlFor="acceptTerms" className="ml-2 text-sm text-text-secondary">
-                    I agree to the{' '}
-                    <Link to="/terms" className="text-accent-primary hover:underline" target="_blank">
-                      Terms of Service
-                    </Link>
-                    {' '}and{' '}
-                    <Link to="/privacy" className="text-accent-primary hover:underline" target="_blank">
-                      Privacy Policy
-                    </Link>
-                  </label>
-                </div>
-                {errors.acceptTerms && (
-                  <p className="mt-1 text-sm text-red-400" role="alert">
-                    {errors.acceptTerms.message}
-                  </p>
-                )}
+              <div className="flex items-start space-x-2">
+                <input
+                  id="acceptTerms"
+                  type="checkbox"
+                  data-testid="signup-terms-checkbox"
+                  className="mt-0.5 h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-2 focus:ring-gray-950 focus:ring-offset-2"
+                  {...register('acceptTerms')}
+                />
+                <label htmlFor="acceptTerms" className="text-sm text-gray-600 leading-none">
+                  I agree to the{' '}
+                  <Link to="/terms" className="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">
+                    Terms of Service
+                  </Link>
+                  {' '}and{' '}
+                  <Link to="/privacy" className="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">
+                    Privacy Policy
+                  </Link>
+                </label>
               </div>
-
-              {/* Submit Button */}
-              <button
-                type="submit"
-                disabled={isSubmitting || isLoading}
-                className={cn(
-                  "w-full py-3 px-6 rounded-xl font-medium",
-                  "bg-gradient-to-r from-accent-primary to-accent-purple",
-                  "text-white shadow-lg shadow-accent-primary/25",
-                  "hover:shadow-xl hover:shadow-accent-primary/40",
-                  "focus:outline-none focus:ring-2 focus:ring-accent-primary/50",
-                  "transition-all duration-200",
-                  "disabled:opacity-50 disabled:cursor-not-allowed"
-                )}
-              >
-                {isSubmitting || isLoading ? 'Creating account...' : 'Create account'}
-              </button>
+              {errors.acceptTerms && (
+                <p className="text-xs text-red-600" role="alert">
+                  {errors.acceptTerms.message}
+                </p>
+              )}
             </form>
 
-            {/* Login Link */}
-            <p className="mt-6 text-center text-sm text-text-tertiary">
-              Already have an account?{' '}
-              <Link 
-                to="/login" 
-                className="text-accent-primary hover:underline font-medium"
+            {/* Footer with Two Buttons */}
+            <div className="flex items-center p-6 pt-0 justify-between gap-4">
+              <Link
+                to="/login"
+                className={cn(
+                  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium",
+                  "ring-offset-white transition-colors",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2",
+                  "border border-gray-300 bg-white text-gray-900 hover:bg-gray-100",
+                  "h-10 px-4 py-2",
+                  "disabled:pointer-events-none disabled:opacity-50"
+                )}
+                data-testid="signup-login-link"
               >
-                Log in
+                Login
               </Link>
-            </p>
-          </motion.div>
-
-          {/* Footer note */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-            className="mt-8 text-center space-y-3"
-          >
-            {/* Benefits */}
-            <div className="flex items-center justify-center gap-6 text-xs text-text-tertiary">
-              <div className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                <span>Free forever</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                <span>No credit card</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                <span>Cancel anytime</span>
-              </div>
+              <button
+                type="submit"
+                onClick={handleSubmit(onSubmit)}
+                disabled={isSubmitting || isLoading}
+                data-testid="signup-create-account-btn"
+                className={cn(
+                  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium",
+                  "ring-offset-white transition-colors",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2",
+                  "bg-gray-900 text-gray-50 hover:bg-gray-900/90",
+                  "h-10 px-4 py-2",
+                  "disabled:pointer-events-none disabled:opacity-50"
+                )}
+              >
+                {isSubmitting || isLoading ? 'Creating...' : 'Create Account'}
+              </button>
             </div>
+
+            {/* BorderBeam Effect */}
+            <BorderBeam 
+              size={80} 
+              duration={10} 
+              borderWidth={5} 
+              colorFrom="#8b5cf6" 
+              colorTo="#ec4899" 
+            />
           </motion.div>
         </div>
       </div>
