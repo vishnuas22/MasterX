@@ -50,7 +50,6 @@ const MainApp = lazy(() => import('@/pages/MainApp'));
 
 // Test/Debug pages (for development)
 const ComponentShowcase = lazy(() => import('./pages/ComponentShowcase'));
-const TestLogin = lazy(() => import('./pages/TestLogin'));
 
 // Feature pages
 const GamificationDashboard = lazy(() => import('./pages/GamificationDashboard'));
@@ -243,7 +242,6 @@ const App: React.FC = () => {
    * Development:
    * - /showcase - Component showcase
    * - /gamification - Gamification showcase
-   * - /test-login - Test login
    * 
    * Fallback:
    * - * - Redirect to landing (404 handling)
@@ -301,7 +299,6 @@ const App: React.FC = () => {
             {import.meta.env.DEV && (
               <>
                 <Route path="/showcase" element={<ComponentShowcase />} />
-                <Route path="/test-login" element={<TestLogin />} />
               </>
             )}
 
