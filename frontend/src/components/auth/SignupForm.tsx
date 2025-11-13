@@ -301,7 +301,7 @@ export const SignupForm = React.memo<SignupFormProps>(({
       if (onSuccess) {
         onSuccess();
       } else {
-        navigate('/app/onboarding');
+        navigate('/app');
       }
     } catch (error: any) {
       const errorMessage = error.response?.data?.detail || error.message;
