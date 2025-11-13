@@ -19,7 +19,7 @@
  * 
  * PRESERVED FUNCTIONALITY:
  * - All authentication handlers work with backend API
- * - Navigation to /signup, /login, /onboarding routes
+ * - Navigation to /signup, /login routes
  * - SEO meta tags and Open Graph
  * - Footer links to internal pages
  */
@@ -772,14 +772,14 @@ export interface LandingProps {
   
   /**
    * Redirect path after signup
-   * @default "/onboarding"
+   * @default "/app"
    */
   signupRedirect?: string;
 }
 
 export const Landing: React.FC<LandingProps> = ({
   showOffer = false,
-  signupRedirect = '/onboarding'
+  signupRedirect = '/app'
 }) => {
   const navigate = useNavigate();
   const [billingCycle, setBillingCycle] = useState('monthly');
