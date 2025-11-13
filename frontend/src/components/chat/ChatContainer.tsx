@@ -386,28 +386,51 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
         </div>
       )}
       
-      {/* Message List */}
-      <div className="flex-1 overflow-hidden">
-        <MessageList
-          messages={messages}
-          isLoading={isLoading}
-          currentUserId={user?.id}
-        />
-        
-        {/* Typing Indicator */}
-        {isLoading && (
-          <div className="px-4 py-2">
-            <TypingIndicator />
+      {/* Message List with Empty State */}
+      {messages.length === 0 && !isLoading ? (
+        /* Enhanced Empty State matching new design */
+        <div className="flex-1 flex items-center justify-center px-8">
+          <div className="text-center max-w-2xl">
+            <div className="mb-8 text-8xl">👋</div>
+            <h2 className="text-5xl font-bold mb-4 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+              Start Your Learning Journey
+            </h2>
+            <p className="text-white/60 text-lg mb-6">
+              Ask me anything! I'm here to help you learn with personalized, emotion-aware responses.
+            </p>
+            <div className="flex items-center justify-center gap-3">
+              <span className="px-4 py-2 rounded-full bg-white/[0.05] border border-white/[0.1] text-xs text-white/50 font-bold">
+                AI Assistant
+              </span>
+              <span className="px-4 py-2 rounded-full bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/30 text-xs text-blue-400 font-bold">
+                EMOTION-AWARE
+              </span>
+            </div>
           </div>
-        )}
-        
-        {/* Auto-scroll anchor */}
-        <div ref={messageEndRef} />
-      </div>
+        </div>
+      ) : (
+        <div className="flex-1 overflow-hidden">
+          <MessageList
+            messages={messages}
+            isLoading={isLoading}
+            currentUserId={user?.id}
+          />
+          
+          {/* Typing Indicator */}
+          {isLoading && (
+            <div className="px-4 py-2">
+              <TypingIndicator />
+            </div>
+          )}
+          
+          {/* Auto-scroll anchor */}
+          <div ref={messageEndRef} />
+        </div>
+      )}
       
-      {/* Message Input Area */}
-      <div className="border-t border-white/10 bg-bg-secondary">
-        <div className="container max-w-4xl mx-auto p-4">
+      {/* Message Input Area - Enhanced Centered Design */}
+      <div className="border-t border-white/[0.08] backdrop-blur-2xl p-8">
+        <div className="max-w-4xl mx-auto">
           <div className="flex items-end gap-3">
             {/* Voice Button (if enabled) */}
             {enableVoice && (
@@ -417,7 +440,7 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
               />
             )}
             
-            {/* Text Input */}
+            {/* Text Input - Enhanced Design */}
             <div className="flex-1">
               <MessageInput
                 onSend={handleSendMessage}
@@ -427,6 +450,9 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
                     ? 'AI is responding...'
                     : 'Ask me anything...'
                 }
+                enableAttachments={false}
+                enableEmoji={false}
+                showCounter={true}
               />
               
               {/* Connection Warning (non-blocking) */}
