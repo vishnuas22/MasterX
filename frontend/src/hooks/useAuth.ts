@@ -148,7 +148,7 @@ export const useAuth = (): UseAuthReturn => {
    * - Creates new account
    * - Automatically logs in
    * - Shows success/error toast
-   * - Navigates to /onboarding on success
+   * - Navigates to /app on success (direct to main application)
    * - Returns boolean for success/failure
    * 
    * @param data - Signup form data (email, password, name)
@@ -175,8 +175,8 @@ export const useAuth = (): UseAuthReturn => {
         duration: 4000,
       });
       
-      // Navigate to onboarding
-      navigate('/onboarding');
+      // Navigate directly to main app
+      navigate('/app');
       
       return true;
     } catch (error: any) {
