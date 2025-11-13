@@ -38,6 +38,9 @@ export interface Message {
   tokens_used?: number;
   cost?: number;
   
+  // ML-generated follow-up questions (for assistant messages)
+  suggested_questions?: SuggestedQuestion[];
+  
   // Optional fields
   embedding?: number[];
   quality_rating?: number; // 1-5
