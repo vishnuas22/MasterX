@@ -1,5 +1,11 @@
 /**
- * Message Component - Individual Message Display
+ * Message Component - Modern Centered Layout (2025)
+ * 
+ * MODERNIZED DESIGN:
+ * - Centered fixed-width column (max-width: 768px)
+ * - Both user and AI messages in center
+ * - Suggested questions below AI response
+ * - Matches ChatGPT/Claude 2025 patterns
  * 
  * WCAG 2.1 AA Compliant:
  * - Proper semantic HTML (article element)
@@ -17,22 +23,24 @@
  * - Message data structure from ChatResponse
  * - Emotion state visualization
  * - Provider metadata display
+ * - ML-generated suggested questions
  */
 
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  User, Bot, Copy, Edit, Trash, Check,
+  User, Bot, Copy, Check, Edit, Trash,
   Sparkles, DollarSign, Zap
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
-import { Avatar } from '@/components/ui/Avatar';
 import { Tooltip } from '@/components/ui/Tooltip';
+import { Avatar } from '@/components/ui/Avatar';
+import { SuggestedQuestions } from './SuggestedQuestions';
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/cjs/styles/prism';
-import type { Message as MessageType } from '@/types/chat.types';
+import type { Message as MessageType, SuggestedQuestion } from '@/types/chat.types';
 
 // ============================================================================
 // TYPES
@@ -48,6 +56,11 @@ export interface MessageProps {
    * Is this the current user's message
    */
   isOwn: boolean;
+  
+  /**
+   * Callback when suggested question is clicked
+   */
+  onQuestionClick?: (question: string, questionData: SuggestedQuestion) => void;
   
   /**
    * Callback when message height changes (for virtual scrolling)
@@ -172,6 +185,7 @@ MessageMetadata.displayName = 'MessageMetadata';
 export const Message: React.FC<MessageProps> = ({
   message,
   isOwn,
+  onQuestionClick,
   onHeightChange,
   className
 }) => {
@@ -234,7 +248,7 @@ export const Message: React.FC<MessageProps> = ({
           <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
             <button
               onClick={() => navigator.clipboard.writeText(String(children))}
-              className="px-2 py-1 bg-bg-tertiary hover:bg-bg-primary rounded text-xs text-text-secondary"
+              className="px-2 py-1 bg-white/[0.08] hover:bg-white/[0.12] rounded text-xs text-white/60"
             >
               Copy
             </button>
@@ -250,7 +264,7 @@ export const Message: React.FC<MessageProps> = ({
           </SyntaxHighlighter>
         </div>
       ) : (
-        <code className="px-1.5 py-0.5 bg-bg-tertiary rounded text-sm font-mono" {...props}>
+        <code className="px-1.5 py-0.5 bg-white/[0.08] rounded text-sm font-mono" {...props}>
           {children}
         </code>
       );
@@ -261,7 +275,7 @@ export const Message: React.FC<MessageProps> = ({
           href={href}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-accent-primary hover:underline"
+          className="text-blue-400 hover:underline"
         >
           {children}
         </a>
@@ -270,7 +284,7 @@ export const Message: React.FC<MessageProps> = ({
   };
   
   // ============================================================================
-  // RENDER
+  // RENDER - MODERN CENTERED LAYOUT
   // ============================================================================
   
   return (
@@ -280,7 +294,7 @@ export const Message: React.FC<MessageProps> = ({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2 }}
       className={cn(
-        'group px-4 py-3 hover:bg-bg-secondary/50 transition-colors',
+        'w-full px-6 py-4',
         className
       )}
       onMouseEnter={() => setShowActions(true)}
@@ -288,145 +302,141 @@ export const Message: React.FC<MessageProps> = ({
       role="article"
       aria-label={`Message from ${isOwn ? 'you' : 'AI assistant'}`}
     >
-      <div className={cn(
-        'flex gap-3',
-        isOwn ? 'flex-row-reverse' : 'flex-row'
-      )}>
-        {/* Avatar */}
-        <div className="flex-shrink-0">
-          {isOwn ? (
-            <Avatar
-              name="You"
-              size="sm"
-              fallback={<User className="w-4 h-4" />}
-              className="bg-accent-primary text-white"
-            />
-          ) : (
-            <Avatar
-              name={message.provider_used || message.provider || 'AI'}
-              size="sm"
-              fallback={<Bot className="w-4 h-4" />}
-              className="bg-accent-purple text-white"
-            />
-          )}
-        </div>
+      {/* CENTERED CONTAINER - Max width 768px */}
+      <div className="mx-auto" style={{ maxWidth: '768px' }}>
         
-        {/* Message Content */}
+        {/* MESSAGE BUBBLE - Modern centered design */}
         <div className={cn(
-          'flex-1 min-w-0 space-y-2',
-          isOwn ? 'items-end' : 'items-start'
+          'rounded-2xl px-5 py-4 mb-2 border transition-all duration-200',
+          isOwn
+            ? 'bg-blue-500/10 border-blue-500/20 backdrop-blur-xl'
+            : 'bg-white/[0.03] border-white/[0.08] backdrop-blur-xl'
         )}>
-          {/* Header: Name + Timestamp */}
-          <div className={cn(
-            'flex items-center gap-2 text-xs',
-            isOwn ? 'flex-row-reverse' : 'flex-row'
-          )}>
-            <span className="font-semibold text-text-primary">
-              {isOwn ? 'You' : 'AI Tutor'}
-            </span>
-            
-            {/* Emotion Badge (for user messages) */}
-            {isOwn && message.emotion_state && (
-              <EmotionBadge
-                emotion={message.emotion_state.primary_emotion}
-                intensity={message.emotion_state.valence}
-                readiness={message.emotion_state.learning_readiness}
-              />
-            )}
+          {/* Role Indicator */}
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              {isOwn ? (
+                <>
+                  <User className="w-4 h-4 text-blue-400" />
+                  <span className="text-xs font-semibold text-white/80">You</span>
+                </>
+              ) : (
+                <>
+                  <Bot className="w-4 h-4 text-purple-400" />
+                  <span className="text-xs font-semibold text-white/80">AI Tutor</span>
+                </>
+              )}
+            </div>
             
             {/* Timestamp */}
             <time
-              className="text-text-tertiary"
+              className="text-xs text-white/40"
               dateTime={message.timestamp}
             >
               {format(new Date(message.timestamp), 'h:mm a')}
             </time>
           </div>
           
-          {/* Message Bubble */}
-          <div className={cn(
-            'rounded-2xl px-4 py-3 max-w-3xl',
-            isOwn
-              ? 'bg-accent-primary text-white ml-auto'
-              : 'bg-bg-secondary text-text-primary'
-          )}>
+          {/* MESSAGE CONTENT */}
+          <div className="relative">
             {isOwn ? (
               // User message (plain text)
-              <p className="text-sm leading-relaxed whitespace-pre-wrap">
+              <p className="text-sm leading-relaxed whitespace-pre-wrap text-white/90">
                 {message.content}
               </p>
             ) : (
               // AI message (markdown)
-              <div className="prose prose-sm prose-invert max-w-none">
+              <div className="prose prose-sm prose-invert max-w-none text-white/90">
                 <ReactMarkdown components={markdownComponents}>
                   {message.content}
                 </ReactMarkdown>
               </div>
             )}
+            
+            {/* Copy Button (hover) */}
+            <AnimatePresence>
+              {showActions && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute top-0 right-0"
+                >
+                  <Tooltip content={isCopied ? 'Copied!' : 'Copy message'}>
+                    <button
+                      onClick={handleCopy}
+                      className="p-2 hover:bg-white/[0.08] rounded-lg transition-colors"
+                      aria-label="Copy message"
+                    >
+                      {isCopied ? (
+                        <Check className="w-4 h-4 text-green-400" />
+                      ) : (
+                        <Copy className="w-4 h-4 text-white/60" />
+                      )}
+                    </button>
+                  </Tooltip>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
-          
-          {/* Metadata (for AI messages) */}
-          {!isOwn && (
-            <MessageMetadata
-              provider={message.provider_used}
-              responseTime={message.response_time_ms}
-              cost={message.cost}
-              tokensUsed={message.tokens_used}
-            />
-          )}
-          
-          {/* Actions (hover/focus) */}
-          <AnimatePresence>
-            {showActions && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.15 }}
-                className={cn(
-                  'flex items-center gap-1',
-                  isOwn ? 'justify-end' : 'justify-start'
-                )}
-              >
-                <Tooltip content={isCopied ? 'Copied!' : 'Copy message'}>
-                  <button
-                    onClick={handleCopy}
-                    className="p-1.5 hover:bg-bg-tertiary rounded-lg transition-colors"
-                    aria-label="Copy message"
-                  >
-                    {isCopied ? (
-                      <Check className="w-4 h-4 text-accent-success" />
-                    ) : (
-                      <Copy className="w-4 h-4 text-text-tertiary" />
-                    )}
-                  </button>
-                </Tooltip>
-                
-                {isOwn && (
-                  <>
-                    <Tooltip content="Edit message">
-                      <button
-                        className="p-1.5 hover:bg-bg-tertiary rounded-lg transition-colors"
-                        aria-label="Edit message"
-                      >
-                        <Edit className="w-4 h-4 text-text-tertiary" />
-                      </button>
-                    </Tooltip>
-                    
-                    <Tooltip content="Delete message">
-                      <button
-                        className="p-1.5 hover:bg-bg-tertiary rounded-lg transition-colors"
-                        aria-label="Delete message"
-                      >
-                        <Trash className="w-4 h-4 text-accent-error" />
-                      </button>
-                    </Tooltip>
-                  </>
-                )}
-              </motion.div>
-            )}
-          </AnimatePresence>
         </div>
+        
+        {/* METADATA BAR - AI messages only */}
+        {!isOwn && (message.provider_used || message.emotion_state) && (
+          <div className="flex items-center gap-3 px-2 mb-3 text-xs text-white/40">
+            {/* Emotion Badge */}
+            {message.emotion_state && (
+              <EmotionBadge
+                emotion={message.emotion_state.primary_emotion}
+                intensity={message.emotion_state.valence || 0.5}
+                readiness={message.emotion_state.learning_readiness}
+              />
+            )}
+            
+            {/* Provider Info */}
+            {message.provider_used && (
+              <Tooltip content="AI Provider">
+                <div className="flex items-center gap-1.5">
+                  <Sparkles className="w-3 h-3" />
+                  <span className="capitalize">{message.provider_used}</span>
+                </div>
+              </Tooltip>
+            )}
+            
+            {/* Response Time */}
+            {message.response_time_ms && (
+              <Tooltip content="Response Time">
+                <div className="flex items-center gap-1.5">
+                  <Zap className="w-3 h-3" />
+                  <span>{(message.response_time_ms / 1000).toFixed(2)}s</span>
+                </div>
+              </Tooltip>
+            )}
+            
+            {/* Cost */}
+            {message.cost !== undefined && message.cost > 0 && (
+              <Tooltip content="Cost">
+                <div className="flex items-center gap-1.5">
+                  <DollarSign className="w-3 h-3" />
+                  <span>${message.cost.toFixed(4)}</span>
+                </div>
+              </Tooltip>
+            )}
+          </div>
+        )}
+        
+        {/* SUGGESTED QUESTIONS - Below AI response (NEW LOCATION) */}
+        {!isOwn && message.suggested_questions && message.suggested_questions.length > 0 && onQuestionClick && (
+          <div className="mt-3">
+            <SuggestedQuestions
+              questions={message.suggested_questions}
+              onQuestionClick={onQuestionClick}
+              visible={true}
+              maxDisplay={5}
+            />
+          </div>
+        )}
       </div>
     </motion.article>
   );
