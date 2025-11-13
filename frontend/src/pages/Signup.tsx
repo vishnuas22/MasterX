@@ -21,7 +21,7 @@
  * Backend Integration:
  * - POST /api/auth/register (creates user)
  * - Auto-login after signup
- * - Redirect to onboarding
+ * - Redirect to main app
  * 
  * Design:
  * - Modern white card with BorderBeam animation effect
