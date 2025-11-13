@@ -1,5 +1,5 @@
 /**
- * ChatContainer Component - Main Chat Interface
+ * ChatContainer Component - Premium Enhanced Main Chat Interface
  * 
  * WCAG 2.1 AA Compliant:
  * - Landmark <main> element
@@ -12,12 +12,21 @@
  * - Lazy loading of message history
  * - Optimistic UI updates (instant message display)
  * - Debounced typing indicators
+ * - GPU-accelerated animations (60fps)
  * 
  * Backend Integration:
  * - POST /api/v1/chat - Send message and get AI response
  * - WebSocket connection for real-time emotion updates
  * - Session persistence in MongoDB
  * - Automatic reconnection on network issues
+ * 
+ * Premium Features:
+ * - Glassmorphism effects with multi-layer depth
+ * - Animated gradient orbs (living background)
+ * - Premium empty state with floating elements
+ * - Enhanced connection status bar
+ * - Premium loading spinner
+ * - Smooth 60fps animations
  */
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
@@ -35,7 +44,7 @@ import { VoiceButton } from './VoiceButton';
 import { SuggestedQuestions } from './SuggestedQuestions';
 import { cn } from '@/utils/cn';
 import { toast } from '@/components/ui/Toast';
-import { AlertCircle, Wifi, WifiOff } from 'lucide-react';
+import { AlertCircle, Wifi, WifiOff, Sparkles } from 'lucide-react';
 
 // ============================================================================
 // TYPES
@@ -77,7 +86,215 @@ export interface ChatContainerProps {
 type ConnectionStatus = 'connected' | 'connecting' | 'disconnected' | 'error';
 
 // ============================================================================
-// MAIN COMPONENT
+// PREMIUM EMPTY STATE COMPONENT (INLINE)
+// ============================================================================
+
+const PremiumEmptyState: React.FC = React.memo(() => {
+  return (
+    <div className="flex-1 flex items-center justify-center px-8 relative overflow-hidden">
+      {/* Animated gradient orbs - Living background */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div 
+          className="absolute top-1/4 left-1/4 w-[600px] h-[600px] rounded-full blur-3xl opacity-30"
+          style={{ 
+            background: 'radial-gradient(circle, rgba(59, 130, 246, 0.4), transparent 70%)',
+            animation: 'float 20s ease-in-out infinite'
+          }}
+        />
+        <div 
+          className="absolute bottom-1/4 right-1/4 w-[600px] h-[600px] rounded-full blur-3xl opacity-30"
+          style={{ 
+            background: 'radial-gradient(circle, rgba(168, 85, 247, 0.4), transparent 70%)',
+            animation: 'float 25s ease-in-out infinite',
+            animationDelay: '-10s'
+          }}
+        />
+        <div 
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full blur-3xl opacity-20"
+          style={{ 
+            background: 'radial-gradient(circle, rgba(236, 72, 153, 0.4), transparent 70%)',
+            animation: 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+          }}
+        />
+      </div>
+      
+      <div className="relative z-10 text-center max-w-3xl">
+        {/* Hero emoji with depth */}
+        <div className="mb-10 relative inline-block">
+          <div 
+            className="absolute inset-0 rounded-full blur-3xl opacity-50"
+            style={{ 
+              background: 'radial-gradient(circle, rgba(59, 130, 246, 0.4), rgba(168, 85, 247, 0.4))',
+              animation: 'pulse 3s ease-in-out infinite'
+            }}
+          />
+          <div className="relative text-[120px] leading-none">
+            <span 
+              className="inline-block filter drop-shadow-2xl"
+              style={{
+                animation: 'wave 2.5s ease-in-out infinite',
+                transformOrigin: '70% 70%'
+              }}
+            >
+              👋
+            </span>
+          </div>
+        </div>
+        
+        {/* Main greeting with animated gradient */}
+        <h2 className="text-2xl font-black mb-4 tracking-tight leading-tight">
+          <span 
+            className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent"
+            style={{
+              backgroundSize: '200% 200%',
+              animation: 'gradient 3s ease infinite'
+            }}
+          >
+            Start Your Learning Journey
+          </span>
+        </h2>
+        
+        {/* Description */}
+        <p className="text-white/60 text-xl mb-3 leading-relaxed font-medium max-w-2xl mx-auto">
+          Ask me anything! I'm here to help you learn with personalized, emotion-aware responses.
+        </p>
+        
+        <p className="text-white/40 text-base mb-10 leading-relaxed font-medium">
+          Powered by advanced AI with real-time emotion detection
+        </p>
+        
+        {/* Premium badges with hover animations */}
+        <div className="flex items-center justify-center gap-3 flex-wrap">
+          <div 
+            className="px-4 py-2 rounded-full border backdrop-blur-xl transition-all duration-300 hover:scale-105"
+            style={{
+              background: 'rgba(255, 255, 255, 0.05)',
+              borderColor: 'rgba(255, 255, 255, 0.1)'
+            }}
+          >
+            <span className="text-xs text-white/50 font-bold tracking-widest">AI ASSISTANT</span>
+          </div>
+          <div 
+            className="px-4 py-2 rounded-full backdrop-blur-xl border transition-all duration-300 hover:scale-105 flex items-center gap-2"
+            style={{
+              background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(168, 85, 247, 0.2))',
+              borderColor: 'rgba(59, 130, 246, 0.3)'
+            }}
+          >
+            <Sparkles className="w-3.5 h-3.5 text-blue-400" />
+            <span className="text-xs font-bold tracking-widest text-blue-400">EMOTION-AWARE</span>
+          </div>
+          <div 
+            className="px-4 py-2 rounded-full backdrop-blur-xl border transition-all duration-300 hover:scale-105"
+            style={{
+              background: 'linear-gradient(135deg, rgba(236, 72, 153, 0.2), rgba(252, 211, 77, 0.2))',
+              borderColor: 'rgba(236, 72, 153, 0.3)'
+            }}
+          >
+            <span className="text-xs font-bold tracking-widest text-pink-400">ULTRA MODE</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+});
+
+PremiumEmptyState.displayName = 'PremiumEmptyState';
+
+// ============================================================================
+// PREMIUM CONNECTION STATUS BAR (INLINE)
+// ============================================================================
+
+const PremiumConnectionStatus: React.FC<{ status: ConnectionStatus }> = React.memo(({ status }) => {
+  if (status === 'connected') return null;
+  
+  return (
+    <div
+      className={cn(
+        'px-6 py-3 text-sm flex items-center gap-3 border-b backdrop-blur-xl transition-all duration-300',
+        status === 'connecting' && 'bg-white/[0.03] text-white/60 border-white/[0.08]',
+        status === 'disconnected' && 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
+        status === 'error' && 'bg-red-500/10 text-red-400 border-red-500/20'
+      )}
+      role="status"
+      aria-live="polite"
+    >
+      {status === 'connecting' && (
+        <>
+          <Wifi className="w-5 h-5 animate-pulse" />
+          <span className="font-medium">Establishing secure connection...</span>
+        </>
+      )}
+      {status === 'disconnected' && (
+        <>
+          <WifiOff className="w-5 h-5" />
+          <span className="font-medium">Reconnecting to real-time services...</span>
+        </>
+      )}
+      {status === 'error' && (
+        <>
+          <AlertCircle className="w-5 h-5" />
+          <span className="font-medium">Connection error - Some features may be limited</span>
+        </>
+      )}
+    </div>
+  );
+});
+
+PremiumConnectionStatus.displayName = 'PremiumConnectionStatus';
+
+// ============================================================================
+// PREMIUM LOADING STATE (INLINE)
+// ============================================================================
+
+const PremiumLoadingState: React.FC = React.memo(() => {
+  return (
+    <div className="flex items-center justify-center h-full relative overflow-hidden">
+      {/* Animated background */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div 
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full blur-3xl opacity-30"
+          style={{ 
+            background: 'radial-gradient(circle, rgba(59, 130, 246, 0.4), transparent 70%)',
+            animation: 'pulse 2s ease-in-out infinite'
+          }}
+        />
+      </div>
+      
+      <div className="text-center space-y-6 relative z-10">
+        {/* Premium dual-ring spinner */}
+        <div className="relative w-20 h-20 mx-auto">
+          <div 
+            className="absolute inset-0 rounded-full border-4 border-transparent"
+            style={{
+              borderTopColor: '#3b82f6',
+              borderRightColor: '#a855f7',
+              animation: 'spin 1s linear infinite'
+            }}
+          />
+          <div 
+            className="absolute inset-2 rounded-full border-4 border-transparent opacity-50"
+            style={{
+              borderTopColor: '#ec4899',
+              borderRightColor: '#3b82f6',
+              animation: 'spin 1.5s linear infinite reverse'
+            }}
+          />
+        </div>
+        
+        <div>
+          <p className="text-white/80 text-lg font-semibold mb-2">Loading chat session...</p>
+          <p className="text-white/40 text-sm">Preparing your personalized experience</p>
+        </div>
+      </div>
+    </div>
+  );
+});
+
+PremiumLoadingState.displayName = 'PremiumLoadingState';
+
+// ============================================================================
+// MAIN COMPONENT - PREMIUM ENHANCED
 // ============================================================================
 
 export const ChatContainer: React.FC<ChatContainerProps> = ({
@@ -314,100 +531,56 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
   }, [error]);
   
   // ============================================================================
-  // LOADING STATE
+  // LOADING STATE - PREMIUM ENHANCED
   // ============================================================================
   
   if (!isInitialized) {
-    return (
-      <div className="flex items-center justify-center h-full bg-bg-primary">
-        <div className="text-center space-y-4">
-          <div className="w-16 h-16 border-4 border-accent-primary border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-text-secondary">Loading chat session...</p>
-        </div>
-      </div>
-    );
+    return <PremiumLoadingState />;
   }
   
   // ============================================================================
-  // RENDER
+  // RENDER - PREMIUM ENHANCED
   // ============================================================================
   
   return (
     <div
       ref={containerRef}
       className={cn(
-        'flex flex-col h-full bg-bg-primary',
+        'flex flex-col h-full relative overflow-hidden',
         className
       )}
+      style={{ 
+        background: 'linear-gradient(to bottom, #0a0a0f, #0d0d15)'
+      }}
       role="main"
       aria-label="Chat interface"
     >
-      {/* Connection Status Bar */}
-      {connectionStatus !== 'connected' && (
-        <div
-          className={cn(
-            'px-4 py-2 text-sm flex items-center gap-2 border-b border-white/10',
-            connectionStatus === 'connecting' && 'bg-bg-secondary text-text-secondary',
-            connectionStatus === 'disconnected' && 'bg-accent-warning/20 text-accent-warning',
-            connectionStatus === 'error' && 'bg-accent-error/20 text-accent-error'
-          )}
-          role="status"
-          aria-live="polite"
-        >
-          {connectionStatus === 'connecting' && (
-            <>
-              <Wifi className="w-4 h-4 animate-pulse" />
-              <span>Connecting...</span>
-            </>
-          )}
-          {connectionStatus === 'disconnected' && (
-            <>
-              <WifiOff className="w-4 h-4" />
-              <span>Disconnected - Attempting to reconnect...</span>
-            </>
-          )}
-          {connectionStatus === 'error' && (
-            <>
-              <AlertCircle className="w-4 h-4" />
-              <span>Connection error - Some features may be limited</span>
-            </>
-          )}
-        </div>
-      )}
+      {/* Premium Connection Status Bar */}
+      <PremiumConnectionStatus status={connectionStatus} />
       
-      {/* Emotion Indicator (Floating) */}
+      {/* Floating Emotion Indicator with Premium Glassmorphism */}
       {showEmotion && currentEmotion && (
-        <div className="absolute top-4 right-4 z-10">
-          <EmotionIndicator
-            emotion={currentEmotion}
-            isAnalyzing={isAnalyzing}
-            compact
-          />
-        </div>
-      )}
-      
-      {/* Message List with Empty State */}
-      {messages.length === 0 && !isLoading ? (
-        /* Enhanced Empty State matching new design */
-        <div className="flex-1 flex items-center justify-center px-8">
-          <div className="text-center max-w-2xl">
-            <div className="mb-8 text-8xl">👋</div>
-            <h2 className="text-5xl font-bold mb-4 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-              Start Your Learning Journey
-            </h2>
-            <p className="text-white/60 text-lg mb-6">
-              Ask me anything! I'm here to help you learn with personalized, emotion-aware responses.
-            </p>
-            <div className="flex items-center justify-center gap-3">
-              <span className="px-4 py-2 rounded-full bg-white/[0.05] border border-white/[0.1] text-xs text-white/50 font-bold">
-                AI Assistant
-              </span>
-              <span className="px-4 py-2 rounded-full bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/30 text-xs text-blue-400 font-bold">
-                EMOTION-AWARE
-              </span>
-            </div>
+        <div className="absolute top-6 right-6 z-20">
+          <div 
+            className="backdrop-blur-xl rounded-2xl border shadow-2xl transition-all duration-300 hover:scale-105"
+            style={{
+              background: 'rgba(255, 255, 255, 0.05)',
+              borderColor: 'rgba(255, 255, 255, 0.1)',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)'
+            }}
+          >
+            <EmotionIndicator
+              emotion={currentEmotion}
+              isAnalyzing={isAnalyzing}
+              compact
+            />
           </div>
         </div>
+      )}
+      
+      {/* Message List or Premium Empty State */}
+      {messages.length === 0 && !isLoading ? (
+        <PremiumEmptyState />
       ) : (
         <div className="flex-1 overflow-hidden">
           <MessageList
@@ -416,9 +589,9 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
             currentUserId={user?.id}
           />
           
-          {/* Typing Indicator */}
+          {/* Premium Typing Indicator */}
           {isLoading && (
-            <div className="px-4 py-2">
+            <div className="px-8 py-4">
               <TypingIndicator />
             </div>
           )}
@@ -428,46 +601,56 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
         </div>
       )}
       
-      {/* Message Input Area - Enhanced Centered Design */}
-      <div className="border-t border-white/[0.08] backdrop-blur-2xl p-8">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex items-end gap-3">
-            {/* Voice Button (if enabled) */}
+      {/* Premium Message Input Area - CENTERED WITH AMBIENT GLOW */}
+      <div className="border-t border-white/[0.08] backdrop-blur-2xl p-8 relative">
+        {/* Ambient bottom glow */}
+        <div 
+          className="absolute inset-0 opacity-20 pointer-events-none"
+          style={{
+            background: 'radial-gradient(ellipse at bottom, rgba(59, 130, 246, 0.2), transparent 70%)'
+          }}
+        />
+        
+        <div className="relative z-10 max-w-5xl mx-auto">
+          <div className="flex items-end gap-4">
+            {/* Voice Button with Premium Styling */}
             {enableVoice && (
-              <VoiceButton
-                onTranscription={handleSendMessage}
-                disabled={isLoading || !isConnected}
-              />
+              <div className="flex-shrink-0">
+                <VoiceButton
+                  onTranscription={handleSendMessage}
+                  disabled={isLoading || !isConnected}
+                />
+              </div>
             )}
             
-            {/* Text Input - Enhanced Design */}
+            {/* Premium Text Input */}
             <div className="flex-1">
               <MessageInput
                 onSend={handleSendMessage}
                 disabled={isLoading}
                 placeholder={
                   isLoading
-                    ? 'AI is responding...'
-                    : 'Ask me anything...'
+                    ? 'AI is thinking...'
+                    : 'Message MasterX...'
                 }
                 enableAttachments={false}
                 enableEmoji={false}
                 showCounter={true}
               />
               
-              {/* Connection Warning (non-blocking) */}
+              {/* Connection Warning (Premium styled) */}
               {!isConnected && (
-                <div className="mt-1 text-xs text-accent-warning flex items-center gap-1">
-                  <WifiOff className="w-3 h-3" />
+                <div className="mt-2 flex items-center gap-2 text-xs text-yellow-400/80 font-medium">
+                  <WifiOff className="w-3.5 h-3.5" />
                   <span>Real-time updates unavailable. Messages will still send.</span>
                 </div>
               )}
             </div>
           </div>
           
-          {/* Suggested Questions */}
+          {/* Suggested Questions with Premium Styling */}
           {suggestedQuestions.length > 0 && !isLoading && (
-            <div className="mt-3">
+            <div className="mt-4">
               <SuggestedQuestions
                 questions={suggestedQuestions}
                 onQuestionClick={handleSuggestedQuestionClick}
@@ -476,36 +659,63 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
             </div>
           )}
           
-          {/* Status indicators */}
-          <div className="mt-2 flex items-center justify-between text-xs text-text-tertiary">
+          {/* Premium Status Footer */}
+          <div className="mt-4 flex items-center justify-between text-xs text-white/30 font-medium">
             <div className="flex items-center gap-4">
               <span
                 className={cn(
-                  'flex items-center gap-1',
-                  isConnected ? 'text-accent-success' : 'text-accent-error'
+                  'flex items-center gap-2 transition-colors duration-300',
+                  isConnected ? 'text-emerald-400' : 'text-red-400'
                 )}
               >
                 <span className={cn(
                   'w-2 h-2 rounded-full',
-                  isConnected ? 'bg-accent-success animate-pulse' : 'bg-accent-error'
+                  isConnected ? 'bg-emerald-500 animate-pulse shadow-lg shadow-emerald-500/50' : 'bg-red-500'
                 )} />
                 {isConnected ? 'Connected' : 'Disconnected'}
               </span>
               
               {storeSessionId && (
-                <span>
+                <span className="text-white/20">
                   Session: {storeSessionId.slice(0, 8)}...
                 </span>
               )}
             </div>
             
-            <div>
-              <kbd className="px-2 py-1 text-xs bg-bg-tertiary rounded">Enter</kbd>
-              <span className="ml-1">to send</span>
+            <div className="flex items-center gap-2 text-white/40">
+              <kbd className="px-2 py-1 text-[10px] bg-white/[0.05] rounded border border-white/[0.08] font-mono">Enter</kbd>
+              <span>to send</span>
+              <span className="text-white/20">•</span>
+              <kbd className="px-2 py-1 text-[10px] bg-white/[0.05] rounded border border-white/[0.08] font-mono">Shift+Enter</kbd>
+              <span>for new line</span>
             </div>
           </div>
         </div>
       </div>
+      
+      {/* Inject Premium Animations CSS */}
+      <style>{`
+        @keyframes wave {
+          0%, 100% { transform: rotate(0deg); }
+          25% { transform: rotate(20deg); }
+          75% { transform: rotate(-20deg); }
+        }
+        
+        @keyframes float {
+          0%, 100% { transform: translate(0, 0) rotate(0deg); }
+          33% { transform: translate(30px, -30px) rotate(5deg); }
+          66% { transform: translate(-20px, 20px) rotate(-5deg); }
+        }
+        
+        @keyframes gradient {
+          0%, 100% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+        }
+        
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 };
