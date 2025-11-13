@@ -46,7 +46,6 @@ const ForgotPassword = lazy(() => import('@/pages/ForgotPassword'));
 const ResetPassword = lazy(() => import('@/pages/ResetPassword'));
 
 // Protected pages
-const Onboarding = lazy(() => import('@/pages/Onboarding'));
 const MainApp = lazy(() => import('@/pages/MainApp'));
 
 // Test/Debug pages (for development)
@@ -239,7 +238,6 @@ const App: React.FC = () => {
    * - /signup - Signup page
    * 
    * Protected (require authentication):
-   * - /onboarding - First-time user setup
    * - /app - Main application (chat interface)
    * 
    * Development:
@@ -266,14 +264,6 @@ const App: React.FC = () => {
             <Route path="/reset-password" element={<ResetPassword />} />
             
             {/* Protected routes */}
-            <Route
-              path="/onboarding"
-              element={
-                <ProtectedRoute>
-                  <Onboarding />
-                </ProtectedRoute>
-              }
-            />
             <Route
               path="/app"
               element={
