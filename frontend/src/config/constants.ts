@@ -106,7 +106,6 @@ export const ROUTES = {
   HOME: '/',
   LOGIN: '/login',
   SIGNUP: '/signup',
-  ONBOARDING: '/onboarding',
   APP: '/app',
   DASHBOARD: '/app/dashboard',
   ANALYTICS: '/app/analytics',
