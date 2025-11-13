@@ -47,6 +47,11 @@ export interface MessageListProps {
   currentUserId?: string;
   
   /**
+   * Callback when suggested question is clicked
+   */
+  onQuestionClick?: (question: string, questionData: any) => void;
+  
+  /**
    * Callback when scrolled to top (load more)
    */
   onLoadMore?: () => void;
