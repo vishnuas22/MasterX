@@ -587,12 +587,15 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
             messages={messages}
             isLoading={isLoading}
             currentUserId={user?.id}
+            onQuestionClick={handleSuggestedQuestionClick}
           />
           
-          {/* Premium Typing Indicator */}
+          {/* Premium Typing Indicator - CENTERED */}
           {isLoading && (
             <div className="px-8 py-4">
-              <TypingIndicator />
+              <div className="mx-auto" style={{ maxWidth: '768px' }}>
+                <TypingIndicator />
+              </div>
             </div>
           )}
           
@@ -648,16 +651,7 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
             </div>
           </div>
           
-          {/* Suggested Questions with Premium Styling */}
-          {suggestedQuestions.length > 0 && !isLoading && (
-            <div className="mt-4">
-              <SuggestedQuestions
-                questions={suggestedQuestions}
-                onQuestionClick={handleSuggestedQuestionClick}
-                visible={true}
-              />
-            </div>
-          )}
+          {/* Suggested Questions REMOVED - Now shown after each AI response in Message component */}
           
           {/* Premium Status Footer */}
           <div className="mt-4 flex items-center justify-between text-xs text-white/30 font-medium">
