@@ -100,6 +100,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         response_time_ms: response.response_time_ms,
         tokens_used: response.tokens_used,
         cost: response.cost,
+        suggested_questions: response.suggested_questions || [], // ✅ ATTACH ML questions to message
       };
       
       set((state) => ({
