@@ -137,6 +137,7 @@ export const MessageList: React.FC<MessageListProps> = ({
   messages,
   isLoading = false,
   currentUserId,
+  onQuestionClick,
   onLoadMore,
   hasMore = false,
   className
@@ -240,6 +241,7 @@ export const MessageList: React.FC<MessageListProps> = ({
               key={message.id}
               message={message}
               isOwn={message.role === 'user' || message.user_id === currentUserId}
+              onQuestionClick={onQuestionClick}
             />
           ))}
         </div>
